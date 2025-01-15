@@ -1,0 +1,7 @@
+procs:
+  webapp:
+    shell: "pnpm dev:webapp"
+  api:
+    shell: "pnpm dev:api"
+  landing:
+    shell: "pnpm dev:landing"

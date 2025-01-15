@@ -1,0 +1,18 @@
+{
+  "name": "glassact-studios",
+  "private": true,
+  "engines": {
+    "node": "22.13.0",
+    "pnpm": "10.0.0"
+  },
+  "scripts": {
+    "dev": "mprocs",
+    "dev:api": "pnpm --filter @glassact/api dev",
+    "dev:landing": "pnpm --filter @glassact/landing dev",
+    "dev:webapp": "pnpm --filter @glassact/webapp dev"
+  },
+  "devDependencies": {
+    "mprocs": "^0.7.1"
+  },
+  "license": "CC BY-NC 4.0"
+}
