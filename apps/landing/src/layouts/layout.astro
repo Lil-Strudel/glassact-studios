@@ -1,0 +1,43 @@
+---
+import NavBar from "../components/navbar";
+import NavBarPlaceholder from "../components/navbar-placeholder.astro";
+import Footer from "../components/footer.astro";
+import "@glassact/ui/globals.css";
+import "@fontsource-variable/inter";
+import { Image } from "astro:assets";
+import LogoImg from "../assets/images/logo.png";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta
+      name="description"
+      content="Enhance Memorials Forever with GlassAct Studios' Custom Glass Art Inlays for Granite Monuments. Discover everlasting beauty for memorials with our bespoke glass inlays at GlassAct Studios. Revolutionizing the memorial industry, our inlays provide permanent color on granite, ensuring a timeless tribute that defies fading. While traditional paint or stain lasts a mere 2 to 8 years, our stained glass inlays endure indefinitely. Tested for over a decade on gravestones, these inlays surpass the resilience of carved granite itself, enduring extremes that monuments will never encounter. Choose from our extensive catalog of ready-to-manufacture designs or transform existing sandblasting designs into vivid, enduring glass inlays. Join monument companies nationwide in embracing the permanence and enduring elegance of GlassAct Studios' custom glass art in memorials."
+    />
+    <meta name="generator" content={Astro.generator} />
+    <title>Welcome | GlassAct Studios</title>
+  </head>
+  <body>
+    <div class="flex flex-col min-h-screen">
+      <NavBar client:only="solid-js">
+        <Image
+          src={LogoImg}
+          alt="Glassact Studios Logo"
+          class="w-[200px]"
+          loading="eager"
+        />
+        <NavBarPlaceholder slot="fallback" />
+      </NavBar>
+      <slot />
+      <Footer />
+    </div>
+  </body>
+</html>

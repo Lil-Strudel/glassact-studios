@@ -1,0 +1,75 @@
+---
+import { Image } from "astro:assets";
+import Layout from "../layouts/layout.astro";
+import TextBlock from "../components/text-block.astro";
+
+import ColorFusionImg from "../assets/images/color-fusion.png";
+import StainedGlassImg from "../assets/images/stained-glass.jpg";
+import SEmblemImg from "../assets/images/s-emblem.png";
+---
+
+<Layout>
+  <section class="grow">
+    <div class="max-w-screen-xl py-24 px-4 md:px-8 mx-auto">
+      <div class="w-full pb-8 flex justify-between items-end">
+        <div>
+          <div class="-mx-3 -my-8">
+            <Image
+              src={ColorFusionImg}
+              alt="Color Fusion"
+              class="w-[20rem]"
+              loading="eager"
+            />
+          </div>
+          <h2 class="mt-2 sm:text-3xl text-2xl font-medium lg:mb-0 mb-4">
+            Permanent Colorfast Glass Inlays
+          </h2>
+        </div>
+      </div>
+      <div class="flex md:gap-8">
+        <div>
+          <Image
+            src={StainedGlassImg}
+            alt="Stained Glass"
+            class="min-w-[400px] hidden md:block"
+            loading="eager"
+          />
+          <Image
+            src={SEmblemImg}
+            alt="S Emblem"
+            class="min-w-[400px] hidden md:block"
+            loading="eager"
+          />
+        </div>
+        <div class="flex flex-col gap-4">
+          <h3 class="text-3xl">Methods and Materials</h3>
+          <TextBlock
+            title="Colored Glass History"
+            description="For hundreds of years, colored glass was produced and used in various ways. A little-known fact is that colored glass never fades and holds its original color for an indefinite time. In Europe, some of the oldest cathedrals still have their original art glass. Superb examples of colored glass are found in the early 12th Century, such as King David displayed in the Augsburg Germany Cathedral, or 13th-Century windows from the Chartres Cathedral in Notre Dame, France. The art glass from over 800 years ago is still as vibrant and beautiful as the first day it was created!"
+          />
+          <Image src={StainedGlassImg} alt="Stained Glass" class="md:hidden" />
+          <TextBlock
+            title="Shaping the Glass"
+            description="Today we have numerous modern tools available such as diamond crusted saw blades and grinders. The computer controlled water-jet, with an ultra-thin cutting radius, is essential for cutting glass.  It is no longer a challenge to cut a one-inch glass letter or number because the machine's tolerances are measured in thousands of an inch.  "
+          />
+          <TextBlock
+            title="Fusing and Annealing"
+            description="Computer controlled kilns are responsible for a high-quality outcome. Barometric pressure, air temperature, and humidity still play a roll, but good record keeping and testing ensure the highest quality in glass finishing. To fuse, fire polish, and anneal the glass inlay, the glass will be heated multiple times and spend well over 30 hours in the kiln. Our fusing and annealing techniques ensure a perfect finish and a hardness that is up to 200 times harder than regular plate glass."
+          />
+          <TextBlock
+            title="Stencils"
+            description="Before a stencil can be cut, a graphic artist draws the artwork and designs the general layout in Adobe Illustrator. Adobe Illustrator is the gold standard in graphic art and layout programs. Most plotting programs reflect how a CAD program works, combined with hints of Adobe Illustrator. CAD is favored by engineers and architects.  Adobe Illustrator is used by artists, graphic artist and by the printing industry. The stencil we create is custom matched to the finished glass art.  When an artisan sandblasts the stencil onto the granite, the fit of the glass inlay into stone is guaranteed."
+          />
+          <TextBlock
+            title="Installation"
+            description="The glass is bonded to the granite using an industrial, epoxy-like adhesive. This adhesive is specially made to adhere glass to stone. A tensile strength of over 2500 pounds ensures a bond that will never be challenged.  The only enemy that could impact the longevity of our adhesive is UV from sunlight.  With that in mind, our artwork is designed with a small outline that is filled with cement based grout. The grout seals the gap permanently and ensures the adhesive to never be exposed to UV or sunlight. The cement based grout adheres permanently to the glass and granite.  Additionally, we color our grout with pigments that are UV-fast.  The colored grout adds another layer of sophistication to our designs."
+          />
+          <TextBlock
+            title="Patent"
+            description="Our process is so special and unique that we have applied for national and international patents. Our first patent has been finalized and granted."
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

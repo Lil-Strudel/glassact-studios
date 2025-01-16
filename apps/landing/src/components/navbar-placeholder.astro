@@ -1,0 +1,77 @@
+---
+import Button from "./button.astro";
+import { Image } from "astro:assets";
+import LogoImg from "../assets/images/logo.png";
+
+const navigation = [
+  { title: "Home", path: "/" },
+  { title: "Gallery", path: "/gallery" },
+  { title: "Our Product", path: "/product" },
+  { title: "Catalog", path: "/catalog" },
+  { title: "FAQs", path: "/faqs" },
+  { title: "Customer Portal", path: "/login" },
+];
+---
+
+<nav class="bg-gray-100 w-full border-b lg:border-0 lg:static">
+  <div class="items-center px-4 max-w-screen-xl mx-auto lg:flex lg:px-8">
+    <div class="flex items-center justify-between py-3 lg:py-5 lg:block">
+      <a href="/">
+        <Image
+          src={LogoImg}
+          alt="Glassact Studios Logo"
+          class="w-[200px]"
+          loading="eager"
+        />
+      </a>
+      <div class="lg:hidden">
+        <Button variant="outline" size="icon" aria-label="Open Menu">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width={2}
+              d="M4 8h16M4 16h16"></path>
+          </svg>
+        </Button>
+      </div>
+    </div>
+    <div
+      class={`flex-1 justify-self-center pb-3 mt-8 lg:block lg:pb-0 lg:mt-0 hidden`}
+    >
+      <ul
+        class="justify-center items-center space-y-8 lg:flex lg:space-x-6 lg:space-y-0"
+      >
+        {
+          navigation.map((item) => (
+            <li class="text-gray-600 hover:text-primary">
+              <a href={item.path} class="block w-full">
+                <Button variant="ghost" class="text-md hover:text-primary">
+                  {item.title}
+                </Button>
+              </a>
+            </li>
+          ))
+        }
+        <li class="inline-block lg:hidden">
+          <a href="/contact" class="block w-full">
+            <Button variant="ghost" class="text-md hover:text-primary">
+              Contact Us
+            </Button>
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="hidden lg:inline-block">
+      <a href="/contact">
+        <Button>Contact Us</Button>
+      </a>
+    </div>
+  </div>
+</nav>

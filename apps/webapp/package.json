@@ -8,12 +8,16 @@
     "build": "vite build",
     "serve": "vite preview"
   },
+  "dependencies": {
+    "@glassact/ui": "workspace:*",
+    "solid-js": "catalog:solid"
+  },
   "devDependencies": {
-    "typescript": "^5.7.2",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.1",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
     "vite": "^6.0.0",
     "vite-plugin-solid": "^2.11.0"
-  },
-  "dependencies": {
-    "solid-js": "^1.9.3"
   }
 }

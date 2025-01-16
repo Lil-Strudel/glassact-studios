@@ -1,0 +1,16 @@
+{
+  "$schema": "https://shadcn-solid.com/schema.json",
+  "tailwind": {
+    "config": "src/tailwind.config.ts",
+    "css": {
+      "path": "src/globals.css",
+      "variable": true
+    },
+    "color": "slate",
+    "prefix": ""
+  },
+  "alias": {
+    "component": "src/",
+    "cn": "@glassact/ui"
+  }
+}

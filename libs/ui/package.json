@@ -1,0 +1,39 @@
+{
+  "name": "@glassact/ui",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./tailwind.config.ts": {
+      "default": "./tailwind.config.ts"
+    },
+    "./globals.css": {
+      "default": "./globals.css"
+    },
+    "./*": {
+      "types": "./dist/src/*.d.ts",
+      "default": [
+        "./src/*.ts",
+        "./src/*.tsx"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@kobalte/core": "^0.13.7",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "solid-js": "catalog:solid",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss": "catalog:",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

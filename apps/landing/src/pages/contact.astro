@@ -1,0 +1,57 @@
+---
+import Layout from "../layouts/layout.astro";
+import EmailSVG from "../components/email-svg.astro";
+import PhoneSVG from "../components/phone-svg.astro";
+import AddressSVG from "../components/address-svg.astro";
+
+const contactMethods = [
+  {
+    icon: EmailSVG,
+    contact: "roy@glassactstudios.com",
+  },
+  {
+    icon: PhoneSVG,
+    contact: "(801) 850-6698",
+  },
+  {
+    icon: AddressSVG,
+    contact: "GlassAct Studios Inc. 540 South Commerce Rd, Orem, UT 84097",
+  },
+];
+---
+
+<Layout>
+  <main class="py-14 grow">
+    <div class="max-w-screen-xl mx-auto px-4 text-gray-600 md:px-8">
+      <div
+        class="max-w-lg mx-auto gap-12 justify-between lg:flex lg:max-w-none"
+      >
+        <div class="max-w-lg space-y-3">
+          <h3 class="font-semibold">Contact</h3>
+          <p class="text-gray-800 text-3xl font-semibold sm:text-4xl">
+            If you have any questions,
+          </p>
+          <p>
+            please do not hesitate to send us a message. We aim to reply within
+            24 hours!
+          </p>
+          <div>
+            <ul class="mt-6 flex flex-wrap gap-x-10 gap-y-6 items-center">
+              {
+                contactMethods.map((item) => (
+                  <li class="flex items-center gap-x-3">
+                    <div class="flex-none text-gray-400">
+                      <item.icon />
+                    </div>
+                    <p>{item.contact}</p>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </div>
+        <div class="flex-1 mt-12 sm:max-w-lg lg:max-w-md"></div>
+      </div>
+    </div>
+  </main>
+</Layout>
