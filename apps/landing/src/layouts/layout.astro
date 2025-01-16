@@ -3,7 +3,6 @@ import NavBar from "../components/navbar";
 import NavBarPlaceholder from "../components/navbar-placeholder.astro";
 import Footer from "../components/footer.astro";
 import "@glassact/ui/globals.css";
-import "@fontsource-variable/inter";
 import { Image } from "astro:assets";
 import LogoImg from "../assets/images/logo.png";
 ---
@@ -28,12 +27,7 @@ import LogoImg from "../assets/images/logo.png";
   <body>
     <div class="flex flex-col min-h-screen">
       <NavBar client:only="solid-js">
-        <Image
-          src={LogoImg}
-          alt="Glassact Studios Logo"
-          class="w-[200px]"
-          loading="eager"
-        />
+        <Image src={LogoImg} alt="Glassact Studios Logo" class="w-[200px]" />
         <NavBarPlaceholder slot="fallback" />
       </NavBar>
       <slot />
