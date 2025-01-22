@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@glassact/ui": "workspace:*",
+    "@solidjs/router": "^0.15.3",
+    "@tanstack/solid-query": "^5.64.1",
     "solid-js": "catalog:solid"
   },
   "devDependencies": {

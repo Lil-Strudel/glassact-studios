@@ -70,6 +70,12 @@ importers:
       '@glassact/ui':
         specifier: workspace:*
         version: link:../../libs/ui
+      '@solidjs/router':
+        specifier: ^0.15.3
+        version: 0.15.3(solid-js@1.9.4)
+      '@tanstack/solid-query':
+        specifier: ^5.64.1
+        version: 5.64.1(solid-js@1.9.4)
       solid-js:
         specifier: catalog:solid
         version: 1.9.4
@@ -750,8 +756,21 @@ packages:
     peerDependencies:
       solid-js: ^1.6.12
 
+  '@solidjs/router@0.15.3':
+    resolution: {integrity: sha512-iEbW8UKok2Oio7o6Y4VTzLj+KFCmQPGEpm1fS3xixwFBdclFVBvaQVeibl1jys4cujfAK5Kn6+uG2uBm3lxOMw==}
+    peerDependencies:
+      solid-js: ^1.8.6
+
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
+
+  '@tanstack/query-core@5.64.1':
+    resolution: {integrity: sha512-978Wx4Wl4UJZbmvU/rkaM9cQtXXrbhK0lsz/UZhYIbyKYA8E4LdomTwyh2GHZ4oU0BKKoDH4YlKk2VscCUgNmg==}
+
+  '@tanstack/solid-query@5.64.1':
+    resolution: {integrity: sha512-Omlnn8TfvRWh7Pq2HT8HBVngn0YTY19YOz5VTn3xtFVSnOZky6GKf6+Mwm2ovl8NfVQGeeBQGld4KMwzzc+vkg==}
+    peerDependencies:
+      solid-js: ^1.6.0
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -2839,9 +2858,20 @@ snapshots:
     dependencies:
       solid-js: 1.9.4
 
+  '@solidjs/router@0.15.3(solid-js@1.9.4)':
+    dependencies:
+      solid-js: 1.9.4
+
   '@swc/helpers@0.5.15':
     dependencies:
       tslib: 2.8.1
+
+  '@tanstack/query-core@5.64.1': {}
+
+  '@tanstack/solid-query@5.64.1(solid-js@1.9.4)':
+    dependencies:
+      '@tanstack/query-core': 5.64.1
+      solid-js: 1.9.4
 
   '@types/babel__core@7.20.5':
     dependencies:
