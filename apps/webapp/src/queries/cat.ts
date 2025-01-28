@@ -1,4 +1,5 @@
 import { queryOptions, SolidMutationOptions } from "@tanstack/solid-query";
+import api from "./api";
 
 interface Cat {
   id: number;
@@ -6,8 +7,8 @@ interface Cat {
 }
 
 export async function getCats(): Promise<Cat[]> {
-  const res = await fetch("/api/cat");
-  return await res.json();
+  const res = await api.get("/cat");
+  return await res.data;
 }
 
 export function getCatsOpts() {
@@ -21,14 +22,8 @@ interface PostCatData {
   name: string;
 }
 export async function postCat(data: PostCatData): Promise<Cat[]> {
-  const res = await fetch("/api/cat", {
-    method: "POST",
-    body: JSON.stringify(data),
-    headers: {
-      "content-type": "application/json",
-    },
-  });
-  return await res.json();
+  const res = await api.post("/cat", data);
+  return await res.data;
 }
 
 export function postCatOpts() {

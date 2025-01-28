@@ -2,8 +2,8 @@
   "name": "glassact-studios",
   "private": true,
   "engines": {
-    "node": "22.13.0",
-    "pnpm": "10.0.0"
+    "node": "22.13",
+    "pnpm": "10"
   },
   "scripts": {
     "dev": "mprocs",

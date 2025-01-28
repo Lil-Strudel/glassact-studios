@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -20,4 +23,22 @@ func Connect() {
 	fmt.Println("Connected to db!")
 
 	Db = conn
+}
+
+func Migrate(direction string) {
+	m, err := migrate.New("file://database/migrations", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to migrate the database: %v\n", err)
+		os.Exit(1)
+	}
+
+	if direction == "up" {
+		m.Up()
+	}
+
+	if direction == "down" {
+		m.Down()
+	}
+
+	fmt.Println("Database migrated!")
 }
