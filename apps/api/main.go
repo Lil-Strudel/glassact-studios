@@ -1,7 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/database"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/router"
@@ -19,6 +23,7 @@ func main() {
 	}
 
 	database.Connect()
+	database.Migrate("up")
 
 	app := fiber.New()
 
@@ -27,5 +32,24 @@ func main() {
 
 	router.SetupRoutes(app)
 
-	log.Fatal(app.Listen(":4100"))
+	go func() {
+		err := app.Listen(":4100", fiber.ListenConfig{
+			DisableStartupMessage: true,
+		})
+		if err != nil {
+			log.Panic(err)
+		}
+	}()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	_ = <-c
+
+	fmt.Println("Gracefully shutting down...")
+	_ = app.Shutdown()
+
+	fmt.Println("Running cleanup tasks...")
+	database.Db.Close()
+
+	fmt.Println("Fiber was successful shutdown.")
 }

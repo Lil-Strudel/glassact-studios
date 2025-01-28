@@ -29,6 +29,8 @@
 # Go workspace file
 go.work
 
+tmp/
+
 ### Node ###
 # Logs
 logs

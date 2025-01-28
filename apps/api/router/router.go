@@ -1,8 +1,8 @@
 package router
 
 import (
-	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/auth"
-	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/cat"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/module/auth"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/module/cat"
 	"github.com/gofiber/fiber/v3"
 )
 

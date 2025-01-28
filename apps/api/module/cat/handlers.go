@@ -3,6 +3,7 @@ package cat
 import (
 	"fmt"
 
+	"github.com/Lil-Strudel/glassact-studios/apps/api/model"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -17,7 +18,7 @@ func GetCats(c fiber.Ctx) error {
 }
 
 func PostCat(c fiber.Ctx) error {
-	cat := new(Cat)
+	cat := new(model.Cat)
 
 	if err := c.Bind().Body(cat); err != nil {
 		return err

@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/database"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/model"
 )
 
-func GetCatsSvc() ([]Cat, error) {
+func GetCatsSvc() ([]model.Cat, error) {
 	rows, err := database.Db.Query(context.Background(), `
 		SELECT id, name
 		FROM cats
@@ -17,10 +18,10 @@ func GetCatsSvc() ([]Cat, error) {
 
 	defer rows.Close()
 
-	var cats []Cat
+	var cats []model.Cat
 
 	for rows.Next() {
-		var cat Cat
+		var cat model.Cat
 		err := rows.Scan(&cat.ID, &cat.Name)
 		if err != nil {
 			return nil, err
