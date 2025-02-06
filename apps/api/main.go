@@ -9,12 +9,9 @@ import (
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/database"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/router"
-	"github.com/Lil-Strudel/glassact-studios/apps/api/sessionStore"
 	"github.com/gofiber/fiber/v3"
-	// "github.com/gofiber/fiber/v3/middleware/csrf"
 	"github.com/gofiber/fiber/v3/middleware/logger"
 	recoverer "github.com/gofiber/fiber/v3/middleware/recover"
-	"github.com/gofiber/fiber/v3/middleware/session"
 
 	"github.com/joho/godotenv"
 )
@@ -32,17 +29,6 @@ func main() {
 
 	app.Use(logger.New())
 	app.Use(recoverer.New())
-
-	storage := sessionStore.New(sessionStore.Config{
-		DB:    database.Db,
-		Table: "sessions",
-	})
-	sessionMiddleware, _ := session.NewWithStore(session.Config{
-		Storage: storage,
-	})
-
-	app.Use(sessionMiddleware)
-	// app.Use(csrf.New(csrf.Config{}))
 
 	router.SetupRoutes(app)
 

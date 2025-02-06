@@ -1,15 +1,12 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"time"
 
-	"github.com/Lil-Strudel/glassact-studios/apps/api/database"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/model"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/util"
 	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/session"
 )
 
 func GetGoogleAuth(c fiber.Ctx) error {
@@ -84,25 +81,6 @@ func GetGoogleAuthCallback(c fiber.Ctx) error {
 			account = newAcc
 		}
 
-	}
-
-	sess := session.FromContext(c)
-	if sess.Fresh() {
-		sid := sess.ID()
-		uid := user.ID
-
-		sess.Set("uid", uid)
-		sess.Set("sid", sid)
-		sess.Set("ip", c.IP())
-		sess.Set("login", time.Unix(time.Now().Unix(), 0).UTC().String())
-		sess.Set("ua", string(c.Request().Header.UserAgent()))
-
-		_, err := database.Db.Exec(context.Background(), `UPDATE sessions SET user_id = $1 WHERE id = $2`, uid, sid)
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Println("created sess")
 	}
 
 	return c.Status(200).JSON(fiber.Map{"user": user, "account": account})
