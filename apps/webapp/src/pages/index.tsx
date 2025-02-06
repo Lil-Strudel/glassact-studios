@@ -30,7 +30,7 @@ const Home: Component = () => {
 
   return (
     <div>
-      <div class="flex flex-col w-[400px] mx-auto gap-2">
+      <div class="flex flex-col max-w-[400px] mx-auto gap-2">
         <Switch>
           <Match when={query.isPending}>
             <p>Loading...</p>
