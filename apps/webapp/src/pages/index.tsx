@@ -4,21 +4,8 @@ import type { Component } from "solid-js";
 import { Switch, Match, createSignal } from "solid-js";
 import { getCatsOpts, postCatOpts } from "../queries/cat";
 
-interface HelloRes {
-  message: string;
-}
-async function fetchHello(): Promise<HelloRes> {
-  const res = await fetch("/api");
-  return await res.json();
-}
-
 const Home: Component = () => {
   const [cat, setCat] = createSignal("");
-  const query = createQuery(() => ({
-    queryKey: ["todos"],
-    queryFn: fetchHello,
-  }));
-
   const catQuery = createQuery(getCatsOpts);
 
   const postCat = createMutation(postCatOpts);
@@ -31,17 +18,6 @@ const Home: Component = () => {
   return (
     <div>
       <div class="flex flex-col max-w-[400px] mx-auto gap-2">
-        <Switch>
-          <Match when={query.isPending}>
-            <p>Loading...</p>
-          </Match>
-          <Match when={query.isError}>
-            <p>Error: {query.error?.message}</p>
-          </Match>
-          <Match when={query.isSuccess}>
-            <p>{query.data?.message}</p>
-          </Match>
-        </Switch>
         <Button as="a" href="/api/auth/google" rel="external">
           Login with Google
         </Button>
