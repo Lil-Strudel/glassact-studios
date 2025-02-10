@@ -75,6 +75,9 @@ importers:
       redaxios:
         specifier: ^0.5.1
         version: 0.5.1
+      solid-icons:
+        specifier: ^1.1.0
+        version: 1.1.0(solid-js@1.9.4)
       solid-js:
         specifier: catalog:solid
         version: 1.9.4
@@ -1843,6 +1846,11 @@ packages:
 
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
+
+  solid-icons@1.1.0:
+    resolution: {integrity: sha512-IesTfr/F1ElVwH2E1110s2RPXH4pujKfSs+koT8rwuTAdleO5s26lNSpqJV7D1+QHooJj18mcOiz2PIKs0ic+A==}
+    peerDependencies:
+      solid-js: '*'
 
   solid-js@1.9.4:
     resolution: {integrity: sha512-ipQl8FJ31bFUoBNScDQTG3BjN6+9Rg+Q+f10bUbnO6EOTTf5NGerJeHc7wyu5I4RMHEl/WwZwUmy/PTRgxxZ8g==}
@@ -4255,6 +4263,10 @@ snapshots:
       is-arrayish: 0.3.2
 
   sisteransi@1.0.5: {}
+
+  solid-icons@1.1.0(solid-js@1.9.4):
+    dependencies:
+      solid-js: 1.9.4
 
   solid-js@1.9.4:
     dependencies:

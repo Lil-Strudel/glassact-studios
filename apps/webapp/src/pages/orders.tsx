@@ -1,15 +1,23 @@
+import { Button } from "@glassact/ui";
+import { FiPlusCircle } from "solid-icons/fi";
 import type { Component } from "solid-js";
 
 const Orders: Component = () => {
   return (
     <div>
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-          Current Projects
-        </h1>
-        <p class="mt-2 text-sm text-gray-500">
-          View current projects and take any action if needed.
-        </p>
+      <div class="flex justify-between">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            Current Projects
+          </h1>
+          <p class="mt-2 text-sm text-gray-500">
+            View current projects and take any action if needed.
+          </p>
+        </div>
+        <Button as="a" href="/orders/place-order">
+          Place New Order
+          <FiPlusCircle size={20} class="ml-2" />
+        </Button>
       </div>
 
       <div>
@@ -42,7 +50,7 @@ const Orders: Component = () => {
                 <td class="py-6 pr-8">
                   <div class="flex items-center">
                     <img
-                      src="https://tailwindui.com/plus/img/ecommerce-images/order-history-page-02-product-01.jpg"
+                      src="https://tailwindui.com/plus-assets/img/ecommerce-images/order-history-page-02-product-01.jpg"
                       alt="Detail of mechanical pencil tip with machined black steel shaft and chrome lead tip."
                       class="mr-6 size-16 rounded object-cover"
                     />
@@ -59,9 +67,7 @@ const Orders: Component = () => {
                   Delivered Jan 25, 2021
                 </td>
                 <td class="whitespace-nowrap py-6 text-right font-medium">
-                  <a href="#" class="text-indigo-600">
-                    View<span class="hidden lg:inline"> Product</span>
-                  </a>
+                  <Button variant="text">View Product</Button>
                 </td>
               </tr>
             </tbody>
@@ -98,12 +104,7 @@ const Orders: Component = () => {
                   <dd class="font-medium text-gray-900 sm:mt-1">$238.00</dd>
                 </div>
               </dl>
-              <a
-                href="#"
-                class="mt-6 flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:mt-0 sm:w-auto"
-              >
-                View Invoice
-              </a>
+              <Button variant="outline">View Invoice</Button>
             </div>
 
             <table class="mt-4 w-full text-gray-500 sm:mt-6">
@@ -137,7 +138,7 @@ const Orders: Component = () => {
                   <td class="py-6 pr-8">
                     <div class="flex items-center">
                       <img
-                        src="https://tailwindui.com/plus/img/ecommerce-images/order-history-page-02-product-01.jpg"
+                        src="https://tailwindui.com/plus-assets/img/ecommerce-images/order-history-page-02-product-01.jpg"
                         alt="Detail of mechanical pencil tip with machined black steel shaft and chrome lead tip."
                         class="mr-6 size-16 rounded object-cover"
                       />
@@ -154,9 +155,7 @@ const Orders: Component = () => {
                     Delivered Jan 25, 2021
                   </td>
                   <td class="whitespace-nowrap py-6 text-right font-medium">
-                    <a href="#" class="text-indigo-600">
-                      View<span class="hidden lg:inline"> Product</span>
-                    </a>
+                    <Button variant="text">View Product</Button>
                   </td>
                 </tr>
               </tbody>

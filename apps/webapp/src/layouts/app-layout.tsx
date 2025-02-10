@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@glassact/ui";
 import { A, RouteSectionProps } from "@solidjs/router";
+import { IoClose, IoMenu, IoNotificationsOutline } from "solid-icons/io";
 
 const user = {
   name: "Tom Cook",
@@ -62,21 +63,7 @@ const AppLayout: Component<RouteSectionProps<unknown>> = (props) => {
               </div>
               <div class="hidden sm:ml-6 sm:flex sm:items-center">
                 <Button size="icon" variant="ghost">
-                  <svg
-                    class="size-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                    data-slot="icon"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
-                    />
-                  </svg>
+                  <IoNotificationsOutline size={24} />
                 </Button>
 
                 <DropdownMenu placement="bottom-end">
@@ -98,37 +85,7 @@ const AppLayout: Component<RouteSectionProps<unknown>> = (props) => {
               </div>
               <div class="-mr-2 flex items-center sm:hidden">
                 <Button size="icon" variant="ghost" onClick={toggleOpen}>
-                  {open() ? (
-                    <svg
-                      class="size-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="currentColor"
-                      data-slot="icon"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M6 18 18 6M6 6l12 12"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      class="size-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="currentColor"
-                      data-slot="icon"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                      />
-                    </svg>
-                  )}
+                  {open() ? <IoClose size={24} /> : <IoMenu size={24} />}
                 </Button>
               </div>
             </div>
@@ -166,21 +123,7 @@ const AppLayout: Component<RouteSectionProps<unknown>> = (props) => {
                     </div>
                   </div>
                   <Button size="icon" variant="ghost" class="ml-auto">
-                    <svg
-                      class="size-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="currentColor"
-                      aria-hidden="true"
-                      data-slot="icon"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
-                      />
-                    </svg>
+                    <IoNotificationsOutline size={24} />
                   </Button>
                 </div>
                 <div class="mt-3 space-y-1">
