@@ -10,14 +10,26 @@ import {
   TabsTrigger,
   TextArea,
   Button,
+  Breadcrumb,
+  textfieldLabel,
 } from "@glassact/ui";
 import { IoClose } from "solid-icons/io";
 
 const AddItem: Component = () => {
   return (
     <div>
-      <Tabs defaultValue="custom">
-        <div class="max-w-[400px] mx-auto">
+      <Breadcrumb
+        crumbs={[
+          { title: "Orders", href: "/orders" },
+          { title: "Place Order", href: "/orders/place-order" },
+          { title: "Add Item", href: "/orders/place-order/add-item" },
+        ]}
+      />
+      <Tabs defaultValue="catalog">
+        <h1 class="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+          Add Item
+        </h1>
+        <div class="max-w-[400px] mx-auto mt-4">
           <TabsList>
             <TabsTrigger value="catalog">Catalog</TabsTrigger>
             <TabsTrigger value="custom">Custom</TabsTrigger>
@@ -26,15 +38,11 @@ const AddItem: Component = () => {
         </div>
         <div class="mx-auto max-w-2xl p-4 flex flex-col sm:px-6 lg:px-0">
           <TabsContent value="catalog">
-            <h1 class="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Catalog
-            </h1>
             <div class="flex gap-8 flex-col">
               <TextFieldRoot class="w-full">
                 <TextFieldLabel>Catalog Number</TextFieldLabel>
                 <TextField placeholder="X-XXX-0000" />
               </TextFieldRoot>
-
               <TextFieldRoot class="w-full">
                 <TextFieldLabel>
                   Describe any modifications to the design (colors, size,
@@ -46,15 +54,11 @@ const AddItem: Component = () => {
             </div>
           </TabsContent>
           <TabsContent value="custom">
-            <h1 class="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Custom
-            </h1>
             <div class="flex gap-8 flex-col">
               <TextFieldRoot class="w-full">
                 <TextFieldLabel>Project Name</TextFieldLabel>
                 <TextField placeholder="Codename: platypus" />
               </TextFieldRoot>
-
               <TextFieldRoot class="w-full">
                 <TextFieldLabel>
                   Describe what the design will be
@@ -67,17 +71,20 @@ const AddItem: Component = () => {
                 </TextFieldLabel>
                 <TextArea placeholder="Upload...." />
               </TextFieldRoot>
-              <TextFieldRoot class="w-full">
-                <TextFieldLabel>
+              <div>
+                <span class={textfieldLabel()}>
                   What are the desired dimentions of the finished peice
-                </TextFieldLabel>
+                </span>
                 <div class="flex items-center gap-4">
-                  <TextField placeholder="Width (in)" />
-
+                  <TextFieldRoot class="w-full">
+                    <TextField placeholder="Width (in)" />
+                  </TextFieldRoot>
                   <IoClose />
-                  <TextField placeholder="Height (in)" />
+                  <TextFieldRoot class="w-full">
+                    <TextField placeholder="Height (in)" />
+                  </TextFieldRoot>
                 </div>
-              </TextFieldRoot>
+              </div>
               <Button class="mx-auto">Add to Order</Button>
             </div>
           </TabsContent>

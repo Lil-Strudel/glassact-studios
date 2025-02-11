@@ -2,6 +2,8 @@ export * from "./cn";
 
 export * from "./accordion";
 
+export * from "./breadcrumb";
+
 export * from "./button";
 export * from "./button-variants";
 

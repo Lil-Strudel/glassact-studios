@@ -1,12 +1,18 @@
-import { Button } from "@glassact/ui";
+import { Breadcrumb, Button } from "@glassact/ui";
 import type { Component } from "solid-js";
 
 const PlaceOrder: Component = () => {
   return (
     <div>
-      <div class="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:px-0">
+      <Breadcrumb
+        crumbs={[
+          { title: "Orders", href: "/orders" },
+          { title: "Place Order", href: "/orders/place-order" },
+        ]}
+      />
+      <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-0">
         <h1 class="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-          New Order
+          Place Order
         </h1>
 
         <div class="mt-12">

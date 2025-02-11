@@ -1,10 +1,11 @@
-import { Button } from "@glassact/ui";
+import { Button, Breadcrumb } from "@glassact/ui";
 import { FiPlusCircle } from "solid-icons/fi";
 import type { Component } from "solid-js";
 
 const Orders: Component = () => {
   return (
     <div>
+      <Breadcrumb crumbs={[{ title: "Orders", href: "/orders" }]} />
       <div class="flex justify-between">
         <div>
           <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
