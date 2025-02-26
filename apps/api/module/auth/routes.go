@@ -1,10 +1,12 @@
 package auth
 
-import "github.com/gofiber/fiber/v3"
+import "net/http"
 
-func SetupRoutes(api fiber.Router) {
-	auth := api.Group("/auth")
+func SetupRoutes(parentMux *http.ServeMux) {
+	authMux := http.NewServeMux()
 
-	auth.Get("/google", GetGoogleAuth)
-	auth.Get("/google/callback", GetGoogleAuthCallback)
+	authMux.HandleFunc("GET /google", GetGoogleAuth)
+	authMux.HandleFunc("GET /google/callback", GetGoogleAuthCallback)
+
+	parentMux.Handle("/auth/", http.StripPrefix("/auth", authMux))
 }

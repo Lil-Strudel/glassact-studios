@@ -1,10 +1,12 @@
 package cat
 
-import "github.com/gofiber/fiber/v3"
+import "net/http"
 
-func SetupRoutes(api fiber.Router) {
-	cat := api.Group("/cat")
+func SetupRoutes(parentMux *http.ServeMux) {
+	catMux := http.NewServeMux()
 
-	cat.Get("/", GetCats)
-	cat.Post("/", PostCat)
+	catMux.HandleFunc("GET /", GetCats)
+	catMux.HandleFunc("POST /", PostCat)
+
+	parentMux.Handle("/cat/", http.StripPrefix("/cat", catMux))
 }

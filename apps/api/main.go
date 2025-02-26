@@ -1,17 +1,15 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/database"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/router"
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/logger"
-	recoverer "github.com/gofiber/fiber/v3/middleware/recover"
 
 	"github.com/joho/godotenv"
 )
@@ -25,31 +23,37 @@ func main() {
 	database.Connect()
 	database.Migrate("up")
 
-	app := fiber.New()
+	handler := http.NewServeMux()
+	router.SetupRoutes(handler)
 
-	app.Use(logger.New())
-	app.Use(recoverer.New())
+	server := http.Server{
+		Addr:    ":4100",
+		Handler: handler,
+	}
 
-	router.SetupRoutes(app)
-
+	idleConnsClosed := make(chan struct{})
 	go func() {
-		err := app.Listen(":4100", fiber.ListenConfig{
-			DisableStartupMessage: true,
-		})
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGTERM)
+		<-sigint
+
+		log.Printf("Gracefully shutting down...")
+		err := server.Shutdown(context.Background())
 		if err != nil {
-			log.Panic(err)
+			log.Printf("HTTP server Shutdown: %v", err)
 		}
+
+		log.Printf("Running cleanup tasks...")
+		database.Db.Close()
+
+		log.Printf("Successful shutdown!")
+		close(idleConnsClosed)
 	}()
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	_ = <-c
+	err = server.ListenAndServe()
+	if err != http.ErrServerClosed {
+		log.Fatalf("HTTP server ListenAndServe: %v", err)
+	}
 
-	fmt.Println("Gracefully shutting down...")
-	_ = app.Shutdown()
-
-	fmt.Println("Running cleanup tasks...")
-	database.Db.Close()
-
-	fmt.Println("Fiber was successful shutdown.")
+	<-idleConnsClosed
 }

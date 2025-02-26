@@ -1,27 +1,29 @@
 package cat
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/model"
-	"github.com/gofiber/fiber/v3"
 )
 
-func GetCats(c fiber.Ctx) error {
+func GetCats(w http.ResponseWriter, req *http.Request) {
 	cats, err := GetCatsSvc()
 	if err != nil {
 		fmt.Println(err)
 		panic("OMG AN ERROR")
 	}
 
-	return c.JSON(cats)
+	json.NewEncoder(w).Encode(cats)
 }
 
-func PostCat(c fiber.Ctx) error {
+func PostCat(w http.ResponseWriter, req *http.Request) {
 	cat := new(model.Cat)
 
-	if err := c.Bind().Body(cat); err != nil {
-		return err
+	if err := json.NewDecoder(req.Body).Decode(&cat); err != nil {
+		fmt.Println(err)
+		panic("OMG AN ERROR")
 	}
 
 	id, err := CreateCatSvc(cat.Name)
@@ -30,5 +32,10 @@ func PostCat(c fiber.Ctx) error {
 		panic("OMG AN ERROR")
 	}
 
-	return c.JSON(fiber.Map{"id": id})
+	type Response struct {
+		Id int `json:"id"`
+	}
+	json.NewEncoder(w).Encode(Response{
+		Id: id,
+	})
 }

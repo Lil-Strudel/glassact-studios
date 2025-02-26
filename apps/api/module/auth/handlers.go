@@ -1,22 +1,25 @@
 package auth
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/model"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/util"
-	"github.com/gofiber/fiber/v3"
 )
 
-func GetGoogleAuth(c fiber.Ctx) error {
+func GetGoogleAuth(w http.ResponseWriter, req *http.Request) {
 	google := ConfigGoogle()
 	url := google.AuthCodeURL("state")
-	return c.Redirect().To(url)
+
+	http.Redirect(w, req, url, http.StatusFound)
 }
 
-func GetGoogleAuthCallback(c fiber.Ctx) error {
-	token, err := ConfigGoogle().Exchange(c.Context(), c.FormValue("code"))
+func GetGoogleAuthCallback(w http.ResponseWriter, req *http.Request) {
+	token, err := ConfigGoogle().Exchange(context.Background(), req.FormValue("code"))
 	if err != nil {
 		panic(err)
 	}
@@ -83,5 +86,15 @@ func GetGoogleAuthCallback(c fiber.Ctx) error {
 
 	}
 
-	return c.Status(200).JSON(fiber.Map{"user": user, "account": account})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	type Response struct {
+		User    *model.User    `json:"user"`
+		Account *model.Account `json:"account"`
+	}
+	json.NewEncoder(w).Encode(Response{
+		User:    user,
+		Account: account,
+	})
 }

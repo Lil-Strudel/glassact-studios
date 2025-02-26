@@ -1,20 +1,20 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/Lil-Strudel/glassact-studios/apps/api/module/auth"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/module/cat"
-	"github.com/gofiber/fiber/v3"
 )
 
-func SetupRoutes(app *fiber.App) {
-	api := app.Group("/api")
+func SetupRoutes(parentMux *http.ServeMux) {
+	apiMux := http.NewServeMux()
 
-	api.Get("/", func(c fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"message": "Hello World!",
-		})
+	auth.SetupRoutes(apiMux)
+	cat.SetupRoutes(apiMux)
+
+	parentMux.Handle("/api/", http.StripPrefix("/api", apiMux))
+	parentMux.HandleFunc("/{$}", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello World!"))
 	})
-
-	auth.SetupRoutes(api)
-	cat.SetupRoutes(api)
 }
