@@ -2,7 +2,5 @@
   "name": "@glassact/api",
   "type": "module",
   "version": "0.0.1",
-  "scripts": {
-    "dev": "air -c .air.toml"
-  }
+  "scripts": {}
 }
