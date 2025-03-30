@@ -10,7 +10,9 @@ import (
 )
 
 const (
-	ScopeAuthentication = "authentication"
+	ScopeLogin   = "login"
+	ScopeAccess  = "access"
+	ScopeRefresh = "refresh"
 )
 
 type Token struct {

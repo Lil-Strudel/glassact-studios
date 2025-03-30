@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/libs/database"
 	"golang.org/x/oauth2"
@@ -44,7 +45,7 @@ type GoogleInfoResponse struct {
 func getGoogleUserInfo(token string) (*GoogleInfoResponse, error) {
 	reqURL, err := url.Parse("https://www.googleapis.com/oauth2/v1/userinfo")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	ptoken := fmt.Sprintf("Bearer %s", token)
@@ -86,7 +87,7 @@ func (app *application) handleGetGoogleAuth(w http.ResponseWriter, req *http.Req
 func (app *application) handleGetGoogleAuthCallback(w http.ResponseWriter, req *http.Request) {
 	token, err := app.configGoogle().Exchange(context.Background(), req.FormValue("code"))
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	userInfo, err := getGoogleUserInfo(token.AccessToken)
@@ -94,7 +95,6 @@ func (app *application) handleGetGoogleAuthCallback(w http.ResponseWriter, req *
 		return
 	}
 
-	var account *database.Account
 	var user *database.User
 
 	existingAccount, found, err := app.db.Accounts.GetByProvider("google", userInfo.ID)
@@ -116,7 +116,6 @@ func (app *application) handleGetGoogleAuthCallback(w http.ResponseWriter, req *
 		}
 
 		user = existingUser
-		account = existingAccount
 	} else {
 		existingUser, found, err := app.db.Users.GetByEmail(userInfo.Email)
 		if err != nil {
@@ -143,11 +142,24 @@ func (app *application) handleGetGoogleAuthCallback(w http.ResponseWriter, req *
 		}
 
 		user = existingUser
-		account = &newAccount
 	}
 
-	app.writeJSON(w, http.StatusOK, map[string]any{
-		"user":    user,
-		"account": account,
-	})
+	refreshToken, err := app.db.Tokens.New(user.ID, 30*24*time.Hour, database.ScopeRefresh)
+	if err != nil {
+		app.log.Info("error creating refreshToken")
+		return
+	}
+
+	cookie := http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken.Plaintext,
+		Path:     "/",
+		Expires:  refreshToken.Expiry,
+		Secure:   false,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	}
+
+	http.SetCookie(w, &cookie)
+	http.Redirect(w, req, app.cfg.baseUrl, http.StatusFound)
 }
