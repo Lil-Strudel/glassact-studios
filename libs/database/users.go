@@ -2,14 +2,17 @@ package database
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type User struct {
 	ID        int       `json:"id"`
 	UUID      string    `json:"uuid"`
+	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
 	Version   int       `json:"version"`
 }
@@ -20,11 +23,11 @@ type UserModel struct {
 
 func (m UserModel) Insert(user *User) error {
 	query := `
-        INSERT INTO users () 
-        VALUES ()
+        INSERT INTO users (email) 
+        VALUES ($1)
         RETURNING id, uuid, created_at, version`
 
-	args := []any{}
+	args := []any{user.Email}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -37,9 +40,9 @@ func (m UserModel) Insert(user *User) error {
 	return nil
 }
 
-func (m UserModel) GetByID(id int) (*User, error) {
+func (m UserModel) GetByID(id int) (*User, bool, error) {
 	query := `
-        SELECT id, uuid, created_at, version
+        SELECT id, uuid, email, created_at, version
         FROM users
         WHERE id = $1`
 
@@ -48,17 +51,22 @@ func (m UserModel) GetByID(id int) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, id).Scan(&user.ID, &user.UUID, &user.CreatedAt, &user.Version)
+	err := m.DB.QueryRow(ctx, query, id).Scan(&user.ID, &user.UUID, &user.Email, &user.CreatedAt, &user.Version)
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil, false, nil
+		default:
+			return nil, false, err
+		}
 	}
 
-	return &user, nil
+	return &user, true, nil
 }
 
-func (m UserModel) GetByUUID(uuid string) (*User, error) {
+func (m UserModel) GetByUUID(uuid string) (*User, bool, error) {
 	query := `
-        SELECT id, uuid, created_at, version
+        SELECT id, uuid, email, created_at, version
         FROM users
         WHERE uuid = $1`
 
@@ -67,22 +75,52 @@ func (m UserModel) GetByUUID(uuid string) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, uuid).Scan(&user.ID, &user.UUID, &user.CreatedAt, &user.Version)
+	err := m.DB.QueryRow(ctx, query, uuid).Scan(&user.ID, &user.UUID, &user.Email, &user.CreatedAt, &user.Version)
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil, false, nil
+		default:
+			return nil, false, err
+		}
 	}
 
-	return &user, nil
+	return &user, true, nil
+}
+
+func (m UserModel) GetByEmail(email string) (*User, bool, error) {
+	query := `
+        SELECT id, uuid, email, created_at, version
+        FROM users
+        WHERE email = $1`
+
+	var user User
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRow(ctx, query, email).Scan(&user.ID, &user.UUID, &user.Email, &user.CreatedAt, &user.Version)
+	if err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil, false, nil
+		default:
+			return nil, false, err
+		}
+	}
+
+	return &user, true, nil
 }
 
 func (m UserModel) Update(user *User) error {
 	query := `
         UPDATE users 
-        SET version = version + 1
-        WHERE id = $1 AND version = $2
+        SET email = $1, version = version + 1
+        WHERE id = $2 AND version = $3
         RETURNING version`
 
 	args := []any{
+		user.Email,
 		user.ID,
 		user.Version,
 	}

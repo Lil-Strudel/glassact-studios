@@ -49,9 +49,12 @@ func (app *application) serve() error {
 			shutdownError <- err
 		}
 
-		app.log.Info("completing background tasks", "addr", srv.Addr)
+		app.log.Info("closing db pool")
+		app.db.Pool.Close()
 
+		app.log.Info("completing background tasks", "addr", srv.Addr)
 		app.wg.Wait()
+
 		shutdownError <- nil
 	}()
 

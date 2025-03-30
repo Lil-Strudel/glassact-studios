@@ -2,8 +2,10 @@ package database
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -46,7 +48,7 @@ func (m AccountModel) Insert(account *Account) error {
 	return nil
 }
 
-func (m AccountModel) GetByID(id int) (*Account, error) {
+func (m AccountModel) GetByID(id int) (*Account, bool, error) {
 	query := `
         SELECT id, uuid, user_id, type, provider, provider_account_id, created_at, version
         FROM accounts
@@ -59,13 +61,18 @@ func (m AccountModel) GetByID(id int) (*Account, error) {
 
 	err := m.DB.QueryRow(ctx, query, id).Scan(&account.ID, &account.UUID, &account.UserID, &account.Type, &account.Provider, &account.ProviderAccountID, &account.CreatedAt, &account.Version)
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil, false, nil
+		default:
+			return nil, false, err
+		}
 	}
 
-	return &account, nil
+	return &account, true, nil
 }
 
-func (m AccountModel) GetByUUID(uuid string) (*Account, error) {
+func (m AccountModel) GetByUUID(uuid string) (*Account, bool, error) {
 	query := `
         SELECT id, uuid, user_id, type, provider, provider_account_id, created_at, version
         FROM accounts
@@ -78,10 +85,44 @@ func (m AccountModel) GetByUUID(uuid string) (*Account, error) {
 
 	err := m.DB.QueryRow(ctx, query, uuid).Scan(&account.ID, &account.UUID, &account.UserID, &account.Type, &account.Provider, &account.ProviderAccountID, &account.CreatedAt, &account.Version)
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil, false, nil
+		default:
+			return nil, false, err
+		}
 	}
 
-	return &account, nil
+	return &account, true, nil
+}
+
+func (m AccountModel) GetByProvider(provider string, providerAccountId string) (*Account, bool, error) {
+	query := `
+        SELECT id, uuid, user_id, type, provider, provider_account_id, created_at, version
+        FROM accounts
+        WHERE provider = $1 AND provider_account_id = $2`
+
+	args := []any{
+		provider,
+		providerAccountId,
+	}
+
+	var account Account
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRow(ctx, query, args...).Scan(&account.ID, &account.UUID, &account.UserID, &account.Type, &account.Provider, &account.ProviderAccountID, &account.CreatedAt, &account.Version)
+	if err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil, false, nil
+		default:
+			return nil, false, err
+		}
+	}
+
+	return &account, true, nil
 }
 
 func (m AccountModel) Update(account *Account) error {

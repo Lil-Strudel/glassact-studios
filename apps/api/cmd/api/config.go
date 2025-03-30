@@ -43,7 +43,7 @@ func getConfig() (*config, error) {
 
 	cfg.google.clientId = os.Getenv("GOOGLE_CLIENT_ID")
 	cfg.google.clientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
-	cfg.google.redirectUrl = os.Getenv("GOOGLE_REDIRECT_URLy")
+	cfg.google.redirectUrl = os.Getenv("GOOGLE_REDIRECT_URL")
 
 	return &cfg, nil
 }

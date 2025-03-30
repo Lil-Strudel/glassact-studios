@@ -8,6 +8,7 @@ type Models struct {
 	Accounts AccountModel
 	Tokens   TokenModel
 	Users    UserModel
+	Pool     *pgxpool.Pool
 }
 
 func NewModels(db *pgxpool.Pool) Models {
@@ -15,5 +16,6 @@ func NewModels(db *pgxpool.Pool) Models {
 		Accounts: AccountModel{DB: db},
 		Tokens:   TokenModel{DB: db},
 		Users:    UserModel{DB: db},
+		Pool:     db,
 	}
 }
