@@ -1,0 +1,13 @@
+{
+  "name": "@glassact/database",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "migrate/new": "migrate create -seq -ext=.sql -dir=./migrations",
+    "migrate/up": "source ./.env && migrate -path ./migrations -database ${DATABASE_DSN} up",
+    "migrate/goto": "source ./.env && migrate -path ./migrations -database ${DATABASE_DSN} goto",
+    "migrate/down": "source ./.env && migrate -path ./migrations -database ${DATABASE_DSN} down",
+    "migrate/force": "source ./.env && migrate -path ./migrations -database ${DATABASE_DSN} force",
+    "psql": "source ./.env && psql ${DATABASE_DSN}"
+  }
+}

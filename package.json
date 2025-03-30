@@ -9,7 +9,13 @@
     "dev": "mprocs",
     "dev:api": "pnpm --filter @glassact/api dev",
     "dev:landing": "pnpm --filter @glassact/landing dev",
-    "dev:webapp": "pnpm --filter @glassact/webapp dev"
+    "dev:webapp": "pnpm --filter @glassact/webapp dev",
+    "db:migrate/new": "pnpm --filter @glassact/database migrate/new",
+    "db:migrate/up": "pnpm --filter @glassact/database migrate/up",
+    "db:migrate/goto": "pnpm --filter @glassact/database migrate/goto",
+    "db:migrate/down": "pnpm --filter @glassact/database migrate/down",
+    "db:migrate/force": "pnpm --filter @glassact/database migrate/force",
+    "db:psql": "pnpm --filter @glassact/database psql"
   },
   "devDependencies": {
     "mprocs": "^0.7.1"

@@ -31,6 +31,8 @@ go.work
 
 tmp/
 
+bin/
+
 ### Node ###
 # Logs
 logs

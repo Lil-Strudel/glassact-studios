@@ -1,4 +1,4 @@
-import { queryOptions, SolidMutationOptions } from "@tanstack/solid-query";
+import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
 
 interface Cat {
