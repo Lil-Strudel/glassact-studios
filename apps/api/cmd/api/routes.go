@@ -9,6 +9,7 @@ func (app *application) routes() http.Handler {
 
 	router.HandleFunc("GET /api/auth/google", app.handleGetGoogleAuth)
 	router.HandleFunc("GET /api/auth/google/callback", app.handleGetGoogleAuthCallback)
+	router.HandleFunc("POST /api/auth/token/access", app.handlePostTokenAccess)
 
 	router.HandleFunc("/", app.handleNotFound)
 

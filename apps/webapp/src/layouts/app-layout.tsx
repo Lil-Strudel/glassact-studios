@@ -24,7 +24,7 @@ const navigation = [
 ];
 const userNavigation = [
   { name: "Settings", href: "/settings", props: {} },
-  { name: "Sign out", href: "/api/auth/sign-out", props: { rel: "external" } },
+  { name: "Log out", href: "/api/auth/logout", props: { rel: "external" } },
 ];
 
 const AppLayout: Component<RouteSectionProps<unknown>> = (props) => {

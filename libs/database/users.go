@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"time"
 
@@ -100,6 +101,44 @@ func (m UserModel) GetByEmail(email string) (*User, bool, error) {
 	defer cancel()
 
 	err := m.DB.QueryRow(ctx, query, email).Scan(&user.ID, &user.UUID, &user.Email, &user.CreatedAt, &user.Version)
+	if err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil, false, nil
+		default:
+			return nil, false, err
+		}
+	}
+
+	return &user, true, nil
+}
+
+func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, bool, error) {
+	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
+
+	query := `
+        SELECT users.id, users.uuid, users.email, users.created_at, users.version
+        FROM users
+        INNER JOIN tokens
+        ON users.id = tokens.user_id
+        WHERE tokens.hash = $1
+        AND tokens.scope = $2 
+        AND tokens.expiry > $3`
+
+	args := []any{tokenHash[:], tokenScope, time.Now()}
+
+	var user User
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRow(ctx, query, args...).Scan(
+		&user.ID,
+		&user.UUID,
+		&user.Email,
+		&user.CreatedAt,
+		&user.Version,
+	)
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):

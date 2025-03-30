@@ -1,51 +1,61 @@
-import { createMutation, createQuery } from "@tanstack/solid-query";
-import { Button, TextField, TextFieldRoot } from "@glassact/ui";
-import type { Component } from "solid-js";
-import { Switch, Match, createSignal } from "solid-js";
-import { getCatsOpts, postCatOpts } from "../queries/cat";
+import { createEffect, type Component } from "solid-js";
+import { useAuthContext } from "../providers/auth";
+import { useNavigate } from "@solidjs/router";
+import { Button } from "@glassact/ui";
 
 const Home: Component = () => {
-  const [cat, setCat] = createSignal("");
-  const catQuery = createQuery(getCatsOpts);
+  const { state } = useAuthContext();
+  const navigate = useNavigate();
 
-  const postCat = createMutation(postCatOpts);
-
-  async function handleClick() {
-    await postCat.mutateAsync({ name: cat() });
-    catQuery.refetch();
-  }
+  createEffect(() => {
+    if (state.status === "authenticated") {
+      navigate("/dashboard", { replace: true });
+    }
+  });
 
   return (
     <div>
-      <div class="flex flex-col max-w-[400px] mx-auto gap-2">
-        <Button as="a" href="/api/auth/google" rel="external">
-          Login with Google
-        </Button>
-        <Button>Log in with microsoft</Button>
-        or
-        <TextFieldRoot>
-          <TextField />
-        </TextFieldRoot>
-        <Button>Send Magic Link</Button>
+      <div class="min-h-full">
+        <nav>
+          <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="flex h-16 justify-between">
+              <div class="flex">
+                <div class="flex shrink-0 items-center">
+                  <img
+                    class="block h-12 w-auto"
+                    src="/src/assets/images/logo-emblem.png"
+                    alt="GlassAct Studios"
+                  />
+                </div>
+              </div>
+              <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                <Button as="a" href="/login" variant="ghost" class="gap-2">
+                  Login <span aria-hidden="true">&rarr;</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </nav>
+        <main>
+          <div class="px-6 pt-14 lg:px-8">
+            <div class="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+              <div class="text-center">
+                <h1 class="text-balance text-5xl font-semibold tracking-tight text-gray-900 sm:text-7xl">
+                  GlassAct Studios
+                </h1>
+                <p class="mt-8 text-pretty text-lg font-medium text-gray-500 sm:text-xl/8">
+                  Track and place new orders using our new platform!
+                </p>
+                <div class="mt-10 flex items-center justify-center gap-x-6">
+                  <Button as="a" href="/login">
+                    Login
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
-
-      <div class="w-[200px]">
-        <TextFieldRoot value={cat()} onChange={(v) => setCat(v)}>
-          <TextField />
-        </TextFieldRoot>
-      </div>
-      <Button onClick={handleClick}>Create Cat</Button>
-      <Switch>
-        <Match when={catQuery.isPending}>
-          <p>Loading...</p>
-        </Match>
-        <Match when={catQuery.isError}>
-          <p>Error: {catQuery.error?.message}</p>
-        </Match>
-        <Match when={catQuery.isSuccess}>
-          <p>{JSON.stringify(catQuery.data)}</p>
-        </Match>
-      </Switch>
     </div>
   );
 };

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -77,15 +78,15 @@ func getGoogleUserInfo(token string) (*GoogleInfoResponse, error) {
 	return &data, nil
 }
 
-func (app *application) handleGetGoogleAuth(w http.ResponseWriter, req *http.Request) {
+func (app *application) handleGetGoogleAuth(w http.ResponseWriter, r *http.Request) {
 	google := app.configGoogle()
 	url := google.AuthCodeURL("state")
 
-	http.Redirect(w, req, url, http.StatusFound)
+	http.Redirect(w, r, url, http.StatusFound)
 }
 
-func (app *application) handleGetGoogleAuthCallback(w http.ResponseWriter, req *http.Request) {
-	token, err := app.configGoogle().Exchange(context.Background(), req.FormValue("code"))
+func (app *application) handleGetGoogleAuthCallback(w http.ResponseWriter, r *http.Request) {
+	token, err := app.configGoogle().Exchange(context.Background(), r.FormValue("code"))
 	if err != nil {
 		return
 	}
@@ -161,5 +162,42 @@ func (app *application) handleGetGoogleAuthCallback(w http.ResponseWriter, req *
 	}
 
 	http.SetCookie(w, &cookie)
-	http.Redirect(w, req, app.cfg.baseUrl, http.StatusFound)
+	http.Redirect(w, r, app.cfg.baseUrl, http.StatusFound)
+}
+
+func (app *application) handlePostTokenAccess(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		switch {
+		case errors.Is(err, http.ErrNoCookie):
+			app.writeJSON(w, http.StatusUnauthorized, map[string]any{
+				"message": "No refresh token found in cookie",
+			})
+			return
+		default:
+			app.log.Info(err.Error())
+			return
+		}
+	}
+
+	user, found, err := app.db.Users.GetForToken(database.ScopeRefresh, cookie.Value)
+	if err != nil {
+		app.log.Info(err.Error())
+		return
+	}
+
+	if !found {
+		app.log.Info("not found")
+		return
+	}
+
+	accessToken, err := app.db.Tokens.New(user.ID, 2*time.Hour, database.ScopeAccess)
+	if err != nil {
+		return
+	}
+
+	app.writeJSON(w, http.StatusCreated, map[string]any{
+		"access_token":     accessToken.Plaintext,
+		"access_token_exp": accessToken.Expiry,
+	})
 }
