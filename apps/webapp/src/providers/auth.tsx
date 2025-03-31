@@ -1,22 +1,18 @@
 import { createQuery } from "@tanstack/solid-query";
-import { createContext, createEffect, useContext } from "solid-js";
-import { createStore, type SetStoreFunction } from "solid-js/store";
+import {
+  createSignal,
+  createContext,
+  createEffect,
+  useContext,
+} from "solid-js";
 import { ParentComponent } from "solid-js/types/server/rendering.js";
 import { postAuthTokenAccessOpts } from "../queries/auth";
+import api from "../queries/api";
 
-type AuthState =
-  | {
-      status: "unauthenticated" | "pending";
-    }
-  | {
-      status: "authenticated";
-      accessToken: string;
-      accessTokenExp: Date;
-    };
-
+type AuthStatus = "unauthenticated" | "pending" | "authenticated";
 export const AuthContext = createContext<{
-  state: AuthState;
-  setState: SetStoreFunction<AuthState>;
+  status: () => AuthStatus;
+  setStatus: (v: AuthStatus | ((prev: AuthStatus) => AuthStatus)) => AuthStatus;
 }>();
 
 export function useAuthContext() {
@@ -28,29 +24,27 @@ export function useAuthContext() {
 }
 
 export const AuthProvider: ParentComponent = (props) => {
-  const [state, setState] = createStore<AuthState>({
-    status: "pending",
-  });
+  const [status, setStatus] = createSignal<AuthStatus>("pending");
 
   const queryOptions = postAuthTokenAccessOpts();
   queryOptions.staleTime = Infinity;
   queryOptions.retry = false;
+  queryOptions.refetchInterval = 1000 * 60 * 60 * 1.5;
 
   const query = createQuery(() => queryOptions);
 
   createEffect(() => {
     switch (query.status) {
       case "success": {
-        setState({
-          status: "authenticated",
-          accessToken: query.data.access_token,
-          accessTokenExp: new Date(query.data.access_token_exp),
-        });
+        setStatus("authenticated");
+        api.defaults.headers = {
+          Authorization: `Bearer ${query.data.access_token}`,
+        };
         break;
       }
 
       case "error": {
-        setState("status", "unauthenticated");
+        setStatus("unauthenticated");
         break;
       }
       default: {
@@ -60,7 +54,7 @@ export const AuthProvider: ParentComponent = (props) => {
   });
 
   return (
-    <AuthContext.Provider value={{ state, setState }}>
+    <AuthContext.Provider value={{ status, setStatus }}>
       {props.children}
     </AuthContext.Provider>
   );

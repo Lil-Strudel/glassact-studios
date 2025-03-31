@@ -9,13 +9,9 @@ import {
 } from "@glassact/ui";
 import { A, RouteSectionProps } from "@solidjs/router";
 import { IoClose, IoMenu, IoNotificationsOutline } from "solid-icons/io";
+import { createQuery } from "@tanstack/solid-query";
+import { getUserSelfOpts } from "../queries/user";
 
-const user = {
-  name: "Tom Cook",
-  email: "tom@example.com",
-  imageUrl:
-    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-};
 const navigation = [
   { name: "Dashboard", href: "/dashboard" },
   { name: "Orders", href: "/orders" },
@@ -24,15 +20,23 @@ const navigation = [
 ];
 const userNavigation = [
   { name: "Settings", href: "/settings", props: {} },
-  { name: "Log out", href: "/api/auth/logout", props: { rel: "external" } },
+  { name: "Logout", href: "/api/auth/logout", props: { rel: "external" } },
 ];
 
 const AppLayout: Component<RouteSectionProps<unknown>> = (props) => {
+  const query = createQuery(getUserSelfOpts);
+
   const [open, setOpen] = createSignal(false);
 
   function toggleOpen() {
     setOpen((open) => !open);
   }
+
+  const user = () => ({
+    name: query.data?.name || "Unnamed User",
+    email: query.data?.email || "placeholder@email.com",
+    imageUrl: query.data?.avatar || "https://placehold.co/400",
+  });
 
   return (
     <div>
@@ -70,8 +74,8 @@ const AppLayout: Component<RouteSectionProps<unknown>> = (props) => {
                   <DropdownMenuTrigger class="ml-3">
                     <img
                       class="size-8 rounded-full"
-                      src={user.imageUrl}
-                      alt="Profile"
+                      src={user().imageUrl}
+                      alt="Avatar"
                     />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
@@ -110,16 +114,16 @@ const AppLayout: Component<RouteSectionProps<unknown>> = (props) => {
                   <div class="shrink-0">
                     <img
                       class="size-10 rounded-full"
-                      src={user.imageUrl}
-                      alt=""
+                      src={user().imageUrl}
+                      alt="Avatar"
                     />
                   </div>
                   <div class="ml-3">
                     <div class="text-base font-medium text-gray-800">
-                      {user.name}
+                      {user().name}
                     </div>
                     <div class="text-sm font-medium text-gray-500">
-                      {user.email}
+                      {user().email}
                     </div>
                   </div>
                   <Button size="icon" variant="ghost" class="ml-auto">

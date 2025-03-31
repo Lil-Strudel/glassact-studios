@@ -13,13 +13,15 @@ import (
 	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/libs/database"
+	"github.com/go-playground/validator/v10"
 )
 
 type application struct {
-	cfg *config
-	db  database.Models
-	log *slog.Logger
-	wg  sync.WaitGroup
+	cfg      *config
+	db       database.Models
+	log      *slog.Logger
+	wg       sync.WaitGroup
+	validate *validator.Validate
 }
 
 func (app *application) serve() error {

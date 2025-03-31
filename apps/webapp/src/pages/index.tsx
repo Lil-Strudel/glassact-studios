@@ -1,18 +1,7 @@
-import { createEffect, type Component } from "solid-js";
-import { useAuthContext } from "../providers/auth";
-import { useNavigate } from "@solidjs/router";
+import { type Component } from "solid-js";
 import { Button } from "@glassact/ui";
 
 const Home: Component = () => {
-  const { state } = useAuthContext();
-  const navigate = useNavigate();
-
-  createEffect(() => {
-    if (state.status === "authenticated") {
-      navigate("/dashboard", { replace: true });
-    }
-  });
-
   return (
     <div>
       <div class="min-h-full">

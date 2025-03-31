@@ -71,9 +71,27 @@ func (m TokenModel) DeleteAllForUser(scope string, userID int) error {
         DELETE FROM tokens 
         WHERE scope = $1 AND user_id = $2`
 
+	args := []any{scope, userID}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	_, err := m.DB.Exec(ctx, query, scope, userID)
+	_, err := m.DB.Exec(ctx, query, args...)
+	return err
+}
+
+func (m TokenModel) DeleteByPlaintext(scope string, plaintext string) error {
+	hash := sha256.Sum256([]byte(plaintext))
+
+	query := `
+        DELETE FROM tokens 
+        WHERE scope = $1 AND hash = $2`
+
+	args := []any{scope, hash[:]}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	_, err := m.DB.Exec(ctx, query, args...)
 	return err
 }

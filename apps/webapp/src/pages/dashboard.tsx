@@ -1,7 +1,11 @@
-import { Component } from "solid-js/types/server/rendering.js";
+import type { Component } from "solid-js";
 
 const Dashboard: Component = () => {
-  return <div>Dashboard</div>;
+  return (
+    <div>
+      <div>Dashboard</div>
+    </div>
+  );
 };
 
 export default Dashboard;

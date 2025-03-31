@@ -1,18 +1,7 @@
 import { Button, TextField, TextFieldRoot } from "@glassact/ui";
-import { createEffect, type Component } from "solid-js";
-import { useAuthContext } from "../providers/auth";
-import { useNavigate } from "@solidjs/router";
+import { type Component } from "solid-js";
 
 const Login: Component = () => {
-  const { state } = useAuthContext();
-  const navigate = useNavigate();
-
-  createEffect(() => {
-    if (state.status === "authenticated") {
-      navigate("/dashboard", { replace: true });
-    }
-  });
-
   return (
     <div>
       <div class="flex flex-col max-w-[400px] mx-auto gap-2">

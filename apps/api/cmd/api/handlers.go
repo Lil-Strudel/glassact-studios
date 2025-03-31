@@ -154,7 +154,7 @@ func (app *application) handleGetGoogleAuthCallback(w http.ResponseWriter, r *ht
 	cookie := http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken.Plaintext,
-		Path:     "/",
+		Path:     "/api/auth",
 		Expires:  refreshToken.Expiry,
 		Secure:   false,
 		HttpOnly: true,
@@ -200,4 +200,42 @@ func (app *application) handlePostTokenAccess(w http.ResponseWriter, r *http.Req
 		"access_token":     accessToken.Plaintext,
 		"access_token_exp": accessToken.Expiry,
 	})
+}
+
+func (app *application) handleGetLogout(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		switch {
+		case errors.Is(err, http.ErrNoCookie):
+			app.writeJSON(w, http.StatusUnauthorized, map[string]any{
+				"message": "No refresh token found in cookie",
+			})
+			return
+		default:
+			app.log.Info(err.Error())
+			return
+		}
+	}
+
+	err = app.db.Tokens.DeleteByPlaintext(database.ScopeRefresh, cookie.Value)
+	if err != nil {
+		app.log.Info(err.Error())
+		return
+	}
+
+	newCookie := http.Cookie{
+		Name:   "refresh_token",
+		Path:   "/api/auth",
+		MaxAge: -1,
+	}
+
+	http.SetCookie(w, &newCookie)
+
+	http.Redirect(w, r, app.cfg.baseUrl, http.StatusFound)
+}
+
+func (app *application) handleGetUserSelf(w http.ResponseWriter, r *http.Request) {
+	user := app.contextGetUser(r)
+
+	app.writeJSON(w, http.StatusOK, user)
 }

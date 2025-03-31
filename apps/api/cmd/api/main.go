@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/Lil-Strudel/glassact-studios/libs/database"
+	"github.com/go-playground/validator/v10"
 )
 
 func main() {
@@ -24,9 +25,10 @@ func main() {
 	defer db.Close()
 
 	app := &application{
-		cfg: cfg,
-		db:  database.NewModels(db),
-		log: logger,
+		cfg:      cfg,
+		db:       database.NewModels(db),
+		log:      logger,
+		validate: validator.New(validator.WithRequiredStructEnabled()),
 	}
 
 	err = app.serve()

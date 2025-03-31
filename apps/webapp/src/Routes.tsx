@@ -18,11 +18,11 @@ const Unauthenticated = (
   Component: Component<RouteSectionProps<unknown>>,
 ): Component<RouteSectionProps<unknown>> => {
   return (props) => {
-    const { state } = useAuthContext();
+    const { status } = useAuthContext();
     const navigate = useNavigate();
 
     createEffect(() => {
-      if (state.status === "authenticated") {
+      if (status() === "authenticated") {
         navigate("/dashboard", { replace: true });
       }
     });
@@ -35,19 +35,19 @@ const Authenticated = (
   Component: Component<RouteSectionProps<unknown>>,
 ): Component<RouteSectionProps<unknown>> => {
   return (props) => {
-    const { state } = useAuthContext();
+    const { status } = useAuthContext();
     const navigate = useNavigate();
 
     createEffect(() => {
-      if (state.status === "unauthenticated") {
+      if (status() === "unauthenticated") {
         navigate("/login", { replace: true });
       }
     });
 
     return (
       <Switch>
-        <Match when={state.status === "pending"}>Loading...</Match>
-        <Match when={state.status === "authenticated"}>
+        <Match when={status() === "pending"}>Loading...</Match>
+        <Match when={status() === "authenticated"}>
           <Component {...props} />
         </Match>
       </Switch>
