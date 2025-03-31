@@ -22,7 +22,6 @@ func main() {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
-	defer db.Close()
 
 	app := &application{
 		cfg:      cfg,

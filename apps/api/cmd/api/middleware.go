@@ -12,7 +12,7 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				w.Header().Set("Connection", "close")
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				app.errorResponse(w, r, serverError, nil)
 			}
 		}()
 
@@ -42,13 +42,13 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 		authorizationHeader := r.Header.Get("Authorization")
 
 		if authorizationHeader == "" {
-			// app.invalidAuthenticationTokenResponse(w, r)
+			app.errorResponse(w, r, authenticationError, nil)
 			return
 		}
 
 		headerParts := strings.Split(authorizationHeader, " ")
 		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-			// app.invalidAuthenticationTokenResponse(w, r)
+			app.errorResponse(w, r, authenticationError, nil)
 			return
 		}
 
@@ -56,18 +56,18 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 
 		err := app.validate.Var(token, "required,len=26")
 		if err != nil {
-			// app.invalidAuthenticationTokenResponse(w, r)
+			app.errorResponse(w, r, authenticationError, nil)
 			return
 		}
 
 		user, found, err := app.db.Users.GetForToken(database.ScopeAccess, token)
 		if err != nil {
-			// app.serverErrorResponse(w, r, err)
+			app.errorResponse(w, r, serverError, err)
 			return
 		}
 
 		if !found {
-			// app.invalidAuthenticationTokenResponse(w, r)
+			app.errorResponse(w, r, authenticationError, nil)
 			return
 		}
 

@@ -20,7 +20,7 @@ func (app *application) handleNotFound(w http.ResponseWriter, r *http.Request) {
 		"message": "route not found",
 	}
 
-	app.writeJSON(w, http.StatusNotFound, data)
+	app.writeJSON(w, r, http.StatusNotFound, data)
 }
 
 func (app *application) configGoogle() *oauth2.Config {
@@ -170,7 +170,7 @@ func (app *application) handlePostTokenAccess(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
-			app.writeJSON(w, http.StatusUnauthorized, map[string]any{
+			app.writeJSON(w, r, http.StatusUnauthorized, map[string]any{
 				"message": "No refresh token found in cookie",
 			})
 			return
@@ -196,7 +196,7 @@ func (app *application) handlePostTokenAccess(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	app.writeJSON(w, http.StatusCreated, map[string]any{
+	app.writeJSON(w, r, http.StatusCreated, map[string]any{
 		"access_token":     accessToken.Plaintext,
 		"access_token_exp": accessToken.Expiry,
 	})
@@ -207,7 +207,7 @@ func (app *application) handleGetLogout(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
-			app.writeJSON(w, http.StatusUnauthorized, map[string]any{
+			app.writeJSON(w, r, http.StatusUnauthorized, map[string]any{
 				"message": "No refresh token found in cookie",
 			})
 			return
@@ -237,5 +237,5 @@ func (app *application) handleGetLogout(w http.ResponseWriter, r *http.Request) 
 func (app *application) handleGetUserSelf(w http.ResponseWriter, r *http.Request) {
 	user := app.contextGetUser(r)
 
-	app.writeJSON(w, http.StatusOK, user)
+	app.writeJSON(w, r, http.StatusOK, user)
 }
