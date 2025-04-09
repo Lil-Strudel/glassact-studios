@@ -1,4 +1,4 @@
-package database
+package data
 
 import (
 	"github.com/jackc/pgx/v5/pgxpool"

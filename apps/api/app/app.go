@@ -13,13 +13,13 @@ import (
 	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/config"
-	"github.com/Lil-Strudel/glassact-studios/libs/database"
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
 	"github.com/go-playground/validator/v10"
 )
 
 type Application struct {
 	Cfg      *config.Config
-	Db       database.Models
+	Db       data.Models
 	Err      appError
 	Log      *slog.Logger
 	Validate *validator.Validate

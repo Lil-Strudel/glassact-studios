@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Lil-Strudel/glassact-studios/libs/database"
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
 )
 
 func (app *Application) RecoverPanic(next http.Handler) http.Handler {
@@ -73,7 +73,7 @@ func (app *Application) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		user, found, err := app.Db.Users.GetForToken(database.ScopeAccess, token)
+		user, found, err := app.Db.Users.GetForToken(data.ScopeAccess, token)
 		if err != nil {
 			app.WriteError(w, r, app.Err.ServerError, err)
 			return
