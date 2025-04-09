@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"context"
@@ -12,26 +12,28 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Lil-Strudel/glassact-studios/apps/api/config"
 	"github.com/Lil-Strudel/glassact-studios/libs/database"
 	"github.com/go-playground/validator/v10"
 )
 
-type application struct {
-	cfg      *config
-	db       database.Models
-	log      *slog.Logger
-	wg       sync.WaitGroup
-	validate *validator.Validate
+type Application struct {
+	Cfg      *config.Config
+	Db       database.Models
+	Err      appError
+	Log      *slog.Logger
+	Validate *validator.Validate
+	Wg       sync.WaitGroup
 }
 
-func (app *application) serve() error {
+func (app *Application) Serve(routes http.Handler) error {
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", app.cfg.port),
-		Handler:      app.routes(),
+		Addr:         fmt.Sprintf(":%d", app.Cfg.Port),
+		Handler:      routes,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
-		ErrorLog:     slog.NewLogLogger(app.log.Handler(), slog.LevelError),
+		ErrorLog:     slog.NewLogLogger(app.Log.Handler(), slog.LevelError),
 	}
 
 	shutdownError := make(chan error)
@@ -41,7 +43,7 @@ func (app *application) serve() error {
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		s := <-quit
 
-		app.log.Info("shutting down server", "signal", s.String())
+		app.Log.Info("shutting down server", "signal", s.String())
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
@@ -51,16 +53,16 @@ func (app *application) serve() error {
 			shutdownError <- err
 		}
 
-		app.log.Info("closing db pool")
-		app.db.Pool.Close()
+		app.Log.Info("closing db pool")
+		app.Db.Pool.Close()
 
-		app.log.Info("completing background tasks", "addr", srv.Addr)
-		app.wg.Wait()
+		app.Log.Info("completing background tasks", "addr", srv.Addr)
+		app.Wg.Wait()
 
 		shutdownError <- nil
 	}()
 
-	app.log.Info("starting server", "addr", srv.Addr, "env", app.cfg.env)
+	app.Log.Info("starting server", "addr", srv.Addr, "env", app.Cfg.Env)
 
 	err := srv.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
@@ -72,7 +74,7 @@ func (app *application) serve() error {
 		return err
 	}
 
-	app.log.Info("stopped server", "addr", srv.Addr)
+	app.Log.Info("stopped server", "addr", srv.Addr)
 
 	return nil
 }
