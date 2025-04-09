@@ -1,15 +1,7 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
 
-interface User {
-  id: string;
-  uuid: string;
-  name: string;
-  email: string;
-  avatar: string;
-  created_at: string;
-  version: number;
-}
+import type { User } from "@glassact/data";
 
 export async function getUserSelf(): Promise<User> {
   const res = await api.get("/user/self");

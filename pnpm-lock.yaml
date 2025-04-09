@@ -82,6 +82,9 @@ importers:
         specifier: catalog:solid
         version: 1.9.4
     devDependencies:
+      '@glassact/data':
+        specifier: workspace:*
+        version: link:../../libs/data
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.20(postcss@8.5.1)
@@ -101,7 +104,11 @@ importers:
         specifier: ^2.11.0
         version: 2.11.0(solid-js@1.9.4)(vite@6.0.7(jiti@1.21.7)(yaml@2.7.0))
 
-  libs/database: {}
+  libs/data:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.7.3
 
   libs/ui:
     dependencies:

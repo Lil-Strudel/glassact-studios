@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
-	"github.com/Lil-Strudel/glassact-studios/libs/database"
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
 )
 
 type application struct {
@@ -38,7 +38,7 @@ func (app *application) HandleGetGoogleAuthCallback(w http.ResponseWriter, r *ht
 		return
 	}
 
-	var user *database.User
+	var user *data.User
 
 	existingAccount, found, err := app.Db.Accounts.GetByProvider("google", userInfo.ID)
 	if err != nil {
@@ -71,7 +71,7 @@ func (app *application) HandleGetGoogleAuthCallback(w http.ResponseWriter, r *ht
 			return
 		}
 
-		newAccount := database.Account{
+		newAccount := data.Account{
 			UserID:            existingUser.ID,
 			Type:              "oidc",
 			Provider:          "google",
@@ -87,7 +87,7 @@ func (app *application) HandleGetGoogleAuthCallback(w http.ResponseWriter, r *ht
 		user = existingUser
 	}
 
-	refreshToken, err := app.Db.Tokens.New(user.ID, 30*24*time.Hour, database.ScopeRefresh)
+	refreshToken, err := app.Db.Tokens.New(user.ID, 30*24*time.Hour, data.ScopeRefresh)
 	if err != nil {
 		app.Log.Info("error creating refreshToken")
 		return
@@ -122,7 +122,7 @@ func (app *application) HandlePostTokenAccess(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	user, found, err := app.Db.Users.GetForToken(database.ScopeRefresh, cookie.Value)
+	user, found, err := app.Db.Users.GetForToken(data.ScopeRefresh, cookie.Value)
 	if err != nil {
 		app.Log.Info(err.Error())
 		return
@@ -133,7 +133,7 @@ func (app *application) HandlePostTokenAccess(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	accessToken, err := app.Db.Tokens.New(user.ID, 2*time.Hour, database.ScopeAccess)
+	accessToken, err := app.Db.Tokens.New(user.ID, 2*time.Hour, data.ScopeAccess)
 	if err != nil {
 		return
 	}
@@ -159,7 +159,7 @@ func (app *application) HandleGetLogout(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	err = app.Db.Tokens.DeleteByPlaintext(database.ScopeRefresh, cookie.Value)
+	err = app.Db.Tokens.DeleteByPlaintext(data.ScopeRefresh, cookie.Value)
 	if err != nil {
 		app.Log.Info(err.Error())
 		return

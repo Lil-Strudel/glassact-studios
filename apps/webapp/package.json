@@ -17,6 +17,7 @@
     "solid-js": "catalog:solid"
   },
   "devDependencies": {
+    "@glassact/data": "workspace:*",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.1",
     "tailwindcss": "catalog:",

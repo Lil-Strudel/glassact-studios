@@ -8,7 +8,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/config"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules"
-	"github.com/Lil-Strudel/glassact-studios/libs/database"
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -21,7 +21,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	db, err := database.NewPool(cfg.Db.Dsn)
+	db, err := data.NewPool(cfg.Db.Dsn)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
@@ -29,7 +29,7 @@ func main() {
 
 	app := &app.Application{
 		Cfg:      cfg,
-		Db:       database.NewModels(db),
+		Db:       data.NewModels(db),
 		Err:      app.AppError,
 		Log:      logger,
 		Validate: validator.New(validator.WithRequiredStructEnabled()),
