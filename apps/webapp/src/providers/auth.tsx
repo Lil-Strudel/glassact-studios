@@ -4,8 +4,8 @@ import {
   createContext,
   createEffect,
   useContext,
+  ParentComponent,
 } from "solid-js";
-import { ParentComponent } from "solid-js/types/server/rendering.js";
 import { postAuthTokenAccessOpts } from "../queries/auth";
 import api from "../queries/api";
 

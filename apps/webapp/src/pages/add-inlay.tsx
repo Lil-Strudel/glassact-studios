@@ -14,15 +14,26 @@ import {
   textfieldLabel,
 } from "@glassact/ui";
 import { IoClose } from "solid-icons/io";
+import { createForm } from "@tanstack/solid-form";
 
-const AddItem: Component = () => {
+const AddInlay: Component = () => {
+  const form = createForm(() => ({
+    defaultValues: {
+      catalog_number: "",
+      description: "",
+    },
+    onSubmit: async ({ value }) => {
+      // Do something with form data
+      console.log(value);
+    },
+  }));
   return (
     <div>
       <Breadcrumb
         crumbs={[
-          { title: "Orders", href: "/orders" },
-          { title: "Place Order", href: "/orders/place-order" },
-          { title: "Add Item", href: "/orders/place-order/add-item" },
+          { title: "Projects", href: "/projects" },
+          { title: "Create Project", href: "/projects/create-project" },
+          { title: "Add Inlay", href: "/projects/create-project/add-inlay" },
         ]}
       />
       <Tabs defaultValue="catalog">
@@ -38,20 +49,52 @@ const AddItem: Component = () => {
         </div>
         <div class="mx-auto max-w-2xl p-4 flex flex-col sm:px-6 lg:px-0">
           <TabsContent value="catalog">
-            <div class="flex gap-8 flex-col">
-              <TextFieldRoot class="w-full">
-                <TextFieldLabel>Catalog Number</TextFieldLabel>
-                <TextField placeholder="X-XXX-0000" />
-              </TextFieldRoot>
-              <TextFieldRoot class="w-full">
-                <TextFieldLabel>
-                  Describe any modifications to the design (colors, size,
-                  ect...)
-                </TextFieldLabel>
-                <TextArea placeholder="Type your message here." />
-              </TextFieldRoot>
-              <Button class="mx-auto">Add to Order</Button>
-            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                form.handleSubmit();
+              }}
+            >
+              <div class="flex gap-8 flex-col">
+                <form.Field
+                  name="catalog_number"
+                  children={(field) => (
+                    <TextFieldRoot class="w-full">
+                      <TextFieldLabel>Catalog Number</TextFieldLabel>
+                      <TextField
+                        placeholder="X-XXX-0000"
+                        name={field().name}
+                        value={field().state.value}
+                        onBlur={field().handleBlur}
+                        onInput={(e) => field().handleChange(e.target.value)}
+                      />
+                    </TextFieldRoot>
+                  )}
+                />
+                <form.Field
+                  name="description"
+                  children={(field) => (
+                    <TextFieldRoot class="w-full">
+                      <TextFieldLabel>
+                        Describe any modifications to the design (colors, size,
+                        ect...)
+                      </TextFieldLabel>
+                      <TextArea
+                        placeholder="Type your message here."
+                        name={field().name}
+                        value={field().state.value}
+                        onBlur={field().handleBlur}
+                        onInput={(e) => field().handleChange(e.target.value)}
+                      />
+                    </TextFieldRoot>
+                  )}
+                />
+                <Button class="mx-auto" type="submit">
+                  Add to Order
+                </Button>
+              </div>
+            </form>
           </TabsContent>
           <TabsContent value="custom">
             <div class="flex gap-8 flex-col">
@@ -94,4 +137,4 @@ const AddItem: Component = () => {
   );
 };
 
-export default AddItem;
+export default AddInlay;

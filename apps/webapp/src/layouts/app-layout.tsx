@@ -14,7 +14,7 @@ import { getUserSelfOpts } from "../queries/user";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard" },
-  { name: "Orders", href: "/orders" },
+  { name: "Projects", href: "/projects" },
   { name: "My Org", href: "/organization" },
   { name: "Help", href: "/help" },
 ];

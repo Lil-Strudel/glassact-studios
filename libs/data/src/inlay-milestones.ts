@@ -1,10 +1,10 @@
-export interface Account {
+export interface InlayMilestone {
   id: number;
   uuid: string;
-  user_id: number;
   type: string;
-  provider: string;
-  provider_account_id: string;
+  event_type: string;
+  event_time: string;
+  project_id: number;
   created_at: string;
   updated_at: string;
   version: number;
