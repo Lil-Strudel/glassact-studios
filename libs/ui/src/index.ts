@@ -9,6 +9,8 @@ export * from "./button-variants";
 
 export * from "./dropdown-menu";
 
+export * from "./form";
+
 export * from "./tooltip";
 
 export * from "./tabs";

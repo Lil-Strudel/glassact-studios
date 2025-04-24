@@ -11,10 +11,12 @@
   "dependencies": {
     "@glassact/ui": "workspace:*",
     "@solidjs/router": "^0.15.3",
+    "@tanstack/solid-form": "catalog:",
     "@tanstack/solid-query": "^5.64.1",
     "redaxios": "^0.5.1",
     "solid-icons": "^1.1.0",
-    "solid-js": "catalog:solid"
+    "solid-js": "catalog:solid",
+    "zod": "^3.24.3"
   },
   "devDependencies": {
     "@glassact/data": "workspace:*",
