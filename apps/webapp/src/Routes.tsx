@@ -13,6 +13,7 @@ import Organization from "./pages/organization";
 import Help from "./pages/help";
 import Settings from "./pages/settings";
 import { useAuthContext } from "./providers/auth";
+import Project from "./pages/project";
 
 const Unauthenticated = (
   Component: Component<RouteSectionProps<unknown>>,
@@ -65,6 +66,7 @@ const Routes: Component = () => {
         <Route path="/projects" component={Projects} />
         <Route path="/projects/create-project" component={CreateProject} />
         <Route path="/projects/create-project/add-inlay" component={AddInlay} />
+        <Route path="/projects/:id" component={Project} />
         <Route path="/organization" component={Organization} />
         <Route path="/help" component={Help} />
         <Route path="/settings" component={Settings} />
