@@ -207,12 +207,6 @@ const CreateProject: Component = () => {
                 <Button class="w-full" type="submit">
                   Create Project
                 </Button>
-
-                <span>or</span>
-
-                <Button class="w-full" onClick={resetState} variant="text">
-                  Start Fresh
-                </Button>
               </div>
             </section>
           </div>
