@@ -1,10 +1,58 @@
 import { GET, Project } from "@glassact/data";
-import { Breadcrumb, Button, cn } from "@glassact/ui";
+import { Breadcrumb, Button, cn, TextField, TextFieldRoot } from "@glassact/ui";
 import { createSignal, Component, Index } from "solid-js";
 import { IoCheckmarkCircleOutline } from "solid-icons/io";
 
 const ProjectPage: Component = () => {
   const [selectedInlay, setSelectedInlay] = createSignal(0);
+  const [messages, setMessages] = createSignal([
+    {
+      id: 1,
+      sender: "client",
+      text: "Hi, I'd like to discuss the progress on my glass project.",
+      time: new Date("2025-06-06T17:30:45"),
+    },
+    {
+      id: 2,
+      sender: "glassact",
+      text: "Hello! I'd be happy to help. I can see your project is currently in the Proof Approval stage.",
+      time: new Date("2025-06-06T17:30:45"),
+    },
+    {
+      id: 3,
+      sender: "client",
+      text: "Great! When can I expect to see the final proof?",
+      time: new Date("2025-06-06T17:30:45"),
+    },
+    {
+      id: 4,
+      sender: "glassact",
+      text: "The proof should be ready for your review by tomorrow morning. I'll send it to your email once it's complete.",
+      time: new Date("2025-06-06T17:30:45"),
+    },
+  ]);
+  const [newMessage, setNewMessage] = createSignal("");
+
+  const sendMessage = () => {
+    const message = newMessage().trim();
+    if (message) {
+      const newMsg = {
+        id: messages().length + 1,
+        sender: "client",
+        text: message,
+        time: new Date(),
+      };
+      setMessages([...messages(), newMsg]);
+      setNewMessage("");
+    }
+  };
+
+  const handleKeyPress = (e: KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
 
   const project: GET<Project> = {
     id: 123,
@@ -29,7 +77,7 @@ const ProjectPage: Component = () => {
     { name: "Cutting", href: "#", status: "upcoming" },
     { name: "Fire Polishing", href: "#", status: "upcoming" },
     { name: "Packaging", href: "#", status: "upcoming" },
-    { name: "Shipped", href: "#", status: "upcoming" },
+    { name: "Shipping", href: "#", status: "upcoming" },
     { name: "Delivered", href: "#", status: "upcoming" },
   ];
 
@@ -127,7 +175,71 @@ const ProjectPage: Component = () => {
             </ol>
           </nav>
         </div>
-        <div class="border rounded-xl p-4 w-full">hello</div>
+        <div class="border rounded-xl p-4 w-full">
+          <div class="flex flex-col">
+            <div class="border-b pb-3 mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">
+                Project Discussion
+              </h3>
+              <p class="text-sm text-gray-500">
+                Chat with us to get your project perfect!
+              </p>
+            </div>
+            <div class="flex-1 overflow-y-auto space-y-4 mb-4">
+              <Index each={messages()}>
+                {(message) => (
+                  <div
+                    class={cn(
+                      "flex",
+                      message().sender === "client"
+                        ? "justify-end"
+                        : "justify-start",
+                    )}
+                  >
+                    <div
+                      class={cn(
+                        "max-w-xs lg:max-w-md px-4 py-2 rounded-lg",
+                        message().sender === "client"
+                          ? "bg-primary text-white"
+                          : "bg-gray-100 text-gray-900",
+                      )}
+                    >
+                      <p class="text-sm">{message().text}</p>
+                      <p
+                        class={cn(
+                          "text-xs mt-1",
+                          message().sender === "client"
+                            ? "text-primary-100"
+                            : "text-gray-500",
+                        )}
+                      >
+                        {message().time.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </Index>
+            </div>
+            <div class="border-t pt-4">
+              <div class="flex gap-2">
+                <TextFieldRoot class="w-full">
+                  <TextField
+                    value={newMessage()}
+                    onInput={(e) => setNewMessage(e.currentTarget.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Type your message..."
+                  />
+                </TextFieldRoot>
+                <Button onClick={sendMessage} disabled={!newMessage().trim()}>
+                  Send
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
