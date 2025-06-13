@@ -15,7 +15,8 @@
     "db:migrate/goto": "pnpm --filter @glassact/data migrate/goto",
     "db:migrate/down": "pnpm --filter @glassact/data migrate/down",
     "db:migrate/force": "pnpm --filter @glassact/data migrate/force",
-    "db:psql": "pnpm --filter @glassact/data psql"
+    "db:psql": "pnpm --filter @glassact/data psql",
+    "libs:build": "pnpm --filter './libs/**' build"
   },
   "devDependencies": {
     "mprocs": "^0.7.1"

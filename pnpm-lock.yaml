@@ -9,6 +9,9 @@ catalogs:
     '@tanstack/solid-form':
       specifier: ^1.4.0
       version: 1.4.0
+    prettier:
+      specifier: ^3.4.2
+      version: 3.4.2
     tailwindcss:
       specifier: ^3.4.17
       version: 3.4.17
