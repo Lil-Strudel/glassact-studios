@@ -19,7 +19,7 @@
     "libs:build": "pnpm --filter './libs/**' build"
   },
   "devDependencies": {
-    "mprocs": "^0.7.1"
+    "mprocs": "^0.7.3"
   },
   "license": "CC BY-NC 4.0"
 }

@@ -12,19 +12,19 @@
     "@glassact/ui": "workspace:*",
     "@solidjs/router": "^0.15.3",
     "@tanstack/solid-form": "catalog:",
-    "@tanstack/solid-query": "^5.64.1",
+    "@tanstack/solid-query": "^5.80.7",
     "redaxios": "^0.5.1",
     "solid-icons": "^1.1.0",
     "solid-js": "catalog:solid",
-    "zod": "^3.24.3"
+    "zod": "^3.25.64"
   },
   "devDependencies": {
     "@glassact/data": "workspace:*",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.5.1",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.5",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
-    "vite": "^6.0.0",
-    "vite-plugin-solid": "^2.11.0"
+    "vite": "^6.3.5",
+    "vite-plugin-solid": "^2.11.6"
   }
 }
