@@ -32,7 +32,7 @@ const ProjectPage: Component = () => {
       id: 3,
       sender: "client",
       type: "message",
-      text: "The dimensions are wrong. Can you make it smaller?",
+      text: "Proof Declined: The dimensions are wrong. Can you make it smaller?",
       time: new Date("2025-06-06T17:30:45"),
     },
     {
@@ -60,26 +60,8 @@ const ProjectPage: Component = () => {
   ]);
 
   const [newMessage, setNewMessage] = createSignal("");
-
-  let chatBoxRef: HTMLDivElement | undefined;
-  let messagesContainerRef: HTMLDivElement | undefined;
-
-  const scrollToBottom = () => {
-    if (messagesContainerRef) {
-      messagesContainerRef.scrollTop = messagesContainerRef.scrollHeight;
-    }
-  };
-
-  // Auto-scroll to bottom when messages change
-  createEffect(() => {
-    messages(); // Track messages signal
-    setTimeout(scrollToBottom, 0); // Use setTimeout to ensure DOM is updated
-  });
-
-  // Scroll to bottom on mount
-  onMount(() => {
-    scrollToBottom();
-  });
+  const [isDeclineFeedback, setIsDeclineFeedback] = createSignal(false);
+  const [declineFeedback, setDeclineFeedback] = createSignal("");
 
   const sendMessage = () => {
     const message = newMessage().trim();
@@ -103,6 +85,30 @@ const ProjectPage: Component = () => {
     }
   };
 
+  const handleDeclineClick = () => {
+    setIsDeclineFeedback(true);
+  };
+
+  const handleDeclineSubmit = () => {
+    const feedback = declineFeedback().trim();
+    if (feedback) {
+      const newMsg = {
+        id: messages().length + 1,
+        sender: "client",
+        type: "message",
+        text: `Proof declined: ${feedback}`,
+        time: new Date(),
+      };
+      setMessages([...messages(), newMsg]);
+      setDeclineFeedback("");
+      setIsDeclineFeedback(false);
+    }
+  };
+
+  const handleDeclineCancel = () => {
+    setDeclineFeedback("");
+    setIsDeclineFeedback(false);
+  };
   const project: GET<Project> = {
     id: 123,
     uuid: "1234",
@@ -225,10 +231,7 @@ const ProjectPage: Component = () => {
           </nav>
         </div>
         <div class="border rounded-xl py-4 w-full flex flex-col min-h-0">
-          <div
-            ref={chatBoxRef}
-            class="flex flex-col h-full min-h-[400px] max-h-[calc(100vh-400px)]"
-          >
+          <div class="flex flex-col h-full min-h-[400px] max-h-[calc(100vh-400px)]">
             <div class="border-b pb-3 mb-4 px-4">
               <h3 class="text-lg font-semibold text-gray-900">
                 Proof Approval
@@ -238,81 +241,118 @@ const ProjectPage: Component = () => {
                 your order!
               </p>
             </div>
-            <div
-              ref={messagesContainerRef}
-              class="flex-1 overflow-y-auto space-y-4 mb-4 px-4 scroll-smooth"
-            >
-              <Index each={messages()}>
-                {(message, index) => (
-                  <div
-                    class={cn(
-                      "flex",
-                      message().sender === "client"
-                        ? "justify-end"
-                        : "justify-start",
-                    )}
-                  >
+            <div class="flex flex-col-reverse overflow-y-auto scroll-smooth ">
+              <div class="flex-1 space-y-4 mb-4 px-4">
+                <Index each={messages()}>
+                  {(message, index) => (
                     <div
                       class={cn(
-                        "max-w-xs lg:max-w-md px-4 py-2 rounded-lg",
+                        "flex",
                         message().sender === "client"
-                          ? "bg-primary text-white"
-                          : "bg-gray-100 text-gray-900",
+                          ? "justify-end"
+                          : "justify-start",
                       )}
                     >
-                      <Show when={Boolean(message().img)}>
-                        <img src={message().img} class="py-2" />
-                      </Show>
-                      <p class="text-sm">{message().text}</p>
-                      <Show
-                        when={
-                          Boolean(message().type === "proof") &&
-                          index === messages().length - 1
-                        }
-                      >
-                        <div class="flex gap-4 my-2">
-                          <Button variant="outline" class="w-full">
-                            Decline
-                          </Button>
-                          <Button class="w-full">Approve</Button>
-                        </div>
-                      </Show>
-                      <Show
-                        when={
-                          Boolean(message().type === "proof") &&
-                          index !== messages().length - 1
-                        }
-                      >
-                        <div class="flex justify-center mt-2">
-                          <p class="text-sm text-gray-500">Declined</p>
-                        </div>
-                      </Show>
-                      <p
+                      <div
                         class={cn(
-                          "text-xs mt-1",
+                          "max-w-xs lg:max-w-md px-4 py-2 rounded-lg",
                           message().sender === "client"
-                            ? "text-primary-100"
-                            : "text-gray-500",
+                            ? "bg-primary text-white"
+                            : "bg-gray-100 text-gray-900",
                         )}
                       >
-                        {message().time.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
+                        <Show when={Boolean(message().img)}>
+                          <img src={message().img} class="py-2" />
+                        </Show>
+                        <p class="text-sm">{message().text}</p>
+                        <Show
+                          when={
+                            Boolean(message().type === "proof") &&
+                            index === messages().length - 1
+                          }
+                        >
+                          <Show
+                            when={!isDeclineFeedback()}
+                            fallback={
+                              <div class="space-y-2 my-2">
+                                <TextFieldRoot>
+                                  <TextField
+                                    value={declineFeedback()}
+                                    onInput={(e) =>
+                                      setDeclineFeedback(e.currentTarget.value)
+                                    }
+                                    placeholder="What would you like changed?"
+                                    class="w-full"
+                                  />
+                                </TextFieldRoot>
+                                <div class="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    onClick={handleDeclineCancel}
+                                    class="flex-1"
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    onClick={handleDeclineSubmit}
+                                    disabled={!declineFeedback().trim()}
+                                    class="flex-1"
+                                  >
+                                    Decline w/ Feedback
+                                  </Button>
+                                </div>
+                              </div>
+                            }
+                          >
+                            <div class="flex gap-4 my-2">
+                              <Button
+                                variant="outline"
+                                class="w-full"
+                                onClick={handleDeclineClick}
+                              >
+                                Decline
+                              </Button>
+                              <Button class="w-full">Approve</Button>
+                            </div>
+                          </Show>
+                        </Show>
+                        <Show
+                          when={
+                            Boolean(message().type === "proof") &&
+                            index !== messages().length - 1
+                          }
+                        >
+                          <div class="flex justify-center mt-2">
+                            <p class="text-sm text-gray-500">Declined</p>
+                          </div>
+                        </Show>
+                        <p
+                          class={cn(
+                            "text-xs mt-1",
+                            message().sender === "client"
+                              ? "text-primary-100"
+                              : "text-gray-500",
+                          )}
+                        >
+                          {message().time.toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
                     </div>
+                  )}
+                </Index>
+                <Show
+                  when={messages()[messages().length - 1].sender === "client"}
+                >
+                  <div class="flex justify-center">
+                    <p class="text-sm text-gray-500 mt-2">
+                      Awaiting response from GlassAct Studios....
+                    </p>
                   </div>
-                )}
-              </Index>
-              <Show
-                when={messages()[messages().length - 1].sender === "client"}
-              >
-                <div class="flex justify-center">
-                  <p class="text-sm text-gray-500 mt-2">
-                    Awaiting response from GlassAct Studios....
-                  </p>
-                </div>
-              </Show>
+                </Show>
+              </div>
             </div>
             <div class="border-t pt-4 px-4">
               <div class="flex gap-2">
