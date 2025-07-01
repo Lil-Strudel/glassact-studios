@@ -9,7 +9,7 @@ import {
 } from "@glassact/ui";
 import { A, RouteSectionProps } from "@solidjs/router";
 import { IoClose, IoMenu, IoNotificationsOutline } from "solid-icons/io";
-import { createQuery } from "@tanstack/solid-query";
+import { useQuery } from "@tanstack/solid-query";
 import { getUserSelfOpts } from "../queries/user";
 
 const navigation = [
@@ -24,7 +24,7 @@ const userNavigation = [
 ];
 
 const AppLayout: Component<RouteSectionProps<unknown>> = (props) => {
-  const query = createQuery(getUserSelfOpts);
+  const query = useQuery(getUserSelfOpts);
 
   const [open, setOpen] = createSignal(false);
 

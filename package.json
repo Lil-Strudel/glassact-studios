@@ -2,7 +2,7 @@
   "name": "glassact-studios",
   "private": true,
   "engines": {
-    "node": "22.13",
+    "node": "22.17",
     "pnpm": "10"
   },
   "scripts": {

@@ -1,4 +1,4 @@
-import { createQuery } from "@tanstack/solid-query";
+import { useQuery } from "@tanstack/solid-query";
 import {
   createSignal,
   createContext,
@@ -31,7 +31,7 @@ export const AuthProvider: ParentComponent = (props) => {
   queryOptions.retry = false;
   queryOptions.refetchInterval = 1000 * 60 * 60 * 1.5;
 
-  const query = createQuery(() => queryOptions);
+  const query = useQuery(() => queryOptions);
 
   createEffect(() => {
     switch (query.status) {
