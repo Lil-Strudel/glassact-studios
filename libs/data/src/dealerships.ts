@@ -1,10 +1,7 @@
-export interface Dealership {
-  id: number;
-  uuid: string;
+import { StandardTable } from "./helpers";
+
+export interface Dealership extends StandardTable {
   name: string;
   address: string;
   location: [number, number];
-  created_at: string;
-  updated_at: string;
-  version: number;
 }

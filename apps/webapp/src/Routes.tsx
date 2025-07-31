@@ -1,5 +1,11 @@
 import { createEffect, Match, Switch, type Component } from "solid-js";
-import { Router, Route, useNavigate, RouteSectionProps } from "@solidjs/router";
+import {
+  Navigate,
+  Router,
+  Route,
+  useNavigate,
+  RouteSectionProps,
+} from "@solidjs/router";
 
 import Home from "./pages/index";
 import NotFound from "./pages/not-found";
@@ -14,6 +20,13 @@ import Help from "./pages/help";
 import Settings from "./pages/settings";
 import { useAuthContext } from "./providers/auth";
 import Project from "./pages/project";
+import AdminDealerships from "./pages/admin-dealerships";
+import AdminLayout from "./layouts/admin-layout";
+import AdminUsers from "./pages/admin-users";
+
+function Redirect(href: string) {
+  return () => <Navigate href={href} />;
+}
 
 const Unauthenticated = (
   Component: Component<RouteSectionProps<unknown>>,
@@ -69,6 +82,11 @@ const Routes: Component = () => {
         <Route path="/projects/:id" component={Project} />
         <Route path="/organization" component={Organization} />
         <Route path="/help" component={Help} />
+        <Route path="/admin" component={AdminLayout}>
+          <Route path="/dealerships" component={AdminDealerships} />
+          <Route path="/users" component={AdminUsers} />
+          <Route path="*" component={Redirect("/admin/dealerships")} />
+        </Route>
         <Route path="/settings" component={Settings} />
       </Route>
       <Route path="*" component={NotFound} />

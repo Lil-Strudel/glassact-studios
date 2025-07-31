@@ -66,6 +66,9 @@ importers:
 
   apps/webapp:
     dependencies:
+      '@fontsource-variable/roboto':
+        specifier: ^5.2.6
+        version: 5.2.6
       '@glassact/ui':
         specifier: workspace:*
         version: link:../../libs/ui
@@ -78,6 +81,9 @@ importers:
       '@tanstack/solid-query':
         specifier: ^5.81.5
         version: 5.81.5(solid-js@1.9.7)
+      '@tanstack/solid-table':
+        specifier: ^8.21.3
+        version: 8.21.3(solid-js@1.9.7)
       redaxios:
         specifier: ^0.5.1
         version: 0.5.1
@@ -459,6 +465,9 @@ packages:
 
   '@floating-ui/utils@0.2.9':
     resolution: {integrity: sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg==}
+
+  '@fontsource-variable/roboto@5.2.6':
+    resolution: {integrity: sha512-bKgCwHdRcUcHPmypU5oih+OnTQUnZ7XBoztJ0W2X+m7WRYITTWnnnQBDPAKbOwiemU/yJHGg+lD03M60BGuuGg==}
 
   '@img/sharp-darwin-arm64@0.33.5':
     resolution: {integrity: sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ==}
@@ -1055,8 +1064,18 @@ packages:
     peerDependencies:
       solid-js: ^1.6.0
 
+  '@tanstack/solid-table@8.21.3':
+    resolution: {integrity: sha512-PmhfSLBxVKiFs01LtYOYrCRhCyTUjxmb4KlxRQiqcALtip8+DOJeeezQM4RSX/GUS0SMVHyH/dNboCpcO++k2A==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      solid-js: '>=1.3'
+
   '@tanstack/store@0.7.1':
     resolution: {integrity: sha512-PjUQKXEXhLYj2X5/6c1Xn/0/qKY0IVFxTJweopRfF26xfjVyb14yALydJrHupDh3/d+1WKmfEgZPBVCmDkzzwg==}
+
+  '@tanstack/table-core@8.21.3':
+    resolution: {integrity: sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==}
+    engines: {node: '>=12'}
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -2977,6 +2996,8 @@ snapshots:
 
   '@floating-ui/utils@0.2.9': {}
 
+  '@fontsource-variable/roboto@5.2.6': {}
+
   '@img/sharp-darwin-arm64@0.33.5':
     optionalDependencies:
       '@img/sharp-libvips-darwin-arm64': 1.0.4
@@ -3459,7 +3480,14 @@ snapshots:
       '@tanstack/store': 0.7.1
       solid-js: 1.9.7
 
+  '@tanstack/solid-table@8.21.3(solid-js@1.9.7)':
+    dependencies:
+      '@tanstack/table-core': 8.21.3
+      solid-js: 1.9.7
+
   '@tanstack/store@0.7.1': {}
+
+  '@tanstack/table-core@8.21.3': {}
 
   '@types/babel__core@7.20.5':
     dependencies:

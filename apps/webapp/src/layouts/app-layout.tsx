@@ -17,6 +17,7 @@ const navigation = [
   { name: "Projects", href: "/projects" },
   { name: "My Org", href: "/organization" },
   { name: "Help", href: "/help" },
+  { name: "Admin", href: "/admin" },
 ];
 const userNavigation = [
   { name: "Settings", href: "/settings", props: {} },

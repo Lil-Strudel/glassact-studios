@@ -9,10 +9,12 @@
     "serve": "vite preview"
   },
   "dependencies": {
+    "@fontsource-variable/roboto": "^5.2.6",
     "@glassact/ui": "workspace:*",
     "@solidjs/router": "^0.15.3",
     "@tanstack/solid-form": "catalog:",
     "@tanstack/solid-query": "^5.81.5",
+    "@tanstack/solid-table": "^8.21.3",
     "redaxios": "^0.5.1",
     "solid-icons": "^1.1.0",
     "solid-js": "catalog:solid",

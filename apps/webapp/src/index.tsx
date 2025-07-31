@@ -2,6 +2,7 @@
 import { render } from "solid-js/web";
 
 import App from "./App";
+import "@fontsource-variable/roboto";
 import "@glassact/ui/globals.css";
 
 const root = document.getElementById("root");
