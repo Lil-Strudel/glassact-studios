@@ -12,8 +12,8 @@
     "@astrojs/solid-js": "^5.1.0",
     "@astrojs/tailwind": "^6.0.2",
     "@glassact/ui": "workspace:*",
-    "astro": "^5.10.2",
-    "sharp": "^0.34.2",
+    "astro": "^5.12.6",
+    "sharp": "^0.34.3",
     "solid-js": "catalog:solid",
     "tailwindcss": "catalog:"
   },
