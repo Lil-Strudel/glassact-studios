@@ -46,7 +46,7 @@ const AdminLayout: Component<RouteSectionProps<unknown>> = (props) => {
           </nav>
         </aside>
 
-        <div class="mx-auto max-w-2xl space-y-16 sm:space-y-20 lg:mx-0 lg:max-w-none">
+        <div class="mx-auto max-w-2xl w-full space-y-16 sm:space-y-20 lg:mx-0 lg:max-w-none">
           {props.children}
         </div>
       </div>

@@ -6,41 +6,32 @@ import {
   TableRow,
   TableBody,
   TableCell,
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
+  Button,
+  TextField,
+  TextFieldRoot,
 } from "@glassact/ui";
 import {
   createSolidTable,
   flexRender,
   getCoreRowModel,
   ColumnDef,
+  getPaginationRowModel,
+  getFilteredRowModel,
 } from "@tanstack/solid-table";
 import { Dealership, GET } from "@glassact/data";
 
-const defaultData: GET<Dealership>[] = [
-  {
-    id: 1,
-    uuid: "123",
-    name: "Test",
-    address: "123 asdf lane, Orem, UT",
-    location: [123, 2321],
-    created_at: "123",
-    updated_at: "123",
-    version: 0,
-  },
-  {
-    id: 2,
-    uuid: "321",
-    name: "Test 2",
-    address: "432 fjkjksd st, Provo, UT",
-    location: [123, 2321],
-    created_at: "123",
-    updated_at: "123",
-    version: 0,
-  },
-];
+export const defaultData: GET<Dealership>[] = Array.from(new Array(100)).map(
+  (_, index) => ({
+    id: index,
+    uuid: "",
+    name: `Test ${index + 1}`,
+    address: "646 W 80 N, Orem, UT 84057",
+    location: [12, 12],
+    created_at: "",
+    updated_at: "",
+    version: 1,
+  }),
+);
 
 const defaultColumns: ColumnDef<GET<Dealership>>[] = [
   {
@@ -53,32 +44,6 @@ const defaultColumns: ColumnDef<GET<Dealership>>[] = [
     cell: (info) => info.getValue(),
     footer: (info) => info.column.id,
   },
-  {
-    id: "actions",
-    cell: () => (
-      <DropdownMenu placement="bottom-end">
-        <DropdownMenuTrigger class="flex items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="size-4"
-            viewBox="0 0 24 24"
-          >
-            <path
-              fill="none"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0"
-            />
-          </svg>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem>Edit</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-  },
 ];
 
 const AdminDealerships: Component = () => {
@@ -90,10 +55,21 @@ const AdminDealerships: Component = () => {
     },
     columns: defaultColumns,
     getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
   });
 
   return (
     <div>
+      <div class="flex items-center justify-between py-4">
+        <TextFieldRoot
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          onChange={(value) => table.getColumn("name")?.setFilterValue(value)}
+        >
+          <TextField placeholder="Filter by name..." class="max-w-sm" />
+        </TextFieldRoot>
+        <Button>Add a new dealership</Button>
+      </div>
       <div class="rounded-md border">
         <Table>
           <TableHeader>
@@ -151,6 +127,24 @@ const AdminDealerships: Component = () => {
             </Show>
           </TableBody>
         </Table>
+      </div>
+      <div class="flex items-center justify-end space-x-2 py-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          Previous
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          Next
+        </Button>
       </div>
     </div>
   );
