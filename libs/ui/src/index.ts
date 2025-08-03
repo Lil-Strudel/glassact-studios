@@ -9,6 +9,8 @@ export * from "./button-variants";
 
 export * from "./checkbox";
 
+export * from "./dialog";
+
 export * from "./dropdown-menu";
 
 export * from "./form";

@@ -6,6 +6,7 @@ import {
   useNavigate,
   RouteSectionProps,
 } from "@solidjs/router";
+import { z } from "zod";
 
 import Home from "./pages/index";
 import NotFound from "./pages/not-found";
@@ -23,6 +24,9 @@ import Project from "./pages/project";
 import AdminDealerships from "./pages/admin-dealerships";
 import AdminLayout from "./layouts/admin-layout";
 import AdminUsers from "./pages/admin-users";
+import DealershipLayout from "./layouts/dealership-layout";
+import DealershipUsers from "./pages/dealership-users";
+import DealershipSettings from "./pages/dealership-settings";
 
 function Redirect(href: string) {
   return () => <Navigate href={href} />;
@@ -82,6 +86,17 @@ const Routes: Component = () => {
         <Route path="/projects/:id" component={Project} />
         <Route path="/organization" component={Organization} />
         <Route path="/help" component={Help} />
+        <Route
+          path="/dealership/:id"
+          component={DealershipLayout}
+          matchFilters={{
+            id: (value) => z.string().min(1).safeParse(value).success,
+          }}
+        >
+          <Route path="/users" component={DealershipUsers} />
+          <Route path="/settings" component={DealershipSettings} />
+          <Route path="*" component={Redirect("/dealership/:id/users")} />
+        </Route>
         <Route path="/admin" component={AdminLayout}>
           <Route path="/dealerships" component={AdminDealerships} />
           <Route path="/users" component={AdminUsers} />

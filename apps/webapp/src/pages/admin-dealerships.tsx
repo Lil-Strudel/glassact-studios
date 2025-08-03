@@ -1,5 +1,11 @@
 import { type Component, createSignal, For, Show } from "solid-js";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  Form,
   Table,
   TableHeader,
   TableHead,
@@ -19,11 +25,15 @@ import {
   getFilteredRowModel,
 } from "@tanstack/solid-table";
 import { Dealership, GET } from "@glassact/data";
+import { IoBuildOutline } from "solid-icons/io";
+import { createForm } from "@tanstack/solid-form";
+import { z } from "zod";
+import { A } from "@solidjs/router";
 
 export const defaultData: GET<Dealership>[] = Array.from(new Array(100)).map(
   (_, index) => ({
     id: index,
-    uuid: "",
+    uuid: "uuid" + index,
     name: `Test ${index + 1}`,
     address: "646 W 80 N, Orem, UT 84057",
     location: [12, 12],
@@ -35,12 +45,31 @@ export const defaultData: GET<Dealership>[] = Array.from(new Array(100)).map(
 
 const defaultColumns: ColumnDef<GET<Dealership>>[] = [
   {
+    id: "actions",
+    enableHiding: false,
+    header: "Edit",
+    cell: (props) => {
+      return (
+        <Button
+          variant="ghost"
+          size="icon"
+          as="a"
+          href={`/dealership/${props.row.original.uuid}`}
+        >
+          <IoBuildOutline size={24} />
+        </Button>
+      );
+    },
+  },
+  {
     accessorKey: "name",
+    header: "Name",
     cell: (info) => info.getValue(),
     footer: (info) => info.column.id,
   },
   {
     accessorKey: "address",
+    header: "Address",
     cell: (info) => info.getValue(),
     footer: (info) => info.column.id,
   },
@@ -59,6 +88,22 @@ const AdminDealerships: Component = () => {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
+  const form = createForm(() => ({
+    defaultValues: {
+      name: "",
+      address: "",
+    },
+    validators: {
+      onSubmit: z.object({
+        name: z.string().min(1),
+        address: z.string().min(1),
+      }),
+    },
+    onSubmit: async ({ value }) => {
+      console.log(value);
+    },
+  }));
+
   return (
     <div>
       <div class="flex items-center justify-between py-4">
@@ -68,7 +113,39 @@ const AdminDealerships: Component = () => {
         >
           <TextField placeholder="Filter by name..." class="max-w-sm" />
         </TextFieldRoot>
-        <Button>Add a new dealership</Button>
+        <Dialog>
+          <DialogTrigger>
+            <Button>Add a new dealership</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add a new dealership</DialogTitle>
+            </DialogHeader>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                form.handleSubmit();
+              }}
+              class="flex flex-col gap-4"
+            >
+              <form.Field
+                name="name"
+                children={(field) => (
+                  <Form.TextField field={field} label="Name" />
+                )}
+              />
+              <form.Field
+                name="address"
+                children={(field) => (
+                  <Form.TextField field={field} label="Address" />
+                )}
+              />
+              <Button type="submit">Add</Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
       <div class="rounded-md border">
         <Table>
