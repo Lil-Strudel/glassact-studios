@@ -1,4 +1,5 @@
-import { type Component, createSignal, For, Show } from "solid-js";
+import { createFileRoute } from "@tanstack/solid-router";
+import { createSignal, For, Show } from "solid-js";
 import {
   Dialog,
   DialogContent,
@@ -28,9 +29,12 @@ import { Dealership, GET } from "@glassact/data";
 import { IoBuildOutline } from "solid-icons/io";
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
-import { A } from "@solidjs/router";
 
-export const defaultData: GET<Dealership>[] = Array.from(new Array(100)).map(
+export const Route = createFileRoute("/_appLayout/admin/dealerships")({
+  component: RouteComponent,
+});
+
+const defaultData: GET<Dealership>[] = Array.from(new Array(100)).map(
   (_, index) => ({
     id: index,
     uuid: "uuid" + index,
@@ -75,7 +79,7 @@ const defaultColumns: ColumnDef<GET<Dealership>>[] = [
   },
 ];
 
-const AdminDealerships: Component = () => {
+function RouteComponent() {
   const [data, setData] = createSignal(defaultData);
 
   const table = createSolidTable({
@@ -103,7 +107,6 @@ const AdminDealerships: Component = () => {
       console.log(value);
     },
   }));
-
   return (
     <div>
       <div class="flex items-center justify-between py-4">
@@ -225,6 +228,4 @@ const AdminDealerships: Component = () => {
       </div>
     </div>
   );
-};
-
-export default AdminDealerships;
+}

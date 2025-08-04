@@ -1,9 +1,14 @@
+import { createFileRoute } from "@tanstack/solid-router";
 import { GET, Project } from "@glassact/data";
 import { Button, Breadcrumb } from "@glassact/ui";
 import { IoAddCircleOutline, IoCheckmarkCircleOutline } from "solid-icons/io";
-import { type Component, Index } from "solid-js";
+import { Index } from "solid-js";
 
-const Projects: Component = () => {
+export const Route = createFileRoute("/_appLayout/projects")({
+  component: RouteComponent,
+});
+
+function RouteComponent() {
   const newProjects: GET<Project>[] = [
     {
       id: 123,
@@ -436,6 +441,4 @@ const Projects: Component = () => {
       </div>
     </div>
   );
-};
-
-export default Projects;
+}

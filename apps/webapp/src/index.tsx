@@ -1,9 +1,9 @@
 /* @refresh reload */
 import { render } from "solid-js/web";
 
-import App from "./App";
 import "@fontsource-variable/roboto";
 import "@glassact/ui/globals.css";
+import App from "./App";
 
 const root = document.getElementById("root");
 

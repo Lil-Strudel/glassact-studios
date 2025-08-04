@@ -1,21 +1,34 @@
-import { A, RouteSectionProps } from "@solidjs/router";
-import { type Component, For } from "solid-js";
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  redirect,
+} from "@tanstack/solid-router";
+import { For } from "solid-js";
 import { IoPersonOutline, IoBusinessOutline } from "solid-icons/io";
+
+export const Route = createFileRoute("/_appLayout/admin")({
+  component: RouteComponent,
+  beforeLoad({ location }) {
+    if (location.pathname.split("/").length < 3) {
+      throw redirect({ to: "/admin/dealerships", replace: true });
+    }
+  },
+});
 
 const navigationItems = [
   {
-    label: "Users",
+    label: "Dealerships",
     icon: IoBusinessOutline,
-    path: "/dealership/:id/users",
+    path: "/admin/dealerships",
   },
   {
-    label: "Settings",
+    label: "Users",
     icon: IoPersonOutline,
-    path: "/dealership/:id/settings",
+    path: "/admin/users",
   },
 ];
-
-const DealershipLayout: Component<RouteSectionProps<unknown>> = (props) => {
+function RouteComponent() {
   return (
     <div>
       <div class="pt-16 lg:flex lg:gap-x-16">
@@ -29,15 +42,18 @@ const DealershipLayout: Component<RouteSectionProps<unknown>> = (props) => {
                 {(item) => {
                   return (
                     <li>
-                      <A
-                        href={item.path}
+                      <Link
+                        to={item.path}
                         class="group flex gap-x-3 rounded-md py-2 pl-2 pr-3 text-sm/6 font-semibold"
-                        activeClass="bg-gray-50 text-primary"
-                        inactiveClass="text-gray-700 hover:bg-gray-50 hover:text-primary"
+                        activeProps={{ class: "bg-gray-50 text-primary" }}
+                        inactiveProps={{
+                          class:
+                            "text-gray-700 hover:bg-gray-50 hover:text-primary",
+                        }}
                       >
                         <item.icon size={24} />
                         {item.label}
-                      </A>
+                      </Link>
                     </li>
                   );
                 }}
@@ -47,11 +63,9 @@ const DealershipLayout: Component<RouteSectionProps<unknown>> = (props) => {
         </aside>
 
         <div class="mx-auto max-w-2xl w-full space-y-16 sm:space-y-20 lg:mx-0 lg:max-w-none">
-          {props.children}
+          <Outlet />
         </div>
       </div>
     </div>
   );
-};
-
-export default DealershipLayout;
+}

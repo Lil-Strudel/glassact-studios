@@ -1,4 +1,4 @@
-import type { Component } from "solid-js";
+import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import {
   Tabs,
   TabsContent,
@@ -13,12 +13,17 @@ import {
 import { IoClose } from "solid-icons/io";
 import { createForm } from "@tanstack/solid-form";
 import { Inlay, POST } from "@glassact/data";
-import { useAppState } from "../providers/app-state";
-import { useNavigate } from "@solidjs/router";
+import { useAppState } from "../../providers/app-state";
 import { z } from "zod";
-import { zodStringNumber } from "../utils/zod-string-number";
+import { zodStringNumber } from "../../utils/zod-string-number";
 
-const AddInlay: Component = () => {
+export const Route = createFileRoute(
+  "/_appLayout/projects_/create-project_/add-inlay",
+)({
+  component: RouteComponent,
+});
+
+function RouteComponent() {
   const [state, setState] = useAppState();
   const navigate = useNavigate();
 
@@ -54,7 +59,7 @@ const AddInlay: Component = () => {
           catalog_item_id: 123,
         },
       });
-      navigate("/projects/create-project");
+      navigate({ to: "/projects/create-project" });
     },
   }));
 
@@ -245,6 +250,4 @@ const AddInlay: Component = () => {
       </Tabs>
     </div>
   );
-};
-
-export default AddInlay;
+}

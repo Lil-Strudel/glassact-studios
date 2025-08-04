@@ -1,5 +1,24 @@
-import type { Component } from "solid-js";
-const NotFound: Component = () => {
+import { Outlet, createRootRouteWithContext } from "@tanstack/solid-router";
+import { TanStackRouterDevtools } from "@tanstack/solid-router-devtools";
+import { SolidQueryDevtools } from "@tanstack/solid-query-devtools";
+import { RouterContext } from "../App";
+
+export const Route = createRootRouteWithContext<RouterContext>()({
+  component: RootComponent,
+  notFoundComponent: NotFoundComponent,
+});
+
+function RootComponent() {
+  return (
+    <>
+      <Outlet />
+      <TanStackRouterDevtools />
+      <SolidQueryDevtools buttonPosition="bottom-left" />
+    </>
+  );
+}
+
+function NotFoundComponent() {
   return (
     <main class="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
       <div class="text-center">
@@ -14,6 +33,4 @@ const NotFound: Component = () => {
       </div>
     </main>
   );
-};
-
-export default NotFound;
+}

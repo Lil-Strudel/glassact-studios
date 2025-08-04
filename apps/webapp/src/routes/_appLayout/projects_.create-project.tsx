@@ -1,13 +1,17 @@
+import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { Breadcrumb, Button, Form } from "@glassact/ui";
-import { type Component, For, Show } from "solid-js";
-import { formatMoney } from "../utils/format-money";
-import { initialAppState, useAppState } from "../providers/app-state";
-import { useNavigate } from "@solidjs/router";
+import { For, Show } from "solid-js";
+import { formatMoney } from "../../utils/format-money";
+import { initialAppState, useAppState } from "../../providers/app-state";
 import { reconcile } from "solid-js/store";
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
 
-const CreateProject: Component = () => {
+export const Route = createFileRoute("/_appLayout/projects_/create-project")({
+  component: RouteComponent,
+});
+
+function RouteComponent() {
   const navigate = useNavigate();
   const [state, setState] = useAppState();
 
@@ -42,7 +46,7 @@ const CreateProject: Component = () => {
     },
     onSubmit: async ({ value }) => {
       resetState();
-      navigate("/projects");
+      navigate({ to: "/projects" });
     },
   }));
 
@@ -214,6 +218,4 @@ const CreateProject: Component = () => {
       </div>
     </div>
   );
-};
-
-export default CreateProject;
+}

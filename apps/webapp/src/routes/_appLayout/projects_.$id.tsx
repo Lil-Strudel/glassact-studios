@@ -1,16 +1,14 @@
+import { createFileRoute } from "@tanstack/solid-router";
 import { GET, Project } from "@glassact/data";
 import { Breadcrumb, Button, cn, TextField, TextFieldRoot } from "@glassact/ui";
-import {
-  createSignal,
-  Component,
-  Index,
-  Show,
-  createEffect,
-  onMount,
-} from "solid-js";
+import { createSignal, Index, Show } from "solid-js";
 import { IoCheckmarkCircleOutline } from "solid-icons/io";
 
-const ProjectPage: Component = () => {
+export const Route = createFileRoute("/_appLayout/projects_/$id")({
+  component: RouteComponent,
+});
+
+function RouteComponent() {
   const [selectedInlay, setSelectedInlay] = createSignal(0);
   const [messages, setMessages] = createSignal([
     {
@@ -135,7 +133,6 @@ const ProjectPage: Component = () => {
     { name: "Shipping", href: "#", status: "upcoming" },
     { name: "Delivered", href: "#", status: "upcoming" },
   ];
-
   return (
     <div>
       <Breadcrumb
@@ -374,6 +371,4 @@ const ProjectPage: Component = () => {
       </div>
     </div>
   );
-};
-
-export default ProjectPage;
+}

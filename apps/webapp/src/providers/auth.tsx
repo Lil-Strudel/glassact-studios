@@ -8,12 +8,17 @@ import {
 } from "solid-js";
 import { postAuthTokenAccessOpts } from "../queries/auth";
 import api from "../queries/api";
+import { DeferredPromise } from "../utils/deferred-promise";
 
-type AuthStatus = "unauthenticated" | "pending" | "authenticated";
-export const AuthContext = createContext<{
+type AuthStatus = "pending" | "unauthenticated" | "authenticated";
+type SettledAuthStatus = "unauthenticated" | "authenticated";
+
+export interface AuthState {
   status: () => AuthStatus;
   setStatus: (v: AuthStatus | ((prev: AuthStatus) => AuthStatus)) => AuthStatus;
-}>();
+  deferredStatus: () => DeferredPromise<SettledAuthStatus>;
+}
+export const AuthContext = createContext<AuthState>();
 
 export function useAuthContext() {
   const context = useContext(AuthContext);
@@ -25,6 +30,9 @@ export function useAuthContext() {
 
 export const AuthProvider: ParentComponent = (props) => {
   const [status, setStatus] = createSignal<AuthStatus>("pending");
+  const [deferredStatus] = createSignal(
+    new DeferredPromise<SettledAuthStatus>(),
+  );
 
   const queryOptions = postAuthTokenAccessOpts();
   queryOptions.staleTime = Infinity;
@@ -37,6 +45,7 @@ export const AuthProvider: ParentComponent = (props) => {
     switch (query.status) {
       case "success": {
         setStatus("authenticated");
+        deferredStatus().resolve("authenticated");
         api.defaults.headers = {
           Authorization: `Bearer ${query.data.access_token}`,
         };
@@ -45,6 +54,7 @@ export const AuthProvider: ParentComponent = (props) => {
 
       case "error": {
         setStatus("unauthenticated");
+        deferredStatus().resolve("unauthenticated");
         break;
       }
       default: {
@@ -54,7 +64,7 @@ export const AuthProvider: ParentComponent = (props) => {
   });
 
   return (
-    <AuthContext.Provider value={{ status, setStatus }}>
+    <AuthContext.Provider value={{ status, setStatus, deferredStatus }}>
       {props.children}
     </AuthContext.Provider>
   );

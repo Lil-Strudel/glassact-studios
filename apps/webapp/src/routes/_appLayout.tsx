@@ -1,4 +1,9 @@
-import type { Component } from "solid-js";
+import {
+  createFileRoute,
+  Outlet,
+  Link,
+  redirect,
+} from "@tanstack/solid-router";
 import { createSignal } from "solid-js";
 import {
   Button,
@@ -7,15 +12,30 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@glassact/ui";
-import { A, RouteSectionProps } from "@solidjs/router";
 import { IoClose, IoMenu, IoNotificationsOutline } from "solid-icons/io";
 import { useQuery } from "@tanstack/solid-query";
 import { getUserSelfOpts } from "../queries/user";
 
+export const Route = createFileRoute("/_appLayout")({
+  component: RouteComponent,
+  beforeLoad: async ({ context, location }) => {
+    const status = await context.auth.deferredStatus().promise;
+
+    if (status === "unauthenticated") {
+      throw redirect({
+        to: "/login",
+        replace: true,
+        search: {
+          redirect: location.href,
+        },
+      });
+    }
+  },
+});
+
 const navigation = [
   { name: "Dashboard", href: "/dashboard" },
   { name: "Projects", href: "/projects" },
-  { name: "My Org", href: "/organization" },
   { name: "Help", href: "/help" },
   { name: "Admin", href: "/admin" },
 ];
@@ -24,7 +44,7 @@ const userNavigation = [
   { name: "Logout", href: "/api/auth/logout", props: { rel: "external" } },
 ];
 
-const AppLayout: Component<RouteSectionProps<unknown>> = (props) => {
+function RouteComponent() {
   const query = useQuery(getUserSelfOpts);
 
   const [open, setOpen] = createSignal(false);
@@ -55,14 +75,17 @@ const AppLayout: Component<RouteSectionProps<unknown>> = (props) => {
                 </div>
                 <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
                   {navigation.map((item) => (
-                    <A
-                      href={item.href}
-                      activeClass="border-primary"
-                      inactiveClass="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                    <Link
+                      to={item.href}
                       class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium"
+                      activeProps={{ class: "border-primary" }}
+                      inactiveProps={{
+                        class:
+                          "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
+                      }}
                     >
                       {item.name}
-                    </A>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -100,14 +123,17 @@ const AppLayout: Component<RouteSectionProps<unknown>> = (props) => {
             <div class="bg-white w-full drop-shadow absolute sm:hidden">
               <div class="space-y-1 pb-3 pt-2">
                 {navigation.map((item) => (
-                  <A
-                    href={item.href}
-                    activeClass="border-primary bg-red-50"
-                    inactiveClass="border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800"
+                  <Link
+                    to={item.href}
                     class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
+                    activeProps={{ class: "border-primary bg-red-50" }}
+                    inactiveProps={{
+                      class:
+                        "border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800",
+                    }}
                   >
                     {item.name}
-                  </A>
+                  </Link>
                 ))}
               </div>
               <div class="border-t border-gray-200 pb-3 pt-4">
@@ -133,14 +159,17 @@ const AppLayout: Component<RouteSectionProps<unknown>> = (props) => {
                 </div>
                 <div class="mt-3 space-y-1">
                   {userNavigation.map((item) => (
-                    <A
-                      href={item.href}
-                      activeClass="border-primary bg-red-50"
-                      inactiveClass="border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800"
+                    <Link
+                      to={item.href}
                       class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
+                      activeProps={{ class: "border-primary bg-red-50" }}
+                      inactiveProps={{
+                        class:
+                          "border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800",
+                      }}
                     >
                       {item.name}
-                    </A>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -149,12 +178,10 @@ const AppLayout: Component<RouteSectionProps<unknown>> = (props) => {
         </nav>
         <main>
           <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            {props.children}
+            <Outlet />
           </div>
         </main>
       </div>
     </div>
   );
-};
-
-export default AppLayout;
+}

@@ -1,23 +1,48 @@
+import { RouterProvider, createRouter } from "@tanstack/solid-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
-import type { Component } from "solid-js";
-import Routes from "./Routes";
-import { AuthProvider } from "./providers/auth";
+import { AuthProvider, AuthState, useAuthContext } from "./providers/auth";
 import { AppStateProvider } from "./providers/app-state";
+import { routeTree } from "./routeTree.gen";
+
+export interface RouterContext {
+  queryClient: QueryClient;
+  auth: AuthState;
+}
 
 const queryClient = new QueryClient();
+const router = createRouter({
+  routeTree,
+  context: {
+    queryClient,
+    auth: null!,
+  },
+  scrollRestoration: true,
+  defaultPreload: "intent",
+  defaultPreloadStaleTime: 0,
+  notFoundMode: "root",
+});
 
-const App: Component = () => {
+declare module "@tanstack/solid-router" {
+  interface Register {
+    router: typeof router;
+  }
+}
+
+function RouterWrapper() {
+  const auth = useAuthContext();
+  return <RouterProvider router={router} context={{ auth }} />;
+}
+
+function App() {
   return (
-    <div>
-      <QueryClientProvider client={queryClient}>
-        <AppStateProvider>
-          <AuthProvider>
-            <Routes />
-          </AuthProvider>
-        </AppStateProvider>
-      </QueryClientProvider>
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <AppStateProvider>
+        <AuthProvider>
+          <RouterWrapper />
+        </AuthProvider>
+      </AppStateProvider>
+    </QueryClientProvider>
   );
-};
+}
 
 export default App;

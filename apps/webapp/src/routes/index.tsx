@@ -1,7 +1,22 @@
-import { type Component } from "solid-js";
+import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { Button } from "@glassact/ui";
+import { createEffect } from "solid-js";
+import { useAuthContext } from "../providers/auth";
 
-const Home: Component = () => {
+export const Route = createFileRoute("/")({
+  component: RouteComponent,
+});
+
+function RouteComponent() {
+  const auth = useAuthContext();
+  const navigate = useNavigate();
+
+  createEffect(() => {
+    if (auth.status() === "authenticated") {
+      navigate({ to: "/dashboard", replace: true });
+    }
+  });
+
   return (
     <div>
       <div class="min-h-full">
@@ -47,6 +62,4 @@ const Home: Component = () => {
       </div>
     </div>
   );
-};
-
-export default Home;
+}
