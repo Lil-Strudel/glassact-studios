@@ -14,6 +14,7 @@ import { Route as AppLayoutRouteImport } from './routes/_appLayout'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppLayoutSettingsRouteImport } from './routes/_appLayout/settings'
 import { Route as AppLayoutProjectsRouteImport } from './routes/_appLayout/projects'
+import { Route as AppLayoutInlaysRouteImport } from './routes/_appLayout/inlays'
 import { Route as AppLayoutHelpRouteImport } from './routes/_appLayout/help'
 import { Route as AppLayoutDashboardRouteImport } from './routes/_appLayout/dashboard'
 import { Route as AppLayoutAdminRouteImport } from './routes/_appLayout/admin'
@@ -48,6 +49,11 @@ const AppLayoutSettingsRoute = AppLayoutSettingsRouteImport.update({
 const AppLayoutProjectsRoute = AppLayoutProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
+  getParentRoute: () => AppLayoutRoute,
+} as any)
+const AppLayoutInlaysRoute = AppLayoutInlaysRouteImport.update({
+  id: '/inlays',
+  path: '/inlays',
   getParentRoute: () => AppLayoutRoute,
 } as any)
 const AppLayoutHelpRoute = AppLayoutHelpRouteImport.update({
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AppLayoutAdminRouteWithChildren
   '/dashboard': typeof AppLayoutDashboardRoute
   '/help': typeof AppLayoutHelpRoute
+  '/inlays': typeof AppLayoutInlaysRoute
   '/projects': typeof AppLayoutProjectsRoute
   '/settings': typeof AppLayoutSettingsRoute
   '/admin/dealerships': typeof AppLayoutAdminDealershipsRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AppLayoutAdminRouteWithChildren
   '/dashboard': typeof AppLayoutDashboardRoute
   '/help': typeof AppLayoutHelpRoute
+  '/inlays': typeof AppLayoutInlaysRoute
   '/projects': typeof AppLayoutProjectsRoute
   '/settings': typeof AppLayoutSettingsRoute
   '/admin/dealerships': typeof AppLayoutAdminDealershipsRoute
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/_appLayout/admin': typeof AppLayoutAdminRouteWithChildren
   '/_appLayout/dashboard': typeof AppLayoutDashboardRoute
   '/_appLayout/help': typeof AppLayoutHelpRoute
+  '/_appLayout/inlays': typeof AppLayoutInlaysRoute
   '/_appLayout/projects': typeof AppLayoutProjectsRoute
   '/_appLayout/settings': typeof AppLayoutSettingsRoute
   '/_appLayout/admin/dealerships': typeof AppLayoutAdminDealershipsRoute
@@ -172,6 +181,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/help'
+    | '/inlays'
     | '/projects'
     | '/settings'
     | '/admin/dealerships'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/help'
+    | '/inlays'
     | '/projects'
     | '/settings'
     | '/admin/dealerships'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/_appLayout/admin'
     | '/_appLayout/dashboard'
     | '/_appLayout/help'
+    | '/_appLayout/inlays'
     | '/_appLayout/projects'
     | '/_appLayout/settings'
     | '/_appLayout/admin/dealerships'
@@ -260,6 +272,13 @@ declare module '@tanstack/solid-router' {
       path: '/projects'
       fullPath: '/projects'
       preLoaderRoute: typeof AppLayoutProjectsRouteImport
+      parentRoute: typeof AppLayoutRoute
+    }
+    '/_appLayout/inlays': {
+      id: '/_appLayout/inlays'
+      path: '/inlays'
+      fullPath: '/inlays'
+      preLoaderRoute: typeof AppLayoutInlaysRouteImport
       parentRoute: typeof AppLayoutRoute
     }
     '/_appLayout/help': {
@@ -375,6 +394,7 @@ interface AppLayoutRouteChildren {
   AppLayoutAdminRoute: typeof AppLayoutAdminRouteWithChildren
   AppLayoutDashboardRoute: typeof AppLayoutDashboardRoute
   AppLayoutHelpRoute: typeof AppLayoutHelpRoute
+  AppLayoutInlaysRoute: typeof AppLayoutInlaysRoute
   AppLayoutProjectsRoute: typeof AppLayoutProjectsRoute
   AppLayoutSettingsRoute: typeof AppLayoutSettingsRoute
   AppLayoutDealershipIdRoute: typeof AppLayoutDealershipIdRouteWithChildren
@@ -387,6 +407,7 @@ const AppLayoutRouteChildren: AppLayoutRouteChildren = {
   AppLayoutAdminRoute: AppLayoutAdminRouteWithChildren,
   AppLayoutDashboardRoute: AppLayoutDashboardRoute,
   AppLayoutHelpRoute: AppLayoutHelpRoute,
+  AppLayoutInlaysRoute: AppLayoutInlaysRoute,
   AppLayoutProjectsRoute: AppLayoutProjectsRoute,
   AppLayoutSettingsRoute: AppLayoutSettingsRoute,
   AppLayoutDealershipIdRoute: AppLayoutDealershipIdRouteWithChildren,

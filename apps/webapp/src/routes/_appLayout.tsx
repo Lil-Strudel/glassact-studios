@@ -38,6 +38,7 @@ const navigation = [
   { name: "Projects", href: "/projects" },
   { name: "Help", href: "/help" },
   { name: "Admin", href: "/admin" },
+  { name: "Inlays", href: "/inlays" },
 ];
 const userNavigation = [
   { name: "Settings", href: "/settings", props: {} },
