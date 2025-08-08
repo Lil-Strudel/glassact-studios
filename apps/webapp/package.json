@@ -4,11 +4,13 @@
   "version": "0.0.1",
   "scripts": {
     "start": "vite",
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
     "serve": "vite preview"
   },
   "dependencies": {
+    "@atlaskit/pragmatic-drag-and-drop": "^1.7.4",
+    "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "^2.1.1",
     "@fontsource-variable/roboto": "^5.2.6",
     "@glassact/ui": "workspace:*",
     "@tanstack/solid-form": "catalog:",

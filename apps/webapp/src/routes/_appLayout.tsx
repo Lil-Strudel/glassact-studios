@@ -22,13 +22,13 @@ export const Route = createFileRoute("/_appLayout")({
     const status = await context.auth.deferredStatus().promise;
 
     if (status === "unauthenticated") {
-      throw redirect({
-        to: "/login",
-        replace: true,
-        search: {
-          redirect: location.href,
-        },
-      });
+      // throw redirect({
+      //   to: "/login",
+      //   replace: true,
+      //   search: {
+      //     redirect: location.href,
+      //   },
+      // });
     }
   },
 });
