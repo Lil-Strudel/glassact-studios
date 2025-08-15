@@ -36,9 +36,8 @@ export const Route = createFileRoute("/_appLayout")({
 const navigation = [
   { name: "Dashboard", href: "/dashboard" },
   { name: "Projects", href: "/projects" },
-  { name: "Help", href: "/help" },
-  { name: "Admin", href: "/admin" },
   { name: "Inlays", href: "/inlays" },
+  { name: "Admin", href: "/admin" },
 ];
 const userNavigation = [
   { name: "Settings", href: "/settings", props: {} },

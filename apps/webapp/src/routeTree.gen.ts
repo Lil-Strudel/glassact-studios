@@ -15,7 +15,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppLayoutSettingsRouteImport } from './routes/_appLayout/settings'
 import { Route as AppLayoutProjectsRouteImport } from './routes/_appLayout/projects'
 import { Route as AppLayoutInlaysRouteImport } from './routes/_appLayout/inlays'
-import { Route as AppLayoutHelpRouteImport } from './routes/_appLayout/help'
 import { Route as AppLayoutDashboardRouteImport } from './routes/_appLayout/dashboard'
 import { Route as AppLayoutAdminRouteImport } from './routes/_appLayout/admin'
 import { Route as AppLayoutProjectsCreateProjectRouteImport } from './routes/_appLayout/projects_.create-project'
@@ -54,11 +53,6 @@ const AppLayoutProjectsRoute = AppLayoutProjectsRouteImport.update({
 const AppLayoutInlaysRoute = AppLayoutInlaysRouteImport.update({
   id: '/inlays',
   path: '/inlays',
-  getParentRoute: () => AppLayoutRoute,
-} as any)
-const AppLayoutHelpRoute = AppLayoutHelpRouteImport.update({
-  id: '/help',
-  path: '/help',
   getParentRoute: () => AppLayoutRoute,
 } as any)
 const AppLayoutDashboardRoute = AppLayoutDashboardRouteImport.update({
@@ -122,7 +116,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/admin': typeof AppLayoutAdminRouteWithChildren
   '/dashboard': typeof AppLayoutDashboardRoute
-  '/help': typeof AppLayoutHelpRoute
   '/inlays': typeof AppLayoutInlaysRoute
   '/projects': typeof AppLayoutProjectsRoute
   '/settings': typeof AppLayoutSettingsRoute
@@ -140,7 +133,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/admin': typeof AppLayoutAdminRouteWithChildren
   '/dashboard': typeof AppLayoutDashboardRoute
-  '/help': typeof AppLayoutHelpRoute
   '/inlays': typeof AppLayoutInlaysRoute
   '/projects': typeof AppLayoutProjectsRoute
   '/settings': typeof AppLayoutSettingsRoute
@@ -160,7 +152,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_appLayout/admin': typeof AppLayoutAdminRouteWithChildren
   '/_appLayout/dashboard': typeof AppLayoutDashboardRoute
-  '/_appLayout/help': typeof AppLayoutHelpRoute
   '/_appLayout/inlays': typeof AppLayoutInlaysRoute
   '/_appLayout/projects': typeof AppLayoutProjectsRoute
   '/_appLayout/settings': typeof AppLayoutSettingsRoute
@@ -180,7 +171,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin'
     | '/dashboard'
-    | '/help'
     | '/inlays'
     | '/projects'
     | '/settings'
@@ -198,7 +188,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin'
     | '/dashboard'
-    | '/help'
     | '/inlays'
     | '/projects'
     | '/settings'
@@ -217,7 +206,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/_appLayout/admin'
     | '/_appLayout/dashboard'
-    | '/_appLayout/help'
     | '/_appLayout/inlays'
     | '/_appLayout/projects'
     | '/_appLayout/settings'
@@ -279,13 +267,6 @@ declare module '@tanstack/solid-router' {
       path: '/inlays'
       fullPath: '/inlays'
       preLoaderRoute: typeof AppLayoutInlaysRouteImport
-      parentRoute: typeof AppLayoutRoute
-    }
-    '/_appLayout/help': {
-      id: '/_appLayout/help'
-      path: '/help'
-      fullPath: '/help'
-      preLoaderRoute: typeof AppLayoutHelpRouteImport
       parentRoute: typeof AppLayoutRoute
     }
     '/_appLayout/dashboard': {
@@ -393,7 +374,6 @@ const AppLayoutDealershipIdRouteWithChildren =
 interface AppLayoutRouteChildren {
   AppLayoutAdminRoute: typeof AppLayoutAdminRouteWithChildren
   AppLayoutDashboardRoute: typeof AppLayoutDashboardRoute
-  AppLayoutHelpRoute: typeof AppLayoutHelpRoute
   AppLayoutInlaysRoute: typeof AppLayoutInlaysRoute
   AppLayoutProjectsRoute: typeof AppLayoutProjectsRoute
   AppLayoutSettingsRoute: typeof AppLayoutSettingsRoute
@@ -406,7 +386,6 @@ interface AppLayoutRouteChildren {
 const AppLayoutRouteChildren: AppLayoutRouteChildren = {
   AppLayoutAdminRoute: AppLayoutAdminRouteWithChildren,
   AppLayoutDashboardRoute: AppLayoutDashboardRoute,
-  AppLayoutHelpRoute: AppLayoutHelpRoute,
   AppLayoutInlaysRoute: AppLayoutInlaysRoute,
   AppLayoutProjectsRoute: AppLayoutProjectsRoute,
   AppLayoutSettingsRoute: AppLayoutSettingsRoute,
