@@ -1,20 +1,25 @@
 import {
   cn,
   Card,
-  CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
   Button,
 } from "@glassact/ui";
 import { createFileRoute } from "@tanstack/solid-router";
-import { createSignal, For, JSXElement, onCleanup, onMount } from "solid-js";
+import {
+  createSignal,
+  For,
+  onCleanup,
+  onMount,
+  ParentComponent,
+} from "solid-js";
 import {
   draggable,
   dropTargetForElements,
   monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { unsafeOverflowAutoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/unsafe-overflow/element";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { CleanupFn } from "@atlaskit/pragmatic-drag-and-drop/dist/types/internal-types";
@@ -26,7 +31,7 @@ export const Route = createFileRoute("/_appLayout/inlays")({
   component: RouteComponent,
 });
 
-function DraggableDiv(props: { id: number }) {
+function InlayCard(props: { id: number }) {
   let ref!: HTMLDivElement;
   const [dragging, setDragging] = createSignal(false);
 
@@ -52,7 +57,7 @@ function DraggableDiv(props: { id: number }) {
   return (
     <Card ref={ref} class={cn("w-full touch-none", dragging() && "opacity-30")}>
       <CardHeader class="flex-row justify-between">
-        <div class="flex items-center gap-2">
+        <div class="flex align-middle gap-2">
           <img
             alt="inlay name"
             src="https://placehold.co/75x75"
@@ -71,7 +76,10 @@ function DraggableDiv(props: { id: number }) {
   );
 }
 
-function DroppableDiv(props: { id: number; children: JSXElement }) {
+interface StepColumnProps {
+  column: Column;
+}
+const StepColumn: ParentComponent<StepColumnProps> = (props) => {
   let ref!: HTMLDivElement;
   const [draggedOver, setDraggedOver] = createSignal(false);
 
@@ -80,7 +88,7 @@ function DroppableDiv(props: { id: number; children: JSXElement }) {
     if (!ref) return;
     const c1 = dropTargetForElements({
       element: ref,
-      getData: () => ({ id: props.id }),
+      getData: () => ({ id: props.column.id }),
       onDragEnter: () => setDraggedOver(true),
       onDragLeave: () => setDraggedOver(false),
       onDrop: () => setDraggedOver(false),
@@ -107,14 +115,15 @@ function DroppableDiv(props: { id: number; children: JSXElement }) {
         draggedOver() && "bg-blue-100",
       )}
     >
-      <span class="text-xl">Title</span>
+      <span class="text-xl">{props.column.title}</span>
       {props.children}
     </div>
   );
-}
+};
 
 interface Column {
   id: number;
+  title: string;
   cards: number[];
 }
 
@@ -123,18 +132,13 @@ type Data = Column[];
 function RouteComponent() {
   let ref!: HTMLDivElement;
   const [data, setData] = createSignal<Data>([
-    { id: 0, cards: [0, 1, 2] },
-    { id: 1, cards: [3, 4, 5] },
-    { id: 2, cards: [6, 7, 8] },
-    { id: 3, cards: [9, 10, 11] },
-    { id: 4, cards: [12, 13, 14] },
-    { id: 5, cards: [15, 16, 17] },
-    {
-      id: 6,
-      cards: [18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32],
-    },
-    { id: 7, cards: [33, 34] },
-    { id: 8, cards: [35] },
+    { id: 0, title: "Inlay Ordered", cards: [0, 1, 2] },
+    { id: 1, title: "Prepping Materials", cards: [3, 5] },
+    { id: 2, title: "Materials Cut", cards: [6] },
+    { id: 3, title: "Inlay Cut", cards: [11] },
+    { id: 4, title: "Fire Polish", cards: [12, 13, 14] },
+    { id: 5, title: "Packaged", cards: [] },
+    { id: 6, title: "Shipped", cards: [18, 19, 20] },
   ]);
 
   let cleanup: CleanupFn;
@@ -173,7 +177,33 @@ function RouteComponent() {
       element: ref,
     });
 
-    cleanup = combine(c1, c2);
+    const c3 = unsafeOverflowAutoScrollForElements({
+      element: ref,
+      getOverflow: () => ({
+        forTopEdge: {
+          top: 6000,
+          right: 6000,
+          left: 6000,
+        },
+        forRightEdge: {
+          top: 6000,
+          right: 6000,
+          bottom: 6000,
+        },
+        forBottomEdge: {
+          right: 6000,
+          bottom: 6000,
+          left: 6000,
+        },
+        forLeftEdge: {
+          top: 6000,
+          left: 6000,
+          bottom: 6000,
+        },
+      }),
+    });
+
+    cleanup = combine(c1, c2, c3);
   });
 
   onCleanup(() => {
@@ -186,11 +216,9 @@ function RouteComponent() {
     <div ref={ref} class="flex gap-4 overflow-x-auto">
       <For each={data()}>
         {(item) => (
-          <DroppableDiv id={item.id}>
-            <For each={item.cards}>
-              {(cardId) => <DraggableDiv id={cardId} />}
-            </For>
-          </DroppableDiv>
+          <StepColumn column={item}>
+            <For each={item.cards}>{(cardId) => <InlayCard id={cardId} />}</For>
+          </StepColumn>
         )}
       </For>
     </div>
