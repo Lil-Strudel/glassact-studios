@@ -10,18 +10,15 @@ import (
 )
 
 type Account struct {
-	ID                   int       `json:"id"`
-	UUID                 string    `json:"uuid"`
-	UserID               int       `json:"user_id"`
-	Type                 string    `json:"type"`
-	Provider             string    `json:"provider"`
-	ProviderAccountID    string    `json:"provider_account_id"`
-	RefreshToken         string    `json:"refresh_token"`
-	AccessToken          string    `json:"access_token"`
-	AccessTokenExpiresAt time.Time `json:"access_token_expires_at"`
-	CreatedAt            time.Time `json:"created_at"`
-	UpdatedAt            time.Time `json:"updated_at"`
-	Version              int       `json:"version"`
+	ID                int       `json:"id"`
+	UUID              string    `json:"uuid"`
+	UserID            int       `json:"user_id"`
+	Type              string    `json:"type"`
+	Provider          string    `json:"provider"`
+	ProviderAccountID string    `json:"provider_account_id"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
+	Version           int       `json:"version"`
 }
 
 type AccountModel struct {
@@ -32,7 +29,7 @@ func (m AccountModel) Insert(account *Account) error {
 	query := `
         INSERT INTO accounts (user_id, type, provider, provider_account_id) 
         VALUES ($1, $2, $3, $4)
-        RETURNING id, uuid, created_at, version`
+        RETURNING id, uuid, created_at, updated_at, version`
 
 	args := []any{
 		account.UserID,
@@ -44,7 +41,7 @@ func (m AccountModel) Insert(account *Account) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(&account.ID, &account.UUID, &account.CreatedAt, &account.Version)
+	err := m.DB.QueryRow(ctx, query, args...).Scan(&account.ID, &account.UUID, &account.CreatedAt, &account.UpdatedAt, &account.Version)
 	if err != nil {
 		return err
 	}
@@ -54,7 +51,7 @@ func (m AccountModel) Insert(account *Account) error {
 
 func (m AccountModel) GetByID(id int) (*Account, bool, error) {
 	query := `
-        SELECT id, uuid, user_id, type, provider, provider_account_id, created_at, version
+        SELECT id, uuid, user_id, type, provider, provider_account_id, created_at, updated_at, version
         FROM accounts
         WHERE id = $1`
 
@@ -63,7 +60,7 @@ func (m AccountModel) GetByID(id int) (*Account, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, id).Scan(&account.ID, &account.UUID, &account.UserID, &account.Type, &account.Provider, &account.ProviderAccountID, &account.CreatedAt, &account.Version)
+	err := m.DB.QueryRow(ctx, query, id).Scan(&account.ID, &account.UUID, &account.UserID, &account.Type, &account.Provider, &account.ProviderAccountID, &account.CreatedAt, &account.UpdatedAt, &account.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
@@ -78,7 +75,7 @@ func (m AccountModel) GetByID(id int) (*Account, bool, error) {
 
 func (m AccountModel) GetByUUID(uuid string) (*Account, bool, error) {
 	query := `
-        SELECT id, uuid, user_id, type, provider, provider_account_id, created_at, version
+        SELECT id, uuid, user_id, type, provider, provider_account_id, created_at, updated_at, version
         FROM accounts
         WHERE uuid = $1`
 
@@ -87,7 +84,7 @@ func (m AccountModel) GetByUUID(uuid string) (*Account, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, uuid).Scan(&account.ID, &account.UUID, &account.UserID, &account.Type, &account.Provider, &account.ProviderAccountID, &account.CreatedAt, &account.Version)
+	err := m.DB.QueryRow(ctx, query, uuid).Scan(&account.ID, &account.UUID, &account.UserID, &account.Type, &account.Provider, &account.ProviderAccountID, &account.CreatedAt, &account.UpdatedAt, &account.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
@@ -102,7 +99,7 @@ func (m AccountModel) GetByUUID(uuid string) (*Account, bool, error) {
 
 func (m AccountModel) GetByProvider(provider string, providerAccountId string) (*Account, bool, error) {
 	query := `
-        SELECT id, uuid, user_id, type, provider, provider_account_id, created_at, version
+        SELECT id, uuid, user_id, type, provider, provider_account_id, created_at, updated_at, version
         FROM accounts
         WHERE provider = $1 AND provider_account_id = $2`
 
@@ -116,7 +113,7 @@ func (m AccountModel) GetByProvider(provider string, providerAccountId string) (
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(&account.ID, &account.UUID, &account.UserID, &account.Type, &account.Provider, &account.ProviderAccountID, &account.CreatedAt, &account.Version)
+	err := m.DB.QueryRow(ctx, query, args...).Scan(&account.ID, &account.UUID, &account.UserID, &account.Type, &account.Provider, &account.ProviderAccountID, &account.CreatedAt, &account.UpdatedAt, &account.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):

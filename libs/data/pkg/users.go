@@ -29,14 +29,14 @@ func (m UserModel) Insert(user *User) error {
 	query := `
         INSERT INTO users (name, email, avatar) 
         VALUES ($1, $2, $3)
-        RETURNING id, uuid, created_at, version`
+        RETURNING id, uuid, created_at, updated_at, version`
 
 	args := []any{user.Name, user.Email, user.Avatar}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(&user.ID, &user.UUID, &user.CreatedAt, &user.Version)
+	err := m.DB.QueryRow(ctx, query, args...).Scan(&user.ID, &user.UUID, &user.CreatedAt, &user.UpdatedAt, &user.Version)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (m UserModel) Insert(user *User) error {
 
 func (m UserModel) GetByID(id int) (*User, bool, error) {
 	query := `
-        SELECT id, uuid, name, email, avatar, created_at, version
+        SELECT id, uuid, name, email, avatar, created_at, updated_at, version
         FROM users
         WHERE id = $1`
 
@@ -55,7 +55,7 @@ func (m UserModel) GetByID(id int) (*User, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, id).Scan(&user.ID, &user.UUID, &user.Name, &user.Email, &user.Avatar, &user.CreatedAt, &user.Version)
+	err := m.DB.QueryRow(ctx, query, id).Scan(&user.ID, &user.UUID, &user.Name, &user.Email, &user.Avatar, &user.CreatedAt, &user.UpdatedAt, &user.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
@@ -70,7 +70,7 @@ func (m UserModel) GetByID(id int) (*User, bool, error) {
 
 func (m UserModel) GetByUUID(uuid string) (*User, bool, error) {
 	query := `
-        SELECT id, uuid, name, email, avatar, created_at, version
+        SELECT id, uuid, name, email, avatar, created_at, updated_at, version
         FROM users
         WHERE uuid = $1`
 
@@ -79,7 +79,7 @@ func (m UserModel) GetByUUID(uuid string) (*User, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, uuid).Scan(&user.ID, &user.UUID, &user.Name, &user.Email, &user.Avatar, &user.CreatedAt, &user.Version)
+	err := m.DB.QueryRow(ctx, query, uuid).Scan(&user.ID, &user.UUID, &user.Name, &user.Email, &user.Avatar, &user.CreatedAt, &user.UpdatedAt, &user.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
@@ -94,7 +94,7 @@ func (m UserModel) GetByUUID(uuid string) (*User, bool, error) {
 
 func (m UserModel) GetByEmail(email string) (*User, bool, error) {
 	query := `
-        SELECT id, uuid, name, email, avatar, created_at, version
+        SELECT id, uuid, name, email, avatar, created_at, updated_at, version
         FROM users
         WHERE email = $1`
 
@@ -103,7 +103,7 @@ func (m UserModel) GetByEmail(email string) (*User, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, email).Scan(&user.ID, &user.UUID, &user.Name, &user.Email, &user.Avatar, &user.CreatedAt, &user.Version)
+	err := m.DB.QueryRow(ctx, query, email).Scan(&user.ID, &user.UUID, &user.Name, &user.Email, &user.Avatar, &user.CreatedAt, &user.UpdatedAt, &user.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
@@ -120,7 +120,7 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, bool, 
 	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
 
 	query := `
-        SELECT users.id, users.uuid, users.name, users.email, users.avatar, users.created_at, users.version
+        SELECT users.id, users.uuid, users.name, users.email, users.avatar, users.created_at, users.updated_at, users.version
         FROM users
         INNER JOIN tokens
         ON users.id = tokens.user_id
@@ -142,6 +142,7 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, bool, 
 		&user.Email,
 		&user.Avatar,
 		&user.CreatedAt,
+		&user.UpdatedAt,
 		&user.Version,
 	)
 	if err != nil {

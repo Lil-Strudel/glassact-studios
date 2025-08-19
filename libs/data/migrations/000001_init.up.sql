@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     name text NOT NULL,
     email citext UNIQUE NOT NULL,
     avatar text NOT NULL,
+    updated_at timestamptz NOT NULL DEFAULT now(),
     created_at timestamptz NOT NULL DEFAULT now(),
     version integer NOT NULL DEFAULT 1
 );
@@ -17,6 +18,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     type VARCHAR(255) NOT NULL,
     provider VARCHAR(255) NOT NULL,
     provider_account_id VARCHAR(255) NOT NULL,
+    updated_at timestamptz NOT NULL DEFAULT now(),
     created_at timestamptz NOT NULL DEFAULT now(),
     version integer NOT NULL DEFAULT 1
 );
