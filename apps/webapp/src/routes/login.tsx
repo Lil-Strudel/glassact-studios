@@ -4,6 +4,8 @@ import { createEffect } from "solid-js";
 import { Button, Form } from "@glassact/ui";
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
+import { useMutation } from "@tanstack/solid-query";
+import { postAuthMagicLinkOpts } from "../queries/auth";
 
 export const Route = createFileRoute("/login")({
   component: RouteComponent,
@@ -13,17 +15,19 @@ function RouteComponent() {
   const auth = useAuthContext();
   const navigate = useNavigate();
 
+  const postAuthMagicLink = useMutation(postAuthMagicLinkOpts);
+
   const form = createForm(() => ({
     defaultValues: {
       email: "",
     },
     validators: {
       onSubmit: z.object({
-        email: z.email(),
+        email: z.string(),
       }),
     },
     onSubmit: async ({ value }) => {
-      console.log(value);
+      postAuthMagicLink.mutate(value);
     },
   }));
 

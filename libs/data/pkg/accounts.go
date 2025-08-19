@@ -10,14 +10,18 @@ import (
 )
 
 type Account struct {
-	ID                int       `json:"id"`
-	UUID              string    `json:"uuid"`
-	UserID            int       `json:"user_id"`
-	Type              string    `json:"type"`
-	Provider          string    `json:"provider"`
-	ProviderAccountID string    `json:"provider_account_id"`
-	CreatedAt         time.Time `json:"created_at"`
-	Version           int       `json:"version"`
+	ID                   int       `json:"id"`
+	UUID                 string    `json:"uuid"`
+	UserID               int       `json:"user_id"`
+	Type                 string    `json:"type"`
+	Provider             string    `json:"provider"`
+	ProviderAccountID    string    `json:"provider_account_id"`
+	RefreshToken         string    `json:"refresh_token"`
+	AccessToken          string    `json:"access_token"`
+	AccessTokenExpiresAt time.Time `json:"access_token_expires_at"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
+	Version              int       `json:"version"`
 }
 
 type AccountModel struct {

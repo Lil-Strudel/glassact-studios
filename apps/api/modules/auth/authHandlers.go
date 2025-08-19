@@ -89,8 +89,13 @@ func (app *application) HandleGetGoogleAuthCallback(w http.ResponseWriter, r *ht
 
 	refreshToken, err := app.Db.Tokens.New(user.ID, 30*24*time.Hour, data.ScopeRefresh)
 	if err != nil {
-		app.Log.Info("error creating refreshToken")
+		app.Log.Error("error creating refreshToken")
 		return
+	}
+
+	secure := false
+	if app.Cfg.Env == "production" {
+		secure = true
 	}
 
 	cookie := http.Cookie{
@@ -98,7 +103,80 @@ func (app *application) HandleGetGoogleAuthCallback(w http.ResponseWriter, r *ht
 		Value:    refreshToken.Plaintext,
 		Path:     "/api/auth",
 		Expires:  refreshToken.Expiry,
-		Secure:   false,
+		Secure:   secure,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	}
+
+	http.SetCookie(w, &cookie)
+	http.Redirect(w, r, app.Cfg.BaseUrl, http.StatusFound)
+}
+
+func (app *application) HandlePostMagicLinkAuth(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Email string `json:"email" validate:"required,email"`
+	}
+
+	err := app.ReadJSONBody(w, r, &body)
+	if err != nil {
+		app.WriteError(w, r, app.Err.BadRequest, err)
+		return
+	}
+
+	user, found, err := app.Db.Users.GetByEmail(body.Email)
+	if err != nil {
+		app.WriteError(w, r, app.Err.ServerError, err)
+		return
+	}
+
+	if !found {
+		app.Log.Error("not found")
+		return
+	}
+
+	loginToken, err := app.Db.Tokens.New(user.ID, 2*time.Hour, data.ScopeLogin)
+	if err != nil {
+		app.Log.Error(err.Error())
+		return
+	}
+
+	app.emailMagicLink(body.Email, loginToken.Plaintext)
+
+	app.WriteJSON(w, r, http.StatusNoContent, nil)
+}
+
+func (app *application) HandleGetMagicLinkCallback(w http.ResponseWriter, r *http.Request) {
+	qs := r.URL.Query()
+	token := qs.Get("token")
+
+	user, found, err := app.Db.Users.GetForToken(data.ScopeLogin, token)
+	if err != nil {
+		app.Log.Error(err.Error())
+		return
+	}
+
+	if !found {
+		app.Log.Error("not found")
+		return
+	}
+
+	refreshToken, err := app.Db.Tokens.New(user.ID, 30*24*time.Hour, data.ScopeRefresh)
+	if err != nil {
+		app.Log.Error("error creating refreshToken")
+		return
+	}
+
+	secure := false
+	if app.Cfg.Env == "production" {
+		secure = true
+	}
+
+	cookie := http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken.Plaintext,
+		Path:     "/api/auth",
+		Expires:  refreshToken.Expiry,
+		Secure:   secure,
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	}
@@ -117,24 +195,25 @@ func (app *application) HandlePostTokenAccess(w http.ResponseWriter, r *http.Req
 			})
 			return
 		default:
-			app.Log.Info(err.Error())
+			app.Log.Error(err.Error())
 			return
 		}
 	}
 
 	user, found, err := app.Db.Users.GetForToken(data.ScopeRefresh, cookie.Value)
 	if err != nil {
-		app.Log.Info(err.Error())
+		app.Log.Error(err.Error())
 		return
 	}
 
 	if !found {
-		app.Log.Info("not found")
+		app.Log.Error("not found")
 		return
 	}
 
 	accessToken, err := app.Db.Tokens.New(user.ID, 2*time.Hour, data.ScopeAccess)
 	if err != nil {
+		app.Log.Error(err.Error())
 		return
 	}
 
@@ -154,14 +233,14 @@ func (app *application) HandleGetLogout(w http.ResponseWriter, r *http.Request) 
 			})
 			return
 		default:
-			app.Log.Info(err.Error())
+			app.Log.Error(err.Error())
 			return
 		}
 	}
 
 	err = app.Db.Tokens.DeleteByPlaintext(data.ScopeRefresh, cookie.Value)
 	if err != nil {
-		app.Log.Info(err.Error())
+		app.Log.Error(err.Error())
 		return
 	}
 

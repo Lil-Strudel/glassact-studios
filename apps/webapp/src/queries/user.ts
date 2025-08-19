@@ -5,7 +5,7 @@ import type { User } from "@glassact/data";
 
 export async function getUserSelf(): Promise<User> {
   const res = await api.get("/user/self");
-  return await res.data;
+  return res.data;
 }
 
 export function getUserSelfOpts() {

@@ -1,11 +1,18 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/mail"
+	"net/smtp"
 	"net/url"
+	"path"
+	"strconv"
+	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -63,4 +70,115 @@ func getGoogleUserInfo(token string) (*googleInfoResponse, error) {
 	}
 
 	return &data, nil
+}
+
+func (app *application) emailMagicLink(email, token string) error {
+	u, err := url.Parse(app.Cfg.BaseUrl)
+	if err != nil {
+		return err
+	}
+
+	u.Path = path.Join(u.Path, "api", "auth", "magic-link", "callback")
+
+	q := u.Query()
+	q.Set("token", token)
+	u.RawQuery = q.Encode()
+
+	from := mail.Address{Name: "GlassAct Studios", Address: "no-reply@glassactstudios.com"}
+	to := mail.Address{Address: email}
+
+	subject := "Sign in to Glassact Studios"
+
+	plain, html := generateMagicLinkEmail(u.String())
+	message := buildMessage(from, to, subject, plain, html)
+
+	auth := smtp.PlainAuth("", app.Cfg.Stmp.Username, app.Cfg.Stmp.Password, app.Cfg.Stmp.Host)
+
+	err = smtp.SendMail(app.Cfg.Stmp.Host+":"+strconv.Itoa(app.Cfg.Stmp.Port), auth, from.Address, []string{to.Address}, message)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func randString(n int) string {
+	b := make([]byte, n)
+	if _, err := rand.Read(b); err != nil {
+		return fmt.Sprintf("%d", time.Now().UnixNano())
+	}
+	return hex.EncodeToString(b)
+}
+
+func buildMessage(from, to mail.Address, subject, textBody, htmlBody string) []byte {
+	msgID := fmt.Sprintf("<%s@glassactstudios.com>", randString(12))
+	date := time.Now().Format(time.RFC1123Z)
+	boundary := "alt-" + randString(12)
+
+	headers := ""
+	headers += fmt.Sprintf("From: %s\r\n", from.String())
+	headers += fmt.Sprintf("To: %s\r\n", to.String())
+	headers += fmt.Sprintf("Subject: %s\r\n", subject)
+	headers += "MIME-Version: 1.0\r\n"
+	headers += fmt.Sprintf("Content-Type: multipart/alternative; boundary=%s\r\n", boundary)
+	headers += fmt.Sprintf("Date: %s\r\n", date)
+	headers += fmt.Sprintf("Message-ID: %s\r\n", msgID)
+
+	body := ""
+	body += fmt.Sprintf("--%s\r\n", boundary)
+	body += "Content-Type: text/plain; charset=\"UTF-8\"\r\n"
+	body += textBody + "\r\n\r\n"
+
+	if htmlBody != "" {
+		body += fmt.Sprintf("--%s\r\n", boundary)
+		body += "Content-Type: text/html; charset=\"UTF-8\"\r\n"
+		body += htmlBody + "\r\n\r\n"
+	}
+
+	body += fmt.Sprintf("--%s--\r\n", boundary)
+
+	return []byte(headers + "\r\n" + body)
+}
+
+func generateMagicLinkEmail(magicLink string) (string, string) {
+	textBody := fmt.Sprintf(`Sign in to Glassact Studios
+
+Click the link below to securely sign in:
+
+%s
+
+If you did not request this, you can ignore this email.`, magicLink)
+
+	htmlBody := fmt.Sprintf(`<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Glassact Studios – Sign In</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#ffffff; font-family:Roboto, Arial, sans-serif; color:#0a0a0a;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%">
+      <tr>
+        <td align="center" style="padding: 40px 0;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="max-width:600px; background:#ffffff; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); padding:40px;">
+            <tr>
+              <td style="text-align:center;">
+                <h1 style="margin:0; font-size:24px; font-weight:600; color:#0a0a0a;">Sign in to Glassact Studios</h1>
+                <p style="margin:20px 0; font-size:16px; color:#737373;">Click the button below to securely sign in:</p>
+                <a href="%s" style="display:inline-block; padding:12px 24px; background-color:#8b0f24; color:#ffffff; text-decoration:none; border-radius:8px; font-size:16px; font-weight:500;">
+                  Sign In
+                </a>
+                <p style="margin-top:30px; font-size:14px; color:#737373;">
+                  If you did not request this email, you can safely ignore it.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`, magicLink)
+
+	return textBody, htmlBody
 }

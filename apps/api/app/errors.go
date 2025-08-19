@@ -11,6 +11,7 @@ type appError struct {
 	RecordNotFound      ErrorType
 	ServerError         ErrorType
 	AuthenticationError ErrorType
+	BadRequest          ErrorType
 }
 
 var AppError = appError{
@@ -18,6 +19,7 @@ var AppError = appError{
 	RecordNotFound:      ErrorType("record-not-found"),
 	ServerError:         ErrorType("server-error"),
 	AuthenticationError: ErrorType("authentication-error"),
+	BadRequest:          ErrorType("bad-request"),
 }
 
 type ErrorConfig struct {
@@ -45,6 +47,11 @@ var ErrorMap = map[ErrorType]ErrorConfig{
 	AppError.AuthenticationError: {
 		Status:   http.StatusUnauthorized,
 		Message:  `Invalid authentication credentials. Please provide an "Authorization" header in "Bearer $access_token" format.`,
+		Expected: true,
+	},
+	AppError.BadRequest: {
+		Status:   http.StatusBadRequest,
+		Message:  `The body you have provided is not in the expected format.`,
 		Expected: true,
 	},
 }

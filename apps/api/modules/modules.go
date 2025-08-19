@@ -19,6 +19,10 @@ func GetRoutes(app *app.Application) http.Handler {
 	authModule := auth.NewAuthModule(app)
 	mux.Handle("GET /api/auth/google", unprotected.ThenFunc(authModule.HandleGetGoogleAuth))
 	mux.Handle("GET /api/auth/google/callback", unprotected.ThenFunc(authModule.HandleGetGoogleAuthCallback))
+
+	mux.Handle("POST /api/auth/magic-link", unprotected.ThenFunc(authModule.HandlePostMagicLinkAuth))
+	mux.Handle("GET /api/auth/magic-link/callback", unprotected.ThenFunc(authModule.HandleGetMagicLinkCallback))
+
 	mux.Handle("POST /api/auth/token/access", unprotected.ThenFunc(authModule.HandlePostTokenAccess))
 	mux.Handle("GET /api/auth/logout", unprotected.ThenFunc(authModule.HandleGetLogout))
 
