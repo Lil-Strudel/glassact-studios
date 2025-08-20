@@ -112,6 +112,98 @@ func (app *application) HandleGetGoogleAuthCallback(w http.ResponseWriter, r *ht
 	http.Redirect(w, r, app.Cfg.BaseUrl, http.StatusFound)
 }
 
+func (app *application) HandleGetMicrosoftAuth(w http.ResponseWriter, r *http.Request) {
+	microsoft := app.configMicrosoft()
+	url := microsoft.AuthCodeURL("state")
+
+	http.Redirect(w, r, url, http.StatusFound)
+}
+
+func (app *application) HandleGetMicrosoftAuthCallback(w http.ResponseWriter, r *http.Request) {
+	token, err := app.configMicrosoft().Exchange(context.Background(), r.FormValue("code"))
+	if err != nil {
+		return
+	}
+
+	userInfo, err := getMicrosoftUserInfo(token.AccessToken)
+	if err != nil {
+		return
+	}
+
+	var user *data.User
+
+	existingAccount, found, err := app.Db.Accounts.GetByProvider("microsoft", userInfo.Sub)
+	if err != nil {
+		app.Log.Info("error while finding account")
+		return
+	}
+
+	if found {
+		existingUser, found, err := app.Db.Users.GetByID(existingAccount.UserID)
+		if err != nil {
+			app.Log.Info("account + error while finding user")
+			return
+		}
+
+		if !found {
+			app.Log.Info("account found but no user")
+			return
+		}
+
+		user = existingUser
+	} else {
+		existingUser, found, err := app.Db.Users.GetByEmail(userInfo.Email)
+		if err != nil {
+			app.Log.Info("no account + error when finding user")
+			return
+		}
+
+		if !found {
+			app.Log.Info("no account + no user")
+			return
+		}
+
+		newAccount := data.Account{
+			UserID:            existingUser.ID,
+			Type:              "oidc",
+			Provider:          "microsoft",
+			ProviderAccountID: userInfo.Sub,
+		}
+
+		err = app.Db.Accounts.Insert(&newAccount)
+		if err != nil {
+			app.Log.Info("error creating account")
+			return
+		}
+
+		user = existingUser
+	}
+
+	refreshToken, err := app.Db.Tokens.New(user.ID, 30*24*time.Hour, data.ScopeRefresh)
+	if err != nil {
+		app.Log.Error("error creating refreshToken")
+		return
+	}
+
+	secure := false
+	if app.Cfg.Env == "production" {
+		secure = true
+	}
+
+	cookie := http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken.Plaintext,
+		Path:     "/api/auth",
+		Expires:  refreshToken.Expiry,
+		Secure:   secure,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	}
+
+	http.SetCookie(w, &cookie)
+	http.Redirect(w, r, app.Cfg.BaseUrl, http.StatusFound)
+}
+
 func (app *application) HandlePostMagicLinkAuth(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Email string `json:"email" validate:"required,email"`

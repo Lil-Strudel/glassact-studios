@@ -16,17 +16,26 @@ import (
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/microsoft"
 )
+
+func (app *application) configMicrosoft() *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     app.Cfg.Microsoft.ClientId,
+		ClientSecret: app.Cfg.Microsoft.ClientSecret,
+		RedirectURL:  app.Cfg.Microsoft.RedirectUrl,
+		Scopes:       []string{"openid", "profile", "email"},
+		Endpoint:     microsoft.AzureADEndpoint(""),
+	}
+}
 
 func (app *application) configGoogle() *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     app.Cfg.Google.ClientId,
 		ClientSecret: app.Cfg.Google.ClientSecret,
 		RedirectURL:  app.Cfg.Google.RedirectUrl,
-		Scopes: []string{
-			"https://www.googleapis.com/auth/userinfo.email",
-		},
-		Endpoint: google.Endpoint,
+		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
+		Endpoint:     google.Endpoint,
 	}
 }
 
@@ -64,6 +73,47 @@ func getGoogleUserInfo(token string) (*googleInfoResponse, error) {
 	}
 
 	var data googleInfoResponse
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &data, nil
+}
+
+type microsoftInfoResponse struct {
+	Sub     string `json:"sub"`
+	Picture string `json:"picture"`
+	Email   string `json:"email"`
+}
+
+func getMicrosoftUserInfo(token string) (*microsoftInfoResponse, error) {
+	reqURL, err := url.Parse("https://graph.microsoft.com/oidc/userinfo")
+	if err != nil {
+		return nil, err
+	}
+
+	ptoken := fmt.Sprintf("Bearer %s", token)
+	res := &http.Request{
+		Method: "GET",
+		URL:    reqURL,
+		Header: map[string][]string{
+			"Authorization": {ptoken},
+		},
+	}
+	req, err := http.DefaultClient.Do(res)
+	if err != nil {
+		return nil, err
+	}
+
+	defer req.Body.Close()
+
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var data microsoftInfoResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		return nil, err
