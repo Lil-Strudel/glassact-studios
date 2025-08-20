@@ -14,7 +14,8 @@ type Config struct {
 	Db      struct {
 		Dsn string
 	}
-	Google struct {
+	AuthSecret string
+	Google     struct {
 		ClientId     string
 		ClientSecret string
 		RedirectUrl  string
@@ -24,7 +25,7 @@ type Config struct {
 		ClientSecret string
 		RedirectUrl  string
 	}
-	Stmp struct {
+	Smtp struct {
 		Host     string
 		Port     int
 		Username string
@@ -52,6 +53,8 @@ func GetConfig() (*Config, error) {
 
 	cfg.Db.Dsn = os.Getenv("DATABASE_DSN")
 
+	cfg.AuthSecret = os.Getenv("AUTH_SECRET")
+
 	cfg.Google.ClientId = os.Getenv("GOOGLE_CLIENT_ID")
 	cfg.Google.ClientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
 	cfg.Google.RedirectUrl = os.Getenv("GOOGLE_REDIRECT_URL")
@@ -60,15 +63,15 @@ func GetConfig() (*Config, error) {
 	cfg.Microsoft.ClientSecret = os.Getenv("MICROSOFT_CLIENT_SECRET")
 	cfg.Microsoft.RedirectUrl = os.Getenv("MICROSOFT_REDIRECT_URL")
 
-	stmpPort, err := strconv.Atoi(os.Getenv("STMP_PORT"))
+	stmpPort, err := strconv.Atoi(os.Getenv("SMTP_PORT"))
 	if err != nil {
 		return nil, err
 	}
 
-	cfg.Stmp.Host = os.Getenv("STMP_HOST")
-	cfg.Stmp.Port = stmpPort
-	cfg.Stmp.Username = os.Getenv("STMP_USERNAME")
-	cfg.Stmp.Password = os.Getenv("STMP_PASSWORD")
+	cfg.Smtp.Host = os.Getenv("SMTP_HOST")
+	cfg.Smtp.Port = stmpPort
+	cfg.Smtp.Username = os.Getenv("SMTP_USERNAME")
+	cfg.Smtp.Password = os.Getenv("SMTP_PASSWORD")
 
 	return &cfg, nil
 }

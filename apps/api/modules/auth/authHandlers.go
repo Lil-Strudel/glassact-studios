@@ -10,188 +10,221 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
 )
 
-type authModule struct {
+type AuthModule struct {
 	*app.Application
 }
 
-func NewAuthModule(app *app.Application) *authModule {
-	return &authModule{
+func NewAuthModule(app *app.Application) *AuthModule {
+	return &AuthModule{
 		app,
 	}
 }
 
-func (authModule *authModule) HandleGetGoogleAuth(w http.ResponseWriter, r *http.Request) {
-	google := authModule.configGoogle()
-	url := google.AuthCodeURL("state")
+func (am *AuthModule) HandleGetGoogleAuth(w http.ResponseWriter, r *http.Request) {
+	state, err := am.generateSecureState()
+	if err != nil {
+		am.WriteError(w, r, am.Err.ServerError, err)
+		return
+	}
+
+	google := am.configGoogle()
+	url := google.AuthCodeURL(state)
 
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
-func (authModule *authModule) HandleGetGoogleAuthCallback(w http.ResponseWriter, r *http.Request) {
-	token, err := authModule.configGoogle().Exchange(context.Background(), r.FormValue("code"))
+func (am *AuthModule) HandleGetGoogleAuthCallback(w http.ResponseWriter, r *http.Request) {
+	state := r.FormValue("state")
+	if err := am.validateState(state); err != nil {
+		am.WriteError(w, r, am.Err.BadRequest, err)
+		return
+	}
+
+	token, err := am.configGoogle().Exchange(context.Background(), r.FormValue("code"))
 	if err != nil {
-		authModule.WriteError(w, r, authModule.Err.ServerError, err)
+		am.WriteError(w, r, am.Err.ServerError, err)
 		return
 	}
 
 	userInfo, err := getGoogleUserInfo(token.AccessToken)
 	if err != nil {
-		authModule.WriteError(w, r, authModule.Err.ServerError, err)
+		am.WriteError(w, r, am.Err.ServerError, err)
 		return
 	}
 
-	user, found, err := authModule.getUserFromProvider(userInfo.Email, "google", userInfo.ID)
+	user, found, err := am.getUserFromProvider(userInfo.Email, "google", userInfo.ID)
 	if err != nil {
-		authModule.WriteError(w, r, authModule.Err.ServerError, err)
+		am.WriteError(w, r, am.Err.ServerError, err)
 		return
 	}
 
 	if !found {
-		authModule.WriteError(w, r, authModule.Err.AccountNotFound, nil)
+		am.WriteError(w, r, am.Err.AccountNotFound, nil)
 		return
 	}
 
-	authModule.login(user.ID, w)
-	http.Redirect(w, r, authModule.Cfg.BaseUrl, http.StatusFound)
+	am.login(user.ID, w)
+	http.Redirect(w, r, am.Cfg.BaseUrl, http.StatusFound)
 }
 
-func (authModule *authModule) HandleGetMicrosoftAuth(w http.ResponseWriter, r *http.Request) {
-	microsoft := authModule.configMicrosoft()
-	url := microsoft.AuthCodeURL("state")
+func (am *AuthModule) HandleGetMicrosoftAuth(w http.ResponseWriter, r *http.Request) {
+	state, err := am.generateSecureState()
+	if err != nil {
+		am.WriteError(w, r, am.Err.ServerError, err)
+		return
+	}
+
+	microsoft := am.configMicrosoft()
+	url := microsoft.AuthCodeURL(state)
 
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
-func (authModule *authModule) HandleGetMicrosoftAuthCallback(w http.ResponseWriter, r *http.Request) {
-	token, err := authModule.configMicrosoft().Exchange(context.Background(), r.FormValue("code"))
+func (am *AuthModule) HandleGetMicrosoftAuthCallback(w http.ResponseWriter, r *http.Request) {
+	state := r.FormValue("state")
+	if err := am.validateState(state); err != nil {
+		am.WriteError(w, r, am.Err.BadRequest, err)
+		return
+	}
+
+	token, err := am.configMicrosoft().Exchange(context.Background(), r.FormValue("code"))
 	if err != nil {
-		authModule.WriteError(w, r, authModule.Err.ServerError, err)
+		am.WriteError(w, r, am.Err.ServerError, err)
 		return
 	}
 
 	userInfo, err := getMicrosoftUserInfo(token.AccessToken)
 	if err != nil {
-		authModule.WriteError(w, r, authModule.Err.ServerError, err)
+		am.WriteError(w, r, am.Err.ServerError, err)
 		return
 	}
 
-	user, found, err := authModule.getUserFromProvider(userInfo.Email, "microsoft", userInfo.Sub)
+	user, found, err := am.getUserFromProvider(userInfo.Email, "microsoft", userInfo.Sub)
 	if err != nil {
-		authModule.WriteError(w, r, authModule.Err.ServerError, err)
+		am.WriteError(w, r, am.Err.ServerError, err)
 		return
 	}
 
 	if !found {
-		authModule.WriteError(w, r, authModule.Err.AccountNotFound, nil)
+		am.WriteError(w, r, am.Err.AccountNotFound, nil)
 		return
 	}
 
-	authModule.login(user.ID, w)
-	http.Redirect(w, r, authModule.Cfg.BaseUrl, http.StatusFound)
+	am.login(user.ID, w)
+	http.Redirect(w, r, am.Cfg.BaseUrl, http.StatusFound)
 }
 
-func (authModule *authModule) HandlePostMagicLinkAuth(w http.ResponseWriter, r *http.Request) {
+func (am *AuthModule) HandlePostMagicLinkAuth(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Email string `json:"email" validate:"required,email"`
 	}
 
-	err := authModule.ReadJSONBody(w, r, &body)
+	err := am.ReadJSONBody(w, r, &body)
 	if err != nil {
-		authModule.WriteError(w, r, authModule.Err.BadRequest, err)
+		am.WriteError(w, r, am.Err.BadRequest, err)
 		return
 	}
 
-	user, found, err := authModule.Db.Users.GetByEmail(body.Email)
+	user, found, err := am.Db.Users.GetByEmail(body.Email)
 	if err != nil {
-		authModule.WriteError(w, r, authModule.Err.ServerError, err)
+		am.WriteError(w, r, am.Err.ServerError, err)
 		return
 	}
 	if !found {
-		authModule.WriteError(w, r, authModule.Err.AccountNotFound, nil)
+		am.WriteError(w, r, am.Err.AccountNotFound, nil)
 		return
 	}
 
-	loginToken, err := authModule.Db.Tokens.New(user.ID, 2*time.Hour, data.ScopeLogin)
+	loginToken, err := am.Db.Tokens.New(user.ID, 2*time.Hour, data.ScopeLogin)
 	if err != nil {
-		authModule.WriteError(w, r, authModule.Err.ServerError, err)
+		am.WriteError(w, r, am.Err.ServerError, err)
 		return
 	}
 
-	authModule.emailMagicLink(body.Email, loginToken.Plaintext)
-	authModule.WriteJSON(w, r, http.StatusNoContent, nil)
+	err = am.emailMagicLink(body.Email, loginToken.Plaintext)
+	if err != nil {
+		am.WriteError(w, r, am.Err.ServerError, err)
+		return
+	}
+
+	am.WriteJSON(w, r, http.StatusNoContent, nil)
 }
 
-func (authModule *authModule) HandleGetMagicLinkCallback(w http.ResponseWriter, r *http.Request) {
+func (am *AuthModule) HandleGetMagicLinkCallback(w http.ResponseWriter, r *http.Request) {
 	qs := r.URL.Query()
 	token := qs.Get("token")
+	if token == "" {
+		am.WriteError(w, r, am.Err.BadRequest, errors.New("missing token in query"))
+		return
+	}
 
-	user, found, err := authModule.Db.Users.GetForToken(data.ScopeLogin, token)
+	user, found, err := am.Db.Users.GetForToken(data.ScopeLogin, token)
 	if err != nil {
-		authModule.WriteError(w, r, authModule.Err.ServerError, err)
+		am.WriteError(w, r, am.Err.ServerError, err)
 		return
 	}
 
 	if !found {
-		authModule.WriteError(w, r, authModule.Err.ServerError, nil)
+		am.WriteError(w, r, am.Err.AccountNotFound, nil)
 		return
 	}
 
-	authModule.login(user.ID, w)
-	http.Redirect(w, r, authModule.Cfg.BaseUrl, http.StatusFound)
+	am.login(user.ID, w)
+	http.Redirect(w, r, am.Cfg.BaseUrl, http.StatusFound)
 }
 
-func (authModule *authModule) HandlePostTokenAccess(w http.ResponseWriter, r *http.Request) {
+func (am *AuthModule) HandlePostTokenAccess(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
-			authModule.WriteError(w, r, authModule.Err.MissingRefreshToken, err)
+			am.WriteError(w, r, am.Err.MissingRefreshToken, err)
 			return
 		default:
-			authModule.WriteError(w, r, authModule.Err.ServerError, err)
+			am.WriteError(w, r, am.Err.ServerError, err)
 			return
 		}
 	}
 
-	user, found, err := authModule.Db.Users.GetForToken(data.ScopeRefresh, cookie.Value)
+	user, found, err := am.Db.Users.GetForToken(data.ScopeRefresh, cookie.Value)
 	if err != nil {
-		authModule.WriteError(w, r, authModule.Err.ServerError, err)
+		am.WriteError(w, r, am.Err.ServerError, err)
 		return
 	}
 
 	if !found {
-		authModule.WriteError(w, r, authModule.Err.AccountNotFound, nil)
+		am.WriteError(w, r, am.Err.AccountNotFound, nil)
 		return
 	}
 
-	accessToken, err := authModule.Db.Tokens.New(user.ID, 2*time.Hour, data.ScopeAccess)
+	accessToken, err := am.Db.Tokens.New(user.ID, 2*time.Hour, data.ScopeAccess)
 	if err != nil {
-		authModule.WriteError(w, r, authModule.Err.ServerError, err)
+		am.WriteError(w, r, am.Err.ServerError, err)
 		return
 	}
 
-	authModule.WriteJSON(w, r, http.StatusCreated, map[string]any{
+	am.WriteJSON(w, r, http.StatusCreated, map[string]any{
 		"access_token":     accessToken.Plaintext,
 		"access_token_exp": accessToken.Expiry,
 	})
 }
 
-func (authModule *authModule) HandleGetLogout(w http.ResponseWriter, r *http.Request) {
+func (am *AuthModule) HandleGetLogout(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
-			authModule.WriteError(w, r, authModule.Err.MissingRefreshToken, err)
+			am.WriteError(w, r, am.Err.MissingRefreshToken, err)
 			return
 		default:
-			authModule.WriteError(w, r, authModule.Err.ServerError, err)
+			am.WriteError(w, r, am.Err.ServerError, err)
 			return
 		}
 	}
 
-	err = authModule.Db.Tokens.DeleteByPlaintext(data.ScopeRefresh, cookie.Value)
+	err = am.Db.Tokens.DeleteByPlaintext(data.ScopeRefresh, cookie.Value)
 	if err != nil {
-		authModule.WriteError(w, r, authModule.Err.ServerError, err)
+		am.WriteError(w, r, am.Err.ServerError, err)
 		return
 	}
 
@@ -202,5 +235,5 @@ func (authModule *authModule) HandleGetLogout(w http.ResponseWriter, r *http.Req
 	}
 
 	http.SetCookie(w, &newCookie)
-	http.Redirect(w, r, authModule.Cfg.BaseUrl, http.StatusFound)
+	http.Redirect(w, r, am.Cfg.BaseUrl, http.StatusFound)
 }
