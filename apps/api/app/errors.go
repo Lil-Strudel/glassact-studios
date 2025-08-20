@@ -12,6 +12,8 @@ type appError struct {
 	ServerError         ErrorType
 	AuthenticationError ErrorType
 	BadRequest          ErrorType
+	MissingRefreshToken ErrorType
+	AccountNotFound     ErrorType
 }
 
 var AppError = appError{
@@ -20,6 +22,8 @@ var AppError = appError{
 	ServerError:         ErrorType("server-error"),
 	AuthenticationError: ErrorType("authentication-error"),
 	BadRequest:          ErrorType("bad-request"),
+	MissingRefreshToken: ErrorType("missing-refresh-token"),
+	AccountNotFound:     ErrorType("account-not-found"),
 }
 
 type ErrorConfig struct {
@@ -52,6 +56,16 @@ var ErrorMap = map[ErrorType]ErrorConfig{
 	AppError.BadRequest: {
 		Status:   http.StatusBadRequest,
 		Message:  `The body you have provided is not in the expected format.`,
+		Expected: true,
+	},
+	AppError.MissingRefreshToken: {
+		Status:   http.StatusUnauthorized,
+		Message:  `No refresh token cookie was found.`,
+		Expected: true,
+	},
+	AppError.AccountNotFound: {
+		Status:   http.StatusUnauthorized,
+		Message:  `An account was not found for you.`,
 		Expected: true,
 	},
 }

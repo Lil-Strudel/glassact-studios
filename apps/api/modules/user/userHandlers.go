@@ -6,18 +6,18 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 )
 
-type application struct {
+type userModule struct {
 	*app.Application
 }
 
-func NewUserModule(app *app.Application) *application {
-	return &application{
+func NewUserModule(app *app.Application) *userModule {
+	return &userModule{
 		app,
 	}
 }
 
-func (app *application) HandleGetUserSelf(w http.ResponseWriter, r *http.Request) {
-	user := app.ContextGetUser(r)
+func (userModule *userModule) HandleGetUserSelf(w http.ResponseWriter, r *http.Request) {
+	user := userModule.ContextGetUser(r)
 
-	app.WriteJSON(w, r, http.StatusOK, user)
+	userModule.WriteJSON(w, r, http.StatusOK, user)
 }

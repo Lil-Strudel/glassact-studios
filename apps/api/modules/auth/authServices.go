@@ -14,26 +14,43 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/microsoft"
 )
 
-func (app *application) configMicrosoft() *oauth2.Config {
-	return &oauth2.Config{
-		ClientID:     app.Cfg.Microsoft.ClientId,
-		ClientSecret: app.Cfg.Microsoft.ClientSecret,
-		RedirectURL:  app.Cfg.Microsoft.RedirectUrl,
-		Scopes:       []string{"openid", "profile", "email"},
-		Endpoint:     microsoft.AzureADEndpoint(""),
+func (authModule *authModule) login(userID int, w http.ResponseWriter) error {
+	refreshToken, err := authModule.Db.Tokens.New(userID, 30*24*time.Hour, data.ScopeRefresh)
+	if err != nil {
+		return err
 	}
+
+	secure := false
+	if authModule.Cfg.Env == "production" {
+		secure = true
+	}
+
+	cookie := http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken.Plaintext,
+		Path:     "/api/auth",
+		Expires:  refreshToken.Expiry,
+		Secure:   secure,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	}
+
+	http.SetCookie(w, &cookie)
+
+	return nil
 }
 
-func (app *application) configGoogle() *oauth2.Config {
+func (authModule *authModule) configGoogle() *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     app.Cfg.Google.ClientId,
-		ClientSecret: app.Cfg.Google.ClientSecret,
-		RedirectURL:  app.Cfg.Google.RedirectUrl,
+		ClientID:     authModule.Cfg.Google.ClientId,
+		ClientSecret: authModule.Cfg.Google.ClientSecret,
+		RedirectURL:  authModule.Cfg.Google.RedirectUrl,
 		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
 		Endpoint:     google.Endpoint,
 	}
@@ -81,6 +98,16 @@ func getGoogleUserInfo(token string) (*googleInfoResponse, error) {
 	return &data, nil
 }
 
+func (authModule *authModule) configMicrosoft() *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     authModule.Cfg.Microsoft.ClientId,
+		ClientSecret: authModule.Cfg.Microsoft.ClientSecret,
+		RedirectURL:  authModule.Cfg.Microsoft.RedirectUrl,
+		Scopes:       []string{"openid", "profile", "email"},
+		Endpoint:     microsoft.AzureADEndpoint(""),
+	}
+}
+
 type microsoftInfoResponse struct {
 	Sub     string `json:"sub"`
 	Picture string `json:"picture"`
@@ -122,8 +149,55 @@ func getMicrosoftUserInfo(token string) (*microsoftInfoResponse, error) {
 	return &data, nil
 }
 
-func (app *application) emailMagicLink(email, token string) error {
-	u, err := url.Parse(app.Cfg.BaseUrl)
+func (authModule *authModule) getUserFromProvider(email, provider, providerID string) (*data.User, bool, error) {
+	var user *data.User
+
+	existingAccount, found, err := authModule.Db.Accounts.GetByProvider(provider, providerID)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if found {
+		existingUser, found, err := authModule.Db.Users.GetByID(existingAccount.UserID)
+		if err != nil {
+			return nil, false, err
+		}
+
+		if !found {
+			return nil, false, nil
+		}
+
+		user = existingUser
+	} else {
+		existingUser, found, err := authModule.Db.Users.GetByEmail(email)
+		if err != nil {
+			return nil, false, err
+		}
+
+		if !found {
+			return nil, false, nil
+		}
+
+		newAccount := data.Account{
+			UserID:            existingUser.ID,
+			Type:              "oidc",
+			Provider:          provider,
+			ProviderAccountID: providerID,
+		}
+
+		err = authModule.Db.Accounts.Insert(&newAccount)
+		if err != nil {
+			return nil, false, err
+		}
+
+		user = existingUser
+	}
+
+	return user, true, nil
+}
+
+func (authModule *authModule) emailMagicLink(email, token string) error {
+	u, err := url.Parse(authModule.Cfg.BaseUrl)
 	if err != nil {
 		return err
 	}
@@ -142,9 +216,9 @@ func (app *application) emailMagicLink(email, token string) error {
 	plain, html := generateMagicLinkEmail(u.String())
 	message := buildMessage(from, to, subject, plain, html)
 
-	auth := smtp.PlainAuth("", app.Cfg.Stmp.Username, app.Cfg.Stmp.Password, app.Cfg.Stmp.Host)
+	auth := smtp.PlainAuth("", authModule.Cfg.Stmp.Username, authModule.Cfg.Stmp.Password, authModule.Cfg.Stmp.Host)
 
-	err = smtp.SendMail(app.Cfg.Stmp.Host+":"+strconv.Itoa(app.Cfg.Stmp.Port), auth, from.Address, []string{to.Address}, message)
+	err = smtp.SendMail(authModule.Cfg.Stmp.Host+":"+strconv.Itoa(authModule.Cfg.Stmp.Port), auth, from.Address, []string{to.Address}, message)
 	if err != nil {
 		return err
 	}
