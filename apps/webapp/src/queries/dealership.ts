@@ -15,6 +15,19 @@ export function getDealershipsOpts() {
   });
 }
 
+export async function getDealership(uuid: string): Promise<GET<Dealership>> {
+  const res = await api.get(`/dealership/${uuid}`);
+  return res.data;
+}
+
+export function getDealershipOpts(uuid: string) {
+  return () =>
+    queryOptions({
+      queryKey: ["dealership", uuid],
+      queryFn: () => getDealership(uuid),
+    });
+}
+
 export async function postDealership(
   body: POST<Dealership>,
 ): Promise<GET<Dealership>> {

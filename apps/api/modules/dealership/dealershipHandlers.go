@@ -27,6 +27,29 @@ func (dm DealershipModule) HandleGetDealerships(w http.ResponseWriter, r *http.R
 	dm.WriteJSON(w, r, http.StatusOK, dealerships)
 }
 
+func (dm DealershipModule) HandleGetDealershipByUUID(w http.ResponseWriter, r *http.Request) {
+	uuid := r.PathValue("uuid")
+
+	err := dm.Validate.Var(uuid, "required,uuid4")
+	if err != nil {
+		dm.WriteError(w, r, dm.Err.BadRequest, err)
+		return
+	}
+
+	dealership, found, err := dm.Db.Dealerships.GetByUUID(uuid)
+	if err != nil {
+		dm.WriteError(w, r, dm.Err.ServerError, err)
+		return
+	}
+
+	if !found {
+		dm.WriteError(w, r, dm.Err.RecordNotFound, nil)
+		return
+	}
+
+	dm.WriteJSON(w, r, http.StatusOK, dealership)
+}
+
 func (dm DealershipModule) HandlePostDealership(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Name    string `json:"name" validate:"required"`
