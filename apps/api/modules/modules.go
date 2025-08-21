@@ -32,6 +32,7 @@ func GetRoutes(app *app.Application) http.Handler {
 
 	dealershipModule := dealership.NewDealershipModule(app)
 	mux.Handle("GET /api/dealership", protected.ThenFunc(dealershipModule.HandleGetDealerships))
+	mux.Handle("POST /api/dealership", protected.ThenFunc(dealershipModule.HandlePostDealership))
 
 	userModule := user.NewUserModule(app)
 	mux.Handle("GET /api/user/self", protected.ThenFunc(userModule.HandleGetUserSelf))

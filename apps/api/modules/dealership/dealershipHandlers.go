@@ -18,6 +18,46 @@ func NewDealershipModule(app *app.Application) *DealershipModule {
 }
 
 func (dm DealershipModule) HandleGetDealerships(w http.ResponseWriter, r *http.Request) {
-	dealership := data.Dealership{}
-	dm.WriteJSON(w, r, http.StatusOK, []data.Dealership{dealership})
+	dealerships, err := dm.Db.Dealerships.GetAll()
+	if err != nil {
+		dm.WriteError(w, r, dm.Err.ServerError, err)
+		return
+	}
+
+	dm.WriteJSON(w, r, http.StatusOK, dealerships)
+}
+
+func (dm DealershipModule) HandlePostDealership(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Name    string `json:"name" validate:"required"`
+		Address struct {
+			Street     string  `json:"street" validate:"required"`
+			StreetExt  *string `json:"street_ext"`
+			City       string  `json:"city" validate:"required"`
+			State      string  `json:"state" validate:"required"`
+			PostalCode string  `json:"postal_code" validate:"required"`
+			Country    string  `json:"country" validate:"required,iso3166_1_alpha2"`
+			Latitude   float64 `json:"latitude" validate:"min=-90,max=90"`
+			Longitude  float64 `json:"longitude" validate:"min=-180,max=180"`
+		} `json:"address" validate:"required"`
+	}
+
+	err := dm.ReadJSONBody(w, r, &body)
+	if err != nil {
+		dm.WriteError(w, r, dm.Err.BadRequest, err)
+		return
+	}
+
+	dealership := data.Dealership{
+		Name:    body.Name,
+		Address: data.Address(body.Address),
+	}
+
+	err = dm.Db.Dealerships.Insert(&dealership)
+	if err != nil {
+		dm.WriteError(w, r, dm.Err.ServerError, err)
+		return
+	}
+
+	dm.WriteJSON(w, r, http.StatusOK, dealership)
 }

@@ -71,7 +71,7 @@ func (m DealershipModel) Insert(dealership *Dealership) error {
 
 func (m DealershipModel) GetByID(id int) (*Dealership, bool, error) {
 	query := `
-	SELECT id, uuid, name, street, street_ext, city, state, postal_code, country, ST_X(location::GEOMETRY) AS longitude, ST_Y(location::GEOMETRY) AS latitude, created_at, updated_at, version
+		SELECT id, uuid, name, street, street_ext, city, state, postal_code, country, ST_X(location::GEOMETRY) AS longitude, ST_Y(location::GEOMETRY) AS latitude, created_at, updated_at, version
         FROM dealerships
         WHERE id = $1`
 
@@ -83,6 +83,7 @@ func (m DealershipModel) GetByID(id int) (*Dealership, bool, error) {
 	err := m.DB.QueryRow(ctx, query, id).Scan(
 		&dealership.ID,
 		&dealership.UUID,
+		&dealership.Name,
 		&dealership.Address.Street,
 		&dealership.Address.StreetExt,
 		&dealership.Address.City,
@@ -109,7 +110,7 @@ func (m DealershipModel) GetByID(id int) (*Dealership, bool, error) {
 
 func (m DealershipModel) GetByUUID(uuid string) (*Dealership, bool, error) {
 	query := `
-	SELECT id, uuid, name, street, street_ext, city, state, postal_code, country, ST_X(location::GEOMETRY) AS longitude, ST_Y(location::GEOMETRY) AS latitude, created_at, updated_at, version
+		SELECT id, uuid, name, street, street_ext, city, state, postal_code, country, ST_X(location::GEOMETRY) AS longitude, ST_Y(location::GEOMETRY) AS latitude, created_at, updated_at, version
         FROM dealerships
         WHERE uuid = $1`
 
@@ -121,6 +122,7 @@ func (m DealershipModel) GetByUUID(uuid string) (*Dealership, bool, error) {
 	err := m.DB.QueryRow(ctx, query, uuid).Scan(
 		&dealership.ID,
 		&dealership.UUID,
+		&dealership.Name,
 		&dealership.Address.Street,
 		&dealership.Address.StreetExt,
 		&dealership.Address.City,
@@ -143,6 +145,59 @@ func (m DealershipModel) GetByUUID(uuid string) (*Dealership, bool, error) {
 	}
 
 	return &dealership, true, nil
+}
+
+func (m DealershipModel) GetAll() ([]*Dealership, error) {
+	query := `
+		SELECT id, uuid, name, street, street_ext, city, state, postal_code, country, ST_X(location::GEOMETRY) AS longitude, ST_Y(location::GEOMETRY) AS latitude, created_at, updated_at, version
+		FROM dealerships
+		WHERE id IS NOT NULL;`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []any{}
+
+	rows, err := m.DB.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	dealerships := []*Dealership{}
+
+	for rows.Next() {
+		var dealership Dealership
+
+		err := rows.Scan(
+			&dealership.ID,
+			&dealership.UUID,
+			&dealership.Name,
+			&dealership.Address.Street,
+			&dealership.Address.StreetExt,
+			&dealership.Address.City,
+			&dealership.Address.State,
+			&dealership.Address.PostalCode,
+			&dealership.Address.Country,
+			&dealership.Address.Longitude,
+			&dealership.Address.Latitude,
+			&dealership.CreatedAt,
+			&dealership.UpdatedAt,
+			&dealership.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		dealerships = append(dealerships, &dealership)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return dealerships, nil
 }
 
 func (m DealershipModel) Update(dealership *Dealership) error {

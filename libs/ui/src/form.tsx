@@ -8,15 +8,23 @@ import {
   textfieldLabel,
 } from "./textfield";
 import { cn } from "./cn";
-import { JSX, Show } from "solid-js";
+import { createEffect, createSignal, JSX, Show } from "solid-js";
 import { TextArea } from "./textarea";
 
-function getValidationState(field: () => AnyFieldApi) {
-  if (field().state.meta.errors.length > 0 && field().state.meta.isTouched) {
-    return "invalid";
-  }
+function useValidationState(field: () => AnyFieldApi) {
+  const [validationState, setValidationState] = createSignal<
+    "valid" | "invalid"
+  >("valid");
 
-  return "valid";
+  createEffect(() => {
+    if (field().state.meta.errors.length > 0 && field().state.meta.isTouched) {
+      setValidationState("invalid");
+    } else {
+      setValidationState("valid");
+    }
+  });
+
+  return validationState;
 }
 
 interface FormTextFieldProps {
@@ -29,10 +37,12 @@ interface FormTextFieldProps {
 }
 function FormTextField(props: FormTextFieldProps) {
   const { field, label, placeholder, description, fullWidth = true } = props;
+  const validationState = useValidationState(field);
+
   return (
     <TextFieldRoot
       class={cn(fullWidth && "w-full", props.class)}
-      validationState={getValidationState(field)}
+      validationState={validationState()}
     >
       {label && <TextFieldLabel>{label}</TextFieldLabel>}
       <TextField
@@ -64,10 +74,12 @@ interface FormTextAreaProps {
 }
 function FormTextArea(props: FormTextAreaProps) {
   const { field, label, placeholder, description, fullWidth = true } = props;
+  const validationState = useValidationState(field);
+
   return (
     <TextFieldRoot
       class={cn(fullWidth && "w-full", props.class)}
-      validationState={getValidationState(field)}
+      validationState={validationState()}
     >
       {label && <TextFieldLabel>{label}</TextFieldLabel>}
       <TextArea

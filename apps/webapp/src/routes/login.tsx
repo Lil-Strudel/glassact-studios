@@ -28,7 +28,7 @@ function RouteComponent() {
       }),
     },
     onSubmit: async ({ value }) => {
-      await postAuthMagicLink.mutateAsync(value, {
+      postAuthMagicLink.mutate(value, {
         onSuccess() {
           setEmailSent(true);
         },
