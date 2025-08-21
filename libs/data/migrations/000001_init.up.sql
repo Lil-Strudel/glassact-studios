@@ -1,4 +1,5 @@
 CREATE EXTENSION citext;
+CREATE EXTENSION postgis;
 
 CREATE TABLE IF NOT EXISTS users (
     id serial PRIMARY KEY,
@@ -30,3 +31,18 @@ CREATE TABLE IF NOT EXISTS tokens (
     scope text NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS dealerships (
+    id serial PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    name text NOT NULL,    
+    street text NOT NULL,
+    street_ext text,
+    city text NOT NULL,
+    state text NOT NULL,
+    postal_code text NOT NULL,
+    country text NOT NULL,
+    location GEOGRAPHY(Point, 4326) NOT NULL,
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    created_at timestamptz NOT NULL DEFAULT now(),
+    version integer NOT NULL DEFAULT 1
+);

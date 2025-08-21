@@ -5,6 +5,7 @@ import (
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/auth"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dealership"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/user"
 	"github.com/justinas/alice"
 )
@@ -28,6 +29,9 @@ func GetRoutes(app *app.Application) http.Handler {
 
 	mux.Handle("POST /api/auth/token/access", unprotected.ThenFunc(authModule.HandlePostTokenAccess))
 	mux.Handle("GET /api/auth/logout", unprotected.ThenFunc(authModule.HandleGetLogout))
+
+	dealershipModule := dealership.NewDealershipModule(app)
+	mux.Handle("GET /api/dealership", protected.ThenFunc(dealershipModule.HandleGetDealerships))
 
 	userModule := user.NewUserModule(app)
 	mux.Handle("GET /api/user/self", protected.ThenFunc(userModule.HandleGetUserSelf))

@@ -1,11 +1,8 @@
-export interface Account {
-  id: number;
-  uuid: string;
+import { StandardTable } from "./helpers";
+
+export interface Account extends StandardTable {
   user_id: number;
   type: string;
   provider: string;
   provider_account_id: string;
-  created_at: string;
-  updated_at: string;
-  version: number;
 }

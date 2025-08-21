@@ -5,17 +5,19 @@ import (
 )
 
 type Models struct {
-	Accounts AccountModel
-	Tokens   TokenModel
-	Users    UserModel
-	Pool     *pgxpool.Pool
+	Accounts    AccountModel
+	Dealerships DealershipModel
+	Tokens      TokenModel
+	Users       UserModel
+	Pool        *pgxpool.Pool
 }
 
 func NewModels(db *pgxpool.Pool) Models {
 	return Models{
-		Accounts: AccountModel{DB: db},
-		Tokens:   TokenModel{DB: db},
-		Users:    UserModel{DB: db},
-		Pool:     db,
+		Accounts:    AccountModel{DB: db},
+		Dealerships: DealershipModel{DB: db},
+		Tokens:      TokenModel{DB: db},
+		Users:       UserModel{DB: db},
+		Pool:        db,
 	}
 }

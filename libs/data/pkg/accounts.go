@@ -41,7 +41,13 @@ func (m AccountModel) Insert(account *Account) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(&account.ID, &account.UUID, &account.CreatedAt, &account.UpdatedAt, &account.Version)
+	err := m.DB.QueryRow(ctx, query, args...).Scan(
+		&account.ID,
+		&account.UUID,
+		&account.CreatedAt,
+		&account.UpdatedAt,
+		&account.Version,
+	)
 	if err != nil {
 		return err
 	}
@@ -60,7 +66,17 @@ func (m AccountModel) GetByID(id int) (*Account, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, id).Scan(&account.ID, &account.UUID, &account.UserID, &account.Type, &account.Provider, &account.ProviderAccountID, &account.CreatedAt, &account.UpdatedAt, &account.Version)
+	err := m.DB.QueryRow(ctx, query, id).Scan(
+		&account.ID,
+		&account.UUID,
+		&account.UserID,
+		&account.Type,
+		&account.Provider,
+		&account.ProviderAccountID,
+		&account.CreatedAt,
+		&account.UpdatedAt,
+		&account.Version,
+	)
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
@@ -84,7 +100,17 @@ func (m AccountModel) GetByUUID(uuid string) (*Account, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, uuid).Scan(&account.ID, &account.UUID, &account.UserID, &account.Type, &account.Provider, &account.ProviderAccountID, &account.CreatedAt, &account.UpdatedAt, &account.Version)
+	err := m.DB.QueryRow(ctx, query, uuid).Scan(
+		&account.ID,
+		&account.UUID,
+		&account.UserID,
+		&account.Type,
+		&account.Provider,
+		&account.ProviderAccountID,
+		&account.CreatedAt,
+		&account.UpdatedAt,
+		&account.Version,
+	)
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
@@ -113,7 +139,17 @@ func (m AccountModel) GetByProvider(provider string, providerAccountId string) (
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(&account.ID, &account.UUID, &account.UserID, &account.Type, &account.Provider, &account.ProviderAccountID, &account.CreatedAt, &account.UpdatedAt, &account.Version)
+	err := m.DB.QueryRow(ctx, query, args...).Scan(
+		&account.ID,
+		&account.UUID,
+		&account.UserID,
+		&account.Type,
+		&account.Provider,
+		&account.ProviderAccountID,
+		&account.CreatedAt,
+		&account.UpdatedAt,
+		&account.Version,
+	)
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):

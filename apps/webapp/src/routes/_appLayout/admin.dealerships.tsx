@@ -29,23 +29,12 @@ import { Dealership, GET } from "@glassact/data";
 import { IoBuildOutline } from "solid-icons/io";
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
+import { useQuery } from "@tanstack/solid-query";
+import { getDealershipsOpts } from "../../queries/dealership";
 
 export const Route = createFileRoute("/_appLayout/admin/dealerships")({
   component: RouteComponent,
 });
-
-const defaultData: GET<Dealership>[] = Array.from(new Array(100)).map(
-  (_, index) => ({
-    id: index,
-    uuid: "uuid" + index,
-    name: `Test ${index + 1}`,
-    address: "646 W 80 N, Orem, UT 84057",
-    location: [12, 12],
-    created_at: "",
-    updated_at: "",
-    version: 1,
-  }),
-);
 
 const defaultColumns: ColumnDef<GET<Dealership>>[] = [
   {
@@ -80,11 +69,11 @@ const defaultColumns: ColumnDef<GET<Dealership>>[] = [
 ];
 
 function RouteComponent() {
-  const [data, setData] = createSignal(defaultData);
+  const query = useQuery(getDealershipsOpts);
 
   const table = createSolidTable({
     get data() {
-      return data();
+      return query.data ?? [];
     },
     columns: defaultColumns,
     getCoreRowModel: getCoreRowModel(),
