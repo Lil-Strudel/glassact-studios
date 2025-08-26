@@ -17,45 +17,45 @@ func NewDealershipModule(app *app.Application) *DealershipModule {
 	}
 }
 
-func (dm DealershipModule) HandleGetDealerships(w http.ResponseWriter, r *http.Request) {
-	dealerships, err := dm.Db.Dealerships.GetAll()
+func (m DealershipModule) HandleGetDealerships(w http.ResponseWriter, r *http.Request) {
+	dealerships, err := m.Db.Dealerships.GetAll()
 	if err != nil {
-		dm.WriteError(w, r, dm.Err.ServerError, err)
+		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
-	dm.WriteJSON(w, r, http.StatusOK, dealerships)
+	m.WriteJSON(w, r, http.StatusOK, dealerships)
 }
 
-func (dm DealershipModule) HandleGetDealershipByUUID(w http.ResponseWriter, r *http.Request) {
+func (m DealershipModule) HandleGetDealershipByUUID(w http.ResponseWriter, r *http.Request) {
 	uuid := r.PathValue("uuid")
 
-	err := dm.Validate.Var(uuid, "required,uuid4")
+	err := m.Validate.Var(uuid, "required,uuid4")
 	if err != nil {
-		dm.WriteError(w, r, dm.Err.BadRequest, err)
+		m.WriteError(w, r, m.Err.BadRequest, err)
 		return
 	}
 
-	dealership, found, err := dm.Db.Dealerships.GetByUUID(uuid)
+	dealership, found, err := m.Db.Dealerships.GetByUUID(uuid)
 	if err != nil {
-		dm.WriteError(w, r, dm.Err.ServerError, err)
+		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
 	if !found {
-		dm.WriteError(w, r, dm.Err.RecordNotFound, nil)
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
 		return
 	}
 
-	dm.WriteJSON(w, r, http.StatusOK, dealership)
+	m.WriteJSON(w, r, http.StatusOK, dealership)
 }
 
-func (dm DealershipModule) HandlePostDealership(w http.ResponseWriter, r *http.Request) {
+func (m DealershipModule) HandlePostDealership(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Name    string `json:"name" validate:"required"`
 		Address struct {
 			Street     string  `json:"street" validate:"required"`
-			StreetExt  *string `json:"street_ext"`
+			StreetExt  string  `json:"street_ext"`
 			City       string  `json:"city" validate:"required"`
 			State      string  `json:"state" validate:"required"`
 			PostalCode string  `json:"postal_code" validate:"required"`
@@ -65,9 +65,9 @@ func (dm DealershipModule) HandlePostDealership(w http.ResponseWriter, r *http.R
 		} `json:"address" validate:"required"`
 	}
 
-	err := dm.ReadJSONBody(w, r, &body)
+	err := m.ReadJSONBody(w, r, &body)
 	if err != nil {
-		dm.WriteError(w, r, dm.Err.BadRequest, err)
+		m.WriteError(w, r, m.Err.BadRequest, err)
 		return
 	}
 
@@ -76,11 +76,11 @@ func (dm DealershipModule) HandlePostDealership(w http.ResponseWriter, r *http.R
 		Address: data.Address(body.Address),
 	}
 
-	err = dm.Db.Dealerships.Insert(&dealership)
+	err = m.Db.Dealerships.Insert(&dealership)
 	if err != nil {
-		dm.WriteError(w, r, dm.Err.ServerError, err)
+		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
-	dm.WriteJSON(w, r, http.StatusOK, dealership)
+	m.WriteJSON(w, r, http.StatusOK, dealership)
 }

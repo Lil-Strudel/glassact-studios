@@ -11,6 +11,8 @@ export * from "./card";
 
 export * from "./checkbox";
 
+export * from "./combobox";
+
 export * from "./dialog";
 
 export * from "./dropdown-menu";
@@ -23,5 +25,7 @@ export * from "./tabs";
 
 export * from "./textarea";
 export * from "./textfield";
+
+export * from "./toast";
 
 export * from "./tooltip";

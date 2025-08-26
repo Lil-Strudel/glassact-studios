@@ -1,3 +1,4 @@
+DROP TRIGGER IF EXISTS update_dealerships_updated_at ON dealerships;
 DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 DROP TRIGGER IF EXISTS update_accounts_updated_at ON accounts;
 

@@ -8,8 +8,19 @@ import {
   textfieldLabel,
 } from "./textfield";
 import { cn } from "./cn";
-import { createEffect, createSignal, JSX, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, JSX, Show } from "solid-js";
 import { TextArea } from "./textarea";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxControl,
+  ComboboxDescription,
+  ComboboxErrorMessage,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+  ComboboxTrigger,
+} from "./combobox";
 
 function useValidationState(field: () => AnyFieldApi) {
   const [validationState, setValidationState] = createSignal<
@@ -101,6 +112,87 @@ function FormTextArea(props: FormTextAreaProps) {
   );
 }
 
+interface FormComboboxProps<T> {
+  field: () => AnyFieldApi;
+  options: { label: string; value: T; disabled?: boolean }[];
+  class?: JSX.HTMLAttributes<"div">["class"];
+  label?: string;
+  placeholder?: string;
+  description?: string;
+  fullWidth?: boolean;
+}
+function FormCombobox<T>(props: FormComboboxProps<T>) {
+  const {
+    field,
+    label,
+    placeholder,
+    description,
+    fullWidth = true,
+    options,
+  } = props;
+  const validationState = useValidationState(field);
+
+  const optionLabels = () => options.map((o) => o.label);
+
+  createEffect(() => {
+    const labels = optionLabels();
+    const uniqueLabels = new Set(labels);
+
+    if (labels.length !== uniqueLabels.size) {
+      const duplicates = labels.filter(
+        (label, index) => labels.indexOf(label) !== index,
+      );
+      const uniqueDuplicates = [...new Set(duplicates)];
+      throw new Error(
+        `FormCombobox: Duplicate option labels detected - ${uniqueDuplicates.join(", ")}`,
+      );
+    }
+  });
+
+  const value = () =>
+    options.find((o) => o.value === field().state.value)?.label ?? undefined;
+
+  const handleChange = (label: string | null) =>
+    field().handleChange(
+      options.find((o) => o.label === label)?.value ?? undefined,
+    );
+
+  const handleInputChange = (input: string) => {
+    if (input === "") {
+      field().handleChange(undefined);
+    }
+  };
+
+  return (
+    <Combobox
+      options={optionLabels()}
+      validationState={validationState()}
+      placeholder={placeholder}
+      name={field().name}
+      value={value()}
+      onBlur={field().handleBlur}
+      onChange={handleChange}
+      onInputChange={handleInputChange}
+      itemComponent={(props) => (
+        <ComboboxItem item={props.item}>{props.item.rawValue}</ComboboxItem>
+      )}
+    >
+      {label && <ComboboxLabel>{label}</ComboboxLabel>}
+      <ComboboxControl class={cn(fullWidth && "w-full", props.class)}>
+        <ComboboxInput />
+        <ComboboxTrigger />
+      </ComboboxControl>
+      {description && <ComboboxDescription>{description}</ComboboxDescription>}
+      <ComboboxErrorMessage>
+        {field()
+          .state.meta.errors.map((error) => error?.message)
+          .join(", ")}
+      </ComboboxErrorMessage>
+      <ComboboxContent />
+    </Combobox>
+  );
+}
+
 interface FormErrorLabelProps {
   field: () => AnyFieldApi;
   class?: JSX.HTMLAttributes<"div">["class"];
@@ -122,5 +214,6 @@ function FormErrorLabel(props: FormErrorLabelProps) {
 export const Form = {
   TextField: FormTextField,
   TextArea: FormTextArea,
+  Combobox: FormCombobox,
   ErrorLabel: FormErrorLabel,
 } as const;

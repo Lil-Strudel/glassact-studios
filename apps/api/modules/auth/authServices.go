@@ -25,14 +25,14 @@ import (
 	"golang.org/x/oauth2/microsoft"
 )
 
-func (am *AuthModule) login(userID int, w http.ResponseWriter) error {
-	refreshToken, err := am.Db.Tokens.New(userID, 30*24*time.Hour, data.ScopeRefresh)
+func (m *AuthModule) login(userID int, w http.ResponseWriter) error {
+	refreshToken, err := m.Db.Tokens.New(userID, 30*24*time.Hour, data.ScopeRefresh)
 	if err != nil {
 		return err
 	}
 
 	secure := false
-	if am.Cfg.Env == "production" {
+	if m.Cfg.Env == "production" {
 		secure = true
 	}
 
@@ -51,11 +51,11 @@ func (am *AuthModule) login(userID int, w http.ResponseWriter) error {
 	return nil
 }
 
-func (am *AuthModule) configGoogle() *oauth2.Config {
+func (m *AuthModule) configGoogle() *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     am.Cfg.Google.ClientId,
-		ClientSecret: am.Cfg.Google.ClientSecret,
-		RedirectURL:  am.Cfg.Google.RedirectUrl,
+		ClientID:     m.Cfg.Google.ClientId,
+		ClientSecret: m.Cfg.Google.ClientSecret,
+		RedirectURL:  m.Cfg.Google.RedirectUrl,
 		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
 		Endpoint:     google.Endpoint,
 	}
@@ -103,11 +103,11 @@ func getGoogleUserInfo(token string) (*googleInfoResponse, error) {
 	return &data, nil
 }
 
-func (am *AuthModule) configMicrosoft() *oauth2.Config {
+func (m *AuthModule) configMicrosoft() *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     am.Cfg.Microsoft.ClientId,
-		ClientSecret: am.Cfg.Microsoft.ClientSecret,
-		RedirectURL:  am.Cfg.Microsoft.RedirectUrl,
+		ClientID:     m.Cfg.Microsoft.ClientId,
+		ClientSecret: m.Cfg.Microsoft.ClientSecret,
+		RedirectURL:  m.Cfg.Microsoft.RedirectUrl,
 		Scopes:       []string{"openid", "profile", "email"},
 		Endpoint:     microsoft.AzureADEndpoint(""),
 	}
@@ -154,16 +154,16 @@ func getMicrosoftUserInfo(token string) (*microsoftInfoResponse, error) {
 	return &data, nil
 }
 
-func (am *AuthModule) getUserFromProvider(email, provider, providerID string) (*data.User, bool, error) {
+func (m *AuthModule) getUserFromProvider(email, provider, providerID string) (*data.User, bool, error) {
 	var user *data.User
 
-	existingAccount, found, err := am.Db.Accounts.GetByProvider(provider, providerID)
+	existingAccount, found, err := m.Db.Accounts.GetByProvider(provider, providerID)
 	if err != nil {
 		return nil, false, err
 	}
 
 	if found {
-		existingUser, found, err := am.Db.Users.GetByID(existingAccount.UserID)
+		existingUser, found, err := m.Db.Users.GetByID(existingAccount.UserID)
 		if err != nil {
 			return nil, false, err
 		}
@@ -174,7 +174,7 @@ func (am *AuthModule) getUserFromProvider(email, provider, providerID string) (*
 
 		user = existingUser
 	} else {
-		existingUser, found, err := am.Db.Users.GetByEmail(email)
+		existingUser, found, err := m.Db.Users.GetByEmail(email)
 		if err != nil {
 			return nil, false, err
 		}
@@ -190,7 +190,7 @@ func (am *AuthModule) getUserFromProvider(email, provider, providerID string) (*
 			ProviderAccountID: providerID,
 		}
 
-		err = am.Db.Accounts.Insert(&newAccount)
+		err = m.Db.Accounts.Insert(&newAccount)
 		if err != nil {
 			return nil, false, err
 		}
@@ -201,8 +201,8 @@ func (am *AuthModule) getUserFromProvider(email, provider, providerID string) (*
 	return user, true, nil
 }
 
-func (am *AuthModule) emailMagicLink(email, token string) error {
-	u, err := url.Parse(am.Cfg.BaseUrl)
+func (m *AuthModule) emailMagicLink(email, token string) error {
+	u, err := url.Parse(m.Cfg.BaseUrl)
 	if err != nil {
 		return err
 	}
@@ -221,9 +221,9 @@ func (am *AuthModule) emailMagicLink(email, token string) error {
 	plain, html := generateMagicLinkEmail(u.String())
 	message := buildMessage(from, to, subject, plain, html)
 
-	auth := smtp.PlainAuth("", am.Cfg.Smtp.Username, am.Cfg.Smtp.Password, am.Cfg.Smtp.Host)
+	auth := smtp.PlainAuth("", m.Cfg.Smtp.Username, m.Cfg.Smtp.Password, m.Cfg.Smtp.Host)
 
-	err = smtp.SendMail(am.Cfg.Smtp.Host+":"+strconv.Itoa(am.Cfg.Smtp.Port), auth, from.Address, []string{to.Address}, message)
+	err = smtp.SendMail(m.Cfg.Smtp.Host+":"+strconv.Itoa(m.Cfg.Smtp.Port), auth, from.Address, []string{to.Address}, message)
 	if err != nil {
 		return err
 	}
@@ -312,7 +312,7 @@ If you did not request this, you can ignore this email.`, magicLink)
 	return textBody, htmlBody
 }
 
-func (am *AuthModule) generateSecureState() (string, error) {
+func (m *AuthModule) generateSecureState() (string, error) {
 	randomBytes := make([]byte, 16)
 	if _, err := rand.Read(randomBytes); err != nil {
 		return "", err
@@ -322,7 +322,7 @@ func (am *AuthModule) generateSecureState() (string, error) {
 
 	data := fmt.Sprintf("%s:%d", hex.EncodeToString(randomBytes), timestamp)
 
-	mac := hmac.New(sha256.New, []byte(am.Cfg.AuthSecret))
+	mac := hmac.New(sha256.New, []byte(m.Cfg.AuthSecret))
 	mac.Write([]byte(data))
 	signature := mac.Sum(nil)
 
@@ -330,7 +330,7 @@ func (am *AuthModule) generateSecureState() (string, error) {
 	return base64.URLEncoding.EncodeToString([]byte(stateData)), nil
 }
 
-func (am *AuthModule) validateState(state string) error {
+func (m *AuthModule) validateState(state string) error {
 	if state == "" {
 		return errors.New("missing state parameter")
 	}
@@ -357,7 +357,7 @@ func (am *AuthModule) validateState(state string) error {
 	}
 
 	data := fmt.Sprintf("%s:%s", randomData, timestampStr)
-	mac := hmac.New(sha256.New, []byte(am.Cfg.AuthSecret))
+	mac := hmac.New(sha256.New, []byte(m.Cfg.AuthSecret))
 	mac.Write([]byte(data))
 	expectedSig := hex.EncodeToString(mac.Sum(nil))
 

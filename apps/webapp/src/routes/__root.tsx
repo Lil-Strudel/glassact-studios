@@ -2,6 +2,7 @@ import { Outlet, createRootRouteWithContext } from "@tanstack/solid-router";
 import { TanStackRouterDevtools } from "@tanstack/solid-router-devtools";
 import { SolidQueryDevtools } from "@tanstack/solid-query-devtools";
 import { RouterContext } from "../App";
+import { Toaster } from "@glassact/ui";
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootComponent,
@@ -12,6 +13,7 @@ function RootComponent() {
   return (
     <>
       <Outlet />
+      <Toaster />
       <TanStackRouterDevtools />
       <SolidQueryDevtools buttonPosition="bottom-left" />
     </>

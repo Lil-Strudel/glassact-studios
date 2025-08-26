@@ -22,7 +22,8 @@
     "migrate/goto": "source ./.env && migrate -path ./migrations -database ${DATABASE_DSN} goto",
     "migrate/down": "source ./.env && migrate -path ./migrations -database ${DATABASE_DSN} down",
     "migrate/force": "source ./.env && migrate -path ./migrations -database ${DATABASE_DSN} force",
-    "psql": "source ./.env && psql ${DATABASE_DSN}"
+    "psql": "source ./.env && psql ${DATABASE_DSN}",
+    "seed": "source ./.env && psql ${DATABASE_DSN} -a -f ./seed.sql"
   },
   "dependencies": {},
   "devDependencies": {

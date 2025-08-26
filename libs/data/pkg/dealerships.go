@@ -11,7 +11,7 @@ import (
 
 type Address struct {
 	Street     string  `json:"street"`
-	StreetExt  *string `json:"street_ext"`
+	StreetExt  string  `json:"street_ext"`
 	City       string  `json:"city"`
 	State      string  `json:"state"`
 	PostalCode string  `json:"postal_code"`

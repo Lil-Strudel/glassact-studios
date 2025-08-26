@@ -36,7 +36,10 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("POST /api/dealership", protected.ThenFunc(dealershipModule.HandlePostDealership))
 
 	userModule := user.NewUserModule(app)
+	mux.Handle("GET /api/user", protected.ThenFunc(userModule.HandleGetUsers))
 	mux.Handle("GET /api/user/self", protected.ThenFunc(userModule.HandleGetUserSelf))
+	mux.Handle("GET /api/user/{uuid}", protected.ThenFunc(userModule.HandleGetUserByUUID))
+	mux.Handle("POST /api/user", protected.ThenFunc(userModule.HandlePostUser))
 
 	mux.Handle("/", unprotected.ThenFunc(app.HandleNotFound))
 	return standard.Then(mux)

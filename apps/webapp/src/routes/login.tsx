@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { useAuthContext } from "../providers/auth";
 import { createEffect, createSignal } from "solid-js";
-import { Button, Form } from "@glassact/ui";
+import { Button, Form, showToast } from "@glassact/ui";
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
 import { useMutation } from "@tanstack/solid-query";
@@ -31,6 +31,13 @@ function RouteComponent() {
       postAuthMagicLink.mutate(value, {
         onSuccess() {
           setEmailSent(true);
+        },
+        onError() {
+          showToast({
+            title: "Problem sending magic link...",
+            description: `An account for ${value.email} was not found.`,
+            variant: "error",
+          });
         },
       });
     },

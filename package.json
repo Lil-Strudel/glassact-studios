@@ -16,6 +16,7 @@
     "db:migrate/down": "pnpm --filter @glassact/data migrate/down",
     "db:migrate/force": "pnpm --filter @glassact/data migrate/force",
     "db:psql": "pnpm --filter @glassact/data psql",
+    "db:seed": "pnpm --filter @glassact/data seed",
     "libs:build": "pnpm --filter './libs/**' build"
   },
   "devDependencies": {

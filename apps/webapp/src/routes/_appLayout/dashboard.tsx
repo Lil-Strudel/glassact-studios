@@ -5,5 +5,5 @@ export const Route = createFileRoute("/_appLayout/dashboard")({
 });
 
 function RouteComponent() {
-  return <div>Hello "/dashboard"!</div>;
+  return <div></div>;
 }
