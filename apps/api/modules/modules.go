@@ -6,6 +6,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/auth"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dealership"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/project"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/user"
 	"github.com/justinas/alice"
 )
@@ -34,6 +35,11 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/dealership", protected.ThenFunc(dealershipModule.HandleGetDealerships))
 	mux.Handle("GET /api/dealership/{uuid}", protected.ThenFunc(dealershipModule.HandleGetDealershipByUUID))
 	mux.Handle("POST /api/dealership", protected.ThenFunc(dealershipModule.HandlePostDealership))
+
+	projectModule := project.NewProjectModule(app)
+	mux.Handle("GET /api/project", protected.ThenFunc(projectModule.HandleGetProjects))
+	mux.Handle("GET /api/project/{uuid}", protected.ThenFunc(projectModule.HandleGetProjectByUUID))
+	mux.Handle("POST /api/project", protected.ThenFunc(projectModule.HandlePostProject))
 
 	userModule := user.NewUserModule(app)
 	mux.Handle("GET /api/user", protected.ThenFunc(userModule.HandleGetUsers))

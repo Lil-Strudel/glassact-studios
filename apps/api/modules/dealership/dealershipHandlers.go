@@ -60,8 +60,8 @@ func (m DealershipModule) HandlePostDealership(w http.ResponseWriter, r *http.Re
 			State      string  `json:"state" validate:"required"`
 			PostalCode string  `json:"postal_code" validate:"required"`
 			Country    string  `json:"country" validate:"required,iso3166_1_alpha2"`
-			Latitude   float64 `json:"latitude" validate:"min=-90,max=90"`
-			Longitude  float64 `json:"longitude" validate:"min=-180,max=180"`
+			Latitude   float64 `json:"latitude" validate:"required,latitude"`
+			Longitude  float64 `json:"longitude" validate:"required,longitude"`
 		} `json:"address" validate:"required"`
 	}
 

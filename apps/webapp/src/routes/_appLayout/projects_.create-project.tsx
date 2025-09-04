@@ -1,11 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/solid-router";
-import { Breadcrumb, Button, Form } from "@glassact/ui";
+import { Breadcrumb, Button, Form, showToast } from "@glassact/ui";
 import { For, Show } from "solid-js";
 import { formatMoney } from "../../utils/format-money";
 import { initialAppState, useAppState } from "../../providers/app-state";
 import { reconcile } from "solid-js/store";
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
+import { postProjectsOpts } from "../../queries/project";
+import { isApiError } from "../../utils/is-api-error";
+import { POST, Project } from "@glassact/data";
+import { getUserSelfOpts } from "../../queries/user";
 
 export const Route = createFileRoute("/_appLayout/projects_/create-project")({
   component: RouteComponent,
@@ -14,6 +19,11 @@ export const Route = createFileRoute("/_appLayout/projects_/create-project")({
 function RouteComponent() {
   const navigate = useNavigate();
   const [state, setState] = useAppState();
+  const queryClient = useQueryClient();
+
+  const query = useQuery(getUserSelfOpts);
+
+  const postProject = useMutation(postProjectsOpts);
 
   function setName(value: string) {
     setState("createProject", "name", value);
@@ -45,8 +55,38 @@ function RouteComponent() {
       }),
     },
     onSubmit: async ({ value }) => {
-      resetState();
-      navigate({ to: "/projects" });
+      if (!query.isSuccess) return;
+
+      const body: POST<Project> = {
+        name: value.name,
+        status: "awaiting-proof",
+        approved: false,
+        dealership_id: query.data.dealership_id,
+      };
+
+      postProject.mutate(body, {
+        onSuccess() {
+          showToast({
+            title: "Created new project!",
+            description: `${value.name}'s project was created.`,
+            variant: "success",
+          });
+          resetState();
+          navigate({ to: "/projects" });
+        },
+        onError(error) {
+          if (isApiError(error)) {
+            showToast({
+              title: "Problem creating new user...",
+              description: error?.data?.error ?? "Unknown error",
+              variant: "error",
+            });
+          }
+        },
+        onSettled() {
+          queryClient.invalidateQueries({ queryKey: ["project"] });
+        },
+      });
     },
   }));
 

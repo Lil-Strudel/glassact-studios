@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS projects;
+
 DROP TABLE IF EXISTS tokens;
 
 DROP TABLE IF EXISTS accounts;
