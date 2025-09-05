@@ -9,6 +9,12 @@ catalogs:
     '@tanstack/solid-form':
       specifier: ^1.15.1
       version: 1.19.0
+    '@tanstack/solid-router':
+      specifier: ^1.130.12
+      version: 1.130.12
+    prettier:
+      specifier: ^3.6.2
+      version: 3.6.2
     tailwindcss:
       specifier: ^3.4.17
       version: 3.4.17
@@ -85,7 +91,7 @@ importers:
         specifier: ^5.84.0
         version: 5.84.0(@tanstack/solid-query@5.83.1(solid-js@1.9.9))(solid-js@1.9.9)
       '@tanstack/solid-router':
-        specifier: ^1.130.12
+        specifier: 'catalog:'
         version: 1.130.12(solid-js@1.9.9)
       '@tanstack/solid-router-devtools':
         specifier: ^1.130.13
@@ -148,6 +154,9 @@ importers:
       '@tanstack/solid-form':
         specifier: 'catalog:'
         version: 1.19.0(solid-js@1.9.9)
+      '@tanstack/solid-router':
+        specifier: 'catalog:'
+        version: 1.130.12(solid-js@1.9.9)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1

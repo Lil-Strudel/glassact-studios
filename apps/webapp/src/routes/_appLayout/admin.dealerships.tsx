@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/solid-router";
+import { createFileRoute, Link } from "@tanstack/solid-router";
 import { For, Show } from "solid-js";
 import {
   Dialog,
@@ -49,8 +49,8 @@ const defaultColumns: ColumnDef<GET<Dealership>>[] = [
         <Button
           variant="ghost"
           size="icon"
-          as="a"
-          href={`/dealership/${props.row.original.uuid}`}
+          as={Link}
+          to={`/dealership/${props.row.original.uuid}`}
         >
           <IoBuildOutline size={24} />
         </Button>

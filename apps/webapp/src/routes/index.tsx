@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/solid-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/solid-router";
 import { Button } from "@glassact/ui";
 import { createEffect } from "solid-js";
 import { useAuthContext } from "../providers/auth";
@@ -33,7 +33,7 @@ function RouteComponent() {
                 </div>
               </div>
               <div class="hidden sm:ml-6 sm:flex sm:items-center">
-                <Button as="a" href="/login" variant="ghost" class="gap-2">
+                <Button as={Link} to="/login" variant="ghost" class="gap-2">
                   Login <span aria-hidden="true">&rarr;</span>
                 </Button>
               </div>
@@ -51,7 +51,7 @@ function RouteComponent() {
                   Track and place new orders using our new platform!
                 </p>
                 <div class="mt-10 flex items-center justify-center gap-x-6">
-                  <Button as="a" href="/login">
+                  <Button as={Link} to="/login">
                     Login
                   </Button>
                 </div>

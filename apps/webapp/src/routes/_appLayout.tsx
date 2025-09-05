@@ -34,14 +34,14 @@ export const Route = createFileRoute("/_appLayout")({
 });
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard" },
-  { name: "Projects", href: "/projects" },
-  { name: "Inlays", href: "/inlays" },
-  { name: "Admin", href: "/admin" },
+  { name: "Dashboard", to: "/dashboard" },
+  { name: "Projects", to: "/projects" },
+  { name: "Inlays", to: "/inlays" },
+  { name: "Admin", to: "/admin" },
 ];
 const userNavigation = [
-  { name: "Settings", href: "/settings", props: {} },
-  { name: "Logout", href: "/api/auth/logout", props: { rel: "external" } },
+  { name: "Settings", to: "/settings", props: {} },
+  { name: "Logout", to: "/api/auth/logout", props: { rel: "external" } },
 ];
 
 function RouteComponent() {
@@ -76,7 +76,7 @@ function RouteComponent() {
                 <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
                   {navigation.map((item) => (
                     <Link
-                      to={item.href}
+                      to={item.to}
                       class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium"
                       activeProps={{ class: "border-primary" }}
                       inactiveProps={{
@@ -104,7 +104,7 @@ function RouteComponent() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     {userNavigation.map((item) => (
-                      <DropdownMenuItem as="a" href={item.href} {...item.props}>
+                      <DropdownMenuItem as={Link} to={item.to} {...item.props}>
                         {item.name}
                       </DropdownMenuItem>
                     ))}
@@ -124,7 +124,7 @@ function RouteComponent() {
               <div class="space-y-1 pb-3 pt-2">
                 {navigation.map((item) => (
                   <Link
-                    to={item.href}
+                    to={item.to}
                     class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
                     activeProps={{ class: "border-primary bg-red-50" }}
                     inactiveProps={{
@@ -160,7 +160,7 @@ function RouteComponent() {
                 <div class="mt-3 space-y-1">
                   {userNavigation.map((item) => (
                     <Link
-                      to={item.href}
+                      to={item.to}
                       class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
                       activeProps={{ class: "border-primary bg-red-50" }}
                       inactiveProps={{

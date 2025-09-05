@@ -1,7 +1,8 @@
+import { Link } from "@tanstack/solid-router";
 import { Button } from "./button";
 type breadcrumbProps = {
   crumbs: {
-    href: string;
+    to: string;
     title: string;
   }[];
 };
@@ -10,7 +11,7 @@ export const Breadcrumb = (props: breadcrumbProps) => {
     <div class="flex gap-2 items-center">
       {props.crumbs.map((crumb, i) => (
         <>
-          <Button as="a" href={crumb.href} variant="link" class="px-0">
+          <Button as={Link} to={crumb.to} variant="link" class="px-0">
             {crumb.title}
           </Button>
           {i !== props.crumbs.length - 1 && (

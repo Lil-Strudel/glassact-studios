@@ -1,23 +1,9 @@
-import { Inlay, POST } from "@glassact/data";
 import { createContext, useContext, ParentComponent } from "solid-js";
 import { SetStoreFunction, createStore } from "solid-js/store";
 import { deepCopy } from "../utils/deep-copy";
 
-interface CreateProject {
-  name: string;
-  inlays: POST<Inlay>[];
-}
-const initialCreateProject: CreateProject = {
-  name: "",
-  inlays: [],
-};
-
-export interface AppState {
-  createProject: CreateProject;
-}
-export const initialAppState: AppState = {
-  createProject: initialCreateProject,
-};
+export interface AppState {}
+export const initialAppState: AppState = {};
 
 export const AppStateContext =
   createContext<[AppState, SetStoreFunction<AppState>]>();

@@ -27,6 +27,7 @@
   "dependencies": {
     "@kobalte/core": "^0.13.11",
     "@tanstack/solid-form": "catalog:",
+    "@tanstack/solid-router": "catalog:",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "solid-js": "catalog:solid",

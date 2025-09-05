@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/solid-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/solid-router";
 import {
   Tabs,
   TabsContent,
@@ -13,27 +13,25 @@ import {
 import { IoClose } from "solid-icons/io";
 import { createForm } from "@tanstack/solid-form";
 import { Inlay, POST } from "@glassact/data";
-import { useAppState } from "../../providers/app-state";
 import { z } from "zod";
 import { zodStringNumber } from "../../utils/zod-string-number";
+import { useProjectFormContext } from "./projects_.create-project";
 
 export const Route = createFileRoute(
-  "/_appLayout/projects_/create-project_/add-inlay",
+  "/_appLayout/projects_/create-project/add-inlay",
 )({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const [state, setState] = useAppState();
+  const form = useProjectFormContext();
   const navigate = useNavigate();
 
   function addInlay(inlay: POST<Inlay>) {
-    setState(
-      "createProject",
-      "inlays",
-      state.createProject.inlays.length,
-      inlay,
-    );
+    form.setFieldValue("inlays", (oldInlays) => {
+      oldInlays.push(inlay);
+      return oldInlays;
+    });
   }
 
   const catalogForm = createForm(() => ({
@@ -101,7 +99,7 @@ function RouteComponent() {
           images: value.images,
         },
       });
-      navigate("/projects/create-project");
+      navigate({ to: "/projects/create-project" });
     },
   }));
 
@@ -109,9 +107,9 @@ function RouteComponent() {
     <div>
       <Breadcrumb
         crumbs={[
-          { title: "Projects", href: "/projects" },
-          { title: "Create Project", href: "/projects/create-project" },
-          { title: "Add Inlay", href: "/projects/create-project/add-inlay" },
+          { title: "Projects", to: "/projects" },
+          { title: "Create Project", to: "/projects/create-project" },
+          { title: "Add Inlay", to: "/projects/create-project/add-inlay" },
         ]}
       />
       <Tabs defaultValue="catalog">
@@ -158,8 +156,8 @@ function RouteComponent() {
                 <div class="mx-auto flex gap-4">
                   <Button
                     variant="outline"
-                    as="a"
-                    href="/projects/create-project"
+                    as={Link}
+                    to="/projects/create-project"
                   >
                     Cancel
                   </Button>
@@ -236,8 +234,8 @@ function RouteComponent() {
                 <div class="mx-auto flex gap-4">
                   <Button
                     variant="outline"
-                    as="a"
-                    href="/projects/create-project"
+                    as={Link}
+                    to="/projects/create-project"
                   >
                     Cancel
                   </Button>

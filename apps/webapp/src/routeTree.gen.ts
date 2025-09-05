@@ -22,7 +22,8 @@ import { Route as AppLayoutProjectsIdRouteImport } from './routes/_appLayout/pro
 import { Route as AppLayoutDealershipIdRouteImport } from './routes/_appLayout/dealership.$id'
 import { Route as AppLayoutAdminUsersRouteImport } from './routes/_appLayout/admin.users'
 import { Route as AppLayoutAdminDealershipsRouteImport } from './routes/_appLayout/admin.dealerships'
-import { Route as AppLayoutProjectsCreateProjectAddInlayRouteImport } from './routes/_appLayout/projects_.create-project_.add-inlay'
+import { Route as AppLayoutProjectsCreateProjectIndexRouteImport } from './routes/_appLayout/projects_.create-project.index'
+import { Route as AppLayoutProjectsCreateProjectAddInlayRouteImport } from './routes/_appLayout/projects_.create-project.add-inlay'
 import { Route as AppLayoutDealershipIdUsersRouteImport } from './routes/_appLayout/dealership.$id.users'
 import { Route as AppLayoutDealershipIdSettingsRouteImport } from './routes/_appLayout/dealership.$id.settings'
 
@@ -92,11 +93,17 @@ const AppLayoutAdminDealershipsRoute =
     path: '/dealerships',
     getParentRoute: () => AppLayoutAdminRoute,
   } as any)
+const AppLayoutProjectsCreateProjectIndexRoute =
+  AppLayoutProjectsCreateProjectIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppLayoutProjectsCreateProjectRoute,
+  } as any)
 const AppLayoutProjectsCreateProjectAddInlayRoute =
   AppLayoutProjectsCreateProjectAddInlayRouteImport.update({
-    id: '/projects_/create-project_/add-inlay',
-    path: '/projects/create-project/add-inlay',
-    getParentRoute: () => AppLayoutRoute,
+    id: '/add-inlay',
+    path: '/add-inlay',
+    getParentRoute: () => AppLayoutProjectsCreateProjectRoute,
   } as any)
 const AppLayoutDealershipIdUsersRoute =
   AppLayoutDealershipIdUsersRouteImport.update({
@@ -123,10 +130,11 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AppLayoutAdminUsersRoute
   '/dealership/$id': typeof AppLayoutDealershipIdRouteWithChildren
   '/projects/$id': typeof AppLayoutProjectsIdRoute
-  '/projects/create-project': typeof AppLayoutProjectsCreateProjectRoute
+  '/projects/create-project': typeof AppLayoutProjectsCreateProjectRouteWithChildren
   '/dealership/$id/settings': typeof AppLayoutDealershipIdSettingsRoute
   '/dealership/$id/users': typeof AppLayoutDealershipIdUsersRoute
   '/projects/create-project/add-inlay': typeof AppLayoutProjectsCreateProjectAddInlayRoute
+  '/projects/create-project/': typeof AppLayoutProjectsCreateProjectIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,10 +148,10 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AppLayoutAdminUsersRoute
   '/dealership/$id': typeof AppLayoutDealershipIdRouteWithChildren
   '/projects/$id': typeof AppLayoutProjectsIdRoute
-  '/projects/create-project': typeof AppLayoutProjectsCreateProjectRoute
   '/dealership/$id/settings': typeof AppLayoutDealershipIdSettingsRoute
   '/dealership/$id/users': typeof AppLayoutDealershipIdUsersRoute
   '/projects/create-project/add-inlay': typeof AppLayoutProjectsCreateProjectAddInlayRoute
+  '/projects/create-project': typeof AppLayoutProjectsCreateProjectIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -159,10 +167,11 @@ export interface FileRoutesById {
   '/_appLayout/admin/users': typeof AppLayoutAdminUsersRoute
   '/_appLayout/dealership/$id': typeof AppLayoutDealershipIdRouteWithChildren
   '/_appLayout/projects_/$id': typeof AppLayoutProjectsIdRoute
-  '/_appLayout/projects_/create-project': typeof AppLayoutProjectsCreateProjectRoute
+  '/_appLayout/projects_/create-project': typeof AppLayoutProjectsCreateProjectRouteWithChildren
   '/_appLayout/dealership/$id/settings': typeof AppLayoutDealershipIdSettingsRoute
   '/_appLayout/dealership/$id/users': typeof AppLayoutDealershipIdUsersRoute
-  '/_appLayout/projects_/create-project_/add-inlay': typeof AppLayoutProjectsCreateProjectAddInlayRoute
+  '/_appLayout/projects_/create-project/add-inlay': typeof AppLayoutProjectsCreateProjectAddInlayRoute
+  '/_appLayout/projects_/create-project/': typeof AppLayoutProjectsCreateProjectIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -182,6 +191,7 @@ export interface FileRouteTypes {
     | '/dealership/$id/settings'
     | '/dealership/$id/users'
     | '/projects/create-project/add-inlay'
+    | '/projects/create-project/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -195,10 +205,10 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/dealership/$id'
     | '/projects/$id'
-    | '/projects/create-project'
     | '/dealership/$id/settings'
     | '/dealership/$id/users'
     | '/projects/create-project/add-inlay'
+    | '/projects/create-project'
   id:
     | '__root__'
     | '/'
@@ -216,7 +226,8 @@ export interface FileRouteTypes {
     | '/_appLayout/projects_/create-project'
     | '/_appLayout/dealership/$id/settings'
     | '/_appLayout/dealership/$id/users'
-    | '/_appLayout/projects_/create-project_/add-inlay'
+    | '/_appLayout/projects_/create-project/add-inlay'
+    | '/_appLayout/projects_/create-project/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -318,12 +329,19 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AppLayoutAdminDealershipsRouteImport
       parentRoute: typeof AppLayoutAdminRoute
     }
-    '/_appLayout/projects_/create-project_/add-inlay': {
-      id: '/_appLayout/projects_/create-project_/add-inlay'
-      path: '/projects/create-project/add-inlay'
+    '/_appLayout/projects_/create-project/': {
+      id: '/_appLayout/projects_/create-project/'
+      path: '/'
+      fullPath: '/projects/create-project/'
+      preLoaderRoute: typeof AppLayoutProjectsCreateProjectIndexRouteImport
+      parentRoute: typeof AppLayoutProjectsCreateProjectRoute
+    }
+    '/_appLayout/projects_/create-project/add-inlay': {
+      id: '/_appLayout/projects_/create-project/add-inlay'
+      path: '/add-inlay'
       fullPath: '/projects/create-project/add-inlay'
       preLoaderRoute: typeof AppLayoutProjectsCreateProjectAddInlayRouteImport
-      parentRoute: typeof AppLayoutRoute
+      parentRoute: typeof AppLayoutProjectsCreateProjectRoute
     }
     '/_appLayout/dealership/$id/users': {
       id: '/_appLayout/dealership/$id/users'
@@ -371,6 +389,24 @@ const AppLayoutDealershipIdRouteWithChildren =
     AppLayoutDealershipIdRouteChildren,
   )
 
+interface AppLayoutProjectsCreateProjectRouteChildren {
+  AppLayoutProjectsCreateProjectAddInlayRoute: typeof AppLayoutProjectsCreateProjectAddInlayRoute
+  AppLayoutProjectsCreateProjectIndexRoute: typeof AppLayoutProjectsCreateProjectIndexRoute
+}
+
+const AppLayoutProjectsCreateProjectRouteChildren: AppLayoutProjectsCreateProjectRouteChildren =
+  {
+    AppLayoutProjectsCreateProjectAddInlayRoute:
+      AppLayoutProjectsCreateProjectAddInlayRoute,
+    AppLayoutProjectsCreateProjectIndexRoute:
+      AppLayoutProjectsCreateProjectIndexRoute,
+  }
+
+const AppLayoutProjectsCreateProjectRouteWithChildren =
+  AppLayoutProjectsCreateProjectRoute._addFileChildren(
+    AppLayoutProjectsCreateProjectRouteChildren,
+  )
+
 interface AppLayoutRouteChildren {
   AppLayoutAdminRoute: typeof AppLayoutAdminRouteWithChildren
   AppLayoutDashboardRoute: typeof AppLayoutDashboardRoute
@@ -379,8 +415,7 @@ interface AppLayoutRouteChildren {
   AppLayoutSettingsRoute: typeof AppLayoutSettingsRoute
   AppLayoutDealershipIdRoute: typeof AppLayoutDealershipIdRouteWithChildren
   AppLayoutProjectsIdRoute: typeof AppLayoutProjectsIdRoute
-  AppLayoutProjectsCreateProjectRoute: typeof AppLayoutProjectsCreateProjectRoute
-  AppLayoutProjectsCreateProjectAddInlayRoute: typeof AppLayoutProjectsCreateProjectAddInlayRoute
+  AppLayoutProjectsCreateProjectRoute: typeof AppLayoutProjectsCreateProjectRouteWithChildren
 }
 
 const AppLayoutRouteChildren: AppLayoutRouteChildren = {
@@ -391,9 +426,8 @@ const AppLayoutRouteChildren: AppLayoutRouteChildren = {
   AppLayoutSettingsRoute: AppLayoutSettingsRoute,
   AppLayoutDealershipIdRoute: AppLayoutDealershipIdRouteWithChildren,
   AppLayoutProjectsIdRoute: AppLayoutProjectsIdRoute,
-  AppLayoutProjectsCreateProjectRoute: AppLayoutProjectsCreateProjectRoute,
-  AppLayoutProjectsCreateProjectAddInlayRoute:
-    AppLayoutProjectsCreateProjectAddInlayRoute,
+  AppLayoutProjectsCreateProjectRoute:
+    AppLayoutProjectsCreateProjectRouteWithChildren,
 }
 
 const AppLayoutRouteWithChildren = AppLayoutRoute._addFileChildren(

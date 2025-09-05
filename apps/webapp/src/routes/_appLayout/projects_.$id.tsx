@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/solid-router";
+import { createFileRoute, Link } from "@tanstack/solid-router";
 import { GET, Project } from "@glassact/data";
 import { Breadcrumb, Button, cn, TextField, TextFieldRoot } from "@glassact/ui";
 import { createSignal, Index, Show } from "solid-js";
@@ -111,10 +111,9 @@ function RouteComponent() {
     id: 123,
     uuid: "1234",
     name: "John Doe",
-    status: "1234",
+    status: "awaiting-proof",
     approved: false,
     dealership_id: 123,
-    shipment_id: 123,
     created_at: "qw34",
     updated_at: "1234",
     version: 1,
@@ -123,22 +122,22 @@ function RouteComponent() {
   const inlays = ["1234-78-A21", "BIR-203-152"];
 
   const steps = [
-    { name: "Proof Creation", href: "#", status: "complete" },
-    { name: "Proof Approval", href: "#", status: "current" },
-    { name: "Order Placement", href: "#", status: "upcoming" },
-    { name: "Material Prep", href: "#", status: "upcoming" },
-    { name: "Cutting", href: "#", status: "upcoming" },
-    { name: "Fire Polishing", href: "#", status: "upcoming" },
-    { name: "Packaging", href: "#", status: "upcoming" },
-    { name: "Shipping", href: "#", status: "upcoming" },
-    { name: "Delivered", href: "#", status: "upcoming" },
+    { name: "Proof Creation", to: "#", status: "complete" },
+    { name: "Proof Approval", to: "#", status: "current" },
+    { name: "Order Placement", to: "#", status: "upcoming" },
+    { name: "Material Prep", to: "#", status: "upcoming" },
+    { name: "Cutting", to: "#", status: "upcoming" },
+    { name: "Fire Polishing", to: "#", status: "upcoming" },
+    { name: "Packaging", to: "#", status: "upcoming" },
+    { name: "Shipping", to: "#", status: "upcoming" },
+    { name: "Delivered", to: "#", status: "upcoming" },
   ];
   return (
     <div>
       <Breadcrumb
         crumbs={[
-          { title: "Projects", href: "/projects" },
-          { title: project.name, href: `/projects/${project.uuid}` },
+          { title: "Projects", to: "/projects" },
+          { title: project.name, to: `/projects/${project.uuid}` },
         ]}
       />
       <div class="relative border-b border-gray-200 pb-5 sm:pb-0">
@@ -179,7 +178,7 @@ function RouteComponent() {
                 {(step) => (
                   <li>
                     {step().status === "complete" ? (
-                      <a href={step().href} class="group">
+                      <a to={step().to} class="group">
                         <span class="flex items-start">
                           <span class="relative flex size-5 shrink-0 items-center justify-center">
                             <IoCheckmarkCircleOutline class="size-full text-primary group-hover:text-primary" />
@@ -190,8 +189,8 @@ function RouteComponent() {
                         </span>
                       </a>
                     ) : step().status === "current" ? (
-                      <a
-                        href={step().href}
+                      <Link
+                        to={step().to}
                         aria-current="step"
                         class="flex items-start"
                       >
@@ -205,9 +204,9 @@ function RouteComponent() {
                         <span class="ml-3 text-sm font-medium text-primary">
                           {step().name}
                         </span>
-                      </a>
+                      </Link>
                     ) : (
-                      <a href={step().href} class="group">
+                      <Link to={step().to} class="group">
                         <div class="flex items-start">
                           <div
                             aria-hidden="true"
@@ -219,7 +218,7 @@ function RouteComponent() {
                             {step().name}
                           </p>
                         </div>
-                      </a>
+                      </Link>
                     )}
                   </li>
                 )}

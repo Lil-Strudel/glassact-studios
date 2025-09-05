@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/solid-router";
+import { createFileRoute, Link } from "@tanstack/solid-router";
 import { GET, Project, ProjectStatus } from "@glassact/data";
 import { Button, Breadcrumb } from "@glassact/ui";
 import { IoAddCircleOutline, IoCheckmarkCircleOutline } from "solid-icons/io";
@@ -30,9 +30,9 @@ function RouteComponent() {
 
   return (
     <div>
-      <Breadcrumb crumbs={[{ title: "Projects", href: "/projects" }]} />
+      <Breadcrumb crumbs={[{ title: "Projects", to: "/projects" }]} />
       <div>
-        <Button as="a" href="/projects/create-project">
+        <Button as={Link} to="/projects/create-project">
           Create New Project
           <IoAddCircleOutline size={20} class="ml-2" />
         </Button>
@@ -71,7 +71,7 @@ function RouteComponent() {
                     <div class="border rounded-xl p-4">
                       <div class="flex items-center justify-between">
                         <span class="text-2xl font-bold">{item().name}</span>
-                        <Button as="a" href={`/projects/${item().uuid}`}>
+                        <Button as={Link} to={`/projects/${item().uuid}`}>
                           View Proofs
                         </Button>
                       </div>
@@ -136,7 +136,7 @@ function RouteComponent() {
                     <div class="border rounded-xl p-4">
                       <div class="flex items-center justify-between">
                         <span class="text-2xl font-bold">{item().name}</span>
-                        <Button as="a" href={`/projects/${item().uuid}`}>
+                        <Button as={Link} to={`/projects/${item().uuid}`}>
                           View Invoice
                         </Button>
                       </div>
@@ -224,7 +224,7 @@ function RouteComponent() {
                     <div class="border rounded-xl p-4">
                       <div class="flex items-center justify-between">
                         <span class="text-2xl font-bold">{item().name}</span>
-                        <Button as="a" href={`/projects/${item().uuid}`}>
+                        <Button as={Link} to={`/projects/${item().uuid}`}>
                           View Project
                         </Button>
                       </div>
@@ -392,7 +392,7 @@ function RouteComponent() {
                     <div class="border rounded-xl p-4">
                       <div class="flex items-center justify-between">
                         <span class="text-2xl font-bold">{item().name}</span>
-                        <Button as="a" href={`/projects/${item().uuid}`}>
+                        <Button as={Link} to={`/projects/${item().uuid}`}>
                           View Receipt
                         </Button>
                       </div>
