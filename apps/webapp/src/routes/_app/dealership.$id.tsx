@@ -10,7 +10,7 @@ import { IoPersonOutline, IoBusinessOutline } from "solid-icons/io";
 import { useQuery } from "@tanstack/solid-query";
 import { getDealershipOpts } from "../../queries/dealership";
 
-export const Route = createFileRoute("/_appLayout/dealership/$id")({
+export const Route = createFileRoute("/_app/dealership/$id")({
   component: RouteComponent,
   beforeLoad({ params, location }) {
     if (location.pathname.split("/").length < 4) {

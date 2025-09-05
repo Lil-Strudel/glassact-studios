@@ -27,7 +27,7 @@ import { z } from "zod";
 import { produce } from "immer";
 import { IoWarningOutline } from "solid-icons/io";
 
-export const Route = createFileRoute("/_appLayout/inlays")({
+export const Route = createFileRoute("/_app/inlays")({
   component: RouteComponent,
 });
 

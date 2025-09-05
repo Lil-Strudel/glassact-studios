@@ -4,7 +4,7 @@ import { Index, Show } from "solid-js";
 import { formatMoney } from "../../utils/format-money";
 import { useProjectFormContext } from "./projects_.create-project";
 
-export const Route = createFileRoute("/_appLayout/projects_/create-project/")({
+export const Route = createFileRoute("/_app/projects_/create-project/")({
   component: RouteComponent,
 });
 

@@ -4,7 +4,7 @@ import { Breadcrumb, Button, cn, TextField, TextFieldRoot } from "@glassact/ui";
 import { createSignal, Index, Show } from "solid-js";
 import { IoCheckmarkCircleOutline } from "solid-icons/io";
 
-export const Route = createFileRoute("/_appLayout/projects_/$id")({
+export const Route = createFileRoute("/_app/projects_/$id")({
   component: RouteComponent,
 });
 
