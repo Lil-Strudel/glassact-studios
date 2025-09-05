@@ -9,7 +9,7 @@ import { Inlay, POST, Project } from "@glassact/data";
 import { getUserSelfOpts } from "../../queries/user";
 import { createContext, useContext } from "solid-js";
 
-export const Route = createFileRoute("/_appLayout/projects_/create-project")({
+export const Route = createFileRoute("/_app/projects_/create-project")({
   component: RouteComponent,
 });
 

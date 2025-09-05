@@ -4,7 +4,7 @@ import { Breadcrumb, Button, cn, TextField, TextFieldRoot } from "@glassact/ui";
 import { createSignal, Index, Show } from "solid-js";
 import { IoCheckmarkCircleOutline } from "solid-icons/io";
 
-export const Route = createFileRoute("/_appLayout/projects_/$id")({
+export const Route = createFileRoute("/_app/projects_/$id")({
   component: RouteComponent,
 });
 
@@ -178,7 +178,7 @@ function RouteComponent() {
                 {(step) => (
                   <li>
                     {step().status === "complete" ? (
-                      <a to={step().to} class="group">
+                      <Link to={step().to} class="group">
                         <span class="flex items-start">
                           <span class="relative flex size-5 shrink-0 items-center justify-center">
                             <IoCheckmarkCircleOutline class="size-full text-primary group-hover:text-primary" />
@@ -187,7 +187,7 @@ function RouteComponent() {
                             {step().name}
                           </span>
                         </span>
-                      </a>
+                      </Link>
                     ) : step().status === "current" ? (
                       <Link
                         to={step().to}

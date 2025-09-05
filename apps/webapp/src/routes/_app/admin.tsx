@@ -7,7 +7,7 @@ import {
 import { For } from "solid-js";
 import { IoPersonOutline, IoBusinessOutline } from "solid-icons/io";
 
-export const Route = createFileRoute("/_appLayout/admin")({
+export const Route = createFileRoute("/_app/admin")({
   component: RouteComponent,
   beforeLoad({ location }) {
     if (location.pathname.split("/").length < 3) {

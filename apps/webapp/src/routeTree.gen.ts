@@ -10,30 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AppLayoutRouteImport } from './routes/_appLayout'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppLayoutSettingsRouteImport } from './routes/_appLayout/settings'
-import { Route as AppLayoutProjectsRouteImport } from './routes/_appLayout/projects'
-import { Route as AppLayoutInlaysRouteImport } from './routes/_appLayout/inlays'
-import { Route as AppLayoutDashboardRouteImport } from './routes/_appLayout/dashboard'
-import { Route as AppLayoutAdminRouteImport } from './routes/_appLayout/admin'
-import { Route as AppLayoutProjectsCreateProjectRouteImport } from './routes/_appLayout/projects_.create-project'
-import { Route as AppLayoutProjectsIdRouteImport } from './routes/_appLayout/projects_.$id'
-import { Route as AppLayoutDealershipIdRouteImport } from './routes/_appLayout/dealership.$id'
-import { Route as AppLayoutAdminUsersRouteImport } from './routes/_appLayout/admin.users'
-import { Route as AppLayoutAdminDealershipsRouteImport } from './routes/_appLayout/admin.dealerships'
-import { Route as AppLayoutProjectsCreateProjectIndexRouteImport } from './routes/_appLayout/projects_.create-project.index'
-import { Route as AppLayoutProjectsCreateProjectAddInlayRouteImport } from './routes/_appLayout/projects_.create-project.add-inlay'
-import { Route as AppLayoutDealershipIdUsersRouteImport } from './routes/_appLayout/dealership.$id.users'
-import { Route as AppLayoutDealershipIdSettingsRouteImport } from './routes/_appLayout/dealership.$id.settings'
+import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppProjectsRouteImport } from './routes/_app/projects'
+import { Route as AppInlaysRouteImport } from './routes/_app/inlays'
+import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppAdminRouteImport } from './routes/_app/admin'
+import { Route as AppProjectsCreateProjectRouteImport } from './routes/_app/projects_.create-project'
+import { Route as AppProjectsIdRouteImport } from './routes/_app/projects_.$id'
+import { Route as AppDealershipIdRouteImport } from './routes/_app/dealership.$id'
+import { Route as AppAdminUsersRouteImport } from './routes/_app/admin.users'
+import { Route as AppAdminDealershipsRouteImport } from './routes/_app/admin.dealerships'
+import { Route as AppProjectsCreateProjectIndexRouteImport } from './routes/_app/projects_.create-project.index'
+import { Route as AppProjectsCreateProjectAddInlayRouteImport } from './routes/_app/projects_.create-project.add-inlay'
+import { Route as AppDealershipIdUsersRouteImport } from './routes/_app/dealership.$id.users'
+import { Route as AppDealershipIdSettingsRouteImport } from './routes/_app/dealership.$id.settings'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppLayoutRoute = AppLayoutRouteImport.update({
-  id: '/_appLayout',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -41,137 +41,134 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppLayoutSettingsRoute = AppLayoutSettingsRouteImport.update({
+const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => AppLayoutRoute,
+  getParentRoute: () => AppRoute,
 } as any)
-const AppLayoutProjectsRoute = AppLayoutProjectsRouteImport.update({
+const AppProjectsRoute = AppProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
-  getParentRoute: () => AppLayoutRoute,
+  getParentRoute: () => AppRoute,
 } as any)
-const AppLayoutInlaysRoute = AppLayoutInlaysRouteImport.update({
+const AppInlaysRoute = AppInlaysRouteImport.update({
   id: '/inlays',
   path: '/inlays',
-  getParentRoute: () => AppLayoutRoute,
+  getParentRoute: () => AppRoute,
 } as any)
-const AppLayoutDashboardRoute = AppLayoutDashboardRouteImport.update({
+const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AppLayoutRoute,
+  getParentRoute: () => AppRoute,
 } as any)
-const AppLayoutAdminRoute = AppLayoutAdminRouteImport.update({
+const AppAdminRoute = AppAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
-  getParentRoute: () => AppLayoutRoute,
+  getParentRoute: () => AppRoute,
 } as any)
-const AppLayoutProjectsCreateProjectRoute =
-  AppLayoutProjectsCreateProjectRouteImport.update({
+const AppProjectsCreateProjectRoute =
+  AppProjectsCreateProjectRouteImport.update({
     id: '/projects_/create-project',
     path: '/projects/create-project',
-    getParentRoute: () => AppLayoutRoute,
+    getParentRoute: () => AppRoute,
   } as any)
-const AppLayoutProjectsIdRoute = AppLayoutProjectsIdRouteImport.update({
+const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
   id: '/projects_/$id',
   path: '/projects/$id',
-  getParentRoute: () => AppLayoutRoute,
+  getParentRoute: () => AppRoute,
 } as any)
-const AppLayoutDealershipIdRoute = AppLayoutDealershipIdRouteImport.update({
+const AppDealershipIdRoute = AppDealershipIdRouteImport.update({
   id: '/dealership/$id',
   path: '/dealership/$id',
-  getParentRoute: () => AppLayoutRoute,
+  getParentRoute: () => AppRoute,
 } as any)
-const AppLayoutAdminUsersRoute = AppLayoutAdminUsersRouteImport.update({
+const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
-  getParentRoute: () => AppLayoutAdminRoute,
+  getParentRoute: () => AppAdminRoute,
 } as any)
-const AppLayoutAdminDealershipsRoute =
-  AppLayoutAdminDealershipsRouteImport.update({
-    id: '/dealerships',
-    path: '/dealerships',
-    getParentRoute: () => AppLayoutAdminRoute,
-  } as any)
-const AppLayoutProjectsCreateProjectIndexRoute =
-  AppLayoutProjectsCreateProjectIndexRouteImport.update({
+const AppAdminDealershipsRoute = AppAdminDealershipsRouteImport.update({
+  id: '/dealerships',
+  path: '/dealerships',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppProjectsCreateProjectIndexRoute =
+  AppProjectsCreateProjectIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AppLayoutProjectsCreateProjectRoute,
+    getParentRoute: () => AppProjectsCreateProjectRoute,
   } as any)
-const AppLayoutProjectsCreateProjectAddInlayRoute =
-  AppLayoutProjectsCreateProjectAddInlayRouteImport.update({
+const AppProjectsCreateProjectAddInlayRoute =
+  AppProjectsCreateProjectAddInlayRouteImport.update({
     id: '/add-inlay',
     path: '/add-inlay',
-    getParentRoute: () => AppLayoutProjectsCreateProjectRoute,
+    getParentRoute: () => AppProjectsCreateProjectRoute,
   } as any)
-const AppLayoutDealershipIdUsersRoute =
-  AppLayoutDealershipIdUsersRouteImport.update({
-    id: '/users',
-    path: '/users',
-    getParentRoute: () => AppLayoutDealershipIdRoute,
-  } as any)
-const AppLayoutDealershipIdSettingsRoute =
-  AppLayoutDealershipIdSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AppLayoutDealershipIdRoute,
-  } as any)
+const AppDealershipIdUsersRoute = AppDealershipIdUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AppDealershipIdRoute,
+} as any)
+const AppDealershipIdSettingsRoute = AppDealershipIdSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppDealershipIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/admin': typeof AppLayoutAdminRouteWithChildren
-  '/dashboard': typeof AppLayoutDashboardRoute
-  '/inlays': typeof AppLayoutInlaysRoute
-  '/projects': typeof AppLayoutProjectsRoute
-  '/settings': typeof AppLayoutSettingsRoute
-  '/admin/dealerships': typeof AppLayoutAdminDealershipsRoute
-  '/admin/users': typeof AppLayoutAdminUsersRoute
-  '/dealership/$id': typeof AppLayoutDealershipIdRouteWithChildren
-  '/projects/$id': typeof AppLayoutProjectsIdRoute
-  '/projects/create-project': typeof AppLayoutProjectsCreateProjectRouteWithChildren
-  '/dealership/$id/settings': typeof AppLayoutDealershipIdSettingsRoute
-  '/dealership/$id/users': typeof AppLayoutDealershipIdUsersRoute
-  '/projects/create-project/add-inlay': typeof AppLayoutProjectsCreateProjectAddInlayRoute
-  '/projects/create-project/': typeof AppLayoutProjectsCreateProjectIndexRoute
+  '/admin': typeof AppAdminRouteWithChildren
+  '/dashboard': typeof AppDashboardRoute
+  '/inlays': typeof AppInlaysRoute
+  '/projects': typeof AppProjectsRoute
+  '/settings': typeof AppSettingsRoute
+  '/admin/dealerships': typeof AppAdminDealershipsRoute
+  '/admin/users': typeof AppAdminUsersRoute
+  '/dealership/$id': typeof AppDealershipIdRouteWithChildren
+  '/projects/$id': typeof AppProjectsIdRoute
+  '/projects/create-project': typeof AppProjectsCreateProjectRouteWithChildren
+  '/dealership/$id/settings': typeof AppDealershipIdSettingsRoute
+  '/dealership/$id/users': typeof AppDealershipIdUsersRoute
+  '/projects/create-project/add-inlay': typeof AppProjectsCreateProjectAddInlayRoute
+  '/projects/create-project/': typeof AppProjectsCreateProjectIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/admin': typeof AppLayoutAdminRouteWithChildren
-  '/dashboard': typeof AppLayoutDashboardRoute
-  '/inlays': typeof AppLayoutInlaysRoute
-  '/projects': typeof AppLayoutProjectsRoute
-  '/settings': typeof AppLayoutSettingsRoute
-  '/admin/dealerships': typeof AppLayoutAdminDealershipsRoute
-  '/admin/users': typeof AppLayoutAdminUsersRoute
-  '/dealership/$id': typeof AppLayoutDealershipIdRouteWithChildren
-  '/projects/$id': typeof AppLayoutProjectsIdRoute
-  '/dealership/$id/settings': typeof AppLayoutDealershipIdSettingsRoute
-  '/dealership/$id/users': typeof AppLayoutDealershipIdUsersRoute
-  '/projects/create-project/add-inlay': typeof AppLayoutProjectsCreateProjectAddInlayRoute
-  '/projects/create-project': typeof AppLayoutProjectsCreateProjectIndexRoute
+  '/admin': typeof AppAdminRouteWithChildren
+  '/dashboard': typeof AppDashboardRoute
+  '/inlays': typeof AppInlaysRoute
+  '/projects': typeof AppProjectsRoute
+  '/settings': typeof AppSettingsRoute
+  '/admin/dealerships': typeof AppAdminDealershipsRoute
+  '/admin/users': typeof AppAdminUsersRoute
+  '/dealership/$id': typeof AppDealershipIdRouteWithChildren
+  '/projects/$id': typeof AppProjectsIdRoute
+  '/dealership/$id/settings': typeof AppDealershipIdSettingsRoute
+  '/dealership/$id/users': typeof AppDealershipIdUsersRoute
+  '/projects/create-project/add-inlay': typeof AppProjectsCreateProjectAddInlayRoute
+  '/projects/create-project': typeof AppProjectsCreateProjectIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_appLayout': typeof AppLayoutRouteWithChildren
+  '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
-  '/_appLayout/admin': typeof AppLayoutAdminRouteWithChildren
-  '/_appLayout/dashboard': typeof AppLayoutDashboardRoute
-  '/_appLayout/inlays': typeof AppLayoutInlaysRoute
-  '/_appLayout/projects': typeof AppLayoutProjectsRoute
-  '/_appLayout/settings': typeof AppLayoutSettingsRoute
-  '/_appLayout/admin/dealerships': typeof AppLayoutAdminDealershipsRoute
-  '/_appLayout/admin/users': typeof AppLayoutAdminUsersRoute
-  '/_appLayout/dealership/$id': typeof AppLayoutDealershipIdRouteWithChildren
-  '/_appLayout/projects_/$id': typeof AppLayoutProjectsIdRoute
-  '/_appLayout/projects_/create-project': typeof AppLayoutProjectsCreateProjectRouteWithChildren
-  '/_appLayout/dealership/$id/settings': typeof AppLayoutDealershipIdSettingsRoute
-  '/_appLayout/dealership/$id/users': typeof AppLayoutDealershipIdUsersRoute
-  '/_appLayout/projects_/create-project/add-inlay': typeof AppLayoutProjectsCreateProjectAddInlayRoute
-  '/_appLayout/projects_/create-project/': typeof AppLayoutProjectsCreateProjectIndexRoute
+  '/_app/admin': typeof AppAdminRouteWithChildren
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/inlays': typeof AppInlaysRoute
+  '/_app/projects': typeof AppProjectsRoute
+  '/_app/settings': typeof AppSettingsRoute
+  '/_app/admin/dealerships': typeof AppAdminDealershipsRoute
+  '/_app/admin/users': typeof AppAdminUsersRoute
+  '/_app/dealership/$id': typeof AppDealershipIdRouteWithChildren
+  '/_app/projects_/$id': typeof AppProjectsIdRoute
+  '/_app/projects_/create-project': typeof AppProjectsCreateProjectRouteWithChildren
+  '/_app/dealership/$id/settings': typeof AppDealershipIdSettingsRoute
+  '/_app/dealership/$id/users': typeof AppDealershipIdUsersRoute
+  '/_app/projects_/create-project/add-inlay': typeof AppProjectsCreateProjectAddInlayRoute
+  '/_app/projects_/create-project/': typeof AppProjectsCreateProjectIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -212,27 +209,27 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/_appLayout'
+    | '/_app'
     | '/login'
-    | '/_appLayout/admin'
-    | '/_appLayout/dashboard'
-    | '/_appLayout/inlays'
-    | '/_appLayout/projects'
-    | '/_appLayout/settings'
-    | '/_appLayout/admin/dealerships'
-    | '/_appLayout/admin/users'
-    | '/_appLayout/dealership/$id'
-    | '/_appLayout/projects_/$id'
-    | '/_appLayout/projects_/create-project'
-    | '/_appLayout/dealership/$id/settings'
-    | '/_appLayout/dealership/$id/users'
-    | '/_appLayout/projects_/create-project/add-inlay'
-    | '/_appLayout/projects_/create-project/'
+    | '/_app/admin'
+    | '/_app/dashboard'
+    | '/_app/inlays'
+    | '/_app/projects'
+    | '/_app/settings'
+    | '/_app/admin/dealerships'
+    | '/_app/admin/users'
+    | '/_app/dealership/$id'
+    | '/_app/projects_/$id'
+    | '/_app/projects_/create-project'
+    | '/_app/dealership/$id/settings'
+    | '/_app/dealership/$id/users'
+    | '/_app/projects_/create-project/add-inlay'
+    | '/_app/projects_/create-project/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppLayoutRoute: typeof AppLayoutRouteWithChildren
+  AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
 }
 
@@ -245,11 +242,11 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_appLayout': {
-      id: '/_appLayout'
+    '/_app': {
+      id: '/_app'
       path: ''
       fullPath: ''
-      preLoaderRoute: typeof AppLayoutRouteImport
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -259,184 +256,179 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_appLayout/settings': {
-      id: '/_appLayout/settings'
+    '/_app/settings': {
+      id: '/_app/settings'
       path: '/settings'
       fullPath: '/settings'
-      preLoaderRoute: typeof AppLayoutSettingsRouteImport
-      parentRoute: typeof AppLayoutRoute
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_appLayout/projects': {
-      id: '/_appLayout/projects'
+    '/_app/projects': {
+      id: '/_app/projects'
       path: '/projects'
       fullPath: '/projects'
-      preLoaderRoute: typeof AppLayoutProjectsRouteImport
-      parentRoute: typeof AppLayoutRoute
+      preLoaderRoute: typeof AppProjectsRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_appLayout/inlays': {
-      id: '/_appLayout/inlays'
+    '/_app/inlays': {
+      id: '/_app/inlays'
       path: '/inlays'
       fullPath: '/inlays'
-      preLoaderRoute: typeof AppLayoutInlaysRouteImport
-      parentRoute: typeof AppLayoutRoute
+      preLoaderRoute: typeof AppInlaysRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_appLayout/dashboard': {
-      id: '/_appLayout/dashboard'
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
-      preLoaderRoute: typeof AppLayoutDashboardRouteImport
-      parentRoute: typeof AppLayoutRoute
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_appLayout/admin': {
-      id: '/_appLayout/admin'
+    '/_app/admin': {
+      id: '/_app/admin'
       path: '/admin'
       fullPath: '/admin'
-      preLoaderRoute: typeof AppLayoutAdminRouteImport
-      parentRoute: typeof AppLayoutRoute
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_appLayout/projects_/create-project': {
-      id: '/_appLayout/projects_/create-project'
+    '/_app/projects_/create-project': {
+      id: '/_app/projects_/create-project'
       path: '/projects/create-project'
       fullPath: '/projects/create-project'
-      preLoaderRoute: typeof AppLayoutProjectsCreateProjectRouteImport
-      parentRoute: typeof AppLayoutRoute
+      preLoaderRoute: typeof AppProjectsCreateProjectRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_appLayout/projects_/$id': {
-      id: '/_appLayout/projects_/$id'
+    '/_app/projects_/$id': {
+      id: '/_app/projects_/$id'
       path: '/projects/$id'
       fullPath: '/projects/$id'
-      preLoaderRoute: typeof AppLayoutProjectsIdRouteImport
-      parentRoute: typeof AppLayoutRoute
+      preLoaderRoute: typeof AppProjectsIdRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_appLayout/dealership/$id': {
-      id: '/_appLayout/dealership/$id'
+    '/_app/dealership/$id': {
+      id: '/_app/dealership/$id'
       path: '/dealership/$id'
       fullPath: '/dealership/$id'
-      preLoaderRoute: typeof AppLayoutDealershipIdRouteImport
-      parentRoute: typeof AppLayoutRoute
+      preLoaderRoute: typeof AppDealershipIdRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_appLayout/admin/users': {
-      id: '/_appLayout/admin/users'
+    '/_app/admin/users': {
+      id: '/_app/admin/users'
       path: '/users'
       fullPath: '/admin/users'
-      preLoaderRoute: typeof AppLayoutAdminUsersRouteImport
-      parentRoute: typeof AppLayoutAdminRoute
+      preLoaderRoute: typeof AppAdminUsersRouteImport
+      parentRoute: typeof AppAdminRoute
     }
-    '/_appLayout/admin/dealerships': {
-      id: '/_appLayout/admin/dealerships'
+    '/_app/admin/dealerships': {
+      id: '/_app/admin/dealerships'
       path: '/dealerships'
       fullPath: '/admin/dealerships'
-      preLoaderRoute: typeof AppLayoutAdminDealershipsRouteImport
-      parentRoute: typeof AppLayoutAdminRoute
+      preLoaderRoute: typeof AppAdminDealershipsRouteImport
+      parentRoute: typeof AppAdminRoute
     }
-    '/_appLayout/projects_/create-project/': {
-      id: '/_appLayout/projects_/create-project/'
+    '/_app/projects_/create-project/': {
+      id: '/_app/projects_/create-project/'
       path: '/'
       fullPath: '/projects/create-project/'
-      preLoaderRoute: typeof AppLayoutProjectsCreateProjectIndexRouteImport
-      parentRoute: typeof AppLayoutProjectsCreateProjectRoute
+      preLoaderRoute: typeof AppProjectsCreateProjectIndexRouteImport
+      parentRoute: typeof AppProjectsCreateProjectRoute
     }
-    '/_appLayout/projects_/create-project/add-inlay': {
-      id: '/_appLayout/projects_/create-project/add-inlay'
+    '/_app/projects_/create-project/add-inlay': {
+      id: '/_app/projects_/create-project/add-inlay'
       path: '/add-inlay'
       fullPath: '/projects/create-project/add-inlay'
-      preLoaderRoute: typeof AppLayoutProjectsCreateProjectAddInlayRouteImport
-      parentRoute: typeof AppLayoutProjectsCreateProjectRoute
+      preLoaderRoute: typeof AppProjectsCreateProjectAddInlayRouteImport
+      parentRoute: typeof AppProjectsCreateProjectRoute
     }
-    '/_appLayout/dealership/$id/users': {
-      id: '/_appLayout/dealership/$id/users'
+    '/_app/dealership/$id/users': {
+      id: '/_app/dealership/$id/users'
       path: '/users'
       fullPath: '/dealership/$id/users'
-      preLoaderRoute: typeof AppLayoutDealershipIdUsersRouteImport
-      parentRoute: typeof AppLayoutDealershipIdRoute
+      preLoaderRoute: typeof AppDealershipIdUsersRouteImport
+      parentRoute: typeof AppDealershipIdRoute
     }
-    '/_appLayout/dealership/$id/settings': {
-      id: '/_appLayout/dealership/$id/settings'
+    '/_app/dealership/$id/settings': {
+      id: '/_app/dealership/$id/settings'
       path: '/settings'
       fullPath: '/dealership/$id/settings'
-      preLoaderRoute: typeof AppLayoutDealershipIdSettingsRouteImport
-      parentRoute: typeof AppLayoutDealershipIdRoute
+      preLoaderRoute: typeof AppDealershipIdSettingsRouteImport
+      parentRoute: typeof AppDealershipIdRoute
     }
   }
 }
 
-interface AppLayoutAdminRouteChildren {
-  AppLayoutAdminDealershipsRoute: typeof AppLayoutAdminDealershipsRoute
-  AppLayoutAdminUsersRoute: typeof AppLayoutAdminUsersRoute
+interface AppAdminRouteChildren {
+  AppAdminDealershipsRoute: typeof AppAdminDealershipsRoute
+  AppAdminUsersRoute: typeof AppAdminUsersRoute
 }
 
-const AppLayoutAdminRouteChildren: AppLayoutAdminRouteChildren = {
-  AppLayoutAdminDealershipsRoute: AppLayoutAdminDealershipsRoute,
-  AppLayoutAdminUsersRoute: AppLayoutAdminUsersRoute,
+const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminDealershipsRoute: AppAdminDealershipsRoute,
+  AppAdminUsersRoute: AppAdminUsersRoute,
 }
 
-const AppLayoutAdminRouteWithChildren = AppLayoutAdminRoute._addFileChildren(
-  AppLayoutAdminRouteChildren,
+const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
+  AppAdminRouteChildren,
 )
 
-interface AppLayoutDealershipIdRouteChildren {
-  AppLayoutDealershipIdSettingsRoute: typeof AppLayoutDealershipIdSettingsRoute
-  AppLayoutDealershipIdUsersRoute: typeof AppLayoutDealershipIdUsersRoute
+interface AppDealershipIdRouteChildren {
+  AppDealershipIdSettingsRoute: typeof AppDealershipIdSettingsRoute
+  AppDealershipIdUsersRoute: typeof AppDealershipIdUsersRoute
 }
 
-const AppLayoutDealershipIdRouteChildren: AppLayoutDealershipIdRouteChildren = {
-  AppLayoutDealershipIdSettingsRoute: AppLayoutDealershipIdSettingsRoute,
-  AppLayoutDealershipIdUsersRoute: AppLayoutDealershipIdUsersRoute,
+const AppDealershipIdRouteChildren: AppDealershipIdRouteChildren = {
+  AppDealershipIdSettingsRoute: AppDealershipIdSettingsRoute,
+  AppDealershipIdUsersRoute: AppDealershipIdUsersRoute,
 }
 
-const AppLayoutDealershipIdRouteWithChildren =
-  AppLayoutDealershipIdRoute._addFileChildren(
-    AppLayoutDealershipIdRouteChildren,
-  )
+const AppDealershipIdRouteWithChildren = AppDealershipIdRoute._addFileChildren(
+  AppDealershipIdRouteChildren,
+)
 
-interface AppLayoutProjectsCreateProjectRouteChildren {
-  AppLayoutProjectsCreateProjectAddInlayRoute: typeof AppLayoutProjectsCreateProjectAddInlayRoute
-  AppLayoutProjectsCreateProjectIndexRoute: typeof AppLayoutProjectsCreateProjectIndexRoute
+interface AppProjectsCreateProjectRouteChildren {
+  AppProjectsCreateProjectAddInlayRoute: typeof AppProjectsCreateProjectAddInlayRoute
+  AppProjectsCreateProjectIndexRoute: typeof AppProjectsCreateProjectIndexRoute
 }
 
-const AppLayoutProjectsCreateProjectRouteChildren: AppLayoutProjectsCreateProjectRouteChildren =
+const AppProjectsCreateProjectRouteChildren: AppProjectsCreateProjectRouteChildren =
   {
-    AppLayoutProjectsCreateProjectAddInlayRoute:
-      AppLayoutProjectsCreateProjectAddInlayRoute,
-    AppLayoutProjectsCreateProjectIndexRoute:
-      AppLayoutProjectsCreateProjectIndexRoute,
+    AppProjectsCreateProjectAddInlayRoute:
+      AppProjectsCreateProjectAddInlayRoute,
+    AppProjectsCreateProjectIndexRoute: AppProjectsCreateProjectIndexRoute,
   }
 
-const AppLayoutProjectsCreateProjectRouteWithChildren =
-  AppLayoutProjectsCreateProjectRoute._addFileChildren(
-    AppLayoutProjectsCreateProjectRouteChildren,
+const AppProjectsCreateProjectRouteWithChildren =
+  AppProjectsCreateProjectRoute._addFileChildren(
+    AppProjectsCreateProjectRouteChildren,
   )
 
-interface AppLayoutRouteChildren {
-  AppLayoutAdminRoute: typeof AppLayoutAdminRouteWithChildren
-  AppLayoutDashboardRoute: typeof AppLayoutDashboardRoute
-  AppLayoutInlaysRoute: typeof AppLayoutInlaysRoute
-  AppLayoutProjectsRoute: typeof AppLayoutProjectsRoute
-  AppLayoutSettingsRoute: typeof AppLayoutSettingsRoute
-  AppLayoutDealershipIdRoute: typeof AppLayoutDealershipIdRouteWithChildren
-  AppLayoutProjectsIdRoute: typeof AppLayoutProjectsIdRoute
-  AppLayoutProjectsCreateProjectRoute: typeof AppLayoutProjectsCreateProjectRouteWithChildren
+interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRouteWithChildren
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppInlaysRoute: typeof AppInlaysRoute
+  AppProjectsRoute: typeof AppProjectsRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppDealershipIdRoute: typeof AppDealershipIdRouteWithChildren
+  AppProjectsIdRoute: typeof AppProjectsIdRoute
+  AppProjectsCreateProjectRoute: typeof AppProjectsCreateProjectRouteWithChildren
 }
 
-const AppLayoutRouteChildren: AppLayoutRouteChildren = {
-  AppLayoutAdminRoute: AppLayoutAdminRouteWithChildren,
-  AppLayoutDashboardRoute: AppLayoutDashboardRoute,
-  AppLayoutInlaysRoute: AppLayoutInlaysRoute,
-  AppLayoutProjectsRoute: AppLayoutProjectsRoute,
-  AppLayoutSettingsRoute: AppLayoutSettingsRoute,
-  AppLayoutDealershipIdRoute: AppLayoutDealershipIdRouteWithChildren,
-  AppLayoutProjectsIdRoute: AppLayoutProjectsIdRoute,
-  AppLayoutProjectsCreateProjectRoute:
-    AppLayoutProjectsCreateProjectRouteWithChildren,
+const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRouteWithChildren,
+  AppDashboardRoute: AppDashboardRoute,
+  AppInlaysRoute: AppInlaysRoute,
+  AppProjectsRoute: AppProjectsRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppDealershipIdRoute: AppDealershipIdRouteWithChildren,
+  AppProjectsIdRoute: AppProjectsIdRoute,
+  AppProjectsCreateProjectRoute: AppProjectsCreateProjectRouteWithChildren,
 }
 
-const AppLayoutRouteWithChildren = AppLayoutRoute._addFileChildren(
-  AppLayoutRouteChildren,
-)
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppLayoutRoute: AppLayoutRouteWithChildren,
+  AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport

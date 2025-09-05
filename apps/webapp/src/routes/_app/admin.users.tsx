@@ -34,7 +34,7 @@ import { getUsersOpts, postUserOpts } from "../../queries/user";
 import DealershipCombobox from "../../components/dealership-combobox";
 import { isApiError } from "../../utils/is-api-error";
 
-export const Route = createFileRoute("/_appLayout/admin/users")({
+export const Route = createFileRoute("/_app/admin/users")({
   component: RouteComponent,
 });
 

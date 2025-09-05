@@ -18,7 +18,7 @@ import { zodStringNumber } from "../../utils/zod-string-number";
 import { useProjectFormContext } from "./projects_.create-project";
 
 export const Route = createFileRoute(
-  "/_appLayout/projects_/create-project/add-inlay",
+  "/_app/projects_/create-project/add-inlay",
 )({
   component: RouteComponent,
 });

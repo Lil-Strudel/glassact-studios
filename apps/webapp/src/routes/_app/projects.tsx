@@ -6,7 +6,7 @@ import { Index, Show } from "solid-js";
 import { useQuery } from "@tanstack/solid-query";
 import { getProjectsOpts } from "../../queries/project";
 
-export const Route = createFileRoute("/_appLayout/projects")({
+export const Route = createFileRoute("/_app/projects")({
   component: RouteComponent,
 });
 

@@ -35,7 +35,7 @@ import {
   postDealershipsOpts,
 } from "../../queries/dealership";
 
-export const Route = createFileRoute("/_appLayout/admin/dealerships")({
+export const Route = createFileRoute("/_app/admin/dealerships")({
   component: RouteComponent,
 });
 

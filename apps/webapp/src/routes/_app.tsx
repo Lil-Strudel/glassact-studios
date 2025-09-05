@@ -16,7 +16,7 @@ import { IoClose, IoMenu, IoNotificationsOutline } from "solid-icons/io";
 import { useQuery } from "@tanstack/solid-query";
 import { getUserSelfOpts } from "../queries/user";
 
-export const Route = createFileRoute("/_appLayout")({
+export const Route = createFileRoute("/_app")({
   component: RouteComponent,
   beforeLoad: async ({ context, location }) => {
     const status = await context.auth.deferredStatus().promise;
