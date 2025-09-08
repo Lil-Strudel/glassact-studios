@@ -23,14 +23,14 @@ type projectStatusi struct {
 }
 
 var ProjectStatusi = projectStatusi{
-	AwaitingProof:     "awaiting-proof",
-	ProofInRevision:   "proof-in-revision",
-	AllProofsAccepted: "all-proofs-accepted",
-	Cancelled:         "cancelled",
-	Ordered:           "ordered",
-	InProduction:      "in-production",
-	AwaitingPayment:   "awaiting-payment",
-	Completed:         "completed",
+	AwaitingProof:     ProjectStatus("awaiting-proof"),
+	ProofInRevision:   ProjectStatus("proof-in-revision"),
+	AllProofsAccepted: ProjectStatus("all-proofs-accepted"),
+	Cancelled:         ProjectStatus("cancelled"),
+	Ordered:           ProjectStatus("ordered"),
+	InProduction:      ProjectStatus("in-production"),
+	AwaitingPayment:   ProjectStatus("awaiting-payment"),
+	Completed:         ProjectStatus("completed"),
 }
 
 type Project struct {

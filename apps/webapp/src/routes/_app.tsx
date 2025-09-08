@@ -56,7 +56,7 @@ function RouteComponent() {
   const user = () => ({
     name: query.data?.name || "Unnamed User",
     email: query.data?.email || "placeholder@email.com",
-    imageUrl: query.data?.avatar || "https://placehold.co/400",
+    imageURL: query.data?.avatar || "https://placehold.co/400",
   });
 
   return (
@@ -98,7 +98,7 @@ function RouteComponent() {
                   <DropdownMenuTrigger class="ml-3">
                     <img
                       class="size-8 rounded-full"
-                      src={user().imageUrl}
+                      src={user().imageURL}
                       alt="Avatar"
                     />
                   </DropdownMenuTrigger>
@@ -141,7 +141,7 @@ function RouteComponent() {
                   <div class="shrink-0">
                     <img
                       class="size-10 rounded-full"
-                      src={user().imageUrl}
+                      src={user().imageURL}
                       alt="Avatar"
                     />
                   </div>

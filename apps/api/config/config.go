@@ -10,20 +10,20 @@ import (
 type Config struct {
 	Env     string
 	Port    int
-	BaseUrl string
+	BaseURL string
 	Db      struct {
 		Dsn string
 	}
 	AuthSecret string
 	Google     struct {
-		ClientId     string
+		ClientID     string
 		ClientSecret string
-		RedirectUrl  string
+		RedirectURL  string
 	}
 	Microsoft struct {
-		ClientId     string
+		ClientID     string
 		ClientSecret string
-		RedirectUrl  string
+		RedirectURL  string
 	}
 	Smtp struct {
 		Host     string
@@ -49,19 +49,19 @@ func GetConfig() (*Config, error) {
 	}
 
 	cfg.Port = port
-	cfg.BaseUrl = os.Getenv("BASE_URL")
+	cfg.BaseURL = os.Getenv("BASE_URL")
 
 	cfg.Db.Dsn = os.Getenv("DATABASE_DSN")
 
 	cfg.AuthSecret = os.Getenv("AUTH_SECRET")
 
-	cfg.Google.ClientId = os.Getenv("GOOGLE_CLIENT_ID")
+	cfg.Google.ClientID = os.Getenv("GOOGLE_CLIENT_ID")
 	cfg.Google.ClientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
-	cfg.Google.RedirectUrl = os.Getenv("GOOGLE_REDIRECT_URL")
+	cfg.Google.RedirectURL = os.Getenv("GOOGLE_REDIRECT_URL")
 
-	cfg.Microsoft.ClientId = os.Getenv("MICROSOFT_CLIENT_ID")
+	cfg.Microsoft.ClientID = os.Getenv("MICROSOFT_CLIENT_ID")
 	cfg.Microsoft.ClientSecret = os.Getenv("MICROSOFT_CLIENT_SECRET")
-	cfg.Microsoft.RedirectUrl = os.Getenv("MICROSOFT_REDIRECT_URL")
+	cfg.Microsoft.RedirectURL = os.Getenv("MICROSOFT_REDIRECT_URL")
 
 	stmpPort, err := strconv.Atoi(os.Getenv("SMTP_PORT"))
 	if err != nil {

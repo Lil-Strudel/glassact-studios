@@ -123,7 +123,7 @@ func (m AccountModel) GetByUUID(uuid string) (*Account, bool, error) {
 	return &account, true, nil
 }
 
-func (m AccountModel) GetByProvider(provider string, providerAccountId string) (*Account, bool, error) {
+func (m AccountModel) GetByProvider(provider string, providerAccountID string) (*Account, bool, error) {
 	query := `
         SELECT id, uuid, user_id, type, provider, provider_account_id, created_at, updated_at, version
         FROM accounts
@@ -131,7 +131,7 @@ func (m AccountModel) GetByProvider(provider string, providerAccountId string) (
 
 	args := []any{
 		provider,
-		providerAccountId,
+		providerAccountID,
 	}
 
 	var account Account

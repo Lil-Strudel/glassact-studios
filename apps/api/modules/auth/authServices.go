@@ -53,9 +53,9 @@ func (m *AuthModule) login(userID int, w http.ResponseWriter) error {
 
 func (m *AuthModule) configGoogle() *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     m.Cfg.Google.ClientId,
+		ClientID:     m.Cfg.Google.ClientID,
 		ClientSecret: m.Cfg.Google.ClientSecret,
-		RedirectURL:  m.Cfg.Google.RedirectUrl,
+		RedirectURL:  m.Cfg.Google.RedirectURL,
 		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
 		Endpoint:     google.Endpoint,
 	}
@@ -105,9 +105,9 @@ func getGoogleUserInfo(token string) (*googleInfoResponse, error) {
 
 func (m *AuthModule) configMicrosoft() *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     m.Cfg.Microsoft.ClientId,
+		ClientID:     m.Cfg.Microsoft.ClientID,
 		ClientSecret: m.Cfg.Microsoft.ClientSecret,
-		RedirectURL:  m.Cfg.Microsoft.RedirectUrl,
+		RedirectURL:  m.Cfg.Microsoft.RedirectURL,
 		Scopes:       []string{"openid", "profile", "email"},
 		Endpoint:     microsoft.AzureADEndpoint(""),
 	}
@@ -202,7 +202,7 @@ func (m *AuthModule) getUserFromProvider(email, provider, providerID string) (*d
 }
 
 func (m *AuthModule) emailMagicLink(email, token string) error {
-	u, err := url.Parse(m.Cfg.BaseUrl)
+	u, err := url.Parse(m.Cfg.BaseURL)
 	if err != nil {
 		return err
 	}

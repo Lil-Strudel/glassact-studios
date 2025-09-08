@@ -64,7 +64,7 @@ func (m *AuthModule) HandleGetGoogleAuthCallback(w http.ResponseWriter, r *http.
 	}
 
 	m.login(user.ID, w)
-	http.Redirect(w, r, m.Cfg.BaseUrl, http.StatusFound)
+	http.Redirect(w, r, m.Cfg.BaseURL, http.StatusFound)
 }
 
 func (m *AuthModule) HandleGetMicrosoftAuth(w http.ResponseWriter, r *http.Request) {
@@ -111,7 +111,7 @@ func (m *AuthModule) HandleGetMicrosoftAuthCallback(w http.ResponseWriter, r *ht
 	}
 
 	m.login(user.ID, w)
-	http.Redirect(w, r, m.Cfg.BaseUrl, http.StatusFound)
+	http.Redirect(w, r, m.Cfg.BaseURL, http.StatusFound)
 }
 
 func (m *AuthModule) HandlePostMagicLinkAuth(w http.ResponseWriter, r *http.Request) {
@@ -170,7 +170,7 @@ func (m *AuthModule) HandleGetMagicLinkCallback(w http.ResponseWriter, r *http.R
 	}
 
 	m.login(user.ID, w)
-	http.Redirect(w, r, m.Cfg.BaseUrl, http.StatusFound)
+	http.Redirect(w, r, m.Cfg.BaseURL, http.StatusFound)
 }
 
 func (m *AuthModule) HandlePostTokenAccess(w http.ResponseWriter, r *http.Request) {
@@ -235,5 +235,5 @@ func (m *AuthModule) HandleGetLogout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &newCookie)
-	http.Redirect(w, r, m.Cfg.BaseUrl, http.StatusFound)
+	http.Redirect(w, r, m.Cfg.BaseURL, http.StatusFound)
 }
