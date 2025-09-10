@@ -1,46 +1,72 @@
-export interface hasMetadata {
-  __hasMetadata?: true;
-}
+import type {
+  GetTagMetadata,
+  SimplifyDeep,
+  Tagged,
+  UnwrapTagged,
+} from "type-fest";
+import { NonRecursiveType } from "type-fest/source/internal";
+import type { TagContainer } from "type-fest/source/tagged";
 
-export interface hasDoubleID {
-  __hasDoubleId?: true;
-}
+export type { SimplifyDeep };
+export type { OmitDeep, Simplify } from "type-fest";
 
-export type StandardTable = hasMetadata & hasDoubleID;
-
-export interface Metadata {
+interface Metadata {
   created_at: string;
   updated_at: string;
   version: number;
 }
 
-export interface DoubleID {
+interface DoubleId {
   id: number;
   uuid: string;
 }
 
-/*
- * These recursive types will check to see if type Type
- * eextends type Condition, and if it does, it will
- * return type Type & Addition. It does this
- * recursivley (duh)
- */
-type Recurse<T, C, A> = {
-  [K in keyof T]: T[K] extends C
-    ? Recurse<T[K], C, A> & A
-    : T[K] extends Object
-      ? Recurse<T[K], C, A>
-      : T[K];
-};
+export type hasMetadata<T> = Tagged<T, "Metadata", Metadata>;
+export type hasDoubleId<T> = Tagged<T, "DoubleId", DoubleId>;
+export type StandardTable<T> = hasMetadata<hasDoubleId<T>>;
 
-type Recursive<Type, Condition, Addition> = Type extends Condition
-  ? Recurse<Type, Condition, Addition> & Addition
-  : Recurse<Type, Condition, Addition>;
+type Tag<Token extends PropertyKey, TagMetadata> = TagContainer<{
+  [K in Token]: TagMetadata;
+}>;
 
-type AddMetadata<T> = Recursive<T, hasMetadata, Metadata>;
-type AddDoubleID<T> = Recursive<T, hasDoubleID, DoubleID>;
+type _addMetadata<T> =
+  T extends Tag<"Metadata", unknown> ? T & GetTagMetadata<T, "Metadata"> : T;
+type _addDoubleId<T> =
+  T extends Tag<"DoubleId", unknown> ? GetTagMetadata<T, "DoubleId"> & T : T;
 
-export type GET<T> = AddDoubleID<AddMetadata<T>>;
-export type POST<T> = T;
-export type PATCH<T> = AddDoubleID<Partial<T>>;
-export type PUT<T> = AddDoubleID<T>;
+type safeUnwrap<T> = T extends Tag<PropertyKey, unknown> ? UnwrapTagged<T> : T;
+// type addMetadata<T> = safeUnwrap<_addMetadata<T>>;
+type addDoubleId<T> = safeUnwrap<_addDoubleId<T>>;
+type addBoth<T> = safeUnwrap<_addDoubleId<_addMetadata<T>>>;
+
+type Exclude = never | NonRecursiveType | Set<unknown> | Map<unknown, unknown>;
+type deepAddDoubleId<Type> = Type extends Exclude
+  ? Type
+  : Type extends object
+    ? {
+        [TypeKey in keyof Type]: deepAddDoubleId<
+          safeUnwrap<addDoubleId<Type[TypeKey]>>
+        >;
+      }
+    : Type;
+
+type deepAddBoth<Type> = Type extends Exclude
+  ? Type
+  : Type extends object
+    ? {
+        [TypeKey in keyof Type]: deepAddBoth<
+          safeUnwrap<addBoth<Type[TypeKey]>>
+        >;
+      }
+    : Type;
+
+type deepSafeUnwrap<Type> = Type extends Exclude
+  ? Type
+  : Type extends object
+    ? { [TypeKey in keyof Type]: deepSafeUnwrap<safeUnwrap<Type[TypeKey]>> }
+    : Type;
+
+export type GET<T> = SimplifyDeep<deepAddBoth<addBoth<T>>>;
+export type POST<T> = SimplifyDeep<deepSafeUnwrap<safeUnwrap<T>>>;
+export type PATCH<T> = SimplifyDeep<Partial<deepAddDoubleId<addDoubleId<T>>>>;
+export type PUT<T> = SimplifyDeep<deepAddDoubleId<addDoubleId<T>>>;

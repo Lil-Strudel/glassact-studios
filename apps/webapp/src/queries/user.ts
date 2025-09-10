@@ -2,6 +2,7 @@ import { queryOptions, SolidMutationOptions } from "@tanstack/solid-query";
 import api from "./api";
 
 import type { GET, POST, User } from "@glassact/data";
+import { mutationOptions } from "../utils/mutation-options";
 
 export async function getUserSelf(): Promise<GET<User>> {
   const res = await api.get("/user/self");
@@ -45,13 +46,8 @@ export async function postUser(body: POST<User>): Promise<GET<User>> {
   return res.data;
 }
 
-export function postUserOpts(): SolidMutationOptions<
-  GET<User>,
-  Error,
-  POST<User>,
-  unknown
-> {
-  return {
+export function postUserOpts() {
+  return mutationOptions({
     mutationFn: postUser,
-  };
+  });
 }

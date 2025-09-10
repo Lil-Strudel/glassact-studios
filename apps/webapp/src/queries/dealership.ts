@@ -2,6 +2,7 @@ import { queryOptions, SolidMutationOptions } from "@tanstack/solid-query";
 import api from "./api";
 
 import type { Dealership, GET, POST } from "@glassact/data";
+import { mutationOptions } from "../utils/mutation-options";
 
 export async function getDealerships(): Promise<GET<Dealership>[]> {
   const res = await api.get("/dealership");
@@ -35,13 +36,8 @@ export async function postDealership(
   return res.data;
 }
 
-export function postDealershipsOpts(): SolidMutationOptions<
-  GET<Dealership>,
-  Error,
-  POST<Dealership>,
-  unknown
-> {
-  return {
+export function postDealershipsOpts() {
+  return mutationOptions({
     mutationFn: postDealership,
-  };
+  });
 }

@@ -48,6 +48,14 @@ CREATE TABLE IF NOT EXISTS tokens (
     scope text NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS catalog_items (
+    id serial PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    created_at timestamptz NOT NULL DEFAULT now(),
+    version integer NOT NULL DEFAULT 1
+);
+
 CREATE TABLE IF NOT EXISTS projects (
     id serial PRIMARY KEY,
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
@@ -60,3 +68,37 @@ CREATE TABLE IF NOT EXISTS projects (
     version integer NOT NULL DEFAULT 1
 );
 
+CREATE TABLE IF NOT EXISTS inlays (
+    id serial PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    project_id integer NOT NULL REFERENCES projects ON DELETE RESTRICT,
+    name text NOT NULL,
+    preview_url text NOT NULL,
+    price_group int NOT NULL,
+    type VARCHAR(255) NOT NULL CHECK (type IN ('catalog', 'custom')),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    created_at timestamptz NOT NULL DEFAULT now(),
+    version integer NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS inlay_catalog_infos (
+    id serial PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    inlay_id integer NOT NULL REFERENCES inlays ON DELETE RESTRICT,
+    catalog_item_id integer NOT NULL REFERENCES catalog_items ON DELETE RESTRICT,
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    created_at timestamptz NOT NULL DEFAULT now(),
+    version integer NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS inlay_custom_infos (
+    id serial PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    inlay_id integer NOT NULL REFERENCES inlays ON DELETE RESTRICT,
+    description text NOT NULL,
+    width double precision NOT NULL,
+    height double precision NOT NULL,
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    created_at timestamptz NOT NULL DEFAULT now(),
+    version integer NOT NULL DEFAULT 1
+);

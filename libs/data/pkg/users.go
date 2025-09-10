@@ -11,15 +11,11 @@ import (
 )
 
 type User struct {
-	ID           int       `json:"id"`
-	UUID         string    `json:"uuid"`
-	Name         string    `json:"name"`
-	Email        string    `json:"email"`
-	Avatar       string    `json:"avatar"`
-	DealershipID int       `json:"dealership_id"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
-	Version      int       `json:"version"`
+	StandardTable
+	Name         string `json:"name"`
+	Email        string `json:"email"`
+	Avatar       string `json:"avatar"`
+	DealershipID int    `json:"dealership_id"`
 }
 
 type UserModel struct {

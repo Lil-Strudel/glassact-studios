@@ -1,29 +1,28 @@
-import { StandardTable } from "./helpers";
+import { GET, StandardTable } from "./helpers";
 
-export interface InlayCatalogInfo extends StandardTable {
+export type InlayCatalogInfo = StandardTable<{
   inlay_id: number;
   catalog_item_id: number;
-}
+}>;
 
-export interface InlayCustomInfo extends StandardTable {
+export type InlayCustomInfo = StandardTable<{
   inlay_id: number;
   description: string;
   width: number;
   height: number;
-  images: InlayCustomImage[];
-}
+}>;
 
-export interface InlayCustomImage extends StandardTable {
+export type InlayCustomImage = StandardTable<{
   url: string;
-}
+}>;
 
-export type Inlay = StandardTable & {
-  project_id: number;
-
-  preview_url: string;
-  name: string;
-  price_group: number;
-} & (
+export type Inlay = StandardTable<
+  {
+    project_id: number;
+    name: string;
+    preview_url: string;
+    price_group: number;
+  } & (
     | {
         type: "catalog";
         catalog_info: InlayCatalogInfo;
@@ -32,4 +31,5 @@ export type Inlay = StandardTable & {
         type: "custom";
         custom_info: InlayCustomInfo;
       }
-  );
+  )
+>;

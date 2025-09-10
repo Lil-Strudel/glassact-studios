@@ -1,7 +1,15 @@
-import { queryOptions, SolidMutationOptions } from "@tanstack/solid-query";
+import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
 
-import type { Project, GET, POST } from "@glassact/data";
+import type {
+  SimplifyDeep,
+  OmitDeep,
+  Project,
+  GET,
+  POST,
+  Inlay,
+} from "@glassact/data";
+import { mutationOptions } from "../utils/mutation-options";
 
 export async function getProjects(): Promise<GET<Project>[]> {
   const res = await api.get("/project");
@@ -33,13 +41,30 @@ export async function postProject(body: POST<Project>): Promise<GET<Project>> {
   return res.data;
 }
 
-export function postProjectsOpts(): SolidMutationOptions<
-  GET<Project>,
-  Error,
-  POST<Project>,
-  unknown
-> {
-  return {
+export function postProjectOpts() {
+  return mutationOptions({
     mutationFn: postProject,
-  };
+  });
+}
+
+type UnneededRefIds =
+  | "project_id"
+  | "catalog_info.inlay_id"
+  | "custom_info.inlay_id";
+export type PostProjectWithInlaysRequest = SimplifyDeep<
+  POST<Project> & {
+    inlays: OmitDeep<POST<Inlay>, UnneededRefIds>[];
+  }
+>;
+export async function postProjectWithInlays(
+  body: PostProjectWithInlaysRequest,
+): Promise<GET<Project> & { inlays: GET<Inlay>[] }> {
+  const res = await api.post("/project/with-inlays", body);
+  return res.data;
+}
+
+export function postProjectWithInlaysOpts() {
+  return mutationOptions({
+    mutationFn: postProjectWithInlays,
+  });
 }

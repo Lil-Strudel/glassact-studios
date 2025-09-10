@@ -1,6 +1,6 @@
 import { StandardTable } from "./helpers";
 
-export interface Dealership extends StandardTable {
+export type Dealership = StandardTable<{
   name: string;
   address: {
     street: string;
@@ -12,4 +12,4 @@ export interface Dealership extends StandardTable {
     latitude: number;
     longitude: number;
   };
-}
+}>;

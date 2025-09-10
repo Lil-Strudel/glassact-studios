@@ -1,11 +1,14 @@
+DROP TABLE IF EXISTS inlay_custom_infos;
+DROP TABLE IF EXISTS inlay_catalog_infos;
+DROP TABLE IF EXISTS inlays;
 DROP TABLE IF EXISTS projects;
+
+DROP TABLE IF EXISTS catalog_items;
 
 DROP TABLE IF EXISTS tokens;
 
 DROP TABLE IF EXISTS accounts;
-
 DROP TABLE IF EXISTS users;
-
 DROP TABLE IF EXISTS dealerships;
 
 DROP EXTENSION IF EXISTS postgis;

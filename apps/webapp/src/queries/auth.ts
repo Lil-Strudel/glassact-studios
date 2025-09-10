@@ -1,5 +1,6 @@
 import { queryOptions, SolidMutationOptions } from "@tanstack/solid-query";
 import api from "./api";
+import { mutationOptions } from "../utils/mutation-options";
 
 export async function postAuthTokenAccess(): Promise<{
   access_token: string;
@@ -29,13 +30,8 @@ export async function postAuthMagicLink(
   return res.data;
 }
 
-export function postAuthMagicLinkOpts(): SolidMutationOptions<
-  postAuthMagicLinkResponse,
-  Error,
-  postAuthMagicLinkBody,
-  unknown
-> {
-  return {
+export function postAuthMagicLinkOpts() {
+  return mutationOptions({
     mutationFn: postAuthMagicLink,
-  };
+  });
 }

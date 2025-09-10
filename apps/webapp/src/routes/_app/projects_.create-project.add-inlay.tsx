@@ -12,10 +12,10 @@ import {
 } from "@glassact/ui";
 import { IoClose } from "solid-icons/io";
 import { createForm } from "@tanstack/solid-form";
-import { Inlay, POST } from "@glassact/data";
 import { z } from "zod";
 import { zodStringNumber } from "../../utils/zod-string-number";
 import { useProjectFormContext } from "./projects_.create-project";
+import { PostProjectWithInlaysRequest } from "../../queries/project";
 
 export const Route = createFileRoute(
   "/_app/projects_/create-project/add-inlay",
@@ -27,7 +27,7 @@ function RouteComponent() {
   const form = useProjectFormContext();
   const navigate = useNavigate();
 
-  function addInlay(inlay: POST<Inlay>) {
+  function addInlay(inlay: PostProjectWithInlaysRequest["inlays"][number]) {
     form.setFieldValue("inlays", (oldInlays) => {
       oldInlays.push(inlay);
       return oldInlays;
@@ -47,14 +47,12 @@ function RouteComponent() {
     },
     onSubmit: async ({ value }) => {
       addInlay({
-        project_id: -1,
         preview_url: "https://placehold.co/400",
         name: value.catalog_number,
         price_group: 2,
         type: "catalog",
         catalog_info: {
-          inlay_id: -1,
-          catalog_item_id: 123,
+          catalog_item_id: 1,
         },
       });
       navigate({ to: "/projects/create-project" });
@@ -86,17 +84,14 @@ function RouteComponent() {
     },
     onSubmit: async ({ value }) => {
       addInlay({
-        project_id: -1,
         preview_url: "https://placehold.co/400",
         name: value.project_name,
         price_group: 2,
         type: "custom",
         custom_info: {
-          inlay_id: -1,
           description: value.description,
           width: Number(value.width),
           height: Number(value.height),
-          images: value.images,
         },
       });
       navigate({ to: "/projects/create-project" });

@@ -21,13 +21,9 @@ type Address struct {
 }
 
 type Dealership struct {
-	ID        int       `json:"id"`
-	UUID      string    `json:"uuid"`
-	Name      string    `json:"name"`
-	Address   Address   `json:"address"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Version   int       `json:"version"`
+	StandardTable
+	Name    string  `json:"name"`
+	Address Address `json:"address"`
 }
 
 type DealershipModel struct {

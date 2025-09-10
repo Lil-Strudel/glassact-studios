@@ -10,9 +10,9 @@ export type ProjectStatus =
   | "awaiting-payment"
   | "completed";
 
-export interface Project extends StandardTable {
+export type Project = StandardTable<{
   name: string;
   status: ProjectStatus;
   approved: boolean;
   dealership_id: number;
-}
+}>;

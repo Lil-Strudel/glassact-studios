@@ -6,6 +6,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/auth"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dealership"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/project"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/user"
 	"github.com/justinas/alice"
@@ -36,10 +37,16 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/dealership/{uuid}", protected.ThenFunc(dealershipModule.HandleGetDealershipByUUID))
 	mux.Handle("POST /api/dealership", protected.ThenFunc(dealershipModule.HandlePostDealership))
 
+	inlayModule := inlay.NewInlayModule(app)
+	mux.Handle("GET /api/inlay", protected.ThenFunc(inlayModule.HandleGetInlays))
+	mux.Handle("GET /api/inlay/{uuid}", protected.ThenFunc(inlayModule.HandleGetInlayByUUID))
+	mux.Handle("POST /api/inlay", protected.ThenFunc(inlayModule.HandlePostInlay))
+
 	projectModule := project.NewProjectModule(app)
 	mux.Handle("GET /api/project", protected.ThenFunc(projectModule.HandleGetProjects))
 	mux.Handle("GET /api/project/{uuid}", protected.ThenFunc(projectModule.HandleGetProjectByUUID))
 	mux.Handle("POST /api/project", protected.ThenFunc(projectModule.HandlePostProject))
+	mux.Handle("POST /api/project/with-inlays", protected.ThenFunc(projectModule.HandlePostProjectWithInlays))
 
 	userModule := user.NewUserModule(app)
 	mux.Handle("GET /api/user", protected.ThenFunc(userModule.HandleGetUsers))

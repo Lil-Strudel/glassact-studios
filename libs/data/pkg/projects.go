@@ -34,15 +34,11 @@ var ProjectStatusi = projectStatusi{
 }
 
 type Project struct {
-	ID           int           `json:"id"`
-	UUID         string        `json:"uuid"`
+	StandardTable
 	Name         string        `json:"name"`
 	Status       ProjectStatus `json:"status"`
 	Approved     bool          `json:"approved"`
 	DealershipID int           `json:"dealership_id"`
-	CreatedAt    time.Time     `json:"created_at"`
-	UpdatedAt    time.Time     `json:"updated_at"`
-	Version      int           `json:"version"`
 }
 
 type ProjectModel struct {
@@ -73,6 +69,37 @@ func (m ProjectModel) Insert(project *Project) error {
 		&project.Version,
 	)
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m ProjectModel) TxInsert(tx pgx.Tx, project *Project) error {
+	query := `
+        INSERT INTO projects (name, status, approved, dealership_id) 
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, uuid, created_at, updated_at, version`
+
+	args := []any{
+		project.Name,
+		project.Status,
+		project.Approved,
+		project.DealershipID,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := tx.QueryRow(ctx, query, args...).Scan(
+		&project.ID,
+		&project.UUID,
+		&project.CreatedAt,
+		&project.UpdatedAt,
+		&project.Version,
+	)
+	if err != nil {
+		tx.Rollback(ctx)
 		return err
 	}
 

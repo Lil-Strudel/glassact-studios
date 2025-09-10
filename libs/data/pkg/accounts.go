@@ -10,15 +10,11 @@ import (
 )
 
 type Account struct {
-	ID                int       `json:"id"`
-	UUID              string    `json:"uuid"`
-	UserID            int       `json:"user_id"`
-	Type              string    `json:"type"`
-	Provider          string    `json:"provider"`
-	ProviderAccountID string    `json:"provider_account_id"`
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
-	Version           int       `json:"version"`
+	StandardTable
+	UserID            int    `json:"user_id"`
+	Type              string `json:"type"`
+	Provider          string `json:"provider"`
+	ProviderAccountID string `json:"provider_account_id"`
 }
 
 type AccountModel struct {
