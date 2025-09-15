@@ -3,6 +3,7 @@ package project
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
@@ -20,7 +21,9 @@ func NewProjectModule(app *app.Application) *ProjectModule {
 }
 
 func (m ProjectModule) HandleGetProjects(w http.ResponseWriter, r *http.Request) {
-	projects, err := m.Db.Projects.GetAll()
+	expand := strings.Split(r.URL.Query().Get("expand"), ",")
+
+	projects, err := m.Db.Projects.GetAll(expand)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return

@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
-import { GET, Project, ProjectStatus } from "@glassact/data";
+import { GET, Inlay, Project, ProjectStatus } from "@glassact/data";
 import { Button, Breadcrumb } from "@glassact/ui";
 import { IoAddCircleOutline, IoCheckmarkCircleOutline } from "solid-icons/io";
-import { Index, Show } from "solid-js";
+import { Component, Index, Show } from "solid-js";
 import { useQuery } from "@tanstack/solid-query";
 import { getProjectsOpts } from "../../queries/project";
 
@@ -11,21 +11,23 @@ export const Route = createFileRoute("/_app/projects")({
 });
 
 function RouteComponent() {
-  const query = useQuery(getProjectsOpts);
+  const query = useQuery(getProjectsOpts({ expand: { inlays: true } }));
 
-  function getByStatusi(statusi: ProjectStatus[]): GET<Project>[] {
+  function getByStatusi(
+    statusi: ProjectStatus[],
+  ): (GET<Project> & { inlays: GET<Inlay>[] })[] {
     if (!query.isSuccess) return [];
     return query.data.filter((project) => statusi.includes(project.status));
   }
 
-  const newProjects = () =>
+  const needsActionProjects = () =>
     getByStatusi([
-      "awaiting-proof",
       "proof-in-revision",
       "all-proofs-accepted",
+      "awaiting-payment",
     ]);
-  const invoiceProjects = () => getByStatusi(["awaiting-payment"]);
-  const activeProjects = () => getByStatusi(["ordered", "in-production"]);
+  const activeProjects = () =>
+    getByStatusi(["awaiting-proof", "ordered", "in-production"]);
   const completedProjects = () => getByStatusi(["completed", "cancelled"]);
 
   return (
@@ -52,141 +54,16 @@ function RouteComponent() {
           <div class="mt-4">
             <div class="space-y-4">
               <Show
-                when={newProjects().length > 0 || invoiceProjects().length > 0}
+                when={needsActionProjects().length > 0}
                 fallback={
-                  <div class="border-2 border-dashed border-gray-300 rounded-xl p-8">
-                    <div class="text-center">
-                      <div class="text-gray-400 text-lg font-medium">
-                        You are all caught up, nothing for you to do!
-                      </div>
-                      <div class="text-gray-400 text-sm mt-2">
-                        New projects requiring action will appear here
-                      </div>
-                    </div>
-                  </div>
+                  <SectionMessage
+                    title="You are all caught up, nothing for you to do!"
+                    description="New projects requiring action will appear here"
+                  />
                 }
               >
-                <Index each={newProjects()}>
-                  {(item) => (
-                    <div class="border rounded-xl p-4">
-                      <div class="flex items-center justify-between">
-                        <span class="text-2xl font-bold">{item().name}</span>
-                        <Button as={Link} to={`/projects/${item().uuid}`}>
-                          View Proofs
-                        </Button>
-                      </div>
-
-                      <table class="mt-4 w-full text-gray-500">
-                        <thead class="text-left text-sm text-gray-500">
-                          <tr>
-                            <th scope="col" class="py-3">
-                              Inlay
-                            </th>
-                            <th scope="col" class="py-3 text-right">
-                              Proof Status
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 border-y border-gray-200 text-sm">
-                          <tr>
-                            <td class="py-4">
-                              <div class="flex items-center">
-                                <img
-                                  src="https://tailwindcss.com/plus-assets/img/ecommerce-images/order-history-page-02-product-01.jpg"
-                                  alt="Detail of mechanical pencil tip with machined black steel shaft and chrome lead tip."
-                                  class="mr-6 size-16 rounded object-cover"
-                                />
-                                <div class="font-medium text-gray-900">
-                                  1234-78-A21
-                                </div>
-                              </div>
-                            </td>
-                            <td class="text-right">Proof Awaiting Approval</td>
-                          </tr>
-                          <tr>
-                            <td class="py-4">
-                              <div class="flex items-center">
-                                <img
-                                  src="https://tailwindcss.com/plus-assets/img/ecommerce-images/order-history-page-02-product-01.jpg"
-                                  alt="Detail of mechanical pencil tip with machined black steel shaft and chrome lead tip."
-                                  class="mr-6 size-16 rounded object-cover"
-                                />
-                                <div class="font-medium text-gray-900">
-                                  BIR-203-152
-                                </div>
-                              </div>
-                            </td>
-                            <td>
-                              <div class="flex justify-end">
-                                Approved
-                                <IoCheckmarkCircleOutline
-                                  size={20}
-                                  class="ml-2"
-                                />
-                              </div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </Index>
-                <Index each={invoiceProjects()}>
-                  {(item) => (
-                    <div class="border rounded-xl p-4">
-                      <div class="flex items-center justify-between">
-                        <span class="text-2xl font-bold">{item().name}</span>
-                        <Button as={Link} to={`/projects/${item().uuid}`}>
-                          View Invoice
-                        </Button>
-                      </div>
-
-                      <table class="mt-4 w-full text-gray-500">
-                        <thead class="text-left text-sm text-gray-500">
-                          <tr>
-                            <th scope="col" class="py-3">
-                              Inlay
-                            </th>
-                            <th scope="col" class="py-3 text-right">
-                              Status
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 border-y border-gray-200 text-sm">
-                          <tr>
-                            <td class="py-4">
-                              <div class="flex items-center">
-                                <img
-                                  src="https://tailwindcss.com/plus-assets/img/ecommerce-images/order-history-page-02-product-01.jpg"
-                                  alt="Detail of mechanical pencil tip with machined black steel shaft and chrome lead tip."
-                                  class="mr-6 size-16 rounded object-cover"
-                                />
-                                <div class="font-medium text-gray-900">
-                                  1234-78-A21
-                                </div>
-                              </div>
-                            </td>
-                            <td class="text-right">Shipped</td>
-                          </tr>
-                          <tr>
-                            <td class="py-4">
-                              <div class="flex items-center">
-                                <img
-                                  src="https://tailwindcss.com/plus-assets/img/ecommerce-images/order-history-page-02-product-01.jpg"
-                                  alt="Detail of mechanical pencil tip with machined black steel shaft and chrome lead tip."
-                                  class="mr-6 size-16 rounded object-cover"
-                                />
-                                <div class="font-medium text-gray-900">
-                                  BIR-203-152
-                                </div>
-                              </div>
-                            </td>
-                            <td class="text-right">Shipped</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                <Index each={needsActionProjects()}>
+                  {(item) => <ProjectCard project={item} />}
                 </Index>
               </Show>
             </div>
@@ -207,154 +84,14 @@ function RouteComponent() {
               <Show
                 when={activeProjects().length > 0}
                 fallback={
-                  <div class="border-2 border-dashed border-gray-300 rounded-xl p-8">
-                    <div class="text-center">
-                      <div class="text-gray-400 text-lg font-medium">
-                        There are no projects currently in the pipeline
-                      </div>
-                      <div class="text-gray-400 text-sm mt-2">
-                        Active projects will appear here as they progress
-                      </div>
-                    </div>
-                  </div>
+                  <SectionMessage
+                    title="There are no projects currently in the pipeline"
+                    description="Active projects will appear here as they progress"
+                  />
                 }
               >
                 <Index each={activeProjects()}>
-                  {(item) => (
-                    <div class="border rounded-xl p-4">
-                      <div class="flex items-center justify-between">
-                        <span class="text-2xl font-bold">{item().name}</span>
-                        <Button as={Link} to={`/projects/${item().uuid}`}>
-                          View Project
-                        </Button>
-                      </div>
-
-                      <table class="mt-4 w-full text-gray-500">
-                        <thead class="text-left text-sm text-gray-500">
-                          <tr>
-                            <th scope="col" class="py-3">
-                              Inlay
-                            </th>
-                            <th scope="col" class="py-3">
-                              Progress
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 border-y border-gray-200 text-sm">
-                          <tr>
-                            <td class="py-4">
-                              <div class="flex items-center">
-                                <img
-                                  src="https://tailwindcss.com/plus-assets/img/ecommerce-images/order-history-page-02-product-01.jpg"
-                                  alt="Detail of mechanical pencil tip with machined black steel shaft and chrome lead tip."
-                                  class="mr-6 size-16 rounded object-cover"
-                                />
-                                <div class="font-medium text-gray-900">
-                                  1234-78-A21
-                                </div>
-                              </div>
-                            </td>
-                            <td>
-                              <ol role="list" class="flex items-center">
-                                <li class="relative pr-8 sm:pr-20">
-                                  <div class="absolute inset-0 flex items-center">
-                                    <div class="h-0.5 w-full bg-primary"></div>
-                                  </div>
-                                  <a
-                                    href="#"
-                                    class="relative flex size-8 items-center justify-center rounded-full bg-primary"
-                                  >
-                                    <svg
-                                      class="size-5 text-white"
-                                      viewBox="0 0 20 20"
-                                      fill="currentColor"
-                                      data-slot="icon"
-                                    >
-                                      <path
-                                        fill-rule="evenodd"
-                                        d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
-                                        clip-rule="evenodd"
-                                      />
-                                    </svg>
-                                  </a>
-                                </li>
-                                <li class="relative pr-8 sm:pr-20">
-                                  <div class="absolute inset-0 flex items-center">
-                                    <div class="h-0.5 w-full bg-primary"></div>
-                                  </div>
-                                  <a
-                                    href="#"
-                                    class="relative flex size-8 items-center justify-center rounded-full bg-primary"
-                                  >
-                                    <svg
-                                      class="size-5 text-white"
-                                      viewBox="0 0 20 20"
-                                      fill="currentColor"
-                                      data-slot="icon"
-                                    >
-                                      <path
-                                        fill-rule="evenodd"
-                                        d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
-                                        clip-rule="evenodd"
-                                      />
-                                    </svg>
-                                  </a>
-                                </li>
-                                <li class="relative pr-8 sm:pr-20">
-                                  <div class="absolute inset-0 flex items-center">
-                                    <div class="h-0.5 w-full bg-gray-200"></div>
-                                  </div>
-                                  <a
-                                    href="#"
-                                    class="relative flex size-8 items-center justify-center rounded-full border-2 border-primary bg-white"
-                                  >
-                                    <span class="size-2.5 rounded-full bg-primary"></span>
-                                  </a>
-                                </li>
-                                <li class="relative pr-8 sm:pr-20">
-                                  <div class="absolute inset-0 flex items-center">
-                                    <div class="h-0.5 w-full bg-gray-200"></div>
-                                  </div>
-                                  <a
-                                    href="#"
-                                    class="group relative flex size-8 items-center justify-center rounded-full border-2 border-gray-300 bg-white hover:border-gray-400"
-                                  >
-                                    <span class="size-2.5 rounded-full bg-transparent group-hover:bg-gray-300"></span>
-                                  </a>
-                                </li>
-                                <li class="relative">
-                                  <div class="absolute inset-0 flex items-center">
-                                    <div class="h-0.5 w-full bg-gray-200"></div>
-                                  </div>
-                                  <a
-                                    href="#"
-                                    class="group relative flex size-8 items-center justify-center rounded-full border-2 border-gray-300 bg-white hover:border-gray-400"
-                                  >
-                                    <span class="size-2.5 rounded-full bg-transparent group-hover:bg-gray-300"></span>
-                                  </a>
-                                </li>
-                              </ol>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="py-4">
-                              <div class="flex items-center">
-                                <img
-                                  src="https://tailwindcss.com/plus-assets/img/ecommerce-images/order-history-page-02-product-01.jpg"
-                                  alt="Detail of mechanical pencil tip with machined black steel shaft and chrome lead tip."
-                                  class="mr-6 size-16 rounded object-cover"
-                                />
-                                <div class="font-medium text-gray-900">
-                                  BIR-203-152
-                                </div>
-                              </div>
-                            </td>
-                            <td class="">Shipped</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                  {(item) => <ProjectCard project={item} />}
                 </Index>
               </Show>
             </div>
@@ -375,74 +112,14 @@ function RouteComponent() {
               <Show
                 when={completedProjects().length > 0}
                 fallback={
-                  <div class="border-2 border-dashed border-gray-300 rounded-xl p-8">
-                    <div class="text-center">
-                      <div class="text-gray-400 text-lg font-medium">
-                        There are no previous projects
-                      </div>
-                      <div class="text-gray-400 text-sm mt-2">
-                        Completed projects will appear here once finished
-                      </div>
-                    </div>
-                  </div>
+                  <SectionMessage
+                    title="There are no previous projects"
+                    description="Completed projects will appear here once finished"
+                  />
                 }
               >
                 <Index each={completedProjects()}>
-                  {(item) => (
-                    <div class="border rounded-xl p-4">
-                      <div class="flex items-center justify-between">
-                        <span class="text-2xl font-bold">{item().name}</span>
-                        <Button as={Link} to={`/projects/${item().uuid}`}>
-                          View Receipt
-                        </Button>
-                      </div>
-
-                      <table class="mt-4 w-full text-gray-500">
-                        <thead class="text-left text-sm text-gray-500">
-                          <tr>
-                            <th scope="col" class="py-3">
-                              Inlay
-                            </th>
-                            <th scope="col" class="py-3 text-right">
-                              Status
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 border-y border-gray-200 text-sm">
-                          <tr>
-                            <td class="py-4">
-                              <div class="flex items-center">
-                                <img
-                                  src="https://tailwindcss.com/plus-assets/img/ecommerce-images/order-history-page-02-product-01.jpg"
-                                  alt="Detail of mechanical pencil tip with machined black steel shaft and chrome lead tip."
-                                  class="mr-6 size-16 rounded object-cover"
-                                />
-                                <div class="font-medium text-gray-900">
-                                  1234-78-A21
-                                </div>
-                              </div>
-                            </td>
-                            <td class="text-right">Delivered</td>
-                          </tr>
-                          <tr>
-                            <td class="py-4">
-                              <div class="flex items-center">
-                                <img
-                                  src="https://tailwindcss.com/plus-assets/img/ecommerce-images/order-history-page-02-product-01.jpg"
-                                  alt="Detail of mechanical pencil tip with machined black steel shaft and chrome lead tip."
-                                  class="mr-6 size-16 rounded object-cover"
-                                />
-                                <div class="font-medium text-gray-900">
-                                  BIR-203-152
-                                </div>
-                              </div>
-                            </td>
-                            <td class="text-right">Delivered</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                  {(item) => <ProjectCard project={item} />}
                 </Index>
               </Show>
             </div>
@@ -452,3 +129,90 @@ function RouteComponent() {
     </div>
   );
 }
+
+interface SectionMessageProps {
+  title: string;
+  description: string;
+}
+const SectionMessage: Component<SectionMessageProps> = (props) => {
+  return (
+    <div class="border-2 border-dashed border-gray-300 rounded-xl p-8">
+      <div class="text-center">
+        <div class="text-gray-400 text-lg font-medium">{props.title}</div>
+        <div class="text-gray-400 text-sm mt-2">{props.description}</div>
+      </div>
+    </div>
+  );
+};
+
+interface ProjectCardProps {
+  project: () => GET<Project> & { inlays: GET<Inlay>[] };
+}
+const ProjectCard: Component<ProjectCardProps> = (props) => {
+  return (
+    <div class="border rounded-xl p-4">
+      <div class="flex items-center justify-between">
+        <span class="text-2xl font-bold">{props.project().name}</span>
+        <Button as={Link} to={`/projects/${props.project().uuid}`}>
+          View Proofs
+        </Button>
+      </div>
+
+      <div class="mt-4 w-full">
+        <Show
+          when={props.project().inlays.length > 0}
+          fallback={
+            <SectionMessage
+              title="No inlays found for this project"
+              description="Please add one before you place an order"
+            />
+          }
+        >
+          <table class="w-full text-gray-500">
+            <thead class="text-left text-sm text-gray-500">
+              <tr>
+                <th scope="col" class="py-3">
+                  Inlay
+                </th>
+                <th scope="col" class="py-3 text-right">
+                  Proof Status
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 border-y border-gray-200 text-sm">
+              <Index each={props.project().inlays}>
+                {(inlay, index) => (
+                  <tr>
+                    <td class="py-4">
+                      <div class="flex items-center">
+                        <img
+                          src={inlay().preview_url}
+                          alt={`${inlay().name} Preview`}
+                          class="mr-6 size-16 rounded object-cover"
+                        />
+                        <div class="font-medium text-gray-900">
+                          {inlay().name}
+                        </div>
+                      </div>
+                    </td>
+                    {index % 2 === 0 && (
+                      <td class="text-right">Proof Awaiting Approval</td>
+                    )}
+                    {index % 2 === 1 && (
+                      <td>
+                        <div class="flex justify-end">
+                          Approved
+                          <IoCheckmarkCircleOutline size={20} class="ml-2" />
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                )}
+              </Index>
+            </tbody>
+          </table>
+        </Show>
+      </div>
+    </div>
+  );
+};

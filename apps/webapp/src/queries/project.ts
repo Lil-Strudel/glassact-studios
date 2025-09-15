@@ -8,19 +8,50 @@ import type {
   GET,
   POST,
   Inlay,
+  Simplify,
 } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
-export async function getProjects(): Promise<GET<Project>[]> {
-  const res = await api.get("/project");
+type getProjectProps = {
+  expand?: {
+    inlays?: boolean;
+  };
+};
+
+// prettier-ignore
+type ExpandWithDefaults<T extends getProjectProps> = {
+  inlays: T["expand"] extends { inlays: infer I } ? I extends true ? true : false : false;
+};
+
+// prettier-ignore
+type ProjectWithExpands<T extends getProjectProps> = Simplify<
+  GET<Project> &
+    (ExpandWithDefaults<T>["inlays"] extends true ? { inlays: GET<Inlay>[] } : {})
+>;
+
+export async function getProjects<T extends getProjectProps = {}>(
+  props: T = {} as T,
+): Promise<ProjectWithExpands<T>[]> {
+  const expand = Object.entries(props.expand || {})
+    .filter(([, value]) => value)
+    .map(([key]) => key);
+
+  const params = {
+    ...(expand.length ? { expand: expand.join(",") } : {}),
+  };
+
+  const res = await api.get("/project", { params });
   return res.data;
 }
 
-export function getProjectsOpts() {
-  return queryOptions({
-    queryKey: ["project"],
-    queryFn: getProjects,
-  });
+export function getProjectsOpts<T extends getProjectProps = {}>(
+  props: T = {} as T,
+) {
+  return () =>
+    queryOptions({
+      queryKey: ["project", props],
+      queryFn: () => getProjects(props),
+    });
 }
 
 export async function getProject(uuid: string): Promise<GET<Project>> {
