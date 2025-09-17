@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 import { AuthProvider, AuthState, useAuthContext } from "./providers/auth";
 import { AppStateProvider } from "./providers/app-state";
 import { routeTree } from "./routeTree.gen";
+import { UserProvider } from "./providers/user";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -38,7 +39,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AppStateProvider>
         <AuthProvider>
-          <RouterWrapper />
+          <UserProvider>
+            <RouterWrapper />
+          </UserProvider>
         </AuthProvider>
       </AppStateProvider>
     </QueryClientProvider>

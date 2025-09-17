@@ -9,10 +9,20 @@ VALUES (
     'US',
     ST_SetSRID(ST_MakePoint(-111.72878560766672, 40.28727777344243), 4326)::GEOGRAPHY);
 
-INSERT INTO users (name, email, avatar, dealership_id)
+INSERT INTO users (name, email, avatar, dealership_id, role)
 VALUES (
     'Aaron Santo',
     'santoaaron@gmail.com',
     'https://ui-avatars.com/api/?name=Aaron+Santo&background=BAFFC9',
-    1
+    1,
+    'admin'
+);
+
+INSERT INTO users (name, email, avatar, dealership_id, role)
+VALUES (
+    'Aaron Santo',
+    'apenguinemail@gmail.com',
+    'https://ui-avatars.com/api/?name=Aaron+Santo&background=BAFFC9',
+    1,
+    'user'
 );

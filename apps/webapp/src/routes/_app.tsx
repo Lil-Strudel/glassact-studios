@@ -13,8 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@glassact/ui";
 import { IoClose, IoMenu, IoNotificationsOutline } from "solid-icons/io";
-import { useQuery } from "@tanstack/solid-query";
-import { getUserSelfOpts } from "../queries/user";
+import { useUserContext } from "../providers/user";
 
 export const Route = createFileRoute("/_app")({
   component: RouteComponent,
@@ -45,19 +44,13 @@ const userNavigation = [
 ];
 
 function RouteComponent() {
-  const query = useQuery(getUserSelfOpts);
+  const { user } = useUserContext();
 
   const [open, setOpen] = createSignal(false);
 
   function toggleOpen() {
     setOpen((open) => !open);
   }
-
-  const user = () => ({
-    name: query.data?.name || "Unnamed User",
-    email: query.data?.email || "placeholder@email.com",
-    imageURL: query.data?.avatar || "https://placehold.co/400",
-  });
 
   return (
     <div>
@@ -98,7 +91,7 @@ function RouteComponent() {
                   <DropdownMenuTrigger class="ml-3">
                     <img
                       class="size-8 rounded-full"
-                      src={user().imageURL}
+                      src={user().avatar}
                       alt="Avatar"
                     />
                   </DropdownMenuTrigger>
@@ -141,7 +134,7 @@ function RouteComponent() {
                   <div class="shrink-0">
                     <img
                       class="size-10 rounded-full"
-                      src={user().imageURL}
+                      src={user().avatar}
                       alt="Avatar"
                     />
                   </div>

@@ -19,6 +19,8 @@ export * from "./dropdown-menu";
 
 export * from "./form";
 
+export * from "./select";
+
 export * from "./table";
 
 export * from "./tabs";

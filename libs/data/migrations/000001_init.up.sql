@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
     email citext UNIQUE NOT NULL,
     avatar text NOT NULL,
     dealership_id integer NOT NULL REFERENCES dealerships ON DELETE RESTRICT,
+    role VARCHAR(255) NOT NULL CHECK (role IN ('user', 'admin')),
     updated_at timestamptz NOT NULL DEFAULT now(),
     created_at timestamptz NOT NULL DEFAULT now(),
     version integer NOT NULL DEFAULT 1
@@ -60,7 +61,7 @@ CREATE TABLE IF NOT EXISTS projects (
     id serial PRIMARY KEY,
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     name text NOT NULL,
-    status VARCHAR(255) NOT NULL CHECK (status IN ('awaiting-proof', 'proof-in-revision', 'all-proofs-accepted', 'cancelled', 'ordered', 'in-production', 'awaiting-payment', 'completed')),
+    status VARCHAR(255) NOT NULL CHECK (status IN ('awaiting-proof', 'proof-in-revision', 'all-proofs-accepted', 'cancelled', 'ordered', 'in-production', 'awaiting-invoice', 'awaiting-payment', 'completed')),
     approved boolean NOT NULL,
     dealership_id integer NOT NULL REFERENCES dealerships ON DELETE RESTRICT,
     updated_at timestamptz NOT NULL DEFAULT now(),

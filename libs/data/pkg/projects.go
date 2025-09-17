@@ -20,6 +20,7 @@ type projectStatusi struct {
 	Cancelled         ProjectStatus
 	Ordered           ProjectStatus
 	InProduction      ProjectStatus
+	AwaitingInvoice   ProjectStatus
 	AwaitingPayment   ProjectStatus
 	Completed         ProjectStatus
 }
@@ -31,6 +32,7 @@ var ProjectStatusi = projectStatusi{
 	Cancelled:         ProjectStatus("cancelled"),
 	Ordered:           ProjectStatus("ordered"),
 	InProduction:      ProjectStatus("in-production"),
+	AwaitingInvoice:   ProjectStatus("awaiting-invoice"),
 	AwaitingPayment:   ProjectStatus("awaiting-payment"),
 	Completed:         ProjectStatus("completed"),
 }

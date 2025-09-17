@@ -1,4 +1,4 @@
-import { GET, StandardTable } from "./helpers";
+import { StandardTable } from "./helpers";
 
 export type InlayCatalogInfo = StandardTable<{
   inlay_id: number;

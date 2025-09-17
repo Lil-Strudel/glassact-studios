@@ -10,12 +10,25 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type UserRole string
+
+type userRoles struct {
+	Admin UserRole
+	User  UserRole
+}
+
+var UserRoles = userRoles{
+	Admin: UserRole("admin"),
+	User:  UserRole("user"),
+}
+
 type User struct {
 	StandardTable
-	Name         string `json:"name"`
-	Email        string `json:"email"`
-	Avatar       string `json:"avatar"`
-	DealershipID int    `json:"dealership_id"`
+	Name         string   `json:"name"`
+	Email        string   `json:"email"`
+	Avatar       string   `json:"avatar"`
+	DealershipID int      `json:"dealership_id"`
+	Role         UserRole `json:"role"`
 }
 
 type UserModel struct {
@@ -24,11 +37,11 @@ type UserModel struct {
 
 func (m UserModel) Insert(user *User) error {
 	query := `
-        INSERT INTO users (name, email, avatar, dealership_id) 
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO users (name, email, avatar, dealership_id, role) 
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING id, uuid, created_at, updated_at, version`
 
-	args := []any{user.Name, user.Email, user.Avatar, user.DealershipID}
+	args := []any{user.Name, user.Email, user.Avatar, user.DealershipID, user.Role}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -43,7 +56,7 @@ func (m UserModel) Insert(user *User) error {
 
 func (m UserModel) GetByID(id int) (*User, bool, error) {
 	query := `
-        SELECT id, uuid, name, email, avatar, dealership_id, created_at, updated_at, version
+        SELECT id, uuid, name, email, avatar, dealership_id, role, created_at, updated_at, version
         FROM users
         WHERE id = $1`
 
@@ -59,6 +72,7 @@ func (m UserModel) GetByID(id int) (*User, bool, error) {
 		&user.Email,
 		&user.Avatar,
 		&user.DealershipID,
+		&user.Role,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 		&user.Version,
@@ -77,7 +91,7 @@ func (m UserModel) GetByID(id int) (*User, bool, error) {
 
 func (m UserModel) GetByUUID(uuid string) (*User, bool, error) {
 	query := `
-        SELECT id, uuid, name, email, avatar, dealership_id, created_at, updated_at, version
+        SELECT id, uuid, name, email, avatar, dealership_id, role, created_at, updated_at, version
         FROM users
         WHERE uuid = $1`
 
@@ -93,6 +107,7 @@ func (m UserModel) GetByUUID(uuid string) (*User, bool, error) {
 		&user.Email,
 		&user.Avatar,
 		&user.DealershipID,
+		&user.Role,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 		&user.Version,
@@ -111,7 +126,7 @@ func (m UserModel) GetByUUID(uuid string) (*User, bool, error) {
 
 func (m UserModel) GetByEmail(email string) (*User, bool, error) {
 	query := `
-        SELECT id, uuid, name, email, avatar, dealership_id, created_at, updated_at, version
+        SELECT id, uuid, name, email, avatar, dealership_id, role, created_at, updated_at, version
         FROM users
         WHERE email = $1`
 
@@ -127,6 +142,7 @@ func (m UserModel) GetByEmail(email string) (*User, bool, error) {
 		&user.Email,
 		&user.Avatar,
 		&user.DealershipID,
+		&user.Role,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 		&user.Version,
@@ -147,7 +163,7 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, bool, 
 	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
 
 	query := `
-        SELECT users.id, users.uuid, users.name, users.email, users.avatar, users.dealership_id, users.created_at, users.updated_at, users.version
+        SELECT users.id, users.uuid, users.name, users.email, users.avatar, users.dealership_id, users.role, users.created_at, users.updated_at, users.version
         FROM users
         INNER JOIN tokens
         ON users.id = tokens.user_id
@@ -169,6 +185,7 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, bool, 
 		&user.Email,
 		&user.Avatar,
 		&user.DealershipID,
+		&user.Role,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 		&user.Version,
@@ -187,7 +204,7 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, bool, 
 
 func (m UserModel) GetAll() ([]*User, error) {
 	query := `
-        SELECT id, uuid, name, email, avatar, dealership_id, created_at, updated_at, version
+        SELECT id, uuid, name, email, avatar, dealership_id, role, created_at, updated_at, version
 		FROM users
 		WHERE id IS NOT NULL;`
 
@@ -215,6 +232,7 @@ func (m UserModel) GetAll() ([]*User, error) {
 			&user.Email,
 			&user.Avatar,
 			&user.DealershipID,
+			&user.Role,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 			&user.Version,
@@ -236,16 +254,17 @@ func (m UserModel) GetAll() ([]*User, error) {
 func (m UserModel) Update(user *User) error {
 	query := `
         UPDATE users 
-        SET name = $1, email = $2, avatar = $3, version = version + 1
-        WHERE id = $4 AND version = $5
+        SET name = $3, email = $4, avatar = $5, role = $6, version = version + 1
+        WHERE id = $1 AND version = $2
         RETURNING version`
 
 	args := []any{
+		user.ID,
+		user.Version,
 		user.Name,
 		user.Email,
 		user.Avatar,
-		user.ID,
-		user.Version,
+		user.Role,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

@@ -5,6 +5,7 @@ import {
   createEffect,
   useContext,
   ParentComponent,
+  Setter,
 } from "solid-js";
 import { postAuthTokenAccessOpts } from "../queries/auth";
 import api from "../queries/api";
@@ -15,7 +16,7 @@ type SettledAuthStatus = "unauthenticated" | "authenticated";
 
 export interface AuthState {
   status: () => AuthStatus;
-  setStatus: (v: AuthStatus | ((prev: AuthStatus) => AuthStatus)) => AuthStatus;
+  setStatus: Setter<AuthStatus>;
   deferredStatus: () => DeferredPromise<SettledAuthStatus>;
 }
 export const AuthContext = createContext<AuthState>();

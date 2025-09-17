@@ -58,10 +58,11 @@ func (m *UserModule) HandleGetUserByUUID(w http.ResponseWriter, r *http.Request)
 
 func (m *UserModule) HandlePostUser(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Name         string `json:"name" validate:"required"`
-		Email        string `json:"email" validate:"required,email"`
-		Avatar       string `json:"avatar" validate:"required,url"`
-		DealershipID int    `json:"dealership_id" validate:"required"`
+		Name         string        `json:"name" validate:"required"`
+		Email        string        `json:"email" validate:"required,email"`
+		Avatar       string        `json:"avatar" validate:"required,url"`
+		DealershipID int           `json:"dealership_id" validate:"required"`
+		Role         data.UserRole `json:"role" validate:"required"`
 	}
 
 	err := m.ReadJSONBody(w, r, &body)
@@ -75,6 +76,7 @@ func (m *UserModule) HandlePostUser(w http.ResponseWriter, r *http.Request) {
 		Email:        body.Email,
 		Avatar:       body.Avatar,
 		DealershipID: body.DealershipID,
+		Role:         body.Role,
 	}
 
 	err = m.Db.Users.Insert(&user)

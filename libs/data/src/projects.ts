@@ -7,6 +7,7 @@ export type ProjectStatus =
   | "cancelled"
   | "ordered"
   | "in-production"
+  | "awaiting-invoice"
   | "awaiting-payment"
   | "completed";
 

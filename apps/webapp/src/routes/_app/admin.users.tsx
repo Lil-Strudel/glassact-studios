@@ -26,7 +26,7 @@ import {
   getPaginationRowModel,
   getFilteredRowModel,
 } from "@tanstack/solid-table";
-import { GET, User } from "@glassact/data";
+import { GET, User, UserRole } from "@glassact/data";
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
@@ -87,12 +87,14 @@ function RouteComponent() {
       name: "",
       email: "",
       dealership_id: undefined as unknown as number,
+      role: "" as UserRole,
     },
     validators: {
       onSubmit: z.object({
         name: z.string().min(1),
         email: z.email(),
         dealership_id: z.number().int(),
+        role: z.union([z.literal("user"), z.literal("admin")]),
       }),
     },
     onSubmit: async ({ value }) => {
@@ -171,6 +173,20 @@ function RouteComponent() {
               <form.Field
                 name="dealership_id"
                 children={(field) => <DealershipCombobox field={field} />}
+              />
+
+              <form.Field
+                name="role"
+                children={(field) => (
+                  <Form.Combobox
+                    field={field}
+                    label="Role"
+                    options={[
+                      { label: "User", value: "user" },
+                      { label: "Admin", value: "admin" },
+                    ]}
+                  />
+                )}
               />
 
               <Button type="submit" disabled={postUser.isPending}>

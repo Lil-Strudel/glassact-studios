@@ -1,16 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
-import { GET, Inlay, Project, ProjectStatus } from "@glassact/data";
+import { GET, Inlay, Project, ProjectStatus, UserRole } from "@glassact/data";
 import { Button, Breadcrumb } from "@glassact/ui";
 import { IoAddCircleOutline, IoCheckmarkCircleOutline } from "solid-icons/io";
 import { Component, Index, Show } from "solid-js";
 import { useQuery } from "@tanstack/solid-query";
 import { getProjectsOpts } from "../../queries/project";
+import { useUserContext } from "../../providers/user";
 
 export const Route = createFileRoute("/_app/projects")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  const { user } = useUserContext();
   const query = useQuery(getProjectsOpts({ expand: { inlays: true } }));
 
   function getByStatusi(
@@ -20,15 +22,33 @@ function RouteComponent() {
     return query.data.filter((project) => statusi.includes(project.status));
   }
 
+  const statusGroups: Record<string, Record<UserRole, ProjectStatus[]>> = {
+    needsAction: {
+      user: ["proof-in-revision", "all-proofs-accepted", "awaiting-payment"],
+      admin: ["awaiting-proof", "awaiting-invoice"],
+    },
+    pendingProjects: {
+      user: ["awaiting-proof"],
+      admin: ["proof-in-revision", "all-proofs-accepted"],
+    },
+    activeProjects: {
+      user: ["ordered", "in-production", "awaiting-invoice"],
+      admin: ["ordered", "in-production", "awaiting-payment"],
+    },
+    completedProjects: {
+      user: ["completed", "cancelled"],
+      admin: ["completed", "cancelled"],
+    },
+  } as const;
+
   const needsActionProjects = () =>
-    getByStatusi([
-      "proof-in-revision",
-      "all-proofs-accepted",
-      "awaiting-payment",
-    ]);
+    getByStatusi(statusGroups.needsAction[user().role]);
+  const pendingProjects = () =>
+    getByStatusi(statusGroups.pendingProjects[user().role]);
   const activeProjects = () =>
-    getByStatusi(["awaiting-proof", "ordered", "in-production"]);
-  const completedProjects = () => getByStatusi(["completed", "cancelled"]);
+    getByStatusi(statusGroups.activeProjects[user().role]);
+  const completedProjects = () =>
+    getByStatusi(statusGroups.completedProjects[user().role]);
 
   return (
     <div>
@@ -63,6 +83,36 @@ function RouteComponent() {
                 }
               >
                 <Index each={needsActionProjects()}>
+                  {(item) => <ProjectCard project={item} />}
+                </Index>
+              </Show>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div>
+            <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+              Pending Projects
+            </h1>
+            <p class="mt-2 text-sm text-gray-500">
+              These projects are waiting for proofs to be created or are having
+              proofs revised.
+            </p>
+          </div>
+
+          <div class="mt-4">
+            <div class="space-y-4">
+              <Show
+                when={pendingProjects().length > 0}
+                fallback={
+                  <SectionMessage
+                    title="No pending projects at this time"
+                    description="Projects waiting for proof creation or revision will appear here"
+                  />
+                }
+              >
+                <Index each={pendingProjects()}>
                   {(item) => <ProjectCard project={item} />}
                 </Index>
               </Show>
