@@ -5,3 +5,6 @@ procs:
     shell: "pnpm dev:api"
   landing:
     shell: "pnpm dev:landing"
+hide_keymap_window: true
+scrollback: 1000000
+proc_list_width: 15
