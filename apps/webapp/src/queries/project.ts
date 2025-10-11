@@ -54,16 +54,30 @@ export function getProjectsOpts<T extends getProjectProps = {}>(
     });
 }
 
-export async function getProject(uuid: string): Promise<GET<Project>> {
-  const res = await api.get(`/project/${uuid}`);
+export async function getProject<T extends getProjectProps = {}>(
+  uuid: string,
+  props: T = {} as T,
+): Promise<ProjectWithExpands<T>> {
+  const expand = Object.entries(props.expand || {})
+    .filter(([, value]) => value)
+    .map(([key]) => key);
+
+  const params = {
+    ...(expand.length ? { expand: expand.join(",") } : {}),
+  };
+
+  const res = await api.get(`/project/${uuid}`, { params });
   return res.data;
 }
 
-export function getProjectOpts(uuid: string) {
+export function getProjectOpts<T extends getProjectProps = {}>(
+  uuid: string,
+  props: T = {} as T,
+) {
   return () =>
     queryOptions({
-      queryKey: ["project", uuid],
-      queryFn: () => getProject(uuid),
+      queryKey: ["project", uuid, props],
+      queryFn: () => getProject(uuid, props),
     });
 }
 

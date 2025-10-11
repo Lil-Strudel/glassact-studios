@@ -235,3 +235,167 @@ func (m InlayModel) TxInsert(tx pgx.Tx, inlay *Inlay) error {
 
 	return nil
 }
+
+func (m InlayModel) GetByID(id int) (*Inlay, bool, error) {
+	query := `
+        SELECT id, uuid, project_id, name, preview_url, price_group, type, created_at, updated_at, version
+        FROM inlays
+        WHERE id = $1`
+
+	var inlay Inlay
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRow(ctx, query, id).Scan(
+		&inlay.ID,
+		&inlay.UUID,
+		&inlay.ProjectID,
+		&inlay.Name,
+		&inlay.PreviewURL,
+		&inlay.PriceGroup,
+		&inlay.Type,
+		&inlay.CreatedAt,
+		&inlay.UpdatedAt,
+		&inlay.Version,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil, false, nil
+		default:
+			return nil, false, err
+		}
+	}
+
+	return &inlay, true, nil
+}
+
+func (m InlayModel) GetByUUID(uuid string) (*Inlay, bool, error) {
+	query := `
+        SELECT id, uuid, project_id, name, preview_url, price_group, type, created_at, updated_at, version
+        FROM inlays
+        WHERE uuid = $1`
+
+	var inlay Inlay
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRow(ctx, query, uuid).Scan(
+		&inlay.ID,
+		&inlay.UUID,
+		&inlay.ProjectID,
+		&inlay.Name,
+		&inlay.PreviewURL,
+		&inlay.PriceGroup,
+		&inlay.Type,
+		&inlay.CreatedAt,
+		&inlay.UpdatedAt,
+		&inlay.Version,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return nil, false, nil
+		default:
+			return nil, false, err
+		}
+	}
+
+	return &inlay, true, nil
+}
+
+func (m InlayModel) GetAll() ([]*Inlay, error) {
+	query := `
+        SELECT id, uuid, project_id, name, preview_url, price_group, type, created_at, updated_at, version
+		FROM inlays
+		WHERE id IS NOT NULL;`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []any{}
+
+	rows, err := m.DB.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	inlays := []*Inlay{}
+
+	for rows.Next() {
+		var inlay Inlay
+
+		err := rows.Scan(
+
+			&inlay.ID,
+			&inlay.UUID,
+			&inlay.ProjectID,
+			&inlay.Name,
+			&inlay.PreviewURL,
+			&inlay.PriceGroup,
+			&inlay.Type,
+			&inlay.CreatedAt,
+			&inlay.UpdatedAt,
+			&inlay.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		inlays = append(inlays, &inlay)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return inlays, nil
+}
+
+func (m InlayModel) Update(inlay *Inlay) error {
+	query := `
+        UPDATE inlays 
+        SET project_id = $3, name = $4, preview_url = $5, price_group = $6, type = $7 version = version + 1
+        WHERE id = $1 AND version = $2
+        RETURNING version`
+
+	args := []any{
+		inlay.ID,
+		inlay.Version,
+		inlay.ProjectID,
+		inlay.Name,
+		inlay.PreviewURL,
+		inlay.PriceGroup,
+		inlay.Type,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRow(ctx, query, args...).Scan(&inlay.Version)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m InlayModel) Delete(id int) error {
+	query := `
+        DELETE FROM inlays
+		WHERE id = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	_, err := m.DB.Exec(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

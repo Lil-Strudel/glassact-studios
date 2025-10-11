@@ -32,7 +32,7 @@ import { z } from "zod";
 import { useMutation, useQuery } from "@tanstack/solid-query";
 import {
   getDealershipsOpts,
-  postDealershipsOpts,
+  postDealershipOpts,
 } from "../../queries/dealership";
 
 export const Route = createFileRoute("/_app/admin/dealerships")({
@@ -93,7 +93,7 @@ const formSchema = z.object({
 function RouteComponent() {
   const query = useQuery(getDealershipsOpts);
 
-  const postDealership = useMutation(postDealershipsOpts);
+  const postDealership = useMutation(postDealershipOpts);
 
   const table = createSolidTable({
     get data() {

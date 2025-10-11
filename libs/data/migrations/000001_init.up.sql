@@ -103,3 +103,15 @@ CREATE TABLE IF NOT EXISTS inlay_custom_infos (
     created_at timestamptz NOT NULL DEFAULT now(),
     version integer NOT NULL DEFAULT 1
 );
+
+CREATE TABLE IF NOT EXISTS inlay_chats (
+    id serial PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    inlay_id integer NOT NULL REFERENCES inlays ON DELETE RESTRICT,
+    user_id integer NOT NULL REFERENCES users ON DELETE RESTRICT,
+    sender_type VARCHAR(255) NOT NULL CHECK (sender_type IN ('glassact', 'customer')),
+    message text NOT NULL,
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    created_at timestamptz NOT NULL DEFAULT now(),
+    version integer NOT NULL DEFAULT 1
+);

@@ -3,6 +3,7 @@ export * from "./audit-logs";
 export * from "./catalog-item";
 export * from "./dealerships";
 export * from "./helpers";
+export * from "./inlay-chats";
 export * from "./inlay-milestones";
 export * from "./inlay-proofs";
 export * from "./inlays";

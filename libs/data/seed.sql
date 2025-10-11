@@ -26,3 +26,8 @@ VALUES (
     1,
     'user'
 );
+
+INSERT INTO catalog_items (created_at)
+VALUES (
+    now()
+);

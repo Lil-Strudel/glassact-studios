@@ -7,6 +7,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/auth"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dealership"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay"
+	inlayChat "github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay-chat"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/project"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/user"
 	"github.com/justinas/alice"
@@ -41,6 +42,12 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/inlay", protected.ThenFunc(inlayModule.HandleGetInlays))
 	mux.Handle("GET /api/inlay/{uuid}", protected.ThenFunc(inlayModule.HandleGetInlayByUUID))
 	mux.Handle("POST /api/inlay", protected.ThenFunc(inlayModule.HandlePostInlay))
+
+	inlayChatModule := inlayChat.NewInlayChatModule(app)
+	mux.Handle("GET /api/inlay-chat", protected.ThenFunc(inlayChatModule.HandleGetInlayChats))
+	mux.Handle("GET /api/inlay-chat/inlay/{uuid}", protected.ThenFunc(inlayChatModule.HandleGetInlayChatsByInlayUUID))
+	mux.Handle("GET /api/inlay-chat/{uuid}", protected.ThenFunc(inlayChatModule.HandleGetInlayChatByUUID))
+	mux.Handle("POST /api/inlay-chat", protected.ThenFunc(inlayChatModule.HandlePostInlayChat))
 
 	projectModule := project.NewProjectModule(app)
 	mux.Handle("GET /api/project", protected.ThenFunc(projectModule.HandleGetProjects))

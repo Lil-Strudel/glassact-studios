@@ -1,125 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
-import { GET, Project } from "@glassact/data";
 import { Breadcrumb, Button, cn, TextField, TextFieldRoot } from "@glassact/ui";
 import { createSignal, Index, Show } from "solid-js";
 import { IoCheckmarkCircleOutline } from "solid-icons/io";
+import { useQuery } from "@tanstack/solid-query";
+import { getProjectOpts } from "../../queries/project";
+import InlayChatbox from "../../components/inlay-chatbox";
 
 export const Route = createFileRoute("/_app/projects_/$id")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const [selectedInlay, setSelectedInlay] = createSignal(0);
-  const [messages, setMessages] = createSignal([
-    {
-      id: 1,
-      sender: "client",
-      type: "order",
-      text: "Catalog Item: 1234-78-A21 Please switch out the blue with light blue.",
-      time: new Date("2025-06-06T17:30:45"),
-    },
-    {
-      id: 2,
-      sender: "glassact",
-      type: "proof",
-      text: "Here is the proof!",
-      img: "https://placehold.co/600x400",
-      time: new Date("2025-06-06T17:30:45"),
-    },
-    {
-      id: 3,
-      sender: "client",
-      type: "message",
-      text: "Proof Declined: The dimensions are wrong. Can you make it smaller?",
-      time: new Date("2025-06-06T17:30:45"),
-    },
-    {
-      id: 4,
-      sender: "glassact",
-      type: "message",
-      text: "What are the exact dimensions you want it to be?",
-      time: new Date("2025-06-06T17:30:45"),
-    },
-    {
-      id: 5,
-      sender: "client",
-      type: "message",
-      text: "2.5 x 3.5in",
-      time: new Date("2025-06-06T17:30:45"),
-    },
-    {
-      id: 6,
-      sender: "glassact",
-      type: "proof",
-      text: "How does this look?",
-      img: "https://placehold.co/600x400",
-      time: new Date("2025-06-06T17:30:45"),
-    },
-  ]);
+  const params = Route.useParams();
+  const [selectedInlayIndex, setSelectedInlayIndex] = createSignal(0);
 
-  const [newMessage, setNewMessage] = createSignal("");
-  const [isDeclineFeedback, setIsDeclineFeedback] = createSignal(false);
-  const [declineFeedback, setDeclineFeedback] = createSignal("");
-
-  const sendMessage = () => {
-    const message = newMessage().trim();
-    if (message) {
-      const newMsg = {
-        id: messages().length + 1,
-        sender: "client",
-        type: "message",
-        text: message,
-        time: new Date(),
-      };
-      setMessages([...messages(), newMsg]);
-      setNewMessage("");
-    }
-  };
-
-  const handleKeyPress = (e: KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
-  const handleDeclineClick = () => {
-    setIsDeclineFeedback(true);
-  };
-
-  const handleDeclineSubmit = () => {
-    const feedback = declineFeedback().trim();
-    if (feedback) {
-      const newMsg = {
-        id: messages().length + 1,
-        sender: "client",
-        type: "message",
-        text: `Proof declined: ${feedback}`,
-        time: new Date(),
-      };
-      setMessages([...messages(), newMsg]);
-      setDeclineFeedback("");
-      setIsDeclineFeedback(false);
-    }
-  };
-
-  const handleDeclineCancel = () => {
-    setDeclineFeedback("");
-    setIsDeclineFeedback(false);
-  };
-  const project: GET<Project> = {
-    id: 123,
-    uuid: "1234",
-    name: "John Doe",
-    status: "awaiting-proof",
-    approved: false,
-    dealership_id: 123,
-    created_at: "qw34",
-    updated_at: "1234",
-    version: 1,
-  };
-
-  const inlays = ["1234-78-A21", "BIR-203-152"];
+  const query = useQuery(
+    getProjectOpts(params().id, { expand: { inlays: true } }),
+  );
 
   const steps = [
     { name: "Proof Creation", to: "#", status: "complete" },
@@ -132,17 +29,20 @@ function RouteComponent() {
     { name: "Shipping", to: "#", status: "upcoming" },
     { name: "Delivered", to: "#", status: "upcoming" },
   ];
+
+  const selectedInlay = () => query.data!.inlays[selectedInlayIndex()];
+
   return (
-    <div>
+    <Show when={query.isSuccess} fallback={<div>Loading</div>}>
       <Breadcrumb
         crumbs={[
           { title: "Projects", to: "/projects" },
-          { title: project.name, to: `/projects/${project.uuid}` },
+          { title: query.data!.name, to: `/projects/${query.data!.uuid}` },
         ]}
       />
       <div class="relative border-b border-gray-200 pb-5 sm:pb-0">
         <div class="md:flex md:items-center md:justify-between">
-          <h1 class="text-2xl font-bold text-gray-900">{project.name}</h1>
+          <h1 class="text-2xl font-bold text-gray-900">{query.data!.name}</h1>
           <div class="mt-3 flex gap-4 md:absolute md:right-0 md:top-3 md:mt-0">
             <Button variant="outline">Cancel Project</Button>
             <Button disabled>Place Order</Button>
@@ -151,18 +51,18 @@ function RouteComponent() {
         <div class="mt-4">
           <div>
             <nav class="-mb-px flex space-x-8">
-              <Index each={inlays}>
+              <Index each={query.data!.inlays}>
                 {(item, index) => (
                   <div
-                    onClick={() => setSelectedInlay(index)}
+                    onClick={() => setSelectedInlayIndex(index)}
                     class={cn(
                       "cursor-pointer whitespace-nowrap border-b-2 border-primary px-1 pb-2 text-sm font-medium text-primary",
-                      index === selectedInlay()
+                      index === selectedInlayIndex()
                         ? "border-primary text-primary"
                         : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
                     )}
                   >
-                    {item()}
+                    {item().name}
                   </div>
                 )}
               </Index>
@@ -206,7 +106,7 @@ function RouteComponent() {
                         </span>
                       </Link>
                     ) : (
-                      <Link to={step().to} class="group">
+                      <Link to={step().to} class="grooup">
                         <div class="flex items-start">
                           <div
                             aria-hidden="true"
@@ -226,148 +126,10 @@ function RouteComponent() {
             </ol>
           </nav>
         </div>
-        <div class="border rounded-xl py-4 w-full flex flex-col min-h-0">
-          <div class="flex flex-col h-full min-h-[400px] max-h-[calc(100vh-400px)]">
-            <div class="border-b pb-3 mb-4 px-4">
-              <h3 class="text-lg font-semibold text-gray-900">
-                Proof Approval
-              </h3>
-              <p class="text-sm text-gray-500">
-                Work with us to get your inlay design perfect before placing
-                your order!
-              </p>
-            </div>
-            <div class="flex flex-col-reverse overflow-y-auto scroll-smooth ">
-              <div class="flex-1 space-y-4 mb-4 px-4">
-                <Index each={messages()}>
-                  {(message, index) => (
-                    <div
-                      class={cn(
-                        "flex",
-                        message().sender === "client"
-                          ? "justify-end"
-                          : "justify-start",
-                      )}
-                    >
-                      <div
-                        class={cn(
-                          "max-w-xs lg:max-w-md px-4 py-2 rounded-lg",
-                          message().sender === "client"
-                            ? "bg-primary text-white"
-                            : "bg-gray-100 text-gray-900",
-                        )}
-                      >
-                        <Show when={Boolean(message().img)}>
-                          <img src={message().img} class="py-2" />
-                        </Show>
-                        <p class="text-sm">{message().text}</p>
-                        <Show
-                          when={
-                            Boolean(message().type === "proof") &&
-                            index === messages().length - 1
-                          }
-                        >
-                          <Show
-                            when={!isDeclineFeedback()}
-                            fallback={
-                              <div class="space-y-2 my-2">
-                                <TextFieldRoot>
-                                  <TextField
-                                    value={declineFeedback()}
-                                    onInput={(e) =>
-                                      setDeclineFeedback(e.currentTarget.value)
-                                    }
-                                    placeholder="What would you like changed?"
-                                    class="w-full"
-                                  />
-                                </TextFieldRoot>
-                                <div class="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    onClick={handleDeclineCancel}
-                                    class="flex-1"
-                                  >
-                                    Cancel
-                                  </Button>
-                                  <Button
-                                    onClick={handleDeclineSubmit}
-                                    disabled={!declineFeedback().trim()}
-                                    class="flex-1"
-                                  >
-                                    Decline w/ Feedback
-                                  </Button>
-                                </div>
-                              </div>
-                            }
-                          >
-                            <div class="flex gap-4 my-2">
-                              <Button
-                                variant="outline"
-                                class="w-full"
-                                onClick={handleDeclineClick}
-                              >
-                                Decline
-                              </Button>
-                              <Button class="w-full">Approve</Button>
-                            </div>
-                          </Show>
-                        </Show>
-                        <Show
-                          when={
-                            Boolean(message().type === "proof") &&
-                            index !== messages().length - 1
-                          }
-                        >
-                          <div class="flex justify-center mt-2">
-                            <p class="text-sm text-gray-500">Declined</p>
-                          </div>
-                        </Show>
-                        <p
-                          class={cn(
-                            "text-xs mt-1",
-                            message().sender === "client"
-                              ? "text-primary-100"
-                              : "text-gray-500",
-                          )}
-                        >
-                          {message().time.toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </Index>
-                <Show
-                  when={messages()[messages().length - 1].sender === "client"}
-                >
-                  <div class="flex justify-center">
-                    <p class="text-sm text-gray-500 mt-2">
-                      Awaiting response from GlassAct Studios....
-                    </p>
-                  </div>
-                </Show>
-              </div>
-            </div>
-            <div class="border-t pt-4 px-4">
-              <div class="flex gap-2">
-                <TextFieldRoot class="w-full">
-                  <TextField
-                    value={newMessage()}
-                    onInput={(e) => setNewMessage(e.currentTarget.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Type your message..."
-                  />
-                </TextFieldRoot>
-                <Button onClick={sendMessage} disabled={!newMessage().trim()}>
-                  Send
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Show when={selectedInlay()}>
+          <InlayChatbox inlay={selectedInlay} />
+        </Show>
       </div>
-    </div>
+    </Show>
   );
 }

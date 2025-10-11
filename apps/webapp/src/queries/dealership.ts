@@ -36,7 +36,7 @@ export async function postDealership(
   return res.data;
 }
 
-export function postDealershipsOpts() {
+export function postDealershipOpts() {
   return mutationOptions({
     mutationFn: postDealership,
   });

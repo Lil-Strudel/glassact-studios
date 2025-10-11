@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS inlay_chats;
 DROP TABLE IF EXISTS inlay_custom_infos;
 DROP TABLE IF EXISTS inlay_catalog_infos;
 DROP TABLE IF EXISTS inlays;

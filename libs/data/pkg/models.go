@@ -8,6 +8,7 @@ type Models struct {
 	Accounts    AccountModel
 	Dealerships DealershipModel
 	Inlays      InlayModel
+	InlayChats  InlayChatModel
 	Projects    ProjectModel
 	Tokens      TokenModel
 	Users       UserModel
@@ -19,6 +20,7 @@ func NewModels(db *pgxpool.Pool) Models {
 		Accounts:    AccountModel{DB: db},
 		Dealerships: DealershipModel{DB: db},
 		Inlays:      InlayModel{DB: db},
+		InlayChats:  InlayChatModel{DB: db},
 		Projects:    ProjectModel{DB: db},
 		Tokens:      TokenModel{DB: db},
 		Users:       UserModel{DB: db},

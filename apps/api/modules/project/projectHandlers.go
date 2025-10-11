@@ -41,7 +41,9 @@ func (m ProjectModule) HandleGetProjectByUUID(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	project, found, err := m.Db.Projects.GetByUUID(uuid)
+	expand := strings.Split(r.URL.Query().Get("expand"), ",")
+
+	project, found, err := m.Db.Projects.GetByUUID(uuid, expand)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
