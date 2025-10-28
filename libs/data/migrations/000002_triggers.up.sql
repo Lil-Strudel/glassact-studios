@@ -41,3 +41,7 @@ CREATE TRIGGER update_inlay_custom_infos_updated_at
 CREATE TRIGGER update_inlay_chats_updated_at 
     BEFORE UPDATE ON inlay_chats 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_inlay_proofs_updated_at 
+    BEFORE UPDATE ON inlay_proofs
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

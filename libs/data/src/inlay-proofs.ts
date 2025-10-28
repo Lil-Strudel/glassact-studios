@@ -1,9 +1,5 @@
-export interface InlayProof {
-  id: number;
-  uuid: string;
-  status: string;
+import { StandardTable } from "./helpers";
+
+export type InlayProof = StandardTable<{
   inlay_id: number;
-  created_at: string;
-  updated_at: string;
-  version: number;
-}
+}>;

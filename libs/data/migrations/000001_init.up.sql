@@ -115,3 +115,12 @@ CREATE TABLE IF NOT EXISTS inlay_chats (
     created_at timestamptz NOT NULL DEFAULT now(),
     version integer NOT NULL DEFAULT 1
 );
+
+CREATE TABLE IF NOT EXISTS inlay_proofs (
+    id serial PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    inlay_id integer NOT NULL REFERENCES inlays ON DELETE RESTRICT,
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    created_at timestamptz NOT NULL DEFAULT now(),
+    version integer NOT NULL DEFAULT 1
+);

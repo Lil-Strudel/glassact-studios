@@ -11,6 +11,7 @@ import { splitProps } from "solid-js";
 
 export const Dialog = DialogPrimitive;
 export const DialogTrigger = DialogPrimitive.Trigger;
+export type { DialogTriggerProps } from "@kobalte/core/dialog";
 
 type dialogContentProps<T extends ValidComponent = "div"> = ParentProps<
   DialogContentProps<T> & {

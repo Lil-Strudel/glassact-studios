@@ -6,6 +6,7 @@ import {
   getInlayChatsByInlayUUIDOpts,
   postInlayChatOpts,
 } from "../queries/inlay-chat";
+import InlayProofDialog from "./inlay-proof-dialog";
 
 interface InlayChatboxProps {
   inlay: () => GET<Inlay>;
@@ -211,6 +212,7 @@ const InlayChatbox: Component<InlayChatboxProps> = (props) => {
         </Show>
         <div class="border-t pt-4 px-4">
           <div class="flex gap-2">
+            <InlayProofDialog />
             <TextFieldRoot class="w-full">
               <TextField
                 value={newMessage()}

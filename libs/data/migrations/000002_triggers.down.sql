@@ -1,3 +1,4 @@
+DROP TRIGGER IF EXISTS update_inlay_proofs_updated_at ON inlay_proofs;
 DROP TRIGGER IF EXISTS update_inlay_chats_updated_at ON inlay_chats;
 DROP TRIGGER IF EXISTS update_inlay_custom_infos_updated_at ON inlay_custom_infos;
 DROP TRIGGER IF EXISTS update_inlay_catalog_infos_updated_at ON inlay_catalog_infos;
