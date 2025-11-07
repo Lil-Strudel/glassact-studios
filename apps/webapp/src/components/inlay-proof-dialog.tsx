@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/solid-query";
 import { IoIceCreamOutline } from "solid-icons/io";
 import { type Component } from "solid-js";
 import { z } from "zod";
+import { FileUpload } from "./fileupload";
 
 const InlayProofDialog: Component = () => {
   const queryClient = useQueryClient();
@@ -59,6 +60,8 @@ const InlayProofDialog: Component = () => {
               <Form.TextField field={field} label="Message" />
             )}
           />
+
+          <FileUpload />
 
           <Button type="submit">Upload</Button>
         </form>

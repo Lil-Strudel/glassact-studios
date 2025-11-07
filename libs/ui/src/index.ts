@@ -17,6 +17,8 @@ export * from "./dialog";
 
 export * from "./dropdown-menu";
 
+export * from "./filefield";
+
 export * from "./form";
 
 export * from "./select";
