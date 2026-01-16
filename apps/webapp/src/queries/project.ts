@@ -41,6 +41,7 @@ export async function getProjects<T extends getProjectProps = {}>(
   };
 
   const res = await api.get("/project", { params });
+
   return res.data;
 }
 

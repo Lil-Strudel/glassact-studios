@@ -14,6 +14,7 @@ import (
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/config"
 	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -24,6 +25,7 @@ type Application struct {
 	Log      *slog.Logger
 	Validate *validator.Validate
 	Wg       sync.WaitGroup
+	S3       *s3.Client
 }
 
 func (app *Application) Serve(routes http.Handler) error {

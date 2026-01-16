@@ -31,7 +31,7 @@ const InlayProofDialog: Component = () => {
   }));
 
   return (
-    <Dialog open>
+    <Dialog>
       <DialogTrigger
         as={(props: DialogTriggerProps) => (
           <Button size="icon" {...props}>

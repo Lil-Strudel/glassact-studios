@@ -26,8 +26,12 @@ resource "aws_s3_bucket" "file_bucket" {
   bucket = "glassact-nkm52j"
 }
 
-resource "aws_iam_user" "dev" {
+resource "aws_iam_user" "strudel_dev" {
   name = "strudel-dev"
+}
+
+resource "aws_iam_user" "t8_dev" {
+  name = "t8-dev"
 }
 
 data "aws_iam_policy_document" "dev_s3" {
@@ -41,8 +45,14 @@ data "aws_iam_policy_document" "dev_s3" {
   }
 }
 
-resource "aws_iam_user_policy" "dev_s3" {
+resource "aws_iam_user_policy" "strudel_dev_s3" {
   name   = "dev-s3"
-  user   = aws_iam_user.dev.name
+  user   = aws_iam_user.strudel_dev.name
+  policy = data.aws_iam_policy_document.dev_s3.json
+}
+
+resource "aws_iam_user_policy" "t8_dev_s3" {
+  name   = "dev-s3"
+  user   = aws_iam_user.t8_dev.name
   policy = data.aws_iam_policy_document.dev_s3.json
 }

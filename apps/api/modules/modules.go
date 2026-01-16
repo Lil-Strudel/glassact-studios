@@ -9,6 +9,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay"
 	inlayChat "github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay-chat"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/project"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/upload"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/user"
 	"github.com/justinas/alice"
 )
@@ -60,6 +61,9 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/user/self", protected.ThenFunc(userModule.HandleGetUserSelf))
 	mux.Handle("GET /api/user/{uuid}", protected.ThenFunc(userModule.HandleGetUserByUUID))
 	mux.Handle("POST /api/user", protected.ThenFunc(userModule.HandlePostUser))
+
+	uploadModule := upload.NewUploadModule(app)
+	mux.Handle("POST /api/upload", protected.ThenFunc(uploadModule.HandlePostUpload))
 
 	mux.Handle("/", unprotected.ThenFunc(app.HandleNotFound))
 	return standard.Then(mux)
