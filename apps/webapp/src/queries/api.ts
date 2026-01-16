@@ -1,4 +1,4 @@
-import axios from "redaxios";
+import axios from "axios";
 
 const api = axios.create({
   baseURL: "/api",
