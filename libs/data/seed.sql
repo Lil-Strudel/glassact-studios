@@ -27,6 +27,15 @@ VALUES (
     'user'
 );
 
+INSERT INTO users (name, email, avatar, dealership_id, role)
+VALUES (
+    'T8 Storey',
+    't8storey@protonmail.com',
+    'https://ui-avatars.com/api/?name=Aaron+Santo&background=BAFFC9',
+    1,
+    'admin'
+);
+
 INSERT INTO catalog_items (created_at)
 VALUES (
     now()
