@@ -249,19 +249,23 @@ func buildMessage(from, to mail.Address, subject, textBody, htmlBody string) []b
 	headers += fmt.Sprintf("To: %s\r\n", to.String())
 	headers += fmt.Sprintf("Subject: %s\r\n", subject)
 	headers += "MIME-Version: 1.0\r\n"
-	headers += fmt.Sprintf("Content-Type: multipart/alternative; boundary=%s\r\n", boundary)
+	headers += fmt.Sprintf("Content-Type: multipart/alternative; boundary=\"%s\"\r\n", boundary)
 	headers += fmt.Sprintf("Date: %s\r\n", date)
 	headers += fmt.Sprintf("Message-ID: %s\r\n", msgID)
 
 	body := ""
 	body += fmt.Sprintf("--%s\r\n", boundary)
 	body += "Content-Type: text/plain; charset=\"UTF-8\"\r\n"
-	body += textBody + "\r\n\r\n"
+	body += "Content-Transfer-Encoding: 7bit\r\n"
+	body += "\r\n"
+	body += textBody + "\r\n"
 
 	if htmlBody != "" {
 		body += fmt.Sprintf("--%s\r\n", boundary)
 		body += "Content-Type: text/html; charset=\"UTF-8\"\r\n"
-		body += htmlBody + "\r\n\r\n"
+		body += "Content-Transfer-Encoding: 7bit\r\n"
+		body += "\r\n"
+		body += htmlBody + "\r\n"
 	}
 
 	body += fmt.Sprintf("--%s--\r\n", boundary)
