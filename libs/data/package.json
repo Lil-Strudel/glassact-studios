@@ -17,6 +17,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "gen": "source ./.env && jet -dsn=${DATABASE_DSN} -path=./pkg/gen",
     "migrate/new": "migrate create -seq -ext=.sql -dir=./migrations",
     "migrate/up": "source ./.env && migrate -path ./migrations -database ${DATABASE_DSN} up",
     "migrate/goto": "source ./.env && migrate -path ./migrations -database ${DATABASE_DSN} goto",

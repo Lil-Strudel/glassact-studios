@@ -25,7 +25,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	db, err := data.NewPool(cfg.Db.Dsn)
+	db, stdb, err := data.NewPool(cfg.Db.Dsn)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
@@ -47,7 +47,7 @@ func main() {
 
 	app := &app.Application{
 		Cfg:      cfg,
-		Db:       data.NewModels(db),
+		Db:       data.NewModels(db, stdb),
 		Err:      app.AppError,
 		Log:      logger,
 		Validate: validator.New(validator.WithRequiredStructEnabled()),

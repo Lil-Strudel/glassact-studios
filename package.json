@@ -10,6 +10,7 @@
     "dev:api": "pnpm --filter @glassact/api dev",
     "dev:landing": "pnpm --filter @glassact/landing dev",
     "dev:webapp": "pnpm --filter @glassact/webapp dev",
+    "db:gen": "pnpm --filter @glassact/data gen",
     "db:migrate/new": "pnpm --filter @glassact/data migrate/new",
     "db:migrate/up": "pnpm --filter @glassact/data migrate/up",
     "db:migrate/goto": "pnpm --filter @glassact/data migrate/goto",
