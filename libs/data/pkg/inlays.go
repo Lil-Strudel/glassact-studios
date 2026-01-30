@@ -2,9 +2,15 @@ package data
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/model"
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/table"
+	"github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/qrm"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -47,7 +53,134 @@ type Inlay struct {
 }
 
 type InlayModel struct {
-	DB *pgxpool.Pool
+	DB   *pgxpool.Pool
+	STDB *sql.DB
+}
+
+func inlayFromGen(genInlay model.Inlays, genCatalogInfo *model.InlayCatalogInfos, genCustomInfo *model.InlayCustomInfos) *Inlay {
+	inlay := Inlay{
+		StandardTable: StandardTable{
+			ID:        int(genInlay.ID),
+			UUID:      genInlay.UUID.String(),
+			CreatedAt: genInlay.CreatedAt,
+			UpdatedAt: genInlay.UpdatedAt,
+			Version:   int(genInlay.Version),
+		},
+		ProjectID:  int(genInlay.ProjectID),
+		Name:       genInlay.Name,
+		PreviewURL: genInlay.PreviewURL,
+		PriceGroup: int(genInlay.PriceGroup),
+		Type:       InlayType(genInlay.Type),
+	}
+
+	if genCatalogInfo != nil {
+		inlay.CatalogInfo = &InlayCatalogInfo{
+			StandardTable: StandardTable{
+				ID:        int(genCatalogInfo.ID),
+				UUID:      genCatalogInfo.UUID.String(),
+				CreatedAt: genCatalogInfo.CreatedAt,
+				UpdatedAt: genCatalogInfo.UpdatedAt,
+				Version:   int(genCatalogInfo.Version),
+			},
+			InlayID:       int(genCatalogInfo.InlayID),
+			CatalogItemID: int(genCatalogInfo.CatalogItemID),
+		}
+	}
+
+	if genCustomInfo != nil {
+		inlay.CustomInfo = &InlayCustomInfo{
+			StandardTable: StandardTable{
+				ID:        int(genCustomInfo.ID),
+				UUID:      genCustomInfo.UUID.String(),
+				CreatedAt: genCustomInfo.CreatedAt,
+				UpdatedAt: genCustomInfo.UpdatedAt,
+				Version:   int(genCustomInfo.Version),
+			},
+			InlayID:     int(genCustomInfo.InlayID),
+			Description: genCustomInfo.Description,
+			Width:       genCustomInfo.Width,
+			Height:      genCustomInfo.Height,
+		}
+	}
+
+	return &inlay
+}
+
+func inlayToGen(in *Inlay) (*model.Inlays, error) {
+	var inlayUUID uuid.UUID
+	var err error
+
+	if in.UUID != "" {
+		inlayUUID, err = uuid.Parse(in.UUID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	genInlay := model.Inlays{
+		ID:         int32(in.ID),
+		UUID:       inlayUUID,
+		ProjectID:  int32(in.ProjectID),
+		Name:       in.Name,
+		PreviewURL: in.PreviewURL,
+		PriceGroup: int32(in.PriceGroup),
+		Type:       string(in.Type),
+		UpdatedAt:  in.UpdatedAt,
+		CreatedAt:  in.CreatedAt,
+		Version:    int32(in.Version),
+	}
+
+	return &genInlay, nil
+}
+
+func catalogInfoToGen(ci *InlayCatalogInfo) (*model.InlayCatalogInfos, error) {
+	var ciUUID uuid.UUID
+	var err error
+
+	if ci.UUID != "" {
+		ciUUID, err = uuid.Parse(ci.UUID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	genCatalogInfo := model.InlayCatalogInfos{
+		ID:            int32(ci.ID),
+		UUID:          ciUUID,
+		InlayID:       int32(ci.InlayID),
+		CatalogItemID: int32(ci.CatalogItemID),
+		UpdatedAt:     ci.UpdatedAt,
+		CreatedAt:     ci.CreatedAt,
+		Version:       int32(ci.Version),
+	}
+
+	return &genCatalogInfo, nil
+}
+
+func customInfoToGen(ci *InlayCustomInfo) (*model.InlayCustomInfos, error) {
+	var ciUUID uuid.UUID
+	var err error
+
+	if ci.UUID != "" {
+		ciUUID, err = uuid.Parse(ci.UUID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	genCustomInfo := model.InlayCustomInfos{
+		ID:          int32(ci.ID),
+		UUID:        ciUUID,
+		InlayID:     int32(ci.InlayID),
+		Description: ci.Description,
+		Width:       ci.Width,
+		Height:      ci.Height,
+		UpdatedAt:   ci.UpdatedAt,
+		CreatedAt:   ci.CreatedAt,
+		Version:     int32(ci.Version),
+	}
+
+	return &genCustomInfo, nil
 }
 
 func (m InlayModel) Insert(inlay *Inlay) error {
@@ -55,57 +188,79 @@ func (m InlayModel) Insert(inlay *Inlay) error {
 	defer cancel()
 
 	tx, err := m.DB.Begin(ctx)
-	query := `
-			INSERT INTO inlays (project_id, name, preview_url, price_group, type)
-			VALUES ($1, $2, $3, $4, $5)
-			RETURNING id, uuid, created_at, updated_at, version`
-
-	args := []any{
-		inlay.ProjectID,
-		inlay.Name,
-		inlay.PreviewURL,
-		inlay.PriceGroup,
-		inlay.Type,
-	}
-
-	err = tx.QueryRow(ctx, query, args...).Scan(
-		&inlay.ID,
-		&inlay.UUID,
-		&inlay.CreatedAt,
-		&inlay.UpdatedAt,
-		&inlay.Version,
-	)
 	if err != nil {
-		tx.Rollback(ctx)
 		return err
 	}
+	defer tx.Rollback(ctx)
+
+	genInlay, err := inlayToGen(inlay)
+	if err != nil {
+		return err
+	}
+
+	query := table.Inlays.INSERT(
+		table.Inlays.ProjectID,
+		table.Inlays.Name,
+		table.Inlays.PreviewURL,
+		table.Inlays.PriceGroup,
+		table.Inlays.Type,
+	).MODEL(
+		genInlay,
+	).RETURNING(
+		table.Inlays.ID,
+		table.Inlays.UUID,
+		table.Inlays.UpdatedAt,
+		table.Inlays.CreatedAt,
+		table.Inlays.Version,
+	)
+
+	var dest model.Inlays
+	err = query.QueryContext(ctx, m.STDB, &dest)
+	if err != nil {
+		return err
+	}
+
+	inlay.ID = int(dest.ID)
+	inlay.UUID = dest.UUID.String()
+	inlay.CreatedAt = dest.CreatedAt
+	inlay.UpdatedAt = dest.UpdatedAt
+	inlay.Version = int(dest.Version)
 
 	if inlay.Type == InlayTypes.Catalog {
 		if inlay.CatalogInfo == nil {
 			return errors.New("CatalogInfo required when inserting Inlay with type catalog")
 		}
 
-		query := `
-			INSERT INTO inlay_catalog_infos (inlay_id, catalog_item_id)
-			VALUES ($1, $2)
-			RETURNING id, uuid, created_at, updated_at, version`
-
-		args := []any{
-			inlay.ID,
-			inlay.CatalogInfo.CatalogItemID,
-		}
-
-		err = tx.QueryRow(ctx, query, args...).Scan(
-			&inlay.CatalogInfo.ID,
-			&inlay.CatalogInfo.UUID,
-			&inlay.CatalogInfo.CreatedAt,
-			&inlay.CatalogInfo.UpdatedAt,
-			&inlay.CatalogInfo.Version,
-		)
+		inlay.CatalogInfo.InlayID = inlay.ID
+		genCatalogInfo, err := catalogInfoToGen(inlay.CatalogInfo)
 		if err != nil {
-			tx.Rollback(ctx)
 			return err
 		}
+
+		catalogQuery := table.InlayCatalogInfos.INSERT(
+			table.InlayCatalogInfos.InlayID,
+			table.InlayCatalogInfos.CatalogItemID,
+		).MODEL(
+			genCatalogInfo,
+		).RETURNING(
+			table.InlayCatalogInfos.ID,
+			table.InlayCatalogInfos.UUID,
+			table.InlayCatalogInfos.UpdatedAt,
+			table.InlayCatalogInfos.CreatedAt,
+			table.InlayCatalogInfos.Version,
+		)
+
+		var catalogDest model.InlayCatalogInfos
+		err = catalogQuery.QueryContext(ctx, m.STDB, &catalogDest)
+		if err != nil {
+			return err
+		}
+
+		inlay.CatalogInfo.ID = int(catalogDest.ID)
+		inlay.CatalogInfo.UUID = catalogDest.UUID.String()
+		inlay.CatalogInfo.CreatedAt = catalogDest.CreatedAt
+		inlay.CatalogInfo.UpdatedAt = catalogDest.UpdatedAt
+		inlay.CatalogInfo.Version = int(catalogDest.Version)
 	}
 
 	if inlay.Type == InlayTypes.Custom {
@@ -113,29 +268,38 @@ func (m InlayModel) Insert(inlay *Inlay) error {
 			return errors.New("CustomInfo required when inserting Inlay with type custom")
 		}
 
-		query := `
-			INSERT INTO inlay_custom_infos (inlay_id, description, width, height)
-			VALUES ($1, $2, $3, $4)
-			RETURNING id, uuid, created_at, updated_at, version`
-
-		args := []any{
-			inlay.ID,
-			inlay.CustomInfo.Description,
-			inlay.CustomInfo.Width,
-			inlay.CustomInfo.Height,
-		}
-
-		err = tx.QueryRow(ctx, query, args...).Scan(
-			&inlay.CustomInfo.ID,
-			&inlay.CustomInfo.UUID,
-			&inlay.CustomInfo.CreatedAt,
-			&inlay.CustomInfo.UpdatedAt,
-			&inlay.CustomInfo.Version,
-		)
+		inlay.CustomInfo.InlayID = inlay.ID
+		genCustomInfo, err := customInfoToGen(inlay.CustomInfo)
 		if err != nil {
-			tx.Rollback(ctx)
 			return err
 		}
+
+		customQuery := table.InlayCustomInfos.INSERT(
+			table.InlayCustomInfos.InlayID,
+			table.InlayCustomInfos.Description,
+			table.InlayCustomInfos.Width,
+			table.InlayCustomInfos.Height,
+		).MODEL(
+			genCustomInfo,
+		).RETURNING(
+			table.InlayCustomInfos.ID,
+			table.InlayCustomInfos.UUID,
+			table.InlayCustomInfos.UpdatedAt,
+			table.InlayCustomInfos.CreatedAt,
+			table.InlayCustomInfos.Version,
+		)
+
+		var customDest model.InlayCustomInfos
+		err = customQuery.QueryContext(ctx, m.STDB, &customDest)
+		if err != nil {
+			return err
+		}
+
+		inlay.CustomInfo.ID = int(customDest.ID)
+		inlay.CustomInfo.UUID = customDest.UUID.String()
+		inlay.CustomInfo.CreatedAt = customDest.CreatedAt
+		inlay.CustomInfo.UpdatedAt = customDest.UpdatedAt
+		inlay.CustomInfo.Version = int(customDest.Version)
 	}
 
 	err = tx.Commit(ctx)
@@ -147,236 +311,220 @@ func (m InlayModel) Insert(inlay *Inlay) error {
 }
 
 func (m InlayModel) TxInsert(tx pgx.Tx, inlay *Inlay) error {
-	query := `
-			INSERT INTO inlays (project_id, name, preview_url, price_group, type)
-			VALUES ($1, $2, $3, $4, $5)
-			RETURNING id, uuid, created_at, updated_at, version`
-
-	args := []any{
-		inlay.ProjectID,
-		inlay.Name,
-		inlay.PreviewURL,
-		inlay.PriceGroup,
-		inlay.Type,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	err := tx.QueryRow(ctx, query, args...).Scan(
-		&inlay.ID,
-		&inlay.UUID,
-		&inlay.CreatedAt,
-		&inlay.UpdatedAt,
-		&inlay.Version,
-	)
-	if err != nil {
-		tx.Rollback(ctx)
-		return err
-	}
-
-	if inlay.Type == InlayTypes.Catalog {
-		if inlay.CatalogInfo == nil {
-			return errors.New("CatalogInfo required when inserting Inlay with type catalog")
-		}
-
-		query := `
-			INSERT INTO inlay_catalog_infos (inlay_id, catalog_item_id)
-			VALUES ($1, $2)
-			RETURNING id, uuid, created_at, updated_at, version`
-
-		args := []any{
-			inlay.ID,
-			inlay.CatalogInfo.CatalogItemID,
-		}
-
-		err = tx.QueryRow(ctx, query, args...).Scan(
-			&inlay.CatalogInfo.ID,
-			&inlay.CatalogInfo.UUID,
-			&inlay.CatalogInfo.CreatedAt,
-			&inlay.CatalogInfo.UpdatedAt,
-			&inlay.CatalogInfo.Version,
-		)
-		if err != nil {
-			tx.Rollback(ctx)
-			return err
-		}
-	}
-
-	if inlay.Type == InlayTypes.Custom {
-		if inlay.CustomInfo == nil {
-			return errors.New("CustomInfo required when inserting Inlay with type custom")
-		}
-
-		query := `
-			INSERT INTO inlay_custom_infos (inlay_id, description, width, height)
-			VALUES ($1, $2, $3, $4)
-			RETURNING id, uuid, created_at, updated_at, version`
-
-		args := []any{
-			inlay.ID,
-			inlay.CustomInfo.Description,
-			inlay.CustomInfo.Width,
-			inlay.CustomInfo.Height,
-		}
-
-		err = tx.QueryRow(ctx, query, args...).Scan(
-			&inlay.CustomInfo.ID,
-			&inlay.CustomInfo.UUID,
-			&inlay.CustomInfo.CreatedAt,
-			&inlay.CustomInfo.UpdatedAt,
-			&inlay.CustomInfo.Version,
-		)
-		if err != nil {
-			tx.Rollback(ctx)
-			return err
-		}
-	}
-
-	return nil
+	// TODO: Implement with jet when needed
+	return errors.New("TxInsert not yet implemented")
 }
 
 func (m InlayModel) GetByID(id int) (*Inlay, bool, error) {
-	query := `
-        SELECT id, uuid, project_id, name, preview_url, price_group, type, created_at, updated_at, version
-        FROM inlays
-        WHERE id = $1`
-
-	var inlay Inlay
+	query := postgres.SELECT(
+		table.Inlays.AllColumns,
+		table.InlayCatalogInfos.AllColumns,
+		table.InlayCustomInfos.AllColumns,
+	).FROM(
+		table.Inlays.
+			LEFT_JOIN(table.InlayCatalogInfos, table.InlayCatalogInfos.InlayID.EQ(table.Inlays.ID)).
+			LEFT_JOIN(table.InlayCustomInfos, table.InlayCustomInfos.InlayID.EQ(table.Inlays.ID)),
+	).WHERE(
+		table.Inlays.ID.EQ(postgres.Int(int64(id))),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, id).Scan(
-		&inlay.ID,
-		&inlay.UUID,
-		&inlay.ProjectID,
-		&inlay.Name,
-		&inlay.PreviewURL,
-		&inlay.PriceGroup,
-		&inlay.Type,
-		&inlay.CreatedAt,
-		&inlay.UpdatedAt,
-		&inlay.Version,
-	)
+	var dest struct {
+		model.Inlays
+		InlayCatalogInfos *model.InlayCatalogInfos
+		InlayCustomInfos  *model.InlayCustomInfos
+	}
+	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		switch {
-		case errors.Is(err, pgx.ErrNoRows):
+		case errors.Is(err, qrm.ErrNoRows):
 			return nil, false, nil
 		default:
 			return nil, false, err
 		}
 	}
 
-	return &inlay, true, nil
+	return inlayFromGen(dest.Inlays, dest.InlayCatalogInfos, dest.InlayCustomInfos), true, nil
 }
 
-func (m InlayModel) GetByUUID(uuid string) (*Inlay, bool, error) {
-	query := `
-        SELECT id, uuid, project_id, name, preview_url, price_group, type, created_at, updated_at, version
-        FROM inlays
-        WHERE uuid = $1`
+func (m InlayModel) GetByUUID(uuidStr string) (*Inlay, bool, error) {
+	parsedUUID, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return nil, false, err
+	}
 
-	var inlay Inlay
+	query := postgres.SELECT(
+		table.Inlays.AllColumns,
+		table.InlayCatalogInfos.AllColumns,
+		table.InlayCustomInfos.AllColumns,
+	).FROM(
+		table.Inlays.
+			LEFT_JOIN(table.InlayCatalogInfos, table.InlayCatalogInfos.InlayID.EQ(table.Inlays.ID)).
+			LEFT_JOIN(table.InlayCustomInfos, table.InlayCustomInfos.InlayID.EQ(table.Inlays.ID)),
+	).WHERE(
+		table.Inlays.UUID.EQ(postgres.UUID(parsedUUID)),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, uuid).Scan(
-		&inlay.ID,
-		&inlay.UUID,
-		&inlay.ProjectID,
-		&inlay.Name,
-		&inlay.PreviewURL,
-		&inlay.PriceGroup,
-		&inlay.Type,
-		&inlay.CreatedAt,
-		&inlay.UpdatedAt,
-		&inlay.Version,
-	)
+	var dest struct {
+		model.Inlays
+		InlayCatalogInfos *model.InlayCatalogInfos
+		InlayCustomInfos  *model.InlayCustomInfos
+	}
+	err = query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		switch {
-		case errors.Is(err, pgx.ErrNoRows):
+		case errors.Is(err, qrm.ErrNoRows):
 			return nil, false, nil
 		default:
 			return nil, false, err
 		}
 	}
 
-	return &inlay, true, nil
+	return inlayFromGen(dest.Inlays, dest.InlayCatalogInfos, dest.InlayCustomInfos), true, nil
 }
 
 func (m InlayModel) GetAll() ([]*Inlay, error) {
-	query := `
-        SELECT id, uuid, project_id, name, preview_url, price_group, type, created_at, updated_at, version
-		FROM inlays
-		WHERE id IS NOT NULL;`
+	query := postgres.SELECT(
+		table.Inlays.AllColumns,
+		table.InlayCatalogInfos.AllColumns,
+		table.InlayCustomInfos.AllColumns,
+	).FROM(
+		table.Inlays.
+			LEFT_JOIN(table.InlayCatalogInfos, table.InlayCatalogInfos.InlayID.EQ(table.Inlays.ID)).
+			LEFT_JOIN(table.InlayCustomInfos, table.InlayCustomInfos.InlayID.EQ(table.Inlays.ID)),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	args := []any{}
-
-	rows, err := m.DB.Query(ctx, query, args...)
+	var dest []struct {
+		model.Inlays
+		InlayCatalogInfos *model.InlayCatalogInfos
+		InlayCustomInfos  *model.InlayCustomInfos
+	}
+	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		return nil, err
 	}
 
-	defer rows.Close()
-
-	inlays := []*Inlay{}
-
-	for rows.Next() {
-		var inlay Inlay
-
-		err := rows.Scan(
-
-			&inlay.ID,
-			&inlay.UUID,
-			&inlay.ProjectID,
-			&inlay.Name,
-			&inlay.PreviewURL,
-			&inlay.PriceGroup,
-			&inlay.Type,
-			&inlay.CreatedAt,
-			&inlay.UpdatedAt,
-			&inlay.Version,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		inlays = append(inlays, &inlay)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
+	inlays := make([]*Inlay, len(dest))
+	for i, d := range dest {
+		inlays[i] = inlayFromGen(d.Inlays, d.InlayCatalogInfos, d.InlayCustomInfos)
 	}
 
 	return inlays, nil
 }
 
 func (m InlayModel) Update(inlay *Inlay) error {
-	query := `
-        UPDATE inlays 
-        SET project_id = $3, name = $4, preview_url = $5, price_group = $6, type = $7 version = version + 1
-        WHERE id = $1 AND version = $2
-        RETURNING version`
-
-	args := []any{
-		inlay.ID,
-		inlay.Version,
-		inlay.ProjectID,
-		inlay.Name,
-		inlay.PreviewURL,
-		inlay.PriceGroup,
-		inlay.Type,
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(&inlay.Version)
+	tx, err := m.DB.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	genInlay, err := inlayToGen(inlay)
+	if err != nil {
+		return err
+	}
+
+	query := table.Inlays.UPDATE(
+		table.Inlays.ProjectID,
+		table.Inlays.Name,
+		table.Inlays.PreviewURL,
+		table.Inlays.PriceGroup,
+		table.Inlays.Type,
+	).MODEL(
+		genInlay,
+	).WHERE(
+		postgres.AND(
+			table.Inlays.ID.EQ(postgres.Int(int64(inlay.ID))),
+			table.Inlays.Version.EQ(postgres.Int(int64(inlay.Version))),
+		),
+	).RETURNING(
+		table.Inlays.UpdatedAt,
+		table.Inlays.Version,
+	)
+
+	var dest model.Inlays
+	err = query.QueryContext(ctx, m.STDB, &dest)
+	if err != nil {
+		return err
+	}
+
+	inlay.UpdatedAt = dest.UpdatedAt
+	inlay.Version = int(dest.Version)
+
+	if inlay.Type == InlayTypes.Catalog && inlay.CatalogInfo != nil {
+		genCatalogInfo, err := catalogInfoToGen(inlay.CatalogInfo)
+		if err != nil {
+			return err
+		}
+
+		catalogQuery := table.InlayCatalogInfos.UPDATE(
+			table.InlayCatalogInfos.CatalogItemID,
+		).MODEL(
+			genCatalogInfo,
+		).WHERE(
+			postgres.AND(
+				table.InlayCatalogInfos.InlayID.EQ(postgres.Int(int64(inlay.ID))),
+				table.InlayCatalogInfos.Version.EQ(postgres.Int(int64(inlay.CatalogInfo.Version))),
+			),
+		).RETURNING(
+			table.InlayCatalogInfos.UpdatedAt,
+			table.InlayCatalogInfos.Version,
+		)
+
+		var catalogDest model.InlayCatalogInfos
+		err = catalogQuery.QueryContext(ctx, m.STDB, &catalogDest)
+		if err != nil {
+			return err
+		}
+
+		inlay.CatalogInfo.UpdatedAt = catalogDest.UpdatedAt
+		inlay.CatalogInfo.Version = int(catalogDest.Version)
+	}
+
+	if inlay.Type == InlayTypes.Custom && inlay.CustomInfo != nil {
+		genCustomInfo, err := customInfoToGen(inlay.CustomInfo)
+		if err != nil {
+			return err
+		}
+
+		customQuery := table.InlayCustomInfos.UPDATE(
+			table.InlayCustomInfos.Description,
+			table.InlayCustomInfos.Width,
+			table.InlayCustomInfos.Height,
+		).MODEL(
+			genCustomInfo,
+		).WHERE(
+			postgres.AND(
+				table.InlayCustomInfos.InlayID.EQ(postgres.Int(int64(inlay.ID))),
+				table.InlayCustomInfos.Version.EQ(postgres.Int(int64(inlay.CustomInfo.Version))),
+			),
+		).RETURNING(
+			table.InlayCustomInfos.UpdatedAt,
+			table.InlayCustomInfos.Version,
+		)
+
+		var customDest model.InlayCustomInfos
+		err = customQuery.QueryContext(ctx, m.STDB, &customDest)
+		if err != nil {
+			return err
+		}
+
+		inlay.CustomInfo.UpdatedAt = customDest.UpdatedAt
+		inlay.CustomInfo.Version = int(customDest.Version)
+	}
+
+	err = tx.Commit(ctx)
 	if err != nil {
 		return err
 	}
@@ -385,14 +533,14 @@ func (m InlayModel) Update(inlay *Inlay) error {
 }
 
 func (m InlayModel) Delete(id int) error {
-	query := `
-        DELETE FROM inlays
-		WHERE id = $1`
+	query := table.Inlays.DELETE().WHERE(
+		table.Inlays.ID.EQ(postgres.Int(int64(id))),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	_, err := m.DB.Exec(ctx, query, id)
+	_, err := query.ExecContext(ctx, m.STDB)
 	if err != nil {
 		return err
 	}

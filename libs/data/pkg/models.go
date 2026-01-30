@@ -22,7 +22,7 @@ func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 	return Models{
 		Accounts:    AccountModel{DB: db, STDB: stdb},
 		Dealerships: DealershipModel{DB: db, STDB: stdb},
-		Inlays:      InlayModel{DB: db},
+		Inlays:      InlayModel{DB: db, STDB: stdb},
 		InlayChats:  InlayChatModel{DB: db},
 		InlayProofs: InlayProofModel{DB: db},
 		Projects:    ProjectModel{DB: db},
