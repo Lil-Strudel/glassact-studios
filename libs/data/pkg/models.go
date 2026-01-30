@@ -27,7 +27,7 @@ func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 		InlayProofs: InlayProofModel{DB: db},
 		Projects:    ProjectModel{DB: db, STDB: stdb},
 		Tokens:      TokenModel{DB: db, STDB: stdb},
-		Users:       UserModel{DB: db},
+		Users:       UserModel{DB: db, STDB: stdb},
 		Pool:        db,
 	}
 }
