@@ -4,8 +4,11 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
+	"database/sql"
 	"time"
 
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/table"
+	"github.com/go-jet/jet/v2/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -38,7 +41,8 @@ func generateToken(userID int, ttl time.Duration, scope string) *Token {
 }
 
 type TokenModel struct {
-	DB *pgxpool.Pool
+	DB   *pgxpool.Pool
+	STDB *sql.DB
 }
 
 func (m TokenModel) New(userID int, ttl time.Duration, scope string) (*Token, error) {
@@ -53,45 +57,53 @@ func (m TokenModel) New(userID int, ttl time.Duration, scope string) (*Token, er
 }
 
 func (m TokenModel) Insert(token *Token) error {
-	query := `
-        INSERT INTO tokens (hash, user_id, expiry, scope) 
-        VALUES ($1, $2, $3, $4)`
-
-	args := []any{token.Hash, token.UserID, token.Expiry, token.Scope}
+	query := table.Tokens.INSERT(
+		table.Tokens.Hash,
+		table.Tokens.UserID,
+		table.Tokens.Expiry,
+		table.Tokens.Scope,
+	).VALUES(
+		token.Hash,
+		int32(token.UserID),
+		token.Expiry,
+		token.Scope,
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	_, err := m.DB.Exec(ctx, query, args...)
+	_, err := query.ExecContext(ctx, m.STDB)
 	return err
 }
 
 func (m TokenModel) DeleteAllForUser(scope string, userID int) error {
-	query := `
-        DELETE FROM tokens 
-        WHERE scope = $1 AND user_id = $2`
-
-	args := []any{scope, userID}
+	query := table.Tokens.DELETE().WHERE(
+		postgres.AND(
+			table.Tokens.Scope.EQ(postgres.String(scope)),
+			table.Tokens.UserID.EQ(postgres.Int(int64(userID))),
+		),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	_, err := m.DB.Exec(ctx, query, args...)
+	_, err := query.ExecContext(ctx, m.STDB)
 	return err
 }
 
 func (m TokenModel) DeleteByPlaintext(scope string, plaintext string) error {
 	hash := sha256.Sum256([]byte(plaintext))
 
-	query := `
-        DELETE FROM tokens 
-        WHERE scope = $1 AND hash = $2`
-
-	args := []any{scope, hash[:]}
+	query := table.Tokens.DELETE().WHERE(
+		postgres.AND(
+			table.Tokens.Scope.EQ(postgres.String(scope)),
+			table.Tokens.Hash.EQ(postgres.Bytea(hash[:])),
+		),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	_, err := m.DB.Exec(ctx, query, args...)
+	_, err := query.ExecContext(ctx, m.STDB)
 	return err
 }
