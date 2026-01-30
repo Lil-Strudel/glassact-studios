@@ -27,7 +27,7 @@ type AccountModel struct {
 	STDB *sql.DB
 }
 
-func fromGen(genAcc model.Accounts) *Account {
+func accountFromGen(genAcc model.Accounts) *Account {
 	account := Account{
 		StandardTable: StandardTable{
 			ID:        int(genAcc.ID),
@@ -45,7 +45,7 @@ func fromGen(genAcc model.Accounts) *Account {
 	return &account
 }
 
-func toGen(a *Account) (*model.Accounts, error) {
+func accountToGen(a *Account) (*model.Accounts, error) {
 	var accountUUID uuid.UUID
 	var err error
 
@@ -72,7 +72,7 @@ func toGen(a *Account) (*model.Accounts, error) {
 }
 
 func (m AccountModel) Insert(account *Account) error {
-	genAcc, err := toGen(account)
+	genAcc, err := accountToGen(account)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (m AccountModel) GetByID(id int) (*Account, bool, error) {
 		}
 	}
 
-	return fromGen(dest), true, nil
+	return accountFromGen(dest), true, nil
 }
 
 func (m AccountModel) GetByUUID(uuidStr string) (*Account, bool, error) {
@@ -164,7 +164,7 @@ func (m AccountModel) GetByUUID(uuidStr string) (*Account, bool, error) {
 		}
 	}
 
-	return fromGen(dest), true, nil
+	return accountFromGen(dest), true, nil
 }
 
 func (m AccountModel) GetByProvider(provider string, providerAccountID string) (*Account, bool, error) {
@@ -193,11 +193,11 @@ func (m AccountModel) GetByProvider(provider string, providerAccountID string) (
 		}
 	}
 
-	return fromGen(dest), true, nil
+	return accountFromGen(dest), true, nil
 }
 
 func (m AccountModel) Update(account *Account) error {
-	genAcc, err := toGen(account)
+	genAcc, err := accountToGen(account)
 	if err != nil {
 		return err
 	}
@@ -215,6 +215,7 @@ func (m AccountModel) Update(account *Account) error {
 			table.Accounts.Version.EQ(postgres.Int(int64(account.Version))),
 		),
 	).RETURNING(
+		table.Accounts.UpdatedAt,
 		table.Accounts.Version,
 	)
 
@@ -227,6 +228,7 @@ func (m AccountModel) Update(account *Account) error {
 		return err
 	}
 
+	account.UpdatedAt = dest.UpdatedAt
 	account.Version = int(dest.Version)
 
 	return nil

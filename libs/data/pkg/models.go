@@ -21,7 +21,7 @@ type Models struct {
 func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 	return Models{
 		Accounts:    AccountModel{DB: db, STDB: stdb},
-		Dealerships: DealershipModel{DB: db},
+		Dealerships: DealershipModel{DB: db, STDB: stdb},
 		Inlays:      InlayModel{DB: db},
 		InlayChats:  InlayChatModel{DB: db},
 		InlayProofs: InlayProofModel{DB: db},
