@@ -1,6 +1,8 @@
 package data
 
 import (
+	"database/sql"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -14,18 +16,20 @@ type Models struct {
 	Tokens      TokenModel
 	Users       UserModel
 	Pool        *pgxpool.Pool
+	STDB        *sql.DB
 }
 
-func NewModels(db *pgxpool.Pool) Models {
+func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 	return Models{
-		Accounts:    AccountModel{DB: db},
-		Dealerships: DealershipModel{DB: db},
-		Inlays:      InlayModel{DB: db},
-		InlayChats:  InlayChatModel{DB: db},
-		InlayProofs: InlayProofModel{DB: db},
-		Projects:    ProjectModel{DB: db},
-		Tokens:      TokenModel{DB: db},
-		Users:       UserModel{DB: db},
+		Accounts:    AccountModel{DB: db, STDB: stdb},
+		Dealerships: DealershipModel{DB: db, STDB: stdb},
+		Inlays:      InlayModel{DB: db, STDB: stdb},
+		InlayChats:  InlayChatModel{DB: db, STDB: stdb},
+		InlayProofs: InlayProofModel{DB: db, STDB: stdb},
+		Projects:    ProjectModel{DB: db, STDB: stdb},
+		Tokens:      TokenModel{DB: db, STDB: stdb},
+		Users:       UserModel{DB: db, STDB: stdb},
 		Pool:        db,
+		STDB:        stdb,
 	}
 }

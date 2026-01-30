@@ -1,5 +1,5 @@
-CREATE EXTENSION citext;
-CREATE EXTENSION postgis;
+CREATE EXTENSION IF NOT EXISTS citext;
+CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TABLE IF NOT EXISTS dealerships (
     id serial PRIMARY KEY,
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS inlays (
 CREATE TABLE IF NOT EXISTS inlay_catalog_infos (
     id serial PRIMARY KEY,
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
-    inlay_id integer NOT NULL REFERENCES inlays ON DELETE RESTRICT,
+    inlay_id integer NOT NULL REFERENCES inlays ON DELETE CASCADE,
     catalog_item_id integer NOT NULL REFERENCES catalog_items ON DELETE RESTRICT,
     updated_at timestamptz NOT NULL DEFAULT now(),
     created_at timestamptz NOT NULL DEFAULT now(),
@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS inlay_catalog_infos (
 CREATE TABLE IF NOT EXISTS inlay_custom_infos (
     id serial PRIMARY KEY,
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
-    inlay_id integer NOT NULL REFERENCES inlays ON DELETE RESTRICT,
+    inlay_id integer NOT NULL REFERENCES inlays ON DELETE CASCADE,
     description text NOT NULL,
     width double precision NOT NULL,
     height double precision NOT NULL,
@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS inlay_custom_infos (
 CREATE TABLE IF NOT EXISTS inlay_chats (
     id serial PRIMARY KEY,
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
-    inlay_id integer NOT NULL REFERENCES inlays ON DELETE RESTRICT,
+    inlay_id integer NOT NULL REFERENCES inlays ON DELETE CASCADE,
     user_id integer NOT NULL REFERENCES users ON DELETE RESTRICT,
     sender_type VARCHAR(255) NOT NULL CHECK (sender_type IN ('glassact', 'customer')),
     message text NOT NULL,

@@ -3,10 +3,15 @@ package data
 import (
 	"context"
 	"crypto/sha256"
+	"database/sql"
 	"errors"
 	"time"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/model"
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/table"
+	"github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/qrm"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -32,261 +37,283 @@ type User struct {
 }
 
 type UserModel struct {
-	DB *pgxpool.Pool
+	DB   *pgxpool.Pool
+	STDB *sql.DB
+}
+
+func userFromGen(genUser model.Users) *User {
+	user := User{
+		StandardTable: StandardTable{
+			ID:        int(genUser.ID),
+			UUID:      genUser.UUID.String(),
+			CreatedAt: genUser.CreatedAt,
+			UpdatedAt: genUser.UpdatedAt,
+			Version:   int(genUser.Version),
+		},
+		Name:         genUser.Name,
+		Email:        genUser.Email,
+		Avatar:       genUser.Avatar,
+		DealershipID: int(genUser.DealershipID),
+		Role:         UserRole(genUser.Role),
+	}
+
+	return &user
+}
+
+func userToGen(u *User) (*model.Users, error) {
+	var userUUID uuid.UUID
+	var err error
+
+	if u.UUID != "" {
+		userUUID, err = uuid.Parse(u.UUID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	genUser := model.Users{
+		ID:           int32(u.ID),
+		UUID:         userUUID,
+		Name:         u.Name,
+		Email:        u.Email,
+		Avatar:       u.Avatar,
+		DealershipID: int32(u.DealershipID),
+		Role:         string(u.Role),
+		UpdatedAt:    u.UpdatedAt,
+		CreatedAt:    u.CreatedAt,
+		Version:      int32(u.Version),
+	}
+
+	return &genUser, nil
 }
 
 func (m UserModel) Insert(user *User) error {
-	query := `
-        INSERT INTO users (name, email, avatar, dealership_id, role) 
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, uuid, created_at, updated_at, version`
+	genUser, err := userToGen(user)
+	if err != nil {
+		return err
+	}
 
-	args := []any{user.Name, user.Email, user.Avatar, user.DealershipID, user.Role}
+	query := table.Users.INSERT(
+		table.Users.Name,
+		table.Users.Email,
+		table.Users.Avatar,
+		table.Users.DealershipID,
+		table.Users.Role,
+	).MODEL(
+		genUser,
+	).RETURNING(
+		table.Users.ID,
+		table.Users.UUID,
+		table.Users.UpdatedAt,
+		table.Users.CreatedAt,
+		table.Users.Version,
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(&user.ID, &user.UUID, &user.CreatedAt, &user.UpdatedAt, &user.Version)
+	var dest model.Users
+	err = query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		return err
 	}
+
+	user.ID = int(dest.ID)
+	user.UUID = dest.UUID.String()
+	user.UpdatedAt = dest.UpdatedAt
+	user.CreatedAt = dest.CreatedAt
+	user.Version = int(dest.Version)
 
 	return nil
 }
 
 func (m UserModel) GetByID(id int) (*User, bool, error) {
-	query := `
-        SELECT id, uuid, name, email, avatar, dealership_id, role, created_at, updated_at, version
-        FROM users
-        WHERE id = $1`
-
-	var user User
+	query := postgres.SELECT(
+		table.Users.AllColumns,
+	).FROM(
+		table.Users,
+	).WHERE(
+		table.Users.ID.EQ(postgres.Int(int64(id))),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, id).Scan(
-		&user.ID,
-		&user.UUID,
-		&user.Name,
-		&user.Email,
-		&user.Avatar,
-		&user.DealershipID,
-		&user.Role,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-		&user.Version,
-	)
+	var dest model.Users
+	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		switch {
-		case errors.Is(err, pgx.ErrNoRows):
+		case errors.Is(err, qrm.ErrNoRows):
 			return nil, false, nil
 		default:
 			return nil, false, err
 		}
 	}
 
-	return &user, true, nil
+	return userFromGen(dest), true, nil
 }
 
-func (m UserModel) GetByUUID(uuid string) (*User, bool, error) {
-	query := `
-        SELECT id, uuid, name, email, avatar, dealership_id, role, created_at, updated_at, version
-        FROM users
-        WHERE uuid = $1`
+func (m UserModel) GetByUUID(uuidStr string) (*User, bool, error) {
+	parsedUUID, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return nil, false, err
+	}
 
-	var user User
+	query := postgres.SELECT(
+		table.Users.AllColumns,
+	).FROM(
+		table.Users,
+	).WHERE(
+		table.Users.UUID.EQ(postgres.UUID(parsedUUID)),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, uuid).Scan(
-		&user.ID,
-		&user.UUID,
-		&user.Name,
-		&user.Email,
-		&user.Avatar,
-		&user.DealershipID,
-		&user.Role,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-		&user.Version,
-	)
+	var dest model.Users
+	err = query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		switch {
-		case errors.Is(err, pgx.ErrNoRows):
+		case errors.Is(err, qrm.ErrNoRows):
 			return nil, false, nil
 		default:
 			return nil, false, err
 		}
 	}
 
-	return &user, true, nil
+	return userFromGen(dest), true, nil
 }
 
 func (m UserModel) GetByEmail(email string) (*User, bool, error) {
-	query := `
-        SELECT id, uuid, name, email, avatar, dealership_id, role, created_at, updated_at, version
-        FROM users
-        WHERE email = $1`
-
-	var user User
+	query := postgres.SELECT(
+		table.Users.AllColumns,
+	).FROM(
+		table.Users,
+	).WHERE(
+		table.Users.Email.EQ(Citext(email)),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, email).Scan(
-		&user.ID,
-		&user.UUID,
-		&user.Name,
-		&user.Email,
-		&user.Avatar,
-		&user.DealershipID,
-		&user.Role,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-		&user.Version,
-	)
+	var dest model.Users
+	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		switch {
-		case errors.Is(err, pgx.ErrNoRows):
+		case errors.Is(err, qrm.ErrNoRows):
 			return nil, false, nil
 		default:
 			return nil, false, err
 		}
 	}
 
-	return &user, true, nil
+	return userFromGen(dest), true, nil
 }
 
 func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, bool, error) {
 	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
 
-	query := `
-        SELECT users.id, users.uuid, users.name, users.email, users.avatar, users.dealership_id, users.role, users.created_at, users.updated_at, users.version
-        FROM users
-        INNER JOIN tokens
-        ON users.id = tokens.user_id
-        WHERE tokens.hash = $1
-        AND tokens.scope = $2 
-        AND tokens.expiry > $3`
-
-	args := []any{tokenHash[:], tokenScope, time.Now()}
-
-	var user User
+	query := postgres.SELECT(
+		table.Users.AllColumns,
+	).FROM(
+		table.Users.INNER_JOIN(table.Tokens, table.Tokens.UserID.EQ(table.Users.ID)),
+	).WHERE(
+		postgres.AND(
+			table.Tokens.Hash.EQ(postgres.Bytea(tokenHash[:])),
+			table.Tokens.Scope.EQ(postgres.String(tokenScope)),
+			table.Tokens.Expiry.GT(postgres.TimestampzExp(Now())),
+		),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(
-		&user.ID,
-		&user.UUID,
-		&user.Name,
-		&user.Email,
-		&user.Avatar,
-		&user.DealershipID,
-		&user.Role,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-		&user.Version,
-	)
+	var dest model.Users
+	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		switch {
-		case errors.Is(err, pgx.ErrNoRows):
+		case errors.Is(err, qrm.ErrNoRows):
 			return nil, false, nil
 		default:
 			return nil, false, err
 		}
 	}
 
-	return &user, true, nil
+	return userFromGen(dest), true, nil
 }
 
 func (m UserModel) GetAll() ([]*User, error) {
-	query := `
-        SELECT id, uuid, name, email, avatar, dealership_id, role, created_at, updated_at, version
-		FROM users
-		WHERE id IS NOT NULL;`
+	query := postgres.SELECT(
+		table.Users.AllColumns,
+	).FROM(
+		table.Users,
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	args := []any{}
-
-	rows, err := m.DB.Query(ctx, query, args...)
+	var dest []model.Users
+	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		return nil, err
 	}
 
-	defer rows.Close()
-
-	users := []*User{}
-
-	for rows.Next() {
-		var user User
-
-		err := rows.Scan(
-			&user.ID,
-			&user.UUID,
-			&user.Name,
-			&user.Email,
-			&user.Avatar,
-			&user.DealershipID,
-			&user.Role,
-			&user.CreatedAt,
-			&user.UpdatedAt,
-			&user.Version,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		users = append(users, &user)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
+	users := make([]*User, len(dest))
+	for i, d := range dest {
+		users[i] = userFromGen(d)
 	}
 
 	return users, nil
 }
 
 func (m UserModel) Update(user *User) error {
-	query := `
-        UPDATE users 
-        SET name = $3, email = $4, avatar = $5, role = $6, version = version + 1
-        WHERE id = $1 AND version = $2
-        RETURNING version`
-
-	args := []any{
-		user.ID,
-		user.Version,
-		user.Name,
-		user.Email,
-		user.Avatar,
-		user.Role,
+	genUser, err := userToGen(user)
+	if err != nil {
+		return err
 	}
+
+	query := table.Users.UPDATE(
+		table.Users.Name,
+		table.Users.Email,
+		table.Users.Avatar,
+		table.Users.Role,
+		table.Users.Version,
+	).MODEL(
+		genUser,
+	).WHERE(
+		postgres.AND(
+			table.Users.ID.EQ(postgres.Int(int64(user.ID))),
+			table.Users.Version.EQ(postgres.Int(int64(user.Version))),
+		),
+	).RETURNING(
+		table.Users.UpdatedAt,
+		table.Users.Version,
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(&user.Version)
+	var dest model.Users
+	err = query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		return err
 	}
+
+	user.UpdatedAt = dest.UpdatedAt
+	user.Version = int(dest.Version)
 
 	return nil
 }
 
 func (m UserModel) Delete(id int) error {
-	query := `
-        DELETE FROM users
-		WHERE id = $1`
+	query := table.Users.DELETE().WHERE(
+		table.Users.ID.EQ(postgres.Int(int64(id))),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	_, err := m.DB.Exec(ctx, query, id)
+	_, err := query.ExecContext(ctx, m.STDB)
 	if err != nil {
 		return err
 	}

@@ -1,10 +1,7 @@
 package project
 
 import (
-	"context"
 	"net/http"
-	"strings"
-	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
@@ -21,9 +18,7 @@ func NewProjectModule(app *app.Application) *ProjectModule {
 }
 
 func (m ProjectModule) HandleGetProjects(w http.ResponseWriter, r *http.Request) {
-	expand := strings.Split(r.URL.Query().Get("expand"), ",")
-
-	projects, err := m.Db.Projects.GetAll(expand)
+	projects, err := m.Db.Projects.GetAll()
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -41,9 +36,7 @@ func (m ProjectModule) HandleGetProjectByUUID(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	expand := strings.Split(r.URL.Query().Get("expand"), ",")
-
-	project, found, err := m.Db.Projects.GetByUUID(uuid, expand)
+	project, found, err := m.Db.Projects.GetByUUID(uuid)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -117,16 +110,13 @@ func (m ProjectModule) HandlePostProjectWithInlays(w http.ResponseWriter, r *htt
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
-	defer cancel()
-
-	tx, err := m.Db.Pool.Begin(ctx)
+	tx, err := m.Db.STDB.Begin()
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
-	defer tx.Rollback(ctx)
+	defer tx.Rollback()
 
 	project := data.Project{
 		Name:         body.Name,
@@ -171,7 +161,7 @@ func (m ProjectModule) HandlePostProjectWithInlays(w http.ResponseWriter, r *htt
 		}
 	}
 
-	err = tx.Commit(ctx)
+	err = tx.Commit()
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return

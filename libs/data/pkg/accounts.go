@@ -2,10 +2,15 @@ package data
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/model"
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/table"
+	"github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/qrm"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -18,181 +23,226 @@ type Account struct {
 }
 
 type AccountModel struct {
-	DB *pgxpool.Pool
+	DB   *pgxpool.Pool
+	STDB *sql.DB
+}
+
+func accountFromGen(genAcc model.Accounts) *Account {
+	account := Account{
+		StandardTable: StandardTable{
+			ID:        int(genAcc.ID),
+			UUID:      genAcc.UUID.String(),
+			CreatedAt: genAcc.CreatedAt,
+			UpdatedAt: genAcc.UpdatedAt,
+			Version:   int(genAcc.Version),
+		},
+		UserID:            int(genAcc.UserID),
+		Type:              genAcc.Type,
+		Provider:          genAcc.Provider,
+		ProviderAccountID: genAcc.ProviderAccountID,
+	}
+
+	return &account
+}
+
+func accountToGen(a *Account) (*model.Accounts, error) {
+	var accountUUID uuid.UUID
+	var err error
+
+	if a.UUID != "" {
+		accountUUID, err = uuid.Parse(a.UUID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	genAcc := model.Accounts{
+		ID:                int32(a.ID),
+		UUID:              accountUUID,
+		UserID:            int32(a.UserID),
+		Type:              a.Type,
+		Provider:          a.Provider,
+		ProviderAccountID: a.ProviderAccountID,
+		UpdatedAt:         a.UpdatedAt,
+		CreatedAt:         a.CreatedAt,
+		Version:           int32(a.Version),
+	}
+
+	return &genAcc, nil
 }
 
 func (m AccountModel) Insert(account *Account) error {
-	query := `
-        INSERT INTO accounts (user_id, type, provider, provider_account_id) 
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, uuid, created_at, updated_at, version`
-
-	args := []any{
-		account.UserID,
-		account.Type,
-		account.Provider,
-		account.ProviderAccountID,
+	genAcc, err := accountToGen(account)
+	if err != nil {
+		return err
 	}
+
+	query := table.Accounts.INSERT(
+		table.Accounts.UserID,
+		table.Accounts.Type,
+		table.Accounts.Provider,
+		table.Accounts.ProviderAccountID,
+	).MODEL(
+		genAcc,
+	).RETURNING(
+		table.Accounts.ID,
+		table.Accounts.UUID,
+		table.Accounts.UpdatedAt,
+		table.Accounts.CreatedAt,
+		table.Accounts.Version,
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(
-		&account.ID,
-		&account.UUID,
-		&account.CreatedAt,
-		&account.UpdatedAt,
-		&account.Version,
-	)
+	var dest model.Accounts
+	err = query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		return err
 	}
+
+	account.ID = int(dest.ID)
+	account.UUID = dest.UUID.String()
+	account.UpdatedAt = dest.UpdatedAt
+	account.CreatedAt = dest.CreatedAt
+	account.Version = int(dest.Version)
 
 	return nil
 }
 
 func (m AccountModel) GetByID(id int) (*Account, bool, error) {
-	query := `
-        SELECT id, uuid, user_id, type, provider, provider_account_id, created_at, updated_at, version
-        FROM accounts
-        WHERE id = $1`
-
-	var account Account
+	query := postgres.SELECT(
+		table.Accounts.AllColumns,
+	).FROM(
+		table.Accounts,
+	).WHERE(
+		table.Accounts.ID.EQ(postgres.Int(int64(id))),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, id).Scan(
-		&account.ID,
-		&account.UUID,
-		&account.UserID,
-		&account.Type,
-		&account.Provider,
-		&account.ProviderAccountID,
-		&account.CreatedAt,
-		&account.UpdatedAt,
-		&account.Version,
-	)
+	var dest model.Accounts
+	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		switch {
-		case errors.Is(err, pgx.ErrNoRows):
+		case errors.Is(err, qrm.ErrNoRows):
 			return nil, false, nil
 		default:
 			return nil, false, err
 		}
 	}
 
-	return &account, true, nil
+	return accountFromGen(dest), true, nil
 }
 
-func (m AccountModel) GetByUUID(uuid string) (*Account, bool, error) {
-	query := `
-        SELECT id, uuid, user_id, type, provider, provider_account_id, created_at, updated_at, version
-        FROM accounts
-        WHERE uuid = $1`
+func (m AccountModel) GetByUUID(uuidStr string) (*Account, bool, error) {
+	parsedUUID, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return nil, false, err
+	}
 
-	var account Account
+	query := postgres.SELECT(
+		table.Accounts.AllColumns,
+	).FROM(
+		table.Accounts,
+	).WHERE(
+		table.Accounts.UUID.EQ(postgres.UUID(parsedUUID)),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, uuid).Scan(
-		&account.ID,
-		&account.UUID,
-		&account.UserID,
-		&account.Type,
-		&account.Provider,
-		&account.ProviderAccountID,
-		&account.CreatedAt,
-		&account.UpdatedAt,
-		&account.Version,
-	)
+	var dest model.Accounts
+	err = query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		switch {
-		case errors.Is(err, pgx.ErrNoRows):
+		case errors.Is(err, qrm.ErrNoRows):
 			return nil, false, nil
 		default:
 			return nil, false, err
 		}
 	}
 
-	return &account, true, nil
+	return accountFromGen(dest), true, nil
 }
 
 func (m AccountModel) GetByProvider(provider string, providerAccountID string) (*Account, bool, error) {
-	query := `
-        SELECT id, uuid, user_id, type, provider, provider_account_id, created_at, updated_at, version
-        FROM accounts
-        WHERE provider = $1 AND provider_account_id = $2`
-
-	args := []any{
-		provider,
-		providerAccountID,
-	}
-
-	var account Account
+	query := postgres.SELECT(
+		table.Accounts.AllColumns,
+	).FROM(
+		table.Accounts,
+	).WHERE(
+		postgres.AND(
+			table.Accounts.Provider.EQ(postgres.String(provider)),
+			table.Accounts.ProviderAccountID.EQ(postgres.String(providerAccountID)),
+		),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(
-		&account.ID,
-		&account.UUID,
-		&account.UserID,
-		&account.Type,
-		&account.Provider,
-		&account.ProviderAccountID,
-		&account.CreatedAt,
-		&account.UpdatedAt,
-		&account.Version,
-	)
+	var dest model.Accounts
+	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		switch {
-		case errors.Is(err, pgx.ErrNoRows):
+		case errors.Is(err, qrm.ErrNoRows):
 			return nil, false, nil
 		default:
 			return nil, false, err
 		}
 	}
 
-	return &account, true, nil
+	return accountFromGen(dest), true, nil
 }
 
 func (m AccountModel) Update(account *Account) error {
-	query := `
-        UPDATE accounts 
-        SET type = $1, provider = $2, provider_account_id = $3, version = version + 1
-        WHERE id = $4 AND version = $5
-        RETURNING version`
-
-	args := []any{
-		account.Type,
-		account.Provider,
-		account.ProviderAccountID,
-		account.ID,
-		account.Version,
+	genAcc, err := accountToGen(account)
+	if err != nil {
+		return err
 	}
+
+	query := table.Accounts.UPDATE(
+		table.Accounts.Type,
+		table.Accounts.Provider,
+		table.Accounts.ProviderAccountID,
+		table.Accounts.Version,
+	).MODEL(
+		genAcc,
+	).WHERE(
+		postgres.AND(
+			table.Accounts.ID.EQ(postgres.Int(int64(account.ID))),
+			table.Accounts.Version.EQ(postgres.Int(int64(account.Version))),
+		),
+	).RETURNING(
+		table.Accounts.UpdatedAt,
+		table.Accounts.Version,
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(&account.Version)
+	var dest model.Accounts
+	err = query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		return err
 	}
+
+	account.UpdatedAt = dest.UpdatedAt
+	account.Version = int(dest.Version)
 
 	return nil
 }
 
 func (m AccountModel) Delete(id int) error {
-	query := `
-        DELETE FROM accounts
-		WHERE id = $1`
+	query := table.Accounts.DELETE().WHERE(
+		table.Accounts.ID.EQ(postgres.Int(int64(id))),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	_, err := m.DB.Exec(ctx, query, id)
+	_, err := query.ExecContext(ctx, m.STDB)
 	if err != nil {
 		return err
 	}
