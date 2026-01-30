@@ -1,6 +1,10 @@
 package data
 
-import "github.com/jackc/pgx/v5/pgxpool"
+import (
+	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+)
 
 type InlayProof struct {
 	StandardTable
@@ -8,5 +12,6 @@ type InlayProof struct {
 }
 
 type InlayProofModel struct {
-	DB *pgxpool.Pool
+	DB   *pgxpool.Pool
+	STDB *sql.DB
 }
