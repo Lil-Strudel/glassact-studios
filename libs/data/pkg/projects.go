@@ -2,11 +2,15 @@ package data
 
 import (
 	"context"
+	"database/sql"
 	"errors"
-	"fmt"
-	"slices"
 	"time"
 
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/model"
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/table"
+	"github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/qrm"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -46,375 +50,227 @@ type Project struct {
 }
 
 type ProjectModel struct {
-	DB *pgxpool.Pool
+	DB   *pgxpool.Pool
+	STDB *sql.DB
+}
+
+func projectFromGen(genProj model.Projects) *Project {
+	project := Project{
+		StandardTable: StandardTable{
+			ID:        int(genProj.ID),
+			UUID:      genProj.UUID.String(),
+			CreatedAt: genProj.CreatedAt,
+			UpdatedAt: genProj.UpdatedAt,
+			Version:   int(genProj.Version),
+		},
+		Name:         genProj.Name,
+		Status:       ProjectStatus(genProj.Status),
+		Approved:     genProj.Approved,
+		DealershipID: int(genProj.DealershipID),
+	}
+
+	return &project
+}
+
+func projectToGen(p *Project) (*model.Projects, error) {
+	var projectUUID uuid.UUID
+	var err error
+
+	if p.UUID != "" {
+		projectUUID, err = uuid.Parse(p.UUID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	genProj := model.Projects{
+		ID:           int32(p.ID),
+		UUID:         projectUUID,
+		Name:         p.Name,
+		Status:       string(p.Status),
+		Approved:     p.Approved,
+		DealershipID: int32(p.DealershipID),
+		UpdatedAt:    p.UpdatedAt,
+		CreatedAt:    p.CreatedAt,
+		Version:      int32(p.Version),
+	}
+
+	return &genProj, nil
 }
 
 func (m ProjectModel) Insert(project *Project) error {
-	query := `
-        INSERT INTO projects (name, status, approved, dealership_id) 
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, uuid, created_at, updated_at, version`
-
-	args := []any{
-		project.Name,
-		project.Status,
-		project.Approved,
-		project.DealershipID,
+	genProj, err := projectToGen(project)
+	if err != nil {
+		return err
 	}
+
+	query := table.Projects.INSERT(
+		table.Projects.Name,
+		table.Projects.Status,
+		table.Projects.Approved,
+		table.Projects.DealershipID,
+	).MODEL(
+		genProj,
+	).RETURNING(
+		table.Projects.ID,
+		table.Projects.UUID,
+		table.Projects.UpdatedAt,
+		table.Projects.CreatedAt,
+		table.Projects.Version,
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(
-		&project.ID,
-		&project.UUID,
-		&project.CreatedAt,
-		&project.UpdatedAt,
-		&project.Version,
-	)
+	var dest model.Projects
+	err = query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		return err
 	}
+
+	project.ID = int(dest.ID)
+	project.UUID = dest.UUID.String()
+	project.UpdatedAt = dest.UpdatedAt
+	project.CreatedAt = dest.CreatedAt
+	project.Version = int(dest.Version)
 
 	return nil
 }
 
 func (m ProjectModel) TxInsert(tx pgx.Tx, project *Project) error {
-	query := `
-        INSERT INTO projects (name, status, approved, dealership_id) 
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, uuid, created_at, updated_at, version`
-
-	args := []any{
-		project.Name,
-		project.Status,
-		project.Approved,
-		project.DealershipID,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	err := tx.QueryRow(ctx, query, args...).Scan(
-		&project.ID,
-		&project.UUID,
-		&project.CreatedAt,
-		&project.UpdatedAt,
-		&project.Version,
-	)
-	if err != nil {
-		tx.Rollback(ctx)
-		return err
-	}
-
-	return nil
+	// TODO: Implement with jet when needed
+	return errors.New("TxInsert not yet implemented")
 }
 
 func (m ProjectModel) GetByID(id int) (*Project, bool, error) {
-	query := `
-		SELECT id, uuid, name, status, approved, dealership_id, created_at, updated_at, version
-        FROM projects
-        WHERE id = $1`
-
-	var project Project
+	query := postgres.SELECT(
+		table.Projects.AllColumns,
+	).FROM(
+		table.Projects,
+	).WHERE(
+		table.Projects.ID.EQ(postgres.Int(int64(id))),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, id).Scan(
-		&project.ID,
-		&project.UUID,
-		&project.Name,
-		&project.Status,
-		&project.Approved,
-		&project.DealershipID,
-		&project.CreatedAt,
-		&project.UpdatedAt,
-		&project.Version,
-	)
+	var dest model.Projects
+	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		switch {
-		case errors.Is(err, pgx.ErrNoRows):
+		case errors.Is(err, qrm.ErrNoRows):
 			return nil, false, nil
 		default:
 			return nil, false, err
 		}
 	}
 
-	return &project, true, nil
+	return projectFromGen(dest), true, nil
 }
 
-func (m ProjectModel) GetByUUID(uuid string, expand []string) (*ExpandedProject, bool, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	includeInlays := slices.Contains(expand, "inlays")
-
-	selects := "projects.id, projects.uuid, projects.name, projects.status, projects.approved, projects.dealership_id, projects.updated_at, projects.created_at, projects.version"
-	if includeInlays {
-		selects += ", inlays.id, inlays.uuid, inlays.project_id, inlays.name, inlays.preview_url, inlays.price_group, inlays.type, inlays.updated_at, inlays.created_at, inlays.version"
-	}
-
-	joins := ""
-	if includeInlays {
-		joins += "LEFT JOIN inlays ON inlays.project_id = projects.id"
-	}
-
-	query := fmt.Sprintf(`
-		SELECT %s
-		FROM projects
-		%s
-		WHERE projects.uuid = $1;`, selects, joins)
-
-	rows, err := m.DB.Query(ctx, query, uuid)
+func (m ProjectModel) GetByUUID(uuidStr string) (*Project, bool, error) {
+	parsedUUID, err := uuid.Parse(uuidStr)
 	if err != nil {
-		switch {
-		case errors.Is(err, pgx.ErrNoRows):
-			return nil, false, nil
-		default:
-			return nil, false, err
-		}
-	}
-
-	defer rows.Close()
-
-	var expandedProject *ExpandedProject
-	var projectFound bool
-
-	for rows.Next() {
-		var project Project
-		var inlayID *int
-		var inlayUUID *string
-		var inlayProjectID *int
-		var inlayName *string
-		var inlayPreviewURL *string
-		var inlayPriceGroup *int
-		var inlayType *InlayType
-		var inlayUpdatedAt *time.Time
-		var inlayCreatedAt *time.Time
-		var inlayVersion *int
-
-		var scans []any
-		scans = append(scans, &project.ID)
-		scans = append(scans, &project.UUID)
-		scans = append(scans, &project.Name)
-		scans = append(scans, &project.Status)
-		scans = append(scans, &project.Approved)
-		scans = append(scans, &project.DealershipID)
-		scans = append(scans, &project.UpdatedAt)
-		scans = append(scans, &project.CreatedAt)
-		scans = append(scans, &project.Version)
-
-		if includeInlays {
-			scans = append(scans, &inlayID)
-			scans = append(scans, &inlayUUID)
-			scans = append(scans, &inlayProjectID)
-			scans = append(scans, &inlayName)
-			scans = append(scans, &inlayPreviewURL)
-			scans = append(scans, &inlayPriceGroup)
-			scans = append(scans, &inlayType)
-			scans = append(scans, &inlayUpdatedAt)
-			scans = append(scans, &inlayCreatedAt)
-			scans = append(scans, &inlayVersion)
-
-		}
-
-		if err := rows.Scan(scans...); err != nil {
-			return nil, false, err
-		}
-
-		if !projectFound {
-			expandedProject = &ExpandedProject{
-				Project: project,
-			}
-			if includeInlays {
-				expandedProject.Inlays = &[]Inlay{}
-			}
-			projectFound = true
-		}
-
-		if includeInlays && inlayID != nil {
-			var inlay Inlay
-			inlay.ID = *inlayID
-			inlay.UUID = *inlayUUID
-			inlay.ProjectID = *inlayProjectID
-			inlay.Name = *inlayName
-			inlay.PreviewURL = *inlayPreviewURL
-			inlay.PriceGroup = *inlayPriceGroup
-			inlay.Type = *inlayType
-			inlay.UpdatedAt = *inlayUpdatedAt
-			inlay.CreatedAt = *inlayCreatedAt
-			inlay.Version = *inlayVersion
-
-			*expandedProject.Inlays = append(*expandedProject.Inlays, inlay)
-		}
-	}
-
-	if err := rows.Err(); err != nil {
 		return nil, false, err
 	}
 
-	if !projectFound {
-		return nil, false, nil
-	}
+	query := postgres.SELECT(
+		table.Projects.AllColumns,
+	).FROM(
+		table.Projects,
+	).WHERE(
+		table.Projects.UUID.EQ(postgres.UUID(parsedUUID)),
+	)
 
-	return expandedProject, true, nil
-}
-
-type ExpandedProject struct {
-	Project
-	Inlays *[]Inlay `json:"inlays,omitempty"`
-}
-
-func (m ProjectModel) GetAll(expand []string) ([]*ExpandedProject, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	includeInlays := slices.Contains(expand, "inlays")
-
-	selects := "projects.id, projects.uuid, projects.name, projects.status, projects.approved, projects.dealership_id, projects.updated_at, projects.created_at, projects.version"
-	if includeInlays {
-		selects += ", inlays.id, inlays.uuid, inlays.project_id, inlays.name, inlays.preview_url, inlays.price_group, inlays.type, inlays.updated_at, inlays.created_at, inlays.version"
+	var dest model.Projects
+	err = query.QueryContext(ctx, m.STDB, &dest)
+	if err != nil {
+		switch {
+		case errors.Is(err, qrm.ErrNoRows):
+			return nil, false, nil
+		default:
+			return nil, false, err
+		}
 	}
 
-	joins := ""
-	if includeInlays {
-		joins += "LEFT JOIN inlays ON inlays.project_id = projects.id"
-	}
+	return projectFromGen(dest), true, nil
+}
 
-	query := fmt.Sprintf(`
-		SELECT %s
-		FROM projects
-		%s
-		WHERE projects.id IS NOT NULL;`, selects, joins)
+func (m ProjectModel) GetAll() ([]*Project, error) {
+	query := postgres.SELECT(
+		table.Projects.AllColumns,
+	).FROM(
+		table.Projects,
+	)
 
-	rows, err := m.DB.Query(ctx, query)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest []model.Projects
+	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		return nil, err
 	}
 
-	defer rows.Close()
-
-	projectMap := make(map[int]*ExpandedProject)
-	for rows.Next() {
-		var project Project
-		var inlayID *int
-		var inlayUUID *string
-		var inlayProjectID *int
-		var inlayName *string
-		var inlayPreviewURL *string
-		var inlayPriceGroup *int
-		var inlayType *InlayType
-		var inlayUpdatedAt *time.Time
-		var inlayCreatedAt *time.Time
-		var inlayVersion *int
-
-		var scans []any
-		scans = append(scans, &project.ID)
-		scans = append(scans, &project.UUID)
-		scans = append(scans, &project.Name)
-		scans = append(scans, &project.Status)
-		scans = append(scans, &project.Approved)
-		scans = append(scans, &project.DealershipID)
-		scans = append(scans, &project.UpdatedAt)
-		scans = append(scans, &project.CreatedAt)
-		scans = append(scans, &project.Version)
-
-		if includeInlays {
-			scans = append(scans, &inlayID)
-			scans = append(scans, &inlayUUID)
-			scans = append(scans, &inlayProjectID)
-			scans = append(scans, &inlayName)
-			scans = append(scans, &inlayPreviewURL)
-			scans = append(scans, &inlayPriceGroup)
-			scans = append(scans, &inlayType)
-			scans = append(scans, &inlayUpdatedAt)
-			scans = append(scans, &inlayCreatedAt)
-			scans = append(scans, &inlayVersion)
-
-		}
-
-		if err := rows.Scan(scans...); err != nil {
-			return nil, err
-		}
-
-		if _, exists := projectMap[project.ID]; !exists {
-			pwi := ExpandedProject{
-				Project: project,
-			}
-
-			if includeInlays {
-				pwi.Inlays = &[]Inlay{}
-			}
-
-			projectMap[project.ID] = &pwi
-		}
-
-		if includeInlays && inlayID != nil {
-			var inlay Inlay
-			inlay.ID = *inlayID
-			inlay.UUID = *inlayUUID
-			inlay.ProjectID = *inlayProjectID
-			inlay.Name = *inlayName
-			inlay.PreviewURL = *inlayPreviewURL
-			inlay.PriceGroup = *inlayPriceGroup
-			inlay.Type = *inlayType
-			inlay.UpdatedAt = *inlayUpdatedAt
-			inlay.CreatedAt = *inlayCreatedAt
-			inlay.Version = *inlayVersion
-
-			*projectMap[project.ID].Inlays = append(*projectMap[project.ID].Inlays, inlay)
-		}
+	projects := make([]*Project, len(dest))
+	for i, d := range dest {
+		projects[i] = projectFromGen(d)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	result := make([]*ExpandedProject, 0, len(projectMap))
-	for _, project := range projectMap {
-		result = append(result, project)
-	}
-
-	return result, nil
+	return projects, nil
 }
 
 func (m ProjectModel) Update(project *Project) error {
-	query := `
-        UPDATE projects
-		SET name = $1, status = $2, approved = $3, dealership_id = $4
-		WHERE id = $5 AND version = $6
-        RETURNING version`
-
-	args := []any{
-		project.Name,
-		project.Status,
-		project.Approved,
-		project.DealershipID,
-		project.ID,
-		project.Version,
+	genProj, err := projectToGen(project)
+	if err != nil {
+		return err
 	}
+
+	query := table.Projects.UPDATE(
+		table.Projects.Name,
+		table.Projects.Status,
+		table.Projects.Approved,
+		table.Projects.DealershipID,
+		table.Projects.Version,
+	).MODEL(
+		genProj,
+	).WHERE(
+		postgres.AND(
+			table.Projects.ID.EQ(postgres.Int(int64(project.ID))),
+			table.Projects.Version.EQ(postgres.Int(int64(project.Version))),
+		),
+	).RETURNING(
+		table.Projects.UpdatedAt,
+		table.Projects.Version,
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRow(ctx, query, args...).Scan(&project.Version)
+	var dest model.Projects
+	err = query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		return err
 	}
+
+	project.UpdatedAt = dest.UpdatedAt
+	project.Version = int(dest.Version)
 
 	return nil
 }
 
 func (m ProjectModel) Delete(id int) error {
-	query := `
-        DELETE FROM projects
-		WHERE id = $1`
+	query := table.Projects.DELETE().WHERE(
+		table.Projects.ID.EQ(postgres.Int(int64(id))),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	_, err := m.DB.Exec(ctx, query, id)
+	_, err := query.ExecContext(ctx, m.STDB)
 	if err != nil {
 		return err
 	}

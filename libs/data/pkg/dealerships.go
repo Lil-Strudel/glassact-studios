@@ -100,7 +100,7 @@ func (m DealershipModel) Insert(dealership *Dealership) error {
 	// a custom SQL expression (ST_SetSRID/ST_MakePoint)
 	locationExpr := postgres.RawString(
 		"ST_SetSRID(ST_MakePoint(#1, #2), 4326)::GEOGRAPHY",
-		map[string]interface{}{
+		map[string]any{
 			"#1": dealership.Address.Longitude,
 			"#2": dealership.Address.Latitude,
 		},
@@ -266,7 +266,7 @@ func (m DealershipModel) Update(dealership *Dealership) error {
 
 	locationExpr := postgres.RawString(
 		"ST_SetSRID(ST_MakePoint(#1, #2), 4326)::GEOGRAPHY",
-		map[string]interface{}{
+		map[string]any{
 			"#1": dealership.Address.Longitude,
 			"#2": dealership.Address.Latitude,
 		},

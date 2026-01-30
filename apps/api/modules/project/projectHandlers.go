@@ -3,7 +3,6 @@ package project
 import (
 	"context"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
@@ -21,9 +20,7 @@ func NewProjectModule(app *app.Application) *ProjectModule {
 }
 
 func (m ProjectModule) HandleGetProjects(w http.ResponseWriter, r *http.Request) {
-	expand := strings.Split(r.URL.Query().Get("expand"), ",")
-
-	projects, err := m.Db.Projects.GetAll(expand)
+	projects, err := m.Db.Projects.GetAll()
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -41,9 +38,7 @@ func (m ProjectModule) HandleGetProjectByUUID(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	expand := strings.Split(r.URL.Query().Get("expand"), ",")
-
-	project, found, err := m.Db.Projects.GetByUUID(uuid, expand)
+	project, found, err := m.Db.Projects.GetByUUID(uuid)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
