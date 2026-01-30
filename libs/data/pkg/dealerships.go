@@ -98,13 +98,7 @@ func (m DealershipModel) Insert(dealership *Dealership) error {
 
 	// Note: We use VALUES instead of MODEL because the location field requires
 	// a custom SQL expression (ST_SetSRID/ST_MakePoint)
-	locationExpr := postgres.RawString(
-		"ST_SetSRID(ST_MakePoint(#1, #2), 4326)::GEOGRAPHY",
-		map[string]any{
-			"#1": dealership.Address.Longitude,
-			"#2": dealership.Address.Latitude,
-		},
-	)
+	locationExpr := STPoint(dealership.Address.Longitude, dealership.Address.Latitude)
 
 	query := table.Dealerships.INSERT(
 		table.Dealerships.Name,
@@ -151,13 +145,10 @@ func (m DealershipModel) Insert(dealership *Dealership) error {
 }
 
 func (m DealershipModel) GetByID(id int) (*Dealership, bool, error) {
-	longitudeExpr := postgres.RawString("ST_X(location::GEOMETRY)")
-	latitudeExpr := postgres.RawString("ST_Y(location::GEOMETRY)")
-
 	query := postgres.SELECT(
 		table.Dealerships.AllColumns,
-		longitudeExpr.AS("longitude"),
-		latitudeExpr.AS("latitude"),
+		STLongitude(table.Dealerships.Location).AS("longitude"),
+		STLatitude(table.Dealerships.Location).AS("latitude"),
 	).FROM(
 		table.Dealerships,
 	).WHERE(
@@ -191,13 +182,10 @@ func (m DealershipModel) GetByUUID(uuidStr string) (*Dealership, bool, error) {
 		return nil, false, err
 	}
 
-	longitudeExpr := postgres.RawString("ST_X(location::GEOMETRY)")
-	latitudeExpr := postgres.RawString("ST_Y(location::GEOMETRY)")
-
 	query := postgres.SELECT(
 		table.Dealerships.AllColumns,
-		longitudeExpr.AS("longitude"),
-		latitudeExpr.AS("latitude"),
+		STLongitude(table.Dealerships.Location).AS("longitude"),
+		STLatitude(table.Dealerships.Location).AS("latitude"),
 	).FROM(
 		table.Dealerships,
 	).WHERE(
@@ -226,13 +214,10 @@ func (m DealershipModel) GetByUUID(uuidStr string) (*Dealership, bool, error) {
 }
 
 func (m DealershipModel) GetAll() ([]*Dealership, error) {
-	longitudeExpr := postgres.RawString("ST_X(location::GEOMETRY)")
-	latitudeExpr := postgres.RawString("ST_Y(location::GEOMETRY)")
-
 	query := postgres.SELECT(
 		table.Dealerships.AllColumns,
-		longitudeExpr.AS("longitude"),
-		latitudeExpr.AS("latitude"),
+		STLongitude(table.Dealerships.Location).AS("longitude"),
+		STLatitude(table.Dealerships.Location).AS("latitude"),
 	).FROM(
 		table.Dealerships,
 	)
@@ -264,13 +249,7 @@ func (m DealershipModel) Update(dealership *Dealership) error {
 		return err
 	}
 
-	locationExpr := postgres.RawString(
-		"ST_SetSRID(ST_MakePoint(#1, #2), 4326)::GEOGRAPHY",
-		map[string]any{
-			"#1": dealership.Address.Longitude,
-			"#2": dealership.Address.Latitude,
-		},
-	)
+	locationExpr := STPoint(dealership.Address.Longitude, dealership.Address.Latitude)
 
 	query := table.Dealerships.UPDATE(
 		table.Dealerships.Name,
@@ -282,10 +261,16 @@ func (m DealershipModel) Update(dealership *Dealership) error {
 		table.Dealerships.Country,
 		table.Dealerships.Location,
 		table.Dealerships.Version,
-	).MODEL(
-		genDeal,
 	).SET(
+		table.Dealerships.Name.SET(postgres.String(genDeal.Name)),
+		table.Dealerships.Street.SET(postgres.String(genDeal.Street)),
+		table.Dealerships.StreetExt.SET(postgres.String(genDeal.StreetExt)),
+		table.Dealerships.City.SET(postgres.String(genDeal.City)),
+		table.Dealerships.State.SET(postgres.String(genDeal.State)),
+		table.Dealerships.PostalCode.SET(postgres.String(genDeal.PostalCode)),
+		table.Dealerships.Country.SET(postgres.String(genDeal.Country)),
 		table.Dealerships.Location.SET(locationExpr),
+		table.Dealerships.Version.SET(postgres.Int(int64(genDeal.Version))),
 	).WHERE(
 		postgres.AND(
 			table.Dealerships.ID.EQ(postgres.Int(int64(dealership.ID))),

@@ -190,7 +190,7 @@ func (m UserModel) GetByEmail(email string) (*User, bool, error) {
 	).FROM(
 		table.Users,
 	).WHERE(
-		table.Users.Email.EQ(postgres.String(email)),
+		table.Users.Email.EQ(Citext(email)),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -221,7 +221,7 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, bool, 
 		postgres.AND(
 			table.Tokens.Hash.EQ(postgres.Bytea(tokenHash[:])),
 			table.Tokens.Scope.EQ(postgres.String(tokenScope)),
-			table.Tokens.Expiry.GT(postgres.TimestampzExp(postgres.Raw("now()"))),
+			table.Tokens.Expiry.GT(postgres.TimestampzExp(Now())),
 		),
 	)
 

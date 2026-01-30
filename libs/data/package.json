@@ -24,7 +24,12 @@
     "migrate/down": "source ./.env && migrate -path ./migrations -database ${DATABASE_DSN} down",
     "migrate/force": "source ./.env && migrate -path ./migrations -database ${DATABASE_DSN} force",
     "psql": "source ./.env && psql ${DATABASE_DSN}",
-    "seed": "source ./.env && psql ${DATABASE_DSN} -a -f ./seed.sql"
+    "seed": "source ./.env && psql ${DATABASE_DSN} -a -f ./seed.sql",
+    "test": "cd ../.. && go test -v ./libs/data/pkg/...",
+    "test:coverage": "cd ../.. && go test -v -coverprofile=coverage.out ./libs/data/pkg/... && go tool cover -html=coverage.out -o coverage.html",
+    "test:race": "cd ../.. && go test -v -race ./libs/data/pkg/...",
+    "test:bench": "cd ../.. && go test -v -bench=. -benchmem ./libs/data/pkg/...",
+    "test:short": "cd ../.. && go test -v -short ./libs/data/pkg/..."
   },
   "dependencies": {},
   "devDependencies": {

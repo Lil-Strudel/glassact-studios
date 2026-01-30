@@ -18,6 +18,10 @@
     "db:migrate/force": "pnpm --filter @glassact/data migrate/force",
     "db:psql": "pnpm --filter @glassact/data psql",
     "db:seed": "pnpm --filter @glassact/data seed",
+    "db:test": "pnpm --filter @glassact/data test",
+    "db:test:coverage": "pnpm --filter @glassact/data test:coverage",
+    "db:test:race": "pnpm --filter @glassact/data test:race",
+    "db:test:bench": "pnpm --filter @glassact/data test:bench",
     "libs:build": "pnpm --filter './libs/**' build"
   },
   "devDependencies": {

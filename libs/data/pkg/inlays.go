@@ -182,7 +182,7 @@ func customInfoToGen(ci *InlayCustomInfo) (*model.InlayCustomInfos, error) {
 	return &genCustomInfo, nil
 }
 
-func (m InlayModel) insertInlaySubtypesWithDB(ctx context.Context, inlay *Inlay) error {
+func (m InlayModel) insertInlaySubtypes(ctx context.Context, executor qrm.Queryable, inlay *Inlay) error {
 	if inlay.Type == InlayTypes.Catalog {
 		if inlay.CatalogInfo == nil {
 			return errors.New("CatalogInfo required when inserting Inlay with type catalog")
@@ -208,7 +208,7 @@ func (m InlayModel) insertInlaySubtypesWithDB(ctx context.Context, inlay *Inlay)
 		)
 
 		var catalogDest model.InlayCatalogInfos
-		err = catalogQuery.QueryContext(ctx, m.STDB, &catalogDest)
+		err = catalogQuery.QueryContext(ctx, executor, &catalogDest)
 		if err != nil {
 			return err
 		}
@@ -247,87 +247,7 @@ func (m InlayModel) insertInlaySubtypesWithDB(ctx context.Context, inlay *Inlay)
 		)
 
 		var customDest model.InlayCustomInfos
-		err = customQuery.QueryContext(ctx, m.STDB, &customDest)
-		if err != nil {
-			return err
-		}
-
-		inlay.CustomInfo.ID = int(customDest.ID)
-		inlay.CustomInfo.UUID = customDest.UUID.String()
-		inlay.CustomInfo.CreatedAt = customDest.CreatedAt
-		inlay.CustomInfo.UpdatedAt = customDest.UpdatedAt
-		inlay.CustomInfo.Version = int(customDest.Version)
-	}
-
-	return nil
-}
-
-func (m InlayModel) insertInlaySubtypesWithTx(ctx context.Context, tx *sql.Tx, inlay *Inlay) error {
-	if inlay.Type == InlayTypes.Catalog {
-		if inlay.CatalogInfo == nil {
-			return errors.New("CatalogInfo required when inserting Inlay with type catalog")
-		}
-
-		inlay.CatalogInfo.InlayID = inlay.ID
-		genCatalogInfo, err := catalogInfoToGen(inlay.CatalogInfo)
-		if err != nil {
-			return err
-		}
-
-		catalogQuery := table.InlayCatalogInfos.INSERT(
-			table.InlayCatalogInfos.InlayID,
-			table.InlayCatalogInfos.CatalogItemID,
-		).MODEL(
-			genCatalogInfo,
-		).RETURNING(
-			table.InlayCatalogInfos.ID,
-			table.InlayCatalogInfos.UUID,
-			table.InlayCatalogInfos.UpdatedAt,
-			table.InlayCatalogInfos.CreatedAt,
-			table.InlayCatalogInfos.Version,
-		)
-
-		var catalogDest model.InlayCatalogInfos
-		err = catalogQuery.QueryContext(ctx, tx, &catalogDest)
-		if err != nil {
-			return err
-		}
-
-		inlay.CatalogInfo.ID = int(catalogDest.ID)
-		inlay.CatalogInfo.UUID = catalogDest.UUID.String()
-		inlay.CatalogInfo.CreatedAt = catalogDest.CreatedAt
-		inlay.CatalogInfo.UpdatedAt = catalogDest.UpdatedAt
-		inlay.CatalogInfo.Version = int(catalogDest.Version)
-	}
-
-	if inlay.Type == InlayTypes.Custom {
-		if inlay.CustomInfo == nil {
-			return errors.New("CustomInfo required when inserting Inlay with type custom")
-		}
-
-		inlay.CustomInfo.InlayID = inlay.ID
-		genCustomInfo, err := customInfoToGen(inlay.CustomInfo)
-		if err != nil {
-			return err
-		}
-
-		customQuery := table.InlayCustomInfos.INSERT(
-			table.InlayCustomInfos.InlayID,
-			table.InlayCustomInfos.Description,
-			table.InlayCustomInfos.Width,
-			table.InlayCustomInfos.Height,
-		).MODEL(
-			genCustomInfo,
-		).RETURNING(
-			table.InlayCustomInfos.ID,
-			table.InlayCustomInfos.UUID,
-			table.InlayCustomInfos.UpdatedAt,
-			table.InlayCustomInfos.CreatedAt,
-			table.InlayCustomInfos.Version,
-		)
-
-		var customDest model.InlayCustomInfos
-		err = customQuery.QueryContext(ctx, tx, &customDest)
+		err = customQuery.QueryContext(ctx, executor, &customDest)
 		if err != nil {
 			return err
 		}
@@ -385,7 +305,7 @@ func (m InlayModel) Insert(inlay *Inlay) error {
 	inlay.UpdatedAt = dest.UpdatedAt
 	inlay.Version = int(dest.Version)
 
-	err = m.insertInlaySubtypesWithDB(ctx, inlay)
+	err = m.insertInlaySubtypes(ctx, m.STDB, inlay)
 	if err != nil {
 		return err
 	}
@@ -435,7 +355,7 @@ func (m InlayModel) TxInsert(tx *sql.Tx, inlay *Inlay) error {
 	inlay.UpdatedAt = dest.UpdatedAt
 	inlay.Version = int(dest.Version)
 
-	err = m.insertInlaySubtypesWithTx(ctx, tx, inlay)
+	err = m.insertInlaySubtypes(ctx, tx, inlay)
 	if err != nil {
 		return err
 	}
