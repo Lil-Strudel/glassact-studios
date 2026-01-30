@@ -11,7 +11,6 @@ import (
 	"github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -137,9 +136,43 @@ func (m ProjectModel) Insert(project *Project) error {
 	return nil
 }
 
-func (m ProjectModel) TxInsert(tx pgx.Tx, project *Project) error {
-	// TODO: Implement with jet when needed
-	return errors.New("TxInsert not yet implemented")
+func (m ProjectModel) TxInsert(tx *sql.Tx, project *Project) error {
+	genProj, err := projectToGen(project)
+	if err != nil {
+		return err
+	}
+
+	query := table.Projects.INSERT(
+		table.Projects.Name,
+		table.Projects.Status,
+		table.Projects.Approved,
+		table.Projects.DealershipID,
+	).MODEL(
+		genProj,
+	).RETURNING(
+		table.Projects.ID,
+		table.Projects.UUID,
+		table.Projects.UpdatedAt,
+		table.Projects.CreatedAt,
+		table.Projects.Version,
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest model.Projects
+	err = query.QueryContext(ctx, tx, &dest)
+	if err != nil {
+		return err
+	}
+
+	project.ID = int(dest.ID)
+	project.UUID = dest.UUID.String()
+	project.UpdatedAt = dest.UpdatedAt
+	project.CreatedAt = dest.CreatedAt
+	project.Version = int(dest.Version)
+
+	return nil
 }
 
 func (m ProjectModel) GetByID(id int) (*Project, bool, error) {

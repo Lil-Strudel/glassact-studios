@@ -16,6 +16,7 @@ type Models struct {
 	Tokens      TokenModel
 	Users       UserModel
 	Pool        *pgxpool.Pool
+	STDB        *sql.DB
 }
 
 func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
@@ -29,5 +30,6 @@ func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 		Tokens:      TokenModel{DB: db, STDB: stdb},
 		Users:       UserModel{DB: db, STDB: stdb},
 		Pool:        db,
+		STDB:        stdb,
 	}
 }

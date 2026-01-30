@@ -1,9 +1,7 @@
 package project
 
 import (
-	"context"
 	"net/http"
-	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
@@ -112,16 +110,13 @@ func (m ProjectModule) HandlePostProjectWithInlays(w http.ResponseWriter, r *htt
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
-	defer cancel()
-
-	tx, err := m.Db.Pool.Begin(ctx)
+	tx, err := m.Db.STDB.Begin()
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
-	defer tx.Rollback(ctx)
+	defer tx.Rollback()
 
 	project := data.Project{
 		Name:         body.Name,
@@ -166,7 +161,7 @@ func (m ProjectModule) HandlePostProjectWithInlays(w http.ResponseWriter, r *htt
 		}
 	}
 
-	err = tx.Commit(ctx)
+	err = tx.Commit()
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
