@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_app/projects")({
 
 function RouteComponent() {
   const { user } = useUserContext();
-  const query = useQuery(getProjectsOpts({ expand: { inlays: true } }));
+  const query = useQuery(getProjectsOpts());
 
   function getByStatusi(
     statusi: ProjectStatus[],

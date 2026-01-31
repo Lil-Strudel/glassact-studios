@@ -8,77 +8,33 @@ import type {
   GET,
   POST,
   Inlay,
-  Simplify,
 } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
-type getProjectProps = {
-  expand?: {
-    inlays?: boolean;
-  };
-};
-
-// prettier-ignore
-type ExpandWithDefaults<T extends getProjectProps> = {
-  inlays: T["expand"] extends { inlays: infer I } ? I extends true ? true : false : false;
-};
-
-// prettier-ignore
-type ProjectWithExpands<T extends getProjectProps> = Simplify<
-  GET<Project> &
-    (ExpandWithDefaults<T>["inlays"] extends true ? { inlays: GET<Inlay>[] } : {})
->;
-
-export async function getProjects<T extends getProjectProps = {}>(
-  props: T = {} as T,
-): Promise<ProjectWithExpands<T>[]> {
-  const expand = Object.entries(props.expand || {})
-    .filter(([, value]) => value)
-    .map(([key]) => key);
-
-  const params = {
-    ...(expand.length ? { expand: expand.join(",") } : {}),
-  };
-
-  const res = await api.get("/project", { params });
+export async function getProjects(): Promise<GET<Project>[]> {
+  const res = await api.get("/project");
 
   return res.data;
 }
 
-export function getProjectsOpts<T extends getProjectProps = {}>(
-  props: T = {} as T,
-) {
+export function getProjectsOpts() {
   return () =>
     queryOptions({
-      queryKey: ["project", props],
-      queryFn: () => getProjects(props),
+      queryKey: ["project"],
+      queryFn: getProjects,
     });
 }
 
-export async function getProject<T extends getProjectProps = {}>(
-  uuid: string,
-  props: T = {} as T,
-): Promise<ProjectWithExpands<T>> {
-  const expand = Object.entries(props.expand || {})
-    .filter(([, value]) => value)
-    .map(([key]) => key);
-
-  const params = {
-    ...(expand.length ? { expand: expand.join(",") } : {}),
-  };
-
-  const res = await api.get(`/project/${uuid}`, { params });
+export async function getProject(uuid: string): Promise<GET<Project>> {
+  const res = await api.get(`/project/${uuid}`);
   return res.data;
 }
 
-export function getProjectOpts<T extends getProjectProps = {}>(
-  uuid: string,
-  props: T = {} as T,
-) {
+export function getProjectOpts(uuid: string) {
   return () =>
     queryOptions({
-      queryKey: ["project", uuid, props],
-      queryFn: () => getProject(uuid, props),
+      queryKey: ["project", uuid],
+      queryFn: () => getProject(uuid),
     });
 }
 

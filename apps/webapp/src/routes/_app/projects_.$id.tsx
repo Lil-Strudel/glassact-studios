@@ -14,9 +14,7 @@ function RouteComponent() {
   const params = Route.useParams();
   const [selectedInlayIndex, setSelectedInlayIndex] = createSignal(0);
 
-  const query = useQuery(
-    getProjectOpts(params().id, { expand: { inlays: true } }),
-  );
+  const query = useQuery(getProjectOpts(params().id));
 
   const steps = [
     { name: "Proof Creation", to: "#", status: "complete" },
