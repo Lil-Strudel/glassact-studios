@@ -15,9 +15,7 @@ function RouteComponent() {
   const { user } = useUserContext();
   const query = useQuery(getProjectsOpts());
 
-  function getByStatusi(
-    statusi: ProjectStatus[],
-  ): (GET<Project> & { inlays: GET<Inlay>[] })[] {
+  function getByStatusi(statusi: ProjectStatus[]): GET<Project>[] {
     if (!query.isSuccess) return [];
     return query.data.filter((project) => statusi.includes(project.status));
   }
@@ -196,7 +194,7 @@ const SectionMessage: Component<SectionMessageProps> = (props) => {
 };
 
 interface ProjectCardProps {
-  project: () => GET<Project> & { inlays: GET<Inlay>[] };
+  project: () => GET<Project>;
 }
 const ProjectCard: Component<ProjectCardProps> = (props) => {
   return (
@@ -209,59 +207,59 @@ const ProjectCard: Component<ProjectCardProps> = (props) => {
       </div>
 
       <div class="mt-4 w-full">
-        <Show
-          when={props.project().inlays.length > 0}
-          fallback={
-            <SectionMessage
-              title="No inlays found for this project"
-              description="Please add one before you place an order"
-            />
-          }
-        >
-          <table class="w-full text-gray-500">
-            <thead class="text-left text-sm text-gray-500">
-              <tr>
-                <th scope="col" class="py-3">
-                  Inlay
-                </th>
-                <th scope="col" class="py-3 text-right">
-                  Proof Status
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 border-y border-gray-200 text-sm">
-              <Index each={props.project().inlays}>
-                {(inlay, index) => (
-                  <tr>
-                    <td class="py-4">
-                      <div class="flex items-center">
-                        <img
-                          src={inlay().preview_url}
-                          alt={`${inlay().name} Preview`}
-                          class="mr-6 size-16 rounded object-cover"
-                        />
-                        <div class="font-medium text-gray-900">
-                          {inlay().name}
-                        </div>
-                      </div>
-                    </td>
-                    {index % 2 === 0 && (
-                      <td class="text-right">Proof Awaiting Approval</td>
-                    )}
-                    {index % 2 === 1 && (
-                      <td>
-                        <div class="flex justify-end">
-                          Approved
-                          <IoCheckmarkCircleOutline size={20} class="ml-2" />
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                )}
-              </Index>
-            </tbody>
-          </table>
-        </Show>
+        {/* <Show */}
+        {/*   when={props.project().inlays.length > 0} */}
+        {/*   fallback={ */}
+        {/*     <SectionMessage */}
+        {/*       title="No inlays found for this project" */}
+        {/*       description="Please add one before you place an order" */}
+        {/*     /> */}
+        {/*   } */}
+        {/* > */}
+        {/*   <table class="w-full text-gray-500"> */}
+        {/*     <thead class="text-left text-sm text-gray-500"> */}
+        {/*       <tr> */}
+        {/*         <th scope="col" class="py-3"> */}
+        {/*           Inlay */}
+        {/*         </th> */}
+        {/*         <th scope="col" class="py-3 text-right"> */}
+        {/*           Proof Status */}
+        {/*         </th> */}
+        {/*       </tr> */}
+        {/*     </thead> */}
+        {/*     <tbody class="divide-y divide-gray-200 border-y border-gray-200 text-sm"> */}
+        {/*       <Index each={props.project().inlays}> */}
+        {/*         {(inlay, index) => ( */}
+        {/*           <tr> */}
+        {/*             <td class="py-4"> */}
+        {/*               <div class="flex items-center"> */}
+        {/*                 <img */}
+        {/*                   src={inlay().preview_url} */}
+        {/*                   alt={`${inlay().name} Preview`} */}
+        {/*                   class="mr-6 size-16 rounded object-cover" */}
+        {/*                 /> */}
+        {/*                 <div class="font-medium text-gray-900"> */}
+        {/*                   {inlay().name} */}
+        {/*                 </div> */}
+        {/*               </div> */}
+        {/*             </td> */}
+        {/*             {index % 2 === 0 && ( */}
+        {/*               <td class="text-right">Proof Awaiting Approval</td> */}
+        {/*             )} */}
+        {/*             {index % 2 === 1 && ( */}
+        {/*               <td> */}
+        {/*                 <div class="flex justify-end"> */}
+        {/*                   Approved */}
+        {/*                   <IoCheckmarkCircleOutline size={20} class="ml-2" /> */}
+        {/*                 </div> */}
+        {/*               </td> */}
+        {/*             )} */}
+        {/*           </tr> */}
+        {/*         )} */}
+        {/*       </Index> */}
+        {/*     </tbody> */}
+        {/*   </table> */}
+        {/* </Show> */}
       </div>
     </div>
   );

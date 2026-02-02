@@ -47,7 +47,7 @@ export const AuthProvider: ParentComponent = (props) => {
       case "success": {
         setStatus("authenticated");
         deferredStatus().resolve("authenticated");
-        api.defaults.headers = {
+        api.defaults.headers.common = {
           Authorization: `Bearer ${query.data.access_token}`,
         };
         break;

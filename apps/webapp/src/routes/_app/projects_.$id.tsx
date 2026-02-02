@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
-import { Breadcrumb, Button, cn, TextField, TextFieldRoot } from "@glassact/ui";
-import { createSignal, Index, Show } from "solid-js";
+import { Breadcrumb, Button } from "@glassact/ui";
+import { Index, Show } from "solid-js";
 import { IoCheckmarkCircleOutline } from "solid-icons/io";
 import { useQuery } from "@tanstack/solid-query";
 import { getProjectOpts } from "../../queries/project";
-import InlayChatbox from "../../components/inlay-chatbox";
+// import InlayChatbox from "../../components/inlay-chatbox";
 
 export const Route = createFileRoute("/_app/projects_/$id")({
   component: RouteComponent,
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_app/projects_/$id")({
 
 function RouteComponent() {
   const params = Route.useParams();
-  const [selectedInlayIndex, setSelectedInlayIndex] = createSignal(0);
+  // const [selectedInlayIndex, setSelectedInlayIndex] = createSignal(0);
 
   const query = useQuery(getProjectOpts(params().id));
 
@@ -27,8 +27,6 @@ function RouteComponent() {
     { name: "Shipping", to: "#", status: "upcoming" },
     { name: "Delivered", to: "#", status: "upcoming" },
   ];
-
-  const selectedInlay = () => query.data!.inlays[selectedInlayIndex()];
 
   return (
     <Show when={query.isSuccess} fallback={<div>Loading</div>}>
@@ -49,21 +47,21 @@ function RouteComponent() {
         <div class="mt-4">
           <div>
             <nav class="-mb-px flex space-x-8">
-              <Index each={query.data!.inlays}>
-                {(item, index) => (
-                  <div
-                    onClick={() => setSelectedInlayIndex(index)}
-                    class={cn(
-                      "cursor-pointer whitespace-nowrap border-b-2 border-primary px-1 pb-2 text-sm font-medium text-primary",
-                      index === selectedInlayIndex()
-                        ? "border-primary text-primary"
-                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
-                    )}
-                  >
-                    {item().name}
-                  </div>
-                )}
-              </Index>
+              {/* <Index each={query.data!.inlays}> */}
+              {/*   {(item, index) => ( */}
+              {/*     <div */}
+              {/*       onClick={() => setSelectedInlayIndex(index)} */}
+              {/*       class={cn( */}
+              {/*         "cursor-pointer whitespace-nowrap border-b-2 border-primary px-1 pb-2 text-sm font-medium text-primary", */}
+              {/*         index === selectedInlayIndex() */}
+              {/*           ? "border-primary text-primary" */}
+              {/*           : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700", */}
+              {/*       )} */}
+              {/*     > */}
+              {/*       {item().name} */}
+              {/*     </div> */}
+              {/*   )} */}
+              {/* </Index> */}
             </nav>
           </div>
         </div>
@@ -124,9 +122,9 @@ function RouteComponent() {
             </ol>
           </nav>
         </div>
-        <Show when={selectedInlay()}>
-          <InlayChatbox inlay={selectedInlay} />
-        </Show>
+        {/* <Show when={selectedInlay()}> */}
+        {/*   <InlayChatbox inlay={selectedInlay} /> */}
+        {/* </Show> */}
       </div>
     </Show>
   );

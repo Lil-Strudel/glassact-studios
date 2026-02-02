@@ -32,7 +32,7 @@
     "test:short": "cd ../.. && go test -v -short ./libs/data/pkg/..."
   },
   "devDependencies": {
-    "type-fest": "^5.4.3",
+    "type-fest": "^4.41.0",
     "typescript": "catalog:"
   }
 }
