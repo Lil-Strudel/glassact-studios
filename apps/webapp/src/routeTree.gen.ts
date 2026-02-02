@@ -245,7 +245,7 @@ declare module '@tanstack/solid-router' {
     '/_app': {
       id: '/_app'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
