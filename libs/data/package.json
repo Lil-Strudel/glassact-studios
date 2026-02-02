@@ -31,9 +31,8 @@
     "test:bench": "cd ../.. && go test -v -bench=. -benchmem ./libs/data/pkg/...",
     "test:short": "cd ../.. && go test -v -short ./libs/data/pkg/..."
   },
-  "dependencies": {},
   "devDependencies": {
-    "type-fest": "^4.41.0",
+    "type-fest": "^5.4.3",
     "typescript": "catalog:"
   }
 }

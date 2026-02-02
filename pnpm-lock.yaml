@@ -31,8 +31,8 @@ importers:
   .:
     devDependencies:
       mprocs:
-        specifier: ^0.7.3
-        version: 0.7.3
+        specifier: ^0.8.3
+        version: 0.8.3
 
   apps/api: {}
 
@@ -103,8 +103,8 @@ importers:
         specifier: ^1.13.4
         version: 1.13.4
       immer:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^11.1.3
+        version: 11.1.3
       solid-icons:
         specifier: ^1.2.0
         version: 1.2.0(solid-js@1.9.11)
@@ -146,8 +146,8 @@ importers:
   libs/data:
     devDependencies:
       type-fest:
-        specifier: ^4.41.0
-        version: 4.41.0
+        specifier: ^5.4.3
+        version: 5.4.3
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -2241,8 +2241,8 @@ packages:
   http-cache-semantics@4.2.0:
     resolution: {integrity: sha512-dTxcvPXqPvXBQpq5dUr6mEMJX4oIEFv6bwom3FDwKRDsuIjjJGANqhBuoAn9c1RQJIdAKav33ED65E2ys+87QQ==}
 
-  immer@10.2.0:
-    resolution: {integrity: sha512-d/+XTN3zfODyjr89gM3mPq1WNX2B8pYsu7eORitdwyA2sBubnTl3laYlBk4sXY5FUa5qTZGBDPJICVbvqzjlbw==}
+  immer@11.1.3:
+    resolution: {integrity: sha512-6jQTc5z0KJFtr1UgFpIL3N9XSC3saRaI9PwWtzM2pSqkNGtiNkYY2OSwkOGDK2XcTRcLb1pi/aNkKZz0nxVH4Q==}
 
   import-meta-resolve@4.2.0:
     resolution: {integrity: sha512-Iqv2fzaTQN28s/FwZAoFq0ZSs/7hMAHJVX+w8PZl3cY19Pxk6jFFalxQoIfW2826i/fDLXv8IiEZRIT0lDuWcg==}
@@ -2524,8 +2524,8 @@ packages:
     resolution: {integrity: sha512-qOOzS1cBTWYF4BH8fVePDBOO9iptMnGUEZwNc/cMWnTV2nVLZ7VoNWEPHkYczZA0pdoA7dl6e7FL659nX9S2aw==}
     engines: {node: '>=16 || 14 >=14.17'}
 
-  mprocs@0.7.3:
-    resolution: {integrity: sha512-I1Ptja/UnNVVSV5QEnBdiiwW70HMWJlmnMq6nvw4J7fwZ3s8UZGuf/FG+FTAUr6CLfat8kriHj+mWLx7xsLKSw==}
+  mprocs@0.8.3:
+    resolution: {integrity: sha512-q3uKG6YLWF9l+fnEgu9CC4qMzEIPSYYMlbTIYdeHYCxGcIm67m4uQmQFmuDr6h69rWPHWJX5N/ih5Ei4h8G9Yg==}
     engines: {node: '>=0.10.0'}
     hasBin: true
 
@@ -2961,6 +2961,10 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
+  tagged-tag@1.0.0:
+    resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
+    engines: {node: '>=20'}
+
   tailwind-merge@2.6.1:
     resolution: {integrity: sha512-Oo6tHdpZsGpkKG88HJ8RR1rg/RdnEkQEfMoEk2x1XRI3F1AxeU+ijRXpiVUF4UbLfcxxRGw6TbUINKYdWVsQTQ==}
 
@@ -3032,6 +3036,10 @@ packages:
   type-fest@4.41.0:
     resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
     engines: {node: '>=16'}
+
+  type-fest@5.4.3:
+    resolution: {integrity: sha512-AXSAQJu79WGc79/3e9/CR77I/KQgeY1AhNvcShIH4PTcGYyC4xv6H4R4AUOwkPS5799KlVDAu8zExeCrkGquiA==}
+    engines: {node: '>=20'}
 
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
@@ -5444,7 +5452,7 @@ snapshots:
 
   http-cache-semantics@4.2.0: {}
 
-  immer@10.2.0: {}
+  immer@11.1.3: {}
 
   import-meta-resolve@4.2.0: {}
 
@@ -5884,7 +5892,7 @@ snapshots:
 
   minipass@7.1.2: {}
 
-  mprocs@0.7.3: {}
+  mprocs@0.8.3: {}
 
   mrmime@2.0.1: {}
 
@@ -6418,6 +6426,8 @@ snapshots:
       picocolors: 1.1.1
       sax: 1.4.4
 
+  tagged-tag@1.0.0: {}
+
   tailwind-merge@2.6.1: {}
 
   tailwindcss-animate@1.0.7(tailwindcss@3.4.19):
@@ -6496,6 +6506,10 @@ snapshots:
       fsevents: 2.3.3
 
   type-fest@4.41.0: {}
+
+  type-fest@5.4.3:
+    dependencies:
+      tagged-tag: 1.0.0
 
   typescript@5.9.3: {}
 
