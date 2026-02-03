@@ -61,6 +61,11 @@ const invoiceTermDays = dealership.isInTrial ? trial30Day : trial15Day;
 setTimeout(() => measureElement(), 0);
 ```
 
+### Do Not Commit
+
+- Committing is a human job
+- Only suggest commit messages
+
 ### Naming Conventions
 
 **Be descriptive over brief:**
