@@ -13,9 +13,20 @@ import (
 )
 
 type CatalogItems struct {
-	ID        int32 `sql:"primary_key"`
-	UUID      uuid.UUID
-	UpdatedAt time.Time
-	CreatedAt time.Time
-	Version   int32
+	ID                  int32 `sql:"primary_key"`
+	UUID                uuid.UUID
+	CatalogCode         string
+	Name                string
+	Description         *string
+	Category            string
+	DefaultWidth        float64
+	DefaultHeight       float64
+	MinWidth            float64
+	MinHeight           float64
+	DefaultPriceGroupID int32
+	SvgURL              string
+	IsActive            bool
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	Version             int32
 }

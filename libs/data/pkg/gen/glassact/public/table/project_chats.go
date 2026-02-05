@@ -11,15 +11,15 @@ import (
 	"github.com/go-jet/jet/v2/postgres"
 )
 
-var InlayChats = newInlayChatsTable("public", "inlay_chats", "")
+var ProjectChats = newProjectChatsTable("public", "project_chats", "")
 
-type inlayChatsTable struct {
+type projectChatsTable struct {
 	postgres.Table
 
 	// Columns
 	ID               postgres.ColumnInteger
 	UUID             postgres.ColumnString
-	InlayID          postgres.ColumnInteger
+	ProjectID        postgres.ColumnInteger
 	DealershipUserID postgres.ColumnInteger
 	InternalUserID   postgres.ColumnInteger
 	MessageType      postgres.ColumnString
@@ -34,44 +34,44 @@ type inlayChatsTable struct {
 	DefaultColumns postgres.ColumnList
 }
 
-type InlayChatsTable struct {
-	inlayChatsTable
+type ProjectChatsTable struct {
+	projectChatsTable
 
-	EXCLUDED inlayChatsTable
+	EXCLUDED projectChatsTable
 }
 
-// AS creates new InlayChatsTable with assigned alias
-func (a InlayChatsTable) AS(alias string) *InlayChatsTable {
-	return newInlayChatsTable(a.SchemaName(), a.TableName(), alias)
+// AS creates new ProjectChatsTable with assigned alias
+func (a ProjectChatsTable) AS(alias string) *ProjectChatsTable {
+	return newProjectChatsTable(a.SchemaName(), a.TableName(), alias)
 }
 
-// Schema creates new InlayChatsTable with assigned schema name
-func (a InlayChatsTable) FromSchema(schemaName string) *InlayChatsTable {
-	return newInlayChatsTable(schemaName, a.TableName(), a.Alias())
+// Schema creates new ProjectChatsTable with assigned schema name
+func (a ProjectChatsTable) FromSchema(schemaName string) *ProjectChatsTable {
+	return newProjectChatsTable(schemaName, a.TableName(), a.Alias())
 }
 
-// WithPrefix creates new InlayChatsTable with assigned table prefix
-func (a InlayChatsTable) WithPrefix(prefix string) *InlayChatsTable {
-	return newInlayChatsTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+// WithPrefix creates new ProjectChatsTable with assigned table prefix
+func (a ProjectChatsTable) WithPrefix(prefix string) *ProjectChatsTable {
+	return newProjectChatsTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
 }
 
-// WithSuffix creates new InlayChatsTable with assigned table suffix
-func (a InlayChatsTable) WithSuffix(suffix string) *InlayChatsTable {
-	return newInlayChatsTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
+// WithSuffix creates new ProjectChatsTable with assigned table suffix
+func (a ProjectChatsTable) WithSuffix(suffix string) *ProjectChatsTable {
+	return newProjectChatsTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
 }
 
-func newInlayChatsTable(schemaName, tableName, alias string) *InlayChatsTable {
-	return &InlayChatsTable{
-		inlayChatsTable: newInlayChatsTableImpl(schemaName, tableName, alias),
-		EXCLUDED:        newInlayChatsTableImpl("", "excluded", ""),
+func newProjectChatsTable(schemaName, tableName, alias string) *ProjectChatsTable {
+	return &ProjectChatsTable{
+		projectChatsTable: newProjectChatsTableImpl(schemaName, tableName, alias),
+		EXCLUDED:          newProjectChatsTableImpl("", "excluded", ""),
 	}
 }
 
-func newInlayChatsTableImpl(schemaName, tableName, alias string) inlayChatsTable {
+func newProjectChatsTableImpl(schemaName, tableName, alias string) projectChatsTable {
 	var (
 		IDColumn               = postgres.IntegerColumn("id")
 		UUIDColumn             = postgres.StringColumn("uuid")
-		InlayIDColumn          = postgres.IntegerColumn("inlay_id")
+		ProjectIDColumn        = postgres.IntegerColumn("project_id")
 		DealershipUserIDColumn = postgres.IntegerColumn("dealership_user_id")
 		InternalUserIDColumn   = postgres.IntegerColumn("internal_user_id")
 		MessageTypeColumn      = postgres.StringColumn("message_type")
@@ -80,18 +80,18 @@ func newInlayChatsTableImpl(schemaName, tableName, alias string) inlayChatsTable
 		CreatedAtColumn        = postgres.TimestampzColumn("created_at")
 		UpdatedAtColumn        = postgres.TimestampzColumn("updated_at")
 		VersionColumn          = postgres.IntegerColumn("version")
-		allColumns             = postgres.ColumnList{IDColumn, UUIDColumn, InlayIDColumn, DealershipUserIDColumn, InternalUserIDColumn, MessageTypeColumn, MessageColumn, AttachmentURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns         = postgres.ColumnList{UUIDColumn, InlayIDColumn, DealershipUserIDColumn, InternalUserIDColumn, MessageTypeColumn, MessageColumn, AttachmentURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		allColumns             = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, DealershipUserIDColumn, InternalUserIDColumn, MessageTypeColumn, MessageColumn, AttachmentURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns         = postgres.ColumnList{UUIDColumn, ProjectIDColumn, DealershipUserIDColumn, InternalUserIDColumn, MessageTypeColumn, MessageColumn, AttachmentURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 		defaultColumns         = postgres.ColumnList{IDColumn, UUIDColumn, MessageTypeColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
-	return inlayChatsTable{
+	return projectChatsTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
 		ID:               IDColumn,
 		UUID:             UUIDColumn,
-		InlayID:          InlayIDColumn,
+		ProjectID:        ProjectIDColumn,
 		DealershipUserID: DealershipUserIDColumn,
 		InternalUserID:   InternalUserIDColumn,
 		MessageType:      MessageTypeColumn,

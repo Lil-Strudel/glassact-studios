@@ -12,14 +12,14 @@ import (
 	"time"
 )
 
-type Accounts struct {
+type DealershipAccounts struct {
 	ID                int32 `sql:"primary_key"`
 	UUID              uuid.UUID
-	UserID            int32
+	DealershipUserID  int32
 	Type              string
 	Provider          string
 	ProviderAccountID string
-	UpdatedAt         time.Time
 	CreatedAt         time.Time
+	UpdatedAt         time.Time
 	Version           int32
 }

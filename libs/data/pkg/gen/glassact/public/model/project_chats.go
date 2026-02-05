@@ -12,10 +12,10 @@ import (
 	"time"
 )
 
-type InlayChats struct {
+type ProjectChats struct {
 	ID               int32 `sql:"primary_key"`
 	UUID             uuid.UUID
-	InlayID          int32
+	ProjectID        int32
 	DealershipUserID *int32
 	InternalUserID   *int32
 	MessageType      string

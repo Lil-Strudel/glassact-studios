@@ -17,16 +17,17 @@ type inlaysTable struct {
 	postgres.Table
 
 	// Columns
-	ID         postgres.ColumnInteger
-	UUID       postgres.ColumnString
-	ProjectID  postgres.ColumnInteger
-	Name       postgres.ColumnString
-	PreviewURL postgres.ColumnString
-	PriceGroup postgres.ColumnInteger
-	Type       postgres.ColumnString
-	UpdatedAt  postgres.ColumnTimestampz
-	CreatedAt  postgres.ColumnTimestampz
-	Version    postgres.ColumnInteger
+	ID                postgres.ColumnInteger
+	UUID              postgres.ColumnString
+	ProjectID         postgres.ColumnInteger
+	Name              postgres.ColumnString
+	Type              postgres.ColumnString
+	PreviewURL        postgres.ColumnString
+	ApprovedProofID   postgres.ColumnInteger
+	ManufacturingStep postgres.ColumnString
+	CreatedAt         postgres.ColumnTimestampz
+	UpdatedAt         postgres.ColumnTimestampz
+	Version           postgres.ColumnInteger
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -68,35 +69,37 @@ func newInlaysTable(schemaName, tableName, alias string) *InlaysTable {
 
 func newInlaysTableImpl(schemaName, tableName, alias string) inlaysTable {
 	var (
-		IDColumn         = postgres.IntegerColumn("id")
-		UUIDColumn       = postgres.StringColumn("uuid")
-		ProjectIDColumn  = postgres.IntegerColumn("project_id")
-		NameColumn       = postgres.StringColumn("name")
-		PreviewURLColumn = postgres.StringColumn("preview_url")
-		PriceGroupColumn = postgres.IntegerColumn("price_group")
-		TypeColumn       = postgres.StringColumn("type")
-		UpdatedAtColumn  = postgres.TimestampzColumn("updated_at")
-		CreatedAtColumn  = postgres.TimestampzColumn("created_at")
-		VersionColumn    = postgres.IntegerColumn("version")
-		allColumns       = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, NameColumn, PreviewURLColumn, PriceGroupColumn, TypeColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
-		mutableColumns   = postgres.ColumnList{UUIDColumn, ProjectIDColumn, NameColumn, PreviewURLColumn, PriceGroupColumn, TypeColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
-		defaultColumns   = postgres.ColumnList{IDColumn, UUIDColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
+		IDColumn                = postgres.IntegerColumn("id")
+		UUIDColumn              = postgres.StringColumn("uuid")
+		ProjectIDColumn         = postgres.IntegerColumn("project_id")
+		NameColumn              = postgres.StringColumn("name")
+		TypeColumn              = postgres.StringColumn("type")
+		PreviewURLColumn        = postgres.StringColumn("preview_url")
+		ApprovedProofIDColumn   = postgres.IntegerColumn("approved_proof_id")
+		ManufacturingStepColumn = postgres.StringColumn("manufacturing_step")
+		CreatedAtColumn         = postgres.TimestampzColumn("created_at")
+		UpdatedAtColumn         = postgres.TimestampzColumn("updated_at")
+		VersionColumn           = postgres.IntegerColumn("version")
+		allColumns              = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, PreviewURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns          = postgres.ColumnList{UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, PreviewURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		defaultColumns          = postgres.ColumnList{IDColumn, UUIDColumn, PreviewURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
 	return inlaysTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:         IDColumn,
-		UUID:       UUIDColumn,
-		ProjectID:  ProjectIDColumn,
-		Name:       NameColumn,
-		PreviewURL: PreviewURLColumn,
-		PriceGroup: PriceGroupColumn,
-		Type:       TypeColumn,
-		UpdatedAt:  UpdatedAtColumn,
-		CreatedAt:  CreatedAtColumn,
-		Version:    VersionColumn,
+		ID:                IDColumn,
+		UUID:              UUIDColumn,
+		ProjectID:         ProjectIDColumn,
+		Name:              NameColumn,
+		Type:              TypeColumn,
+		PreviewURL:        PreviewURLColumn,
+		ApprovedProofID:   ApprovedProofIDColumn,
+		ManufacturingStep: ManufacturingStepColumn,
+		CreatedAt:         CreatedAtColumn,
+		UpdatedAt:         UpdatedAtColumn,
+		Version:           VersionColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

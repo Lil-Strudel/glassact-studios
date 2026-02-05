@@ -12,13 +12,17 @@ import (
 	"time"
 )
 
-type InlayCustomInfos struct {
+type InlayBlockers struct {
 	ID              int32 `sql:"primary_key"`
 	UUID            uuid.UUID
 	InlayID         int32
-	Description     string
-	RequestedWidth  float64
-	RequestedHeight float64
+	BlockerType     string
+	Reason          string
+	StepBlocked     string
+	CreatedBy       *int32
+	ResolvedAt      *time.Time
+	ResolvedBy      *int32
+	ResolutionNotes *string
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	Version         int32

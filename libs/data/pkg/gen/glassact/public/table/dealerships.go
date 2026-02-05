@@ -27,8 +27,8 @@ type dealershipsTable struct {
 	PostalCode postgres.ColumnString
 	Country    postgres.ColumnString
 	Location   postgres.ColumnString
-	UpdatedAt  postgres.ColumnTimestampz
 	CreatedAt  postgres.ColumnTimestampz
+	UpdatedAt  postgres.ColumnTimestampz
 	Version    postgres.ColumnInteger
 
 	AllColumns     postgres.ColumnList
@@ -81,12 +81,12 @@ func newDealershipsTableImpl(schemaName, tableName, alias string) dealershipsTab
 		PostalCodeColumn = postgres.StringColumn("postal_code")
 		CountryColumn    = postgres.StringColumn("country")
 		LocationColumn   = postgres.StringColumn("location")
-		UpdatedAtColumn  = postgres.TimestampzColumn("updated_at")
 		CreatedAtColumn  = postgres.TimestampzColumn("created_at")
+		UpdatedAtColumn  = postgres.TimestampzColumn("updated_at")
 		VersionColumn    = postgres.IntegerColumn("version")
-		allColumns       = postgres.ColumnList{IDColumn, UUIDColumn, NameColumn, StreetColumn, StreetExtColumn, CityColumn, StateColumn, PostalCodeColumn, CountryColumn, LocationColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
-		mutableColumns   = postgres.ColumnList{UUIDColumn, NameColumn, StreetColumn, StreetExtColumn, CityColumn, StateColumn, PostalCodeColumn, CountryColumn, LocationColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
-		defaultColumns   = postgres.ColumnList{IDColumn, UUIDColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
+		allColumns       = postgres.ColumnList{IDColumn, UUIDColumn, NameColumn, StreetColumn, StreetExtColumn, CityColumn, StateColumn, PostalCodeColumn, CountryColumn, LocationColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns   = postgres.ColumnList{UUIDColumn, NameColumn, StreetColumn, StreetExtColumn, CityColumn, StateColumn, PostalCodeColumn, CountryColumn, LocationColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		defaultColumns   = postgres.ColumnList{IDColumn, UUIDColumn, StreetExtColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
 	return dealershipsTable{
@@ -103,8 +103,8 @@ func newDealershipsTableImpl(schemaName, tableName, alias string) dealershipsTab
 		PostalCode: PostalCodeColumn,
 		Country:    CountryColumn,
 		Location:   LocationColumn,
-		UpdatedAt:  UpdatedAtColumn,
 		CreatedAt:  CreatedAtColumn,
+		UpdatedAt:  UpdatedAtColumn,
 		Version:    VersionColumn,
 
 		AllColumns:     allColumns,

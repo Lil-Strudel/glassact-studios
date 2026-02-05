@@ -12,15 +12,15 @@ import (
 	"time"
 )
 
-type Projects struct {
+type OrderSnapshots struct {
 	ID           int32 `sql:"primary_key"`
 	UUID         uuid.UUID
-	DealershipID int32
-	Name         string
-	Status       string
-	OrderedAt    *time.Time
-	OrderedBy    *int32
+	ProjectID    int32
+	InlayID      int32
+	ProofID      int32
+	PriceGroupID int32
+	PriceCents   int32
+	Width        float64
+	Height       float64
 	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	Version      int32
 }

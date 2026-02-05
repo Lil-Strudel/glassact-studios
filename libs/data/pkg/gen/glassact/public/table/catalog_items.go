@@ -17,11 +17,22 @@ type catalogItemsTable struct {
 	postgres.Table
 
 	// Columns
-	ID        postgres.ColumnInteger
-	UUID      postgres.ColumnString
-	UpdatedAt postgres.ColumnTimestampz
-	CreatedAt postgres.ColumnTimestampz
-	Version   postgres.ColumnInteger
+	ID                  postgres.ColumnInteger
+	UUID                postgres.ColumnString
+	CatalogCode         postgres.ColumnString
+	Name                postgres.ColumnString
+	Description         postgres.ColumnString
+	Category            postgres.ColumnString
+	DefaultWidth        postgres.ColumnFloat
+	DefaultHeight       postgres.ColumnFloat
+	MinWidth            postgres.ColumnFloat
+	MinHeight           postgres.ColumnFloat
+	DefaultPriceGroupID postgres.ColumnInteger
+	SvgURL              postgres.ColumnString
+	IsActive            postgres.ColumnBool
+	CreatedAt           postgres.ColumnTimestampz
+	UpdatedAt           postgres.ColumnTimestampz
+	Version             postgres.ColumnInteger
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -63,25 +74,47 @@ func newCatalogItemsTable(schemaName, tableName, alias string) *CatalogItemsTabl
 
 func newCatalogItemsTableImpl(schemaName, tableName, alias string) catalogItemsTable {
 	var (
-		IDColumn        = postgres.IntegerColumn("id")
-		UUIDColumn      = postgres.StringColumn("uuid")
-		UpdatedAtColumn = postgres.TimestampzColumn("updated_at")
-		CreatedAtColumn = postgres.TimestampzColumn("created_at")
-		VersionColumn   = postgres.IntegerColumn("version")
-		allColumns      = postgres.ColumnList{IDColumn, UUIDColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
-		mutableColumns  = postgres.ColumnList{UUIDColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
-		defaultColumns  = postgres.ColumnList{IDColumn, UUIDColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
+		IDColumn                  = postgres.IntegerColumn("id")
+		UUIDColumn                = postgres.StringColumn("uuid")
+		CatalogCodeColumn         = postgres.StringColumn("catalog_code")
+		NameColumn                = postgres.StringColumn("name")
+		DescriptionColumn         = postgres.StringColumn("description")
+		CategoryColumn            = postgres.StringColumn("category")
+		DefaultWidthColumn        = postgres.FloatColumn("default_width")
+		DefaultHeightColumn       = postgres.FloatColumn("default_height")
+		MinWidthColumn            = postgres.FloatColumn("min_width")
+		MinHeightColumn           = postgres.FloatColumn("min_height")
+		DefaultPriceGroupIDColumn = postgres.IntegerColumn("default_price_group_id")
+		SvgURLColumn              = postgres.StringColumn("svg_url")
+		IsActiveColumn            = postgres.BoolColumn("is_active")
+		CreatedAtColumn           = postgres.TimestampzColumn("created_at")
+		UpdatedAtColumn           = postgres.TimestampzColumn("updated_at")
+		VersionColumn             = postgres.IntegerColumn("version")
+		allColumns                = postgres.ColumnList{IDColumn, UUIDColumn, CatalogCodeColumn, NameColumn, DescriptionColumn, CategoryColumn, DefaultWidthColumn, DefaultHeightColumn, MinWidthColumn, MinHeightColumn, DefaultPriceGroupIDColumn, SvgURLColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns            = postgres.ColumnList{UUIDColumn, CatalogCodeColumn, NameColumn, DescriptionColumn, CategoryColumn, DefaultWidthColumn, DefaultHeightColumn, MinWidthColumn, MinHeightColumn, DefaultPriceGroupIDColumn, SvgURLColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		defaultColumns            = postgres.ColumnList{IDColumn, UUIDColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
 	return catalogItemsTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:        IDColumn,
-		UUID:      UUIDColumn,
-		UpdatedAt: UpdatedAtColumn,
-		CreatedAt: CreatedAtColumn,
-		Version:   VersionColumn,
+		ID:                  IDColumn,
+		UUID:                UUIDColumn,
+		CatalogCode:         CatalogCodeColumn,
+		Name:                NameColumn,
+		Description:         DescriptionColumn,
+		Category:            CategoryColumn,
+		DefaultWidth:        DefaultWidthColumn,
+		DefaultHeight:       DefaultHeightColumn,
+		MinWidth:            MinWidthColumn,
+		MinHeight:           MinHeightColumn,
+		DefaultPriceGroupID: DefaultPriceGroupIDColumn,
+		SvgURL:              SvgURLColumn,
+		IsActive:            IsActiveColumn,
+		CreatedAt:           CreatedAtColumn,
+		UpdatedAt:           UpdatedAtColumn,
+		Version:             VersionColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

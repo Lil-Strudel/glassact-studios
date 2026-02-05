@@ -12,15 +12,13 @@ import (
 	"time"
 )
 
-type Inlays struct {
+type InternalAccounts struct {
 	ID                int32 `sql:"primary_key"`
 	UUID              uuid.UUID
-	ProjectID         int32
-	Name              string
+	InternalUserID    int32
 	Type              string
-	PreviewURL        string
-	ApprovedProofID   *int32
-	ManufacturingStep *string
+	Provider          string
+	ProviderAccountID string
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	Version           int32

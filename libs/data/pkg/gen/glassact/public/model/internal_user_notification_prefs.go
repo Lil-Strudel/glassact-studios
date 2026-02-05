@@ -7,13 +7,9 @@
 
 package model
 
-import (
-	"time"
-)
-
-type Tokens struct {
-	Hash   []byte `sql:"primary_key"`
-	UserID int32
-	Expiry time.Time
-	Scope  string
+type InternalUserNotificationPrefs struct {
+	ID             int32 `sql:"primary_key"`
+	InternalUserID int32
+	EventType      NotificationEventType
+	EmailEnabled   bool
 }

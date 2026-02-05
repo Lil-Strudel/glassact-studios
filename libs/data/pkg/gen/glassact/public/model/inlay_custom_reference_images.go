@@ -12,16 +12,11 @@ import (
 	"time"
 )
 
-type Inlays struct {
+type InlayCustomReferenceImages struct {
 	ID                int32 `sql:"primary_key"`
 	UUID              uuid.UUID
-	ProjectID         int32
-	Name              string
-	Type              string
-	PreviewURL        string
-	ApprovedProofID   *int32
-	ManufacturingStep *string
+	InlayCustomInfoID int32
+	ImageURL          string
+	SortOrder         int32
 	CreatedAt         time.Time
-	UpdatedAt         time.Time
-	Version           int32
 }

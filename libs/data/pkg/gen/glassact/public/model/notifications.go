@@ -12,16 +12,17 @@ import (
 	"time"
 )
 
-type InlayChats struct {
+type Notifications struct {
 	ID               int32 `sql:"primary_key"`
 	UUID             uuid.UUID
-	InlayID          int32
 	DealershipUserID *int32
 	InternalUserID   *int32
-	MessageType      string
-	Message          string
-	AttachmentURL    *string
+	EventType        NotificationEventType
+	Title            string
+	Body             string
+	ProjectID        *int32
+	InlayID          *int32
+	ReadAt           *time.Time
+	EmailSentAt      *time.Time
 	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	Version          int32
 }

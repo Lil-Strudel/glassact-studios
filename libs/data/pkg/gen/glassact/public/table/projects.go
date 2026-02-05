@@ -19,12 +19,13 @@ type projectsTable struct {
 	// Columns
 	ID           postgres.ColumnInteger
 	UUID         postgres.ColumnString
+	DealershipID postgres.ColumnInteger
 	Name         postgres.ColumnString
 	Status       postgres.ColumnString
-	Approved     postgres.ColumnBool
-	DealershipID postgres.ColumnInteger
-	UpdatedAt    postgres.ColumnTimestampz
+	OrderedAt    postgres.ColumnTimestampz
+	OrderedBy    postgres.ColumnInteger
 	CreatedAt    postgres.ColumnTimestampz
+	UpdatedAt    postgres.ColumnTimestampz
 	Version      postgres.ColumnInteger
 
 	AllColumns     postgres.ColumnList
@@ -69,16 +70,17 @@ func newProjectsTableImpl(schemaName, tableName, alias string) projectsTable {
 	var (
 		IDColumn           = postgres.IntegerColumn("id")
 		UUIDColumn         = postgres.StringColumn("uuid")
+		DealershipIDColumn = postgres.IntegerColumn("dealership_id")
 		NameColumn         = postgres.StringColumn("name")
 		StatusColumn       = postgres.StringColumn("status")
-		ApprovedColumn     = postgres.BoolColumn("approved")
-		DealershipIDColumn = postgres.IntegerColumn("dealership_id")
-		UpdatedAtColumn    = postgres.TimestampzColumn("updated_at")
+		OrderedAtColumn    = postgres.TimestampzColumn("ordered_at")
+		OrderedByColumn    = postgres.IntegerColumn("ordered_by")
 		CreatedAtColumn    = postgres.TimestampzColumn("created_at")
+		UpdatedAtColumn    = postgres.TimestampzColumn("updated_at")
 		VersionColumn      = postgres.IntegerColumn("version")
-		allColumns         = postgres.ColumnList{IDColumn, UUIDColumn, NameColumn, StatusColumn, ApprovedColumn, DealershipIDColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
-		mutableColumns     = postgres.ColumnList{UUIDColumn, NameColumn, StatusColumn, ApprovedColumn, DealershipIDColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
-		defaultColumns     = postgres.ColumnList{IDColumn, UUIDColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
+		allColumns         = postgres.ColumnList{IDColumn, UUIDColumn, DealershipIDColumn, NameColumn, StatusColumn, OrderedAtColumn, OrderedByColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns     = postgres.ColumnList{UUIDColumn, DealershipIDColumn, NameColumn, StatusColumn, OrderedAtColumn, OrderedByColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		defaultColumns     = postgres.ColumnList{IDColumn, UUIDColumn, StatusColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
 	return projectsTable{
@@ -87,12 +89,13 @@ func newProjectsTableImpl(schemaName, tableName, alias string) projectsTable {
 		//Columns
 		ID:           IDColumn,
 		UUID:         UUIDColumn,
+		DealershipID: DealershipIDColumn,
 		Name:         NameColumn,
 		Status:       StatusColumn,
-		Approved:     ApprovedColumn,
-		DealershipID: DealershipIDColumn,
-		UpdatedAt:    UpdatedAtColumn,
+		OrderedAt:    OrderedAtColumn,
+		OrderedBy:    OrderedByColumn,
 		CreatedAt:    CreatedAtColumn,
+		UpdatedAt:    UpdatedAtColumn,
 		Version:      VersionColumn,
 
 		AllColumns:     allColumns,

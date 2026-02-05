@@ -13,11 +13,12 @@ import (
 )
 
 type InlayCatalogInfos struct {
-	ID            int32 `sql:"primary_key"`
-	UUID          uuid.UUID
-	InlayID       int32
-	CatalogItemID int32
-	UpdatedAt     time.Time
-	CreatedAt     time.Time
-	Version       int32
+	ID                 int32 `sql:"primary_key"`
+	UUID               uuid.UUID
+	InlayID            int32
+	CatalogItemID      int32
+	CustomizationNotes string
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	Version            int32
 }

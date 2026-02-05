@@ -23,7 +23,7 @@ type Dealerships struct {
 	PostalCode string
 	Country    string
 	Location   string
-	UpdatedAt  time.Time
 	CreatedAt  time.Time
+	UpdatedAt  time.Time
 	Version    int32
 }

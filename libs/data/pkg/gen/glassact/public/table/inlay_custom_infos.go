@@ -17,15 +17,15 @@ type inlayCustomInfosTable struct {
 	postgres.Table
 
 	// Columns
-	ID          postgres.ColumnInteger
-	UUID        postgres.ColumnString
-	InlayID     postgres.ColumnInteger
-	Description postgres.ColumnString
-	Width       postgres.ColumnFloat
-	Height      postgres.ColumnFloat
-	UpdatedAt   postgres.ColumnTimestampz
-	CreatedAt   postgres.ColumnTimestampz
-	Version     postgres.ColumnInteger
+	ID              postgres.ColumnInteger
+	UUID            postgres.ColumnString
+	InlayID         postgres.ColumnInteger
+	Description     postgres.ColumnString
+	RequestedWidth  postgres.ColumnFloat
+	RequestedHeight postgres.ColumnFloat
+	CreatedAt       postgres.ColumnTimestampz
+	UpdatedAt       postgres.ColumnTimestampz
+	Version         postgres.ColumnInteger
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -67,33 +67,33 @@ func newInlayCustomInfosTable(schemaName, tableName, alias string) *InlayCustomI
 
 func newInlayCustomInfosTableImpl(schemaName, tableName, alias string) inlayCustomInfosTable {
 	var (
-		IDColumn          = postgres.IntegerColumn("id")
-		UUIDColumn        = postgres.StringColumn("uuid")
-		InlayIDColumn     = postgres.IntegerColumn("inlay_id")
-		DescriptionColumn = postgres.StringColumn("description")
-		WidthColumn       = postgres.FloatColumn("width")
-		HeightColumn      = postgres.FloatColumn("height")
-		UpdatedAtColumn   = postgres.TimestampzColumn("updated_at")
-		CreatedAtColumn   = postgres.TimestampzColumn("created_at")
-		VersionColumn     = postgres.IntegerColumn("version")
-		allColumns        = postgres.ColumnList{IDColumn, UUIDColumn, InlayIDColumn, DescriptionColumn, WidthColumn, HeightColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
-		mutableColumns    = postgres.ColumnList{UUIDColumn, InlayIDColumn, DescriptionColumn, WidthColumn, HeightColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
-		defaultColumns    = postgres.ColumnList{IDColumn, UUIDColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
+		IDColumn              = postgres.IntegerColumn("id")
+		UUIDColumn            = postgres.StringColumn("uuid")
+		InlayIDColumn         = postgres.IntegerColumn("inlay_id")
+		DescriptionColumn     = postgres.StringColumn("description")
+		RequestedWidthColumn  = postgres.FloatColumn("requested_width")
+		RequestedHeightColumn = postgres.FloatColumn("requested_height")
+		CreatedAtColumn       = postgres.TimestampzColumn("created_at")
+		UpdatedAtColumn       = postgres.TimestampzColumn("updated_at")
+		VersionColumn         = postgres.IntegerColumn("version")
+		allColumns            = postgres.ColumnList{IDColumn, UUIDColumn, InlayIDColumn, DescriptionColumn, RequestedWidthColumn, RequestedHeightColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns        = postgres.ColumnList{UUIDColumn, InlayIDColumn, DescriptionColumn, RequestedWidthColumn, RequestedHeightColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		defaultColumns        = postgres.ColumnList{IDColumn, UUIDColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
 	return inlayCustomInfosTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:          IDColumn,
-		UUID:        UUIDColumn,
-		InlayID:     InlayIDColumn,
-		Description: DescriptionColumn,
-		Width:       WidthColumn,
-		Height:      HeightColumn,
-		UpdatedAt:   UpdatedAtColumn,
-		CreatedAt:   CreatedAtColumn,
-		Version:     VersionColumn,
+		ID:              IDColumn,
+		UUID:            UUIDColumn,
+		InlayID:         InlayIDColumn,
+		Description:     DescriptionColumn,
+		RequestedWidth:  RequestedWidthColumn,
+		RequestedHeight: RequestedHeightColumn,
+		CreatedAt:       CreatedAtColumn,
+		UpdatedAt:       UpdatedAtColumn,
+		Version:         VersionColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

@@ -17,13 +17,14 @@ type inlayCatalogInfosTable struct {
 	postgres.Table
 
 	// Columns
-	ID            postgres.ColumnInteger
-	UUID          postgres.ColumnString
-	InlayID       postgres.ColumnInteger
-	CatalogItemID postgres.ColumnInteger
-	UpdatedAt     postgres.ColumnTimestampz
-	CreatedAt     postgres.ColumnTimestampz
-	Version       postgres.ColumnInteger
+	ID                 postgres.ColumnInteger
+	UUID               postgres.ColumnString
+	InlayID            postgres.ColumnInteger
+	CatalogItemID      postgres.ColumnInteger
+	CustomizationNotes postgres.ColumnString
+	CreatedAt          postgres.ColumnTimestampz
+	UpdatedAt          postgres.ColumnTimestampz
+	Version            postgres.ColumnInteger
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -65,29 +66,31 @@ func newInlayCatalogInfosTable(schemaName, tableName, alias string) *InlayCatalo
 
 func newInlayCatalogInfosTableImpl(schemaName, tableName, alias string) inlayCatalogInfosTable {
 	var (
-		IDColumn            = postgres.IntegerColumn("id")
-		UUIDColumn          = postgres.StringColumn("uuid")
-		InlayIDColumn       = postgres.IntegerColumn("inlay_id")
-		CatalogItemIDColumn = postgres.IntegerColumn("catalog_item_id")
-		UpdatedAtColumn     = postgres.TimestampzColumn("updated_at")
-		CreatedAtColumn     = postgres.TimestampzColumn("created_at")
-		VersionColumn       = postgres.IntegerColumn("version")
-		allColumns          = postgres.ColumnList{IDColumn, UUIDColumn, InlayIDColumn, CatalogItemIDColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
-		mutableColumns      = postgres.ColumnList{UUIDColumn, InlayIDColumn, CatalogItemIDColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
-		defaultColumns      = postgres.ColumnList{IDColumn, UUIDColumn, UpdatedAtColumn, CreatedAtColumn, VersionColumn}
+		IDColumn                 = postgres.IntegerColumn("id")
+		UUIDColumn               = postgres.StringColumn("uuid")
+		InlayIDColumn            = postgres.IntegerColumn("inlay_id")
+		CatalogItemIDColumn      = postgres.IntegerColumn("catalog_item_id")
+		CustomizationNotesColumn = postgres.StringColumn("customization_notes")
+		CreatedAtColumn          = postgres.TimestampzColumn("created_at")
+		UpdatedAtColumn          = postgres.TimestampzColumn("updated_at")
+		VersionColumn            = postgres.IntegerColumn("version")
+		allColumns               = postgres.ColumnList{IDColumn, UUIDColumn, InlayIDColumn, CatalogItemIDColumn, CustomizationNotesColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns           = postgres.ColumnList{UUIDColumn, InlayIDColumn, CatalogItemIDColumn, CustomizationNotesColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		defaultColumns           = postgres.ColumnList{IDColumn, UUIDColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
 	return inlayCatalogInfosTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:            IDColumn,
-		UUID:          UUIDColumn,
-		InlayID:       InlayIDColumn,
-		CatalogItemID: CatalogItemIDColumn,
-		UpdatedAt:     UpdatedAtColumn,
-		CreatedAt:     CreatedAtColumn,
-		Version:       VersionColumn,
+		ID:                 IDColumn,
+		UUID:               UUIDColumn,
+		InlayID:            InlayIDColumn,
+		CatalogItemID:      CatalogItemIDColumn,
+		CustomizationNotes: CustomizationNotesColumn,
+		CreatedAt:          CreatedAtColumn,
+		UpdatedAt:          UpdatedAtColumn,
+		Version:            VersionColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
