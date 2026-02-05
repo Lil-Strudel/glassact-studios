@@ -1,19 +1,22 @@
 import { StandardTable } from "./helpers";
 
 export type ProjectStatus =
-  | "awaiting-proof"
-  | "proof-in-revision"
-  | "all-proofs-accepted"
-  | "cancelled"
+  | "draft"
+  | "designing"
+  | "pending-approval"
+  | "approved"
   | "ordered"
   | "in-production"
-  | "awaiting-invoice"
-  | "awaiting-payment"
-  | "completed";
+  | "shipped"
+  | "delivered"
+  | "invoiced"
+  | "completed"
+  | "cancelled";
 
 export type Project = StandardTable<{
+  dealership_id: number;
   name: string;
   status: ProjectStatus;
-  approved: boolean;
-  dealership_id: number;
+  ordered_at: string | null;
+  ordered_by: number | null;
 }>;

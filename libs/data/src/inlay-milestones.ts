@@ -1,11 +1,12 @@
-export interface InlayMilestone {
-  id: number;
-  uuid: string;
-  type: string;
-  event_type: string;
-  event_time: string;
+import { StandardTable } from "./helpers";
+import { ManufacturingStep } from "./inlays";
+
+export type MilestoneEventType = "entered" | "exited" | "reverted";
+
+export type InlayMilestone = StandardTable<{
   inlay_id: number;
-  created_at: string;
-  updated_at: string;
-  version: number;
-}
+  step: ManufacturingStep;
+  event_type: MilestoneEventType;
+  performed_by: number;
+  event_time: string;
+}>;
