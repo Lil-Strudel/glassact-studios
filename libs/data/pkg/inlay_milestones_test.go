@@ -9,12 +9,16 @@ func TestInlayMilestone_Insert(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
+	internalUser := createTestInternalUser(t, models)
 
 	milestone := &InlayMilestone{
-		InlayID:     1,
+		InlayID:     inlay.ID,
 		Step:        ManufacturingSteps.Ordered,
 		EventType:   MilestoneEventTypes.Entered,
-		PerformedBy: 1,
+		PerformedBy: internalUser.ID,
 		EventTime:   time.Now(),
 	}
 
@@ -35,13 +39,17 @@ func TestInlayMilestone_GetByID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
+	internalUser := createTestInternalUser(t, models)
 
 	now := time.Now()
 	original := &InlayMilestone{
-		InlayID:     2,
+		InlayID:     inlay.ID,
 		Step:        ManufacturingSteps.MaterialsPrep,
 		EventType:   MilestoneEventTypes.Entered,
-		PerformedBy: 1,
+		PerformedBy: internalUser.ID,
 		EventTime:   now,
 	}
 
@@ -72,12 +80,16 @@ func TestInlayMilestone_GetByUUID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
+	internalUser := createTestInternalUser(t, models)
 
 	original := &InlayMilestone{
-		InlayID:     3,
+		InlayID:     inlay.ID,
 		Step:        ManufacturingSteps.Cutting,
 		EventType:   MilestoneEventTypes.Entered,
-		PerformedBy: 2,
+		PerformedBy: internalUser.ID,
 		EventTime:   time.Now(),
 	}
 
@@ -102,13 +114,17 @@ func TestInlayMilestone_GetByInlayID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
+	internalUser := createTestInternalUser(t, models)
 
-	inlayID := 4
+	inlayID := inlay.ID
 	milestone1 := &InlayMilestone{
 		InlayID:     inlayID,
 		Step:        ManufacturingSteps.FirePolish,
 		EventType:   MilestoneEventTypes.Entered,
-		PerformedBy: 1,
+		PerformedBy: internalUser.ID,
 		EventTime:   time.Now(),
 	}
 
@@ -116,7 +132,7 @@ func TestInlayMilestone_GetByInlayID(t *testing.T) {
 		InlayID:     inlayID,
 		Step:        ManufacturingSteps.FirePolish,
 		EventType:   MilestoneEventTypes.Exited,
-		PerformedBy: 1,
+		PerformedBy: internalUser.ID,
 		EventTime:   time.Now().Add(2 * time.Hour),
 	}
 
@@ -142,12 +158,17 @@ func TestInlayMilestone_Update(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
+	internalUser1 := createTestInternalUser(t, models)
+	internalUser2 := createTestInternalUser(t, models)
 
 	original := &InlayMilestone{
-		InlayID:     5,
+		InlayID:     inlay.ID,
 		Step:        ManufacturingSteps.Packaging,
 		EventType:   MilestoneEventTypes.Entered,
-		PerformedBy: 1,
+		PerformedBy: internalUser1.ID,
 		EventTime:   time.Now(),
 	}
 
@@ -157,7 +178,7 @@ func TestInlayMilestone_Update(t *testing.T) {
 	}
 
 	original.EventType = MilestoneEventTypes.Exited
-	original.PerformedBy = 2
+	original.PerformedBy = internalUser2.ID
 
 	err = models.InlayMilestones.Update(original)
 	if err != nil {
@@ -174,8 +195,8 @@ func TestInlayMilestone_Update(t *testing.T) {
 	if retrieved.EventType != MilestoneEventTypes.Exited {
 		t.Errorf("Expected event type Exited, got %s", retrieved.EventType)
 	}
-	if retrieved.PerformedBy != 2 {
-		t.Errorf("Expected PerformedBy 2, got %d", retrieved.PerformedBy)
+	if retrieved.PerformedBy != internalUser2.ID {
+		t.Errorf("Expected PerformedBy %d, got %d", internalUser2.ID, retrieved.PerformedBy)
 	}
 }
 
@@ -183,12 +204,16 @@ func TestInlayMilestone_Delete(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
+	internalUser := createTestInternalUser(t, models)
 
 	milestone := &InlayMilestone{
-		InlayID:     6,
+		InlayID:     inlay.ID,
 		Step:        ManufacturingSteps.Shipped,
 		EventType:   MilestoneEventTypes.Entered,
-		PerformedBy: 1,
+		PerformedBy: internalUser.ID,
 		EventTime:   time.Now(),
 	}
 
@@ -215,20 +240,26 @@ func TestInlayMilestone_GetAll(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay1 := createTestInlay(t, models, project.ID)
+	inlay2 := createTestInlay(t, models, project.ID)
+	internalUser1 := createTestInternalUser(t, models)
+	internalUser2 := createTestInternalUser(t, models)
 
 	milestone1 := &InlayMilestone{
-		InlayID:     7,
+		InlayID:     inlay1.ID,
 		Step:        ManufacturingSteps.Delivered,
 		EventType:   MilestoneEventTypes.Entered,
-		PerformedBy: 1,
+		PerformedBy: internalUser1.ID,
 		EventTime:   time.Now(),
 	}
 
 	milestone2 := &InlayMilestone{
-		InlayID:     8,
+		InlayID:     inlay2.ID,
 		Step:        ManufacturingSteps.Ordered,
 		EventType:   MilestoneEventTypes.Entered,
-		PerformedBy: 2,
+		PerformedBy: internalUser2.ID,
 		EventTime:   time.Now(),
 	}
 
@@ -254,6 +285,10 @@ func TestInlayMilestone_ManufacturingSteps(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
+	internalUser := createTestInternalUser(t, models)
 
 	steps := []ManufacturingStep{
 		ManufacturingSteps.Ordered,
@@ -267,10 +302,10 @@ func TestInlayMilestone_ManufacturingSteps(t *testing.T) {
 
 	for i, step := range steps {
 		milestone := &InlayMilestone{
-			InlayID:     9,
+			InlayID:     inlay.ID,
 			Step:        step,
 			EventType:   MilestoneEventTypes.Entered,
-			PerformedBy: 1,
+			PerformedBy: internalUser.ID,
 			EventTime:   time.Now().Add(time.Duration(i) * time.Hour),
 		}
 

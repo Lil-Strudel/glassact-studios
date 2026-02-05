@@ -10,6 +10,7 @@ func TestInlayChat_Insert(t *testing.T) {
 	models := getTestModels(t)
 	dealership := createTestDealership(t, models)
 	project := createTestProject(t, models, dealership.ID)
+	dealershipUser := createTestDealershipUser(t, models, dealership.ID)
 	priceGroup := createTestPriceGroup(t, models)
 	catalogItem := createTestCatalogItem(t, models, priceGroup.ID)
 
@@ -30,9 +31,10 @@ func TestInlayChat_Insert(t *testing.T) {
 	}
 
 	chat := &InlayChat{
-		InlayID:     inlay.ID,
-		MessageType: ChatMessageTypes.Text,
-		Message:     "Test message",
+		InlayID:          inlay.ID,
+		DealershipUserID: &dealershipUser.ID,
+		MessageType:      ChatMessageTypes.Text,
+		Message:          "Test message",
 	}
 
 	err = models.InlayChats.Insert(chat)
@@ -54,6 +56,7 @@ func TestInlayChat_GetByID(t *testing.T) {
 	models := getTestModels(t)
 	dealership := createTestDealership(t, models)
 	project := createTestProject(t, models, dealership.ID)
+	dealershipUser := createTestDealershipUser(t, models, dealership.ID)
 	priceGroup := createTestPriceGroup(t, models)
 	catalogItem := createTestCatalogItem(t, models, priceGroup.ID)
 
@@ -73,9 +76,10 @@ func TestInlayChat_GetByID(t *testing.T) {
 	}
 
 	chat := &InlayChat{
-		InlayID:     inlay.ID,
-		MessageType: ChatMessageTypes.Text,
-		Message:     "Test message",
+		InlayID:          inlay.ID,
+		DealershipUserID: &dealershipUser.ID,
+		MessageType:      ChatMessageTypes.Text,
+		Message:          "Test message",
 	}
 	err = models.InlayChats.Insert(chat)
 	if err != nil {
@@ -105,6 +109,7 @@ func TestInlayChat_GetByUUID(t *testing.T) {
 	models := getTestModels(t)
 	dealership := createTestDealership(t, models)
 	project := createTestProject(t, models, dealership.ID)
+	dealershipUser := createTestDealershipUser(t, models, dealership.ID)
 	priceGroup := createTestPriceGroup(t, models)
 	catalogItem := createTestCatalogItem(t, models, priceGroup.ID)
 
@@ -124,9 +129,10 @@ func TestInlayChat_GetByUUID(t *testing.T) {
 	}
 
 	chat := &InlayChat{
-		InlayID:     inlay.ID,
-		MessageType: ChatMessageTypes.Text,
-		Message:     "Test message",
+		InlayID:          inlay.ID,
+		DealershipUserID: &dealershipUser.ID,
+		MessageType:      ChatMessageTypes.Text,
+		Message:          "Test message",
 	}
 	err = models.InlayChats.Insert(chat)
 	if err != nil {
@@ -153,6 +159,7 @@ func TestInlayChat_GetByInlayID(t *testing.T) {
 	models := getTestModels(t)
 	dealership := createTestDealership(t, models)
 	project := createTestProject(t, models, dealership.ID)
+	dealershipUser := createTestDealershipUser(t, models, dealership.ID)
 	priceGroup := createTestPriceGroup(t, models)
 	catalogItem := createTestCatalogItem(t, models, priceGroup.ID)
 
@@ -172,9 +179,10 @@ func TestInlayChat_GetByInlayID(t *testing.T) {
 	}
 
 	chat1 := &InlayChat{
-		InlayID:     inlay.ID,
-		MessageType: ChatMessageTypes.Text,
-		Message:     "Message 1",
+		InlayID:          inlay.ID,
+		DealershipUserID: &dealershipUser.ID,
+		MessageType:      ChatMessageTypes.Text,
+		Message:          "Message 1",
 	}
 	err = models.InlayChats.Insert(chat1)
 	if err != nil {
@@ -182,9 +190,10 @@ func TestInlayChat_GetByInlayID(t *testing.T) {
 	}
 
 	chat2 := &InlayChat{
-		InlayID:     inlay.ID,
-		MessageType: ChatMessageTypes.Text,
-		Message:     "Message 2",
+		InlayID:          inlay.ID,
+		DealershipUserID: &dealershipUser.ID,
+		MessageType:      ChatMessageTypes.Text,
+		Message:          "Message 2",
 	}
 	err = models.InlayChats.Insert(chat2)
 	if err != nil {
@@ -207,6 +216,7 @@ func TestInlayChat_Update(t *testing.T) {
 	models := getTestModels(t)
 	dealership := createTestDealership(t, models)
 	project := createTestProject(t, models, dealership.ID)
+	dealershipUser := createTestDealershipUser(t, models, dealership.ID)
 	priceGroup := createTestPriceGroup(t, models)
 	catalogItem := createTestCatalogItem(t, models, priceGroup.ID)
 
@@ -226,9 +236,10 @@ func TestInlayChat_Update(t *testing.T) {
 	}
 
 	chat := &InlayChat{
-		InlayID:     inlay.ID,
-		MessageType: ChatMessageTypes.Text,
-		Message:     "Test message",
+		InlayID:          inlay.ID,
+		DealershipUserID: &dealershipUser.ID,
+		MessageType:      ChatMessageTypes.Text,
+		Message:          "Test message",
 	}
 	err = models.InlayChats.Insert(chat)
 	if err != nil {
@@ -257,6 +268,7 @@ func TestInlayChat_Delete(t *testing.T) {
 	models := getTestModels(t)
 	dealership := createTestDealership(t, models)
 	project := createTestProject(t, models, dealership.ID)
+	dealershipUser := createTestDealershipUser(t, models, dealership.ID)
 	priceGroup := createTestPriceGroup(t, models)
 	catalogItem := createTestCatalogItem(t, models, priceGroup.ID)
 
@@ -276,9 +288,10 @@ func TestInlayChat_Delete(t *testing.T) {
 	}
 
 	chat := &InlayChat{
-		InlayID:     inlay.ID,
-		MessageType: ChatMessageTypes.Text,
-		Message:     "Test message",
+		InlayID:          inlay.ID,
+		DealershipUserID: &dealershipUser.ID,
+		MessageType:      ChatMessageTypes.Text,
+		Message:          "Test message",
 	}
 	err = models.InlayChats.Insert(chat)
 	if err != nil {

@@ -225,10 +225,11 @@ func TestInvoice_GetAll(t *testing.T) {
 
 	models := getTestModels(t)
 	dealership := createTestDealership(t, models)
-	project := createTestProject(t, models, dealership.ID)
+	project1 := createTestProject(t, models, dealership.ID)
+	project2 := createTestProject(t, models, dealership.ID)
 
 	invoice1 := &Invoice{
-		ProjectID:     project.ID,
+		ProjectID:     project1.ID,
 		InvoiceNumber: "INV-007",
 		SubtotalCents: 50000,
 		TaxCents:      5000,
@@ -237,7 +238,7 @@ func TestInvoice_GetAll(t *testing.T) {
 	}
 
 	invoice2 := &Invoice{
-		ProjectID:     project.ID,
+		ProjectID:     project2.ID,
 		InvoiceNumber: "INV-008",
 		SubtotalCents: 100000,
 		TaxCents:      10000,

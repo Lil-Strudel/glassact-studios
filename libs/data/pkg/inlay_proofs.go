@@ -150,8 +150,8 @@ func inlayProofToGen(ip *InlayProof) (*model.InlayProofs, error) {
 		declinedBy = &declinedByVal
 	}
 
-	colorOverridesStr := ""
-	if ip.ColorOverrides != nil && len(ip.ColorOverrides) > 0 {
+	colorOverridesStr := "{}"
+	if ip.ColorOverrides != nil {
 		colorOverridesBytes, _ := json.Marshal(ip.ColorOverrides)
 		colorOverridesStr = string(colorOverridesBytes)
 	}

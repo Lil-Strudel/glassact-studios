@@ -272,3 +272,69 @@ func createTestCatalogItem(t *testing.T, models Models, priceGroupID int) *Catal
 
 	return catalogItem
 }
+
+func createTestInlay(t *testing.T, models Models, projectID int) *Inlay {
+	t.Helper()
+
+	inlay := &Inlay{
+		ProjectID:  projectID,
+		Name:       "Test Inlay",
+		Type:       InlayTypes.Custom,
+		PreviewURL: "https://example.com/preview.png",
+		CustomInfo: &InlayCustomInfo{
+			Description:     "Test custom inlay",
+			RequestedWidth:  100.0,
+			RequestedHeight: 150.0,
+		},
+	}
+
+	err := models.Inlays.Insert(inlay)
+	if err != nil {
+		t.Fatalf("Failed to create test inlay: %v", err)
+	}
+
+	return inlay
+}
+
+func createTestInlayChat(t *testing.T, models Models, inlayID int) *InlayChat {
+	t.Helper()
+
+	chat := &InlayChat{
+		InlayID:     inlayID,
+		MessageType: "system",
+		Message:     "Test chat message",
+	}
+
+	err := models.InlayChats.Insert(chat)
+	if err != nil {
+		t.Fatalf("Failed to create test inlay chat: %v", err)
+	}
+
+	return chat
+}
+
+func createTestInlayProof(t *testing.T, models Models, inlayID int, priceGroupID int) *InlayProof {
+	t.Helper()
+
+	chat := createTestInlayChat(t, models, inlayID)
+
+	proof := &InlayProof{
+		InlayID:        inlayID,
+		VersionNumber:  1,
+		DesignAssetURL: "https://example.com/design.svg",
+		Width:          100.0,
+		Height:         150.0,
+		PriceGroupID:   &priceGroupID,
+		ScaleFactor:    1.0,
+		ColorOverrides: map[string]interface{}{},
+		Status:         ProofStatuses.Pending,
+		SentInChatID:   chat.ID,
+	}
+
+	err := models.InlayProofs.Insert(proof)
+	if err != nil {
+		t.Fatalf("Failed to create test inlay proof: %v", err)
+	}
+
+	return proof
+}

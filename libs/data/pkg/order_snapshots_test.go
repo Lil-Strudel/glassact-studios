@@ -8,12 +8,17 @@ func TestOrderSnapshot_Insert(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	priceGroup := createTestPriceGroup(t, models)
+	inlay := createTestInlay(t, models, project.ID)
+	proof := createTestInlayProof(t, models, inlay.ID, priceGroup.ID)
 
 	snapshot := &OrderSnapshot{
-		ProjectID:    1,
-		InlayID:      1,
-		ProofID:      1,
-		PriceGroupID: 1,
+		ProjectID:    project.ID,
+		InlayID:      inlay.ID,
+		ProofID:      proof.ID,
+		PriceGroupID: priceGroup.ID,
 		PriceCents:   50000,
 		Width:        100.5,
 		Height:       200.5,
@@ -39,12 +44,17 @@ func TestOrderSnapshot_GetByID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	priceGroup := createTestPriceGroup(t, models)
+	inlay := createTestInlay(t, models, project.ID)
+	proof := createTestInlayProof(t, models, inlay.ID, priceGroup.ID)
 
 	original := &OrderSnapshot{
-		ProjectID:    2,
-		InlayID:      2,
-		ProofID:      2,
-		PriceGroupID: 2,
+		ProjectID:    project.ID,
+		InlayID:      inlay.ID,
+		ProofID:      proof.ID,
+		PriceGroupID: priceGroup.ID,
 		PriceCents:   75000,
 		Width:        150.0,
 		Height:       250.0,
@@ -83,12 +93,17 @@ func TestOrderSnapshot_GetByUUID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	priceGroup := createTestPriceGroup(t, models)
+	inlay := createTestInlay(t, models, project.ID)
+	proof := createTestInlayProof(t, models, inlay.ID, priceGroup.ID)
 
 	original := &OrderSnapshot{
-		ProjectID:    3,
-		InlayID:      3,
-		ProofID:      3,
-		PriceGroupID: 3,
+		ProjectID:    project.ID,
+		InlayID:      inlay.ID,
+		ProofID:      proof.ID,
+		PriceGroupID: priceGroup.ID,
 		PriceCents:   100000,
 		Width:        200.0,
 		Height:       300.0,
@@ -115,13 +130,20 @@ func TestOrderSnapshot_GetByProjectID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	priceGroup := createTestPriceGroup(t, models)
+	inlay1 := createTestInlay(t, models, project.ID)
+	inlay2 := createTestInlay(t, models, project.ID)
+	proof1 := createTestInlayProof(t, models, inlay1.ID, priceGroup.ID)
+	proof2 := createTestInlayProof(t, models, inlay2.ID, priceGroup.ID)
 
-	projectID := 4
+	projectID := project.ID
 	snapshot1 := &OrderSnapshot{
 		ProjectID:    projectID,
-		InlayID:      4,
-		ProofID:      4,
-		PriceGroupID: 4,
+		InlayID:      inlay1.ID,
+		ProofID:      proof1.ID,
+		PriceGroupID: priceGroup.ID,
 		PriceCents:   50000,
 		Width:        100.0,
 		Height:       200.0,
@@ -129,9 +151,9 @@ func TestOrderSnapshot_GetByProjectID(t *testing.T) {
 
 	snapshot2 := &OrderSnapshot{
 		ProjectID:    projectID,
-		InlayID:      5,
-		ProofID:      5,
-		PriceGroupID: 5,
+		InlayID:      inlay2.ID,
+		ProofID:      proof2.ID,
+		PriceGroupID: priceGroup.ID,
 		PriceCents:   60000,
 		Width:        120.0,
 		Height:       220.0,
@@ -159,13 +181,18 @@ func TestOrderSnapshot_GetByInlayID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	priceGroup := createTestPriceGroup(t, models)
+	inlay := createTestInlay(t, models, project.ID)
+	proof := createTestInlayProof(t, models, inlay.ID, priceGroup.ID)
 
-	inlayID := 6
+	inlayID := inlay.ID
 	snapshot := &OrderSnapshot{
-		ProjectID:    5,
+		ProjectID:    project.ID,
 		InlayID:      inlayID,
-		ProofID:      6,
-		PriceGroupID: 6,
+		ProofID:      proof.ID,
+		PriceGroupID: priceGroup.ID,
 		PriceCents:   55000,
 		Width:        110.0,
 		Height:       210.0,
@@ -192,12 +219,17 @@ func TestOrderSnapshot_Delete(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	priceGroup := createTestPriceGroup(t, models)
+	inlay := createTestInlay(t, models, project.ID)
+	proof := createTestInlayProof(t, models, inlay.ID, priceGroup.ID)
 
 	snapshot := &OrderSnapshot{
-		ProjectID:    6,
-		InlayID:      7,
-		ProofID:      7,
-		PriceGroupID: 7,
+		ProjectID:    project.ID,
+		InlayID:      inlay.ID,
+		ProofID:      proof.ID,
+		PriceGroupID: priceGroup.ID,
 		PriceCents:   45000,
 		Width:        90.0,
 		Height:       190.0,
@@ -226,22 +258,30 @@ func TestOrderSnapshot_GetAll(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project1 := createTestProject(t, models, dealership.ID)
+	project2 := createTestProject(t, models, dealership.ID)
+	priceGroup := createTestPriceGroup(t, models)
+	inlay1 := createTestInlay(t, models, project1.ID)
+	inlay2 := createTestInlay(t, models, project2.ID)
+	proof1 := createTestInlayProof(t, models, inlay1.ID, priceGroup.ID)
+	proof2 := createTestInlayProof(t, models, inlay2.ID, priceGroup.ID)
 
 	snapshot1 := &OrderSnapshot{
-		ProjectID:    7,
-		InlayID:      8,
-		ProofID:      8,
-		PriceGroupID: 8,
+		ProjectID:    project1.ID,
+		InlayID:      inlay1.ID,
+		ProofID:      proof1.ID,
+		PriceGroupID: priceGroup.ID,
 		PriceCents:   40000,
 		Width:        80.0,
 		Height:       180.0,
 	}
 
 	snapshot2 := &OrderSnapshot{
-		ProjectID:    8,
-		InlayID:      9,
-		ProofID:      9,
-		PriceGroupID: 9,
+		ProjectID:    project2.ID,
+		InlayID:      inlay2.ID,
+		ProofID:      proof2.ID,
+		PriceGroupID: priceGroup.ID,
 		PriceCents:   35000,
 		Width:        70.0,
 		Height:       170.0,

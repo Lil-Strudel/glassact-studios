@@ -268,6 +268,7 @@ func (m InlayMilestoneModel) Update(milestone *InlayMilestone) error {
 	query := table.InlayMilestones.UPDATE(
 		table.InlayMilestones.Step,
 		table.InlayMilestones.EventType,
+		table.InlayMilestones.PerformedBy,
 		table.InlayMilestones.EventTime,
 		table.InlayMilestones.Version,
 	).MODEL(

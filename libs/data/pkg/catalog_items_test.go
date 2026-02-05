@@ -8,6 +8,7 @@ func TestCatalogItem_Insert(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
 
 	catalogItem := &CatalogItem{
 		CatalogCode:         "CAT-001",
@@ -17,7 +18,7 @@ func TestCatalogItem_Insert(t *testing.T) {
 		DefaultHeight:       200.0,
 		MinWidth:            50.0,
 		MinHeight:           100.0,
-		DefaultPriceGroupID: 1,
+		DefaultPriceGroupID: priceGroup.ID,
 		SvgURL:              "https://example.com/item.svg",
 		IsActive:            true,
 	}
@@ -42,6 +43,7 @@ func TestCatalogItem_GetByID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
 
 	// Insert test item
 	original := &CatalogItem{
@@ -52,7 +54,7 @@ func TestCatalogItem_GetByID(t *testing.T) {
 		DefaultHeight:       200.0,
 		MinWidth:            50.0,
 		MinHeight:           100.0,
-		DefaultPriceGroupID: 1,
+		DefaultPriceGroupID: priceGroup.ID,
 		SvgURL:              "https://example.com/item.svg",
 		IsActive:            true,
 	}
@@ -85,6 +87,7 @@ func TestCatalogItem_GetByUUID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
 
 	original := &CatalogItem{
 		CatalogCode:         "CAT-003",
@@ -94,7 +97,7 @@ func TestCatalogItem_GetByUUID(t *testing.T) {
 		DefaultHeight:       200.0,
 		MinWidth:            50.0,
 		MinHeight:           100.0,
-		DefaultPriceGroupID: 1,
+		DefaultPriceGroupID: priceGroup.ID,
 		SvgURL:              "https://example.com/item.svg",
 		IsActive:            true,
 	}
@@ -120,6 +123,7 @@ func TestCatalogItem_GetByCatalogCode(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
 
 	original := &CatalogItem{
 		CatalogCode:         "UNIQUE-CODE",
@@ -129,7 +133,7 @@ func TestCatalogItem_GetByCatalogCode(t *testing.T) {
 		DefaultHeight:       200.0,
 		MinWidth:            50.0,
 		MinHeight:           100.0,
-		DefaultPriceGroupID: 1,
+		DefaultPriceGroupID: priceGroup.ID,
 		SvgURL:              "https://example.com/item.svg",
 		IsActive:            true,
 	}
@@ -155,6 +159,7 @@ func TestCatalogItem_Update(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
 
 	original := &CatalogItem{
 		CatalogCode:         "CAT-004",
@@ -164,7 +169,7 @@ func TestCatalogItem_Update(t *testing.T) {
 		DefaultHeight:       200.0,
 		MinWidth:            50.0,
 		MinHeight:           100.0,
-		DefaultPriceGroupID: 1,
+		DefaultPriceGroupID: priceGroup.ID,
 		SvgURL:              "https://example.com/item.svg",
 		IsActive:            true,
 	}
@@ -201,6 +206,7 @@ func TestCatalogItem_Delete(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
 
 	item := &CatalogItem{
 		CatalogCode:         "CAT-005",
@@ -210,7 +216,7 @@ func TestCatalogItem_Delete(t *testing.T) {
 		DefaultHeight:       200.0,
 		MinWidth:            50.0,
 		MinHeight:           100.0,
-		DefaultPriceGroupID: 1,
+		DefaultPriceGroupID: priceGroup.ID,
 		SvgURL:              "https://example.com/item.svg",
 		IsActive:            true,
 	}
@@ -238,6 +244,7 @@ func TestCatalogItem_Tags(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
 
 	item := &CatalogItem{
 		CatalogCode:         "CAT-006",
@@ -247,7 +254,7 @@ func TestCatalogItem_Tags(t *testing.T) {
 		DefaultHeight:       200.0,
 		MinWidth:            50.0,
 		MinHeight:           100.0,
-		DefaultPriceGroupID: 1,
+		DefaultPriceGroupID: priceGroup.ID,
 		SvgURL:              "https://example.com/item.svg",
 		IsActive:            true,
 	}
@@ -296,6 +303,7 @@ func TestCatalogItem_GetByTag(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
 
 	item1 := &CatalogItem{
 		CatalogCode:         "CAT-007",
@@ -305,7 +313,7 @@ func TestCatalogItem_GetByTag(t *testing.T) {
 		DefaultHeight:       200.0,
 		MinWidth:            50.0,
 		MinHeight:           100.0,
-		DefaultPriceGroupID: 1,
+		DefaultPriceGroupID: priceGroup.ID,
 		SvgURL:              "https://example.com/item.svg",
 		IsActive:            true,
 	}
@@ -318,7 +326,7 @@ func TestCatalogItem_GetByTag(t *testing.T) {
 		DefaultHeight:       200.0,
 		MinWidth:            50.0,
 		MinHeight:           100.0,
-		DefaultPriceGroupID: 1,
+		DefaultPriceGroupID: priceGroup.ID,
 		SvgURL:              "https://example.com/item.svg",
 		IsActive:            true,
 	}
@@ -356,6 +364,7 @@ func TestCatalogItem_GetByCategory(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
 
 	item1 := &CatalogItem{
 		CatalogCode:         "CAT-009",
@@ -365,7 +374,7 @@ func TestCatalogItem_GetByCategory(t *testing.T) {
 		DefaultHeight:       200.0,
 		MinWidth:            50.0,
 		MinHeight:           100.0,
-		DefaultPriceGroupID: 1,
+		DefaultPriceGroupID: priceGroup.ID,
 		SvgURL:              "https://example.com/item.svg",
 		IsActive:            true,
 	}
@@ -378,7 +387,7 @@ func TestCatalogItem_GetByCategory(t *testing.T) {
 		DefaultHeight:       200.0,
 		MinWidth:            50.0,
 		MinHeight:           100.0,
-		DefaultPriceGroupID: 1,
+		DefaultPriceGroupID: priceGroup.ID,
 		SvgURL:              "https://example.com/item.svg",
 		IsActive:            true,
 	}
@@ -406,6 +415,7 @@ func TestCatalogItem_GetAll(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
 
 	item1 := &CatalogItem{
 		CatalogCode:         "CAT-011",
@@ -415,7 +425,7 @@ func TestCatalogItem_GetAll(t *testing.T) {
 		DefaultHeight:       200.0,
 		MinWidth:            50.0,
 		MinHeight:           100.0,
-		DefaultPriceGroupID: 1,
+		DefaultPriceGroupID: priceGroup.ID,
 		SvgURL:              "https://example.com/item.svg",
 		IsActive:            true,
 	}
@@ -428,7 +438,7 @@ func TestCatalogItem_GetAll(t *testing.T) {
 		DefaultHeight:       200.0,
 		MinWidth:            50.0,
 		MinHeight:           100.0,
-		DefaultPriceGroupID: 1,
+		DefaultPriceGroupID: priceGroup.ID,
 		SvgURL:              "https://example.com/item.svg",
 		IsActive:            true,
 	}

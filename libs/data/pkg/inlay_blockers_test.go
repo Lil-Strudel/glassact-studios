@@ -9,9 +9,12 @@ func TestInlayBlocker_Insert(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
 
 	blocker := &InlayBlocker{
-		InlayID:     1,
+		InlayID:     inlay.ID,
 		BlockerType: BlockerTypes.Hard,
 		Reason:      "Material unavailable",
 		StepBlocked: "materials-prep",
@@ -34,9 +37,12 @@ func TestInlayBlocker_GetByID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
 
 	original := &InlayBlocker{
-		InlayID:     2,
+		InlayID:     inlay.ID,
 		BlockerType: BlockerTypes.Soft,
 		Reason:      "Awaiting approval",
 		StepBlocked: "cutting",
@@ -69,9 +75,12 @@ func TestInlayBlocker_GetByUUID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
 
 	original := &InlayBlocker{
-		InlayID:     3,
+		InlayID:     inlay.ID,
 		BlockerType: BlockerTypes.Hard,
 		Reason:      "Equipment failure",
 		StepBlocked: "fire-polish",
@@ -98,8 +107,11 @@ func TestInlayBlocker_GetByInlayID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
 
-	inlayID := 4
+	inlayID := inlay.ID
 	blocker1 := &InlayBlocker{
 		InlayID:     inlayID,
 		BlockerType: BlockerTypes.Soft,
@@ -136,8 +148,11 @@ func TestInlayBlocker_GetUnresolved(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
 
-	inlayID := 5
+	inlayID := inlay.ID
 	blocker1 := &InlayBlocker{
 		InlayID:     inlayID,
 		BlockerType: BlockerTypes.Soft,
@@ -182,9 +197,12 @@ func TestInlayBlocker_Update(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
 
 	original := &InlayBlocker{
-		InlayID:     6,
+		InlayID:     inlay.ID,
 		BlockerType: BlockerTypes.Soft,
 		Reason:      "Original reason",
 		StepBlocked: "packaging",
@@ -228,9 +246,12 @@ func TestInlayBlocker_Delete(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
 
 	blocker := &InlayBlocker{
-		InlayID:     7,
+		InlayID:     inlay.ID,
 		BlockerType: BlockerTypes.Soft,
 		Reason:      "To be deleted",
 		StepBlocked: "delivered",
@@ -259,16 +280,20 @@ func TestInlayBlocker_GetAll(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay1 := createTestInlay(t, models, project.ID)
+	inlay2 := createTestInlay(t, models, project.ID)
 
 	blocker1 := &InlayBlocker{
-		InlayID:     8,
+		InlayID:     inlay1.ID,
 		BlockerType: BlockerTypes.Soft,
 		Reason:      "All test 1",
 		StepBlocked: "ordered",
 	}
 
 	blocker2 := &InlayBlocker{
-		InlayID:     9,
+		InlayID:     inlay2.ID,
 		BlockerType: BlockerTypes.Hard,
 		Reason:      "All test 2",
 		StepBlocked: "cutting",

@@ -10,6 +10,7 @@ func TestNotification_Insert(t *testing.T) {
 
 	models := getTestModels(t)
 	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
 
 	user := &DealershipUser{
 		DealershipID: dealership.ID,
@@ -30,7 +31,7 @@ func TestNotification_Insert(t *testing.T) {
 		EventType:        NotificationEventTypes.ProofReady,
 		Title:            "Proof Ready",
 		Body:             "Your proof is ready for review",
-		ProjectID:        intPtr(1),
+		ProjectID:        intPtr(project.ID),
 	}
 
 	err = models.Notifications.Insert(notification)
@@ -54,6 +55,7 @@ func TestNotification_GetByID(t *testing.T) {
 
 	models := getTestModels(t)
 	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
 
 	user := &DealershipUser{
 		DealershipID: dealership.ID,
@@ -74,7 +76,7 @@ func TestNotification_GetByID(t *testing.T) {
 		EventType:        NotificationEventTypes.OrderPlaced,
 		Title:            "Order Placed",
 		Body:             "Your order has been placed",
-		ProjectID:        intPtr(2),
+		ProjectID:        intPtr(project.ID),
 	}
 
 	err = models.Notifications.Insert(original)
@@ -105,6 +107,7 @@ func TestNotification_GetByUUID(t *testing.T) {
 
 	models := getTestModels(t)
 	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
 
 	user := &DealershipUser{
 		DealershipID: dealership.ID,
@@ -125,7 +128,7 @@ func TestNotification_GetByUUID(t *testing.T) {
 		EventType:        NotificationEventTypes.InvoiceSent,
 		Title:            "Invoice Sent",
 		Body:             "Your invoice has been sent",
-		ProjectID:        intPtr(3),
+		ProjectID:        intPtr(project.ID),
 	}
 
 	err = models.Notifications.Insert(original)
@@ -150,6 +153,8 @@ func TestNotification_GetForDealershipUser(t *testing.T) {
 
 	models := getTestModels(t)
 	dealership := createTestDealership(t, models)
+	project1 := createTestProject(t, models, dealership.ID)
+	project2 := createTestProject(t, models, dealership.ID)
 
 	user := &DealershipUser{
 		DealershipID: dealership.ID,
@@ -170,7 +175,7 @@ func TestNotification_GetForDealershipUser(t *testing.T) {
 		EventType:        NotificationEventTypes.ProofApproved,
 		Title:            "Proof Approved",
 		Body:             "Your proof has been approved",
-		ProjectID:        intPtr(4),
+		ProjectID:        intPtr(project1.ID),
 	}
 
 	notif2 := &Notification{
@@ -178,7 +183,7 @@ func TestNotification_GetForDealershipUser(t *testing.T) {
 		EventType:        NotificationEventTypes.PaymentReceived,
 		Title:            "Payment Received",
 		Body:             "Payment has been received",
-		ProjectID:        intPtr(5),
+		ProjectID:        intPtr(project2.ID),
 	}
 
 	err = models.Notifications.Insert(notif1)
@@ -204,6 +209,7 @@ func TestNotification_MarkRead(t *testing.T) {
 
 	models := getTestModels(t)
 	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
 
 	user := &DealershipUser{
 		DealershipID: dealership.ID,
@@ -224,7 +230,7 @@ func TestNotification_MarkRead(t *testing.T) {
 		EventType:        NotificationEventTypes.ProofDeclined,
 		Title:            "Proof Declined",
 		Body:             "Your proof has been declined",
-		ProjectID:        intPtr(6),
+		ProjectID:        intPtr(project.ID),
 	}
 
 	err = models.Notifications.Insert(notification)
@@ -255,6 +261,7 @@ func TestNotification_Delete(t *testing.T) {
 
 	models := getTestModels(t)
 	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
 
 	user := &DealershipUser{
 		DealershipID: dealership.ID,
@@ -275,7 +282,7 @@ func TestNotification_Delete(t *testing.T) {
 		EventType:        NotificationEventTypes.ChatMessage,
 		Title:            "New Message",
 		Body:             "You have a new message",
-		ProjectID:        intPtr(7),
+		ProjectID:        intPtr(project.ID),
 	}
 
 	err = models.Notifications.Insert(notification)

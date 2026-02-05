@@ -1,7 +1,9 @@
 package data
 
 import (
+	"fmt"
 	"testing"
+	"time"
 )
 
 func createTestInternalUser(t *testing.T, models Models) *InternalUser {
@@ -9,7 +11,7 @@ func createTestInternalUser(t *testing.T, models Models) *InternalUser {
 
 	user := &InternalUser{
 		Name:     "Test Internal User",
-		Email:    "internal@example.com",
+		Email:    fmt.Sprintf("internal%d@example.com", time.Now().UnixNano()),
 		Avatar:   "https://example.com/avatar.png",
 		Role:     InternalUserRoles.Designer,
 		IsActive: true,
