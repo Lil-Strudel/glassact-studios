@@ -73,7 +73,7 @@ func (app *Application) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		user, found, err := app.Db.Users.GetForToken(data.ScopeAccess, token)
+		user, found, err := app.Db.DealershipUsers.GetForToken(data.DealershipScopeAccess, token)
 		if err != nil {
 			app.WriteError(w, r, app.Err.ServerError, err)
 			return

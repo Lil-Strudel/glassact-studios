@@ -26,7 +26,7 @@ import (
 )
 
 func (m *AuthModule) login(userID int, w http.ResponseWriter) error {
-	refreshToken, err := m.Db.Tokens.New(userID, 30*24*time.Hour, data.ScopeRefresh)
+	refreshToken, err := m.Db.DealershipTokens.New(userID, 30*24*time.Hour, data.DealershipScopeRefresh)
 	if err != nil {
 		return err
 	}
@@ -154,16 +154,16 @@ func getMicrosoftUserInfo(token string) (*microsoftInfoResponse, error) {
 	return &data, nil
 }
 
-func (m *AuthModule) getUserFromProvider(email, provider, providerID string) (*data.User, bool, error) {
-	var user *data.User
+func (m *AuthModule) getUserFromProvider(email, provider, providerID string) (*data.DealershipUser, bool, error) {
+	var user *data.DealershipUser
 
-	existingAccount, found, err := m.Db.Accounts.GetByProvider(provider, providerID)
+	existingAccount, found, err := m.Db.DealershipAccounts.GetByProvider(provider, providerID)
 	if err != nil {
 		return nil, false, err
 	}
 
 	if found {
-		existingUser, found, err := m.Db.Users.GetByID(existingAccount.UserID)
+		existingUser, found, err := m.Db.DealershipUsers.GetByID(existingAccount.DealershipUserID)
 		if err != nil {
 			return nil, false, err
 		}
@@ -174,7 +174,7 @@ func (m *AuthModule) getUserFromProvider(email, provider, providerID string) (*d
 
 		user = existingUser
 	} else {
-		existingUser, found, err := m.Db.Users.GetByEmail(email)
+		existingUser, found, err := m.Db.DealershipUsers.GetByEmail(email)
 		if err != nil {
 			return nil, false, err
 		}
@@ -183,14 +183,14 @@ func (m *AuthModule) getUserFromProvider(email, provider, providerID string) (*d
 			return nil, false, nil
 		}
 
-		newAccount := data.Account{
-			UserID:            existingUser.ID,
+		newAccount := data.DealershipAccount{
+			DealershipUserID:  existingUser.ID,
 			Type:              "oidc",
 			Provider:          provider,
 			ProviderAccountID: providerID,
 		}
 
-		err = m.Db.Accounts.Insert(&newAccount)
+		err = m.Db.DealershipAccounts.Insert(&newAccount)
 		if err != nil {
 			return nil, false, err
 		}

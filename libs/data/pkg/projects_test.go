@@ -210,6 +210,106 @@ func TestProject_Delete(t *testing.T) {
 	}
 }
 
+func TestProject_TxInsert(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+
+	tx, err := testDB.STDB.Begin()
+	if err != nil {
+		t.Fatalf("Failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	project := &Project{
+		DealershipID: dealership.ID,
+		Name:         "Test Project in Transaction",
+		Status:       ProjectStatuses.Draft,
+	}
+
+	err = models.Projects.TxInsert(tx, project)
+	if err != nil {
+		t.Fatalf("Failed to insert project in transaction: %v", err)
+	}
+
+	if project.ID == 0 {
+		t.Errorf("Expected non-zero ID, got %d", project.ID)
+	}
+	if project.UUID == "" {
+		t.Errorf("Expected UUID, got empty string")
+	}
+	if project.CreatedAt.IsZero() {
+		t.Errorf("Expected CreatedAt to be set")
+	}
+	if project.UpdatedAt.IsZero() {
+		t.Errorf("Expected UpdatedAt to be set")
+	}
+	if project.Version != 1 {
+		t.Errorf("Expected version 1, got %d", project.Version)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		t.Fatalf("Failed to commit transaction: %v", err)
+	}
+
+	// Verify the project was actually committed
+	retrieved, found, err := models.Projects.GetByID(project.ID)
+	if err != nil {
+		t.Fatalf("Failed to get project: %v", err)
+	}
+
+	if !found {
+		t.Errorf("Expected project to be found in database")
+	}
+
+	if retrieved.Name != "Test Project in Transaction" {
+		t.Errorf("Expected name 'Test Project in Transaction', got %s", retrieved.Name)
+	}
+}
+
+func TestProject_TxInsertRollback(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+
+	tx, err := testDB.STDB.Begin()
+	if err != nil {
+		t.Fatalf("Failed to begin transaction: %v", err)
+	}
+
+	project := &Project{
+		DealershipID: dealership.ID,
+		Name:         "Rolled Back Project",
+		Status:       ProjectStatuses.Draft,
+	}
+
+	err = models.Projects.TxInsert(tx, project)
+	if err != nil {
+		t.Fatalf("Failed to insert project in transaction: %v", err)
+	}
+
+	projectID := project.ID
+
+	// Rollback the transaction
+	err = tx.Rollback()
+	if err != nil {
+		t.Fatalf("Failed to rollback transaction: %v", err)
+	}
+
+	// Verify the project was NOT committed
+	_, found, err := models.Projects.GetByID(projectID)
+	if err != nil {
+		t.Fatalf("Failed to get project: %v", err)
+	}
+
+	if found {
+		t.Errorf("Expected project to be rolled back and not found in database")
+	}
+}
+
 func TestProjectStatuses(t *testing.T) {
 	statuses := []ProjectStatus{
 		ProjectStatuses.Draft,

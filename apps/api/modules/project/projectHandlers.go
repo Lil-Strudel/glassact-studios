@@ -54,7 +54,6 @@ func (m ProjectModule) HandlePostProject(w http.ResponseWriter, r *http.Request)
 	var body struct {
 		Name         string             `json:"name" validate:"required"`
 		Status       data.ProjectStatus `json:"status" validate:"required"`
-		Approved     bool               `json:"approved"`
 		DealershipID int                `json:"dealership_id" validate:"required"`
 	}
 
@@ -67,7 +66,6 @@ func (m ProjectModule) HandlePostProject(w http.ResponseWriter, r *http.Request)
 	project := data.Project{
 		Name:         body.Name,
 		Status:       body.Status,
-		Approved:     body.Approved,
 		DealershipID: body.DealershipID,
 	}
 
@@ -84,12 +82,10 @@ func (m ProjectModule) HandlePostProjectWithInlays(w http.ResponseWriter, r *htt
 	var body struct {
 		Name         string             `json:"name" validate:"required"`
 		Status       data.ProjectStatus `json:"status" validate:"required"`
-		Approved     bool               `json:"approved"`
 		DealershipID int                `json:"dealership_id" validate:"required"`
 		Inlays       []struct {
 			Name       string         `json:"name" validate:"required"`
 			PreviewURL string         `json:"preview_url" validate:"required"`
-			PriceGroup int            `json:"price_group" validate:"required"`
 			Type       data.InlayType `json:"type" validate:"required"`
 
 			CatalogInfo *struct {
@@ -97,9 +93,9 @@ func (m ProjectModule) HandlePostProjectWithInlays(w http.ResponseWriter, r *htt
 			} `json:"catalog_info" validate:"required_if=Type catalog,excluded_unless=Type catalog"`
 
 			CustomInfo *struct {
-				Description string  `json:"description" validate:"required"`
-				Width       float64 `json:"width" validate:"required"`
-				Height      float64 `json:"height" validate:"required"`
+				Description     string  `json:"description" validate:"required"`
+				RequestedWidth  float64 `json:"requested_width" validate:"required"`
+				RequestedHeight float64 `json:"requested_height" validate:"required"`
 			} `json:"custom_info" validate:"required_if=Type custom,excluded_unless=Type custom"`
 		} `json:"inlays" validate:"required,dive"`
 	}
@@ -121,7 +117,6 @@ func (m ProjectModule) HandlePostProjectWithInlays(w http.ResponseWriter, r *htt
 	project := data.Project{
 		Name:         body.Name,
 		Status:       body.Status,
-		Approved:     body.Approved,
 		DealershipID: body.DealershipID,
 	}
 
@@ -136,7 +131,6 @@ func (m ProjectModule) HandlePostProjectWithInlays(w http.ResponseWriter, r *htt
 			ProjectID:  project.ID,
 			Name:       body.Name,
 			PreviewURL: body.PreviewURL,
-			PriceGroup: body.PriceGroup,
 			Type:       body.Type,
 		}
 
@@ -148,9 +142,9 @@ func (m ProjectModule) HandlePostProjectWithInlays(w http.ResponseWriter, r *htt
 
 		if body.CustomInfo != nil {
 			inlay.CustomInfo = &data.InlayCustomInfo{
-				Description: body.CustomInfo.Description,
-				Width:       body.CustomInfo.Width,
-				Height:      body.CustomInfo.Height,
+				Description:     body.CustomInfo.Description,
+				RequestedWidth:  body.CustomInfo.RequestedWidth,
+				RequestedHeight: body.CustomInfo.RequestedHeight,
 			}
 		}
 

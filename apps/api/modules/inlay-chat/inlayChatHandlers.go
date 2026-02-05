@@ -47,7 +47,7 @@ func (m InlayChatModule) HandleGetInlayChatsByInlayUUID(w http.ResponseWriter, r
 		return
 	}
 
-	inlayChats, err := m.Db.InlayChats.GetAllByInlayID(inlay.ID)
+	inlayChats, err := m.Db.InlayChats.GetByInlayID(inlay.ID)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -81,9 +81,9 @@ func (m InlayChatModule) HandleGetInlayChatByUUID(w http.ResponseWriter, r *http
 
 func (m InlayChatModule) HandlePostInlayChat(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		InlayID    int             `json:"inlay_id" validate:"required"`
-		SenderType data.SenderType `json:"sender_type" validate:"required"`
-		Message    string          `json:"message" validate:"required"`
+		InlayID     int                  `json:"inlay_id" validate:"required"`
+		MessageType data.ChatMessageType `json:"message_type" validate:"required"`
+		Message     string               `json:"message" validate:"required"`
 	}
 
 	err := m.ReadJSONBody(w, r, &body)
@@ -95,10 +95,10 @@ func (m InlayChatModule) HandlePostInlayChat(w http.ResponseWriter, r *http.Requ
 	user := m.ContextGetUser(r)
 
 	inlayChat := data.InlayChat{
-		InlayID:    body.InlayID,
-		UserID:     user.ID,
-		SenderType: body.SenderType,
-		Message:    body.Message,
+		InlayID:          body.InlayID,
+		DealershipUserID: &user.ID,
+		MessageType:      body.MessageType,
+		Message:          body.Message,
 	}
 
 	err = m.Db.InlayChats.Insert(&inlayChat)

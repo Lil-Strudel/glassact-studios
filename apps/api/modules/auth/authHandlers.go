@@ -125,7 +125,7 @@ func (m *AuthModule) HandlePostMagicLinkAuth(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	user, found, err := m.Db.Users.GetByEmail(body.Email)
+	user, found, err := m.Db.DealershipUsers.GetByEmail(body.Email)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -135,7 +135,7 @@ func (m *AuthModule) HandlePostMagicLinkAuth(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	loginToken, err := m.Db.Tokens.New(user.ID, 2*time.Hour, data.ScopeLogin)
+	loginToken, err := m.Db.DealershipTokens.New(user.ID, 2*time.Hour, data.DealershipScopeLogin)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -158,7 +158,7 @@ func (m *AuthModule) HandleGetMagicLinkCallback(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	user, found, err := m.Db.Users.GetForToken(data.ScopeLogin, token)
+	user, found, err := m.Db.DealershipUsers.GetForToken(data.DealershipScopeLogin, token)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -186,7 +186,7 @@ func (m *AuthModule) HandlePostTokenAccess(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	user, found, err := m.Db.Users.GetForToken(data.ScopeRefresh, cookie.Value)
+	user, found, err := m.Db.DealershipUsers.GetForToken(data.DealershipScopeRefresh, cookie.Value)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -197,7 +197,7 @@ func (m *AuthModule) HandlePostTokenAccess(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	accessToken, err := m.Db.Tokens.New(user.ID, 2*time.Hour, data.ScopeAccess)
+	accessToken, err := m.Db.DealershipTokens.New(user.ID, 2*time.Hour, data.DealershipScopeAccess)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -222,7 +222,7 @@ func (m *AuthModule) HandleGetLogout(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = m.Db.Tokens.DeleteByPlaintext(data.ScopeRefresh, cookie.Value)
+	err = m.Db.DealershipTokens.DeleteByPlaintext(data.DealershipScopeRefresh, cookie.Value)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return

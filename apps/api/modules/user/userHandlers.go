@@ -24,7 +24,7 @@ func (m *UserModule) HandleGetUserSelf(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *UserModule) HandleGetUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := m.Db.Users.GetAll()
+	users, err := m.Db.DealershipUsers.GetAll()
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -42,7 +42,7 @@ func (m *UserModule) HandleGetUserByUUID(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	user, found, err := m.Db.Users.GetByUUID(uuid)
+	user, found, err := m.Db.DealershipUsers.GetByUUID(uuid)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -58,11 +58,11 @@ func (m *UserModule) HandleGetUserByUUID(w http.ResponseWriter, r *http.Request)
 
 func (m *UserModule) HandlePostUser(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Name         string        `json:"name" validate:"required"`
-		Email        string        `json:"email" validate:"required,email"`
-		Avatar       string        `json:"avatar" validate:"required,url"`
-		DealershipID int           `json:"dealership_id" validate:"required"`
-		Role         data.UserRole `json:"role" validate:"required"`
+		Name         string                  `json:"name" validate:"required"`
+		Email        string                  `json:"email" validate:"required,email"`
+		Avatar       string                  `json:"avatar" validate:"required,url"`
+		DealershipID int                     `json:"dealership_id" validate:"required"`
+		Role         data.DealershipUserRole `json:"role" validate:"required"`
 	}
 
 	err := m.ReadJSONBody(w, r, &body)
@@ -71,7 +71,7 @@ func (m *UserModule) HandlePostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := data.User{
+	user := data.DealershipUser{
 		Name:         body.Name,
 		Email:        body.Email,
 		Avatar:       body.Avatar,
@@ -79,7 +79,7 @@ func (m *UserModule) HandlePostUser(w http.ResponseWriter, r *http.Request) {
 		Role:         body.Role,
 	}
 
-	err = m.Db.Users.Insert(&user)
+	err = m.Db.DealershipUsers.Insert(&user)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
