@@ -20,39 +20,7 @@ const formOpts = formOptions({
     name: "",
     inlays: [] as PostProjectWithInlaysRequest["inlays"],
   },
-  validators: {
-    onSubmit: z.object({
-      name: z.string().min(1),
-      inlays: z
-        .array(
-          z
-            .object({
-              name: z.string(),
-              preview_url: z.string(),
-              price_group: z.int(),
-            })
-            .and(
-              z.discriminatedUnion("type", [
-                z.object({
-                  type: z.literal("catalog"),
-                  catalog_info: z.object({
-                    catalog_item_id: z.int(),
-                  }),
-                }),
-                z.object({
-                  type: z.literal("custom"),
-                  custom_info: z.object({
-                    description: z.string(),
-                    width: z.number(),
-                    height: z.number(),
-                  }),
-                }),
-              ]),
-            ),
-        )
-        .min(1),
-    }),
-  },
+  validators: {},
 });
 
 const dummyFormJustForType = createForm(() => formOpts);
@@ -77,11 +45,13 @@ function RouteComponent() {
     ...formOpts,
     onSubmit: async ({ value }) => {
       if (!query.isSuccess) return;
+      if (!("dealership_id" in query.data)) return;
 
       const body: PostProjectWithInlaysRequest = {
         ...value,
-        status: "awaiting-proof",
-        approved: false,
+        status: "draft",
+        ordered_at: null,
+        ordered_by: null,
         dealership_id: query.data.dealership_id,
       };
 

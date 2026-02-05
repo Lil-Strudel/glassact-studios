@@ -46,15 +46,6 @@ function RouteComponent() {
       }),
     },
     onSubmit: async ({ value }) => {
-      addInlay({
-        preview_url: "https://placehold.co/400",
-        name: value.catalog_number,
-        price_group: 2,
-        type: "catalog",
-        catalog_info: {
-          catalog_item_id: 1,
-        },
-      });
       navigate({ to: "/projects/create-project" });
     },
   }));
@@ -83,17 +74,6 @@ function RouteComponent() {
       }),
     },
     onSubmit: async ({ value }) => {
-      addInlay({
-        preview_url: "https://placehold.co/400",
-        name: value.project_name,
-        price_group: 2,
-        type: "custom",
-        custom_info: {
-          description: value.description,
-          width: Number(value.width),
-          height: Number(value.height),
-        },
-      });
       navigate({ to: "/projects/create-project" });
     },
   }));

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
-import { GET, Inlay, Project, ProjectStatus, UserRole } from "@glassact/data";
+import { GET, Inlay, Project, ProjectStatus } from "@glassact/data";
 import { Button, Breadcrumb } from "@glassact/ui";
 import { IoAddCircleOutline, IoCheckmarkCircleOutline } from "solid-icons/io";
 import { Component, Index, Show } from "solid-js";
@@ -19,34 +19,6 @@ function RouteComponent() {
     if (!query.isSuccess) return [];
     return query.data.filter((project) => statusi.includes(project.status));
   }
-
-  const statusGroups: Record<string, Record<UserRole, ProjectStatus[]>> = {
-    needsAction: {
-      user: ["proof-in-revision", "all-proofs-accepted", "awaiting-payment"],
-      admin: ["awaiting-proof", "awaiting-invoice"],
-    },
-    pendingProjects: {
-      user: ["awaiting-proof"],
-      admin: ["proof-in-revision", "all-proofs-accepted"],
-    },
-    activeProjects: {
-      user: ["ordered", "in-production", "awaiting-invoice"],
-      admin: ["ordered", "in-production", "awaiting-payment"],
-    },
-    completedProjects: {
-      user: ["completed", "cancelled"],
-      admin: ["completed", "cancelled"],
-    },
-  } as const;
-
-  const needsActionProjects = () =>
-    getByStatusi(statusGroups.needsAction[user().role]);
-  const pendingProjects = () =>
-    getByStatusi(statusGroups.pendingProjects[user().role]);
-  const activeProjects = () =>
-    getByStatusi(statusGroups.activeProjects[user().role]);
-  const completedProjects = () =>
-    getByStatusi(statusGroups.completedProjects[user().role]);
 
   return (
     <div>
@@ -70,107 +42,7 @@ function RouteComponent() {
           </div>
 
           <div class="mt-4">
-            <div class="space-y-4">
-              <Show
-                when={needsActionProjects().length > 0}
-                fallback={
-                  <SectionMessage
-                    title="You are all caught up, nothing for you to do!"
-                    description="New projects requiring action will appear here"
-                  />
-                }
-              >
-                <Index each={needsActionProjects()}>
-                  {(item) => <ProjectCard project={item} />}
-                </Index>
-              </Show>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div>
-            <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-              Pending Projects
-            </h1>
-            <p class="mt-2 text-sm text-gray-500">
-              These projects are waiting for proofs to be created or are having
-              proofs revised.
-            </p>
-          </div>
-
-          <div class="mt-4">
-            <div class="space-y-4">
-              <Show
-                when={pendingProjects().length > 0}
-                fallback={
-                  <SectionMessage
-                    title="No pending projects at this time"
-                    description="Projects waiting for proof creation or revision will appear here"
-                  />
-                }
-              >
-                <Index each={pendingProjects()}>
-                  {(item) => <ProjectCard project={item} />}
-                </Index>
-              </Show>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div>
-            <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-              Active Projects
-            </h1>
-            <p class="mt-2 text-sm text-gray-500">
-              These are projects currently in the pipeline.
-            </p>
-          </div>
-          <div class="mt-4">
-            <div class="space-y-4">
-              <Show
-                when={activeProjects().length > 0}
-                fallback={
-                  <SectionMessage
-                    title="There are no projects currently in the pipeline"
-                    description="Active projects will appear here as they progress"
-                  />
-                }
-              >
-                <Index each={activeProjects()}>
-                  {(item) => <ProjectCard project={item} />}
-                </Index>
-              </Show>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div>
-            <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-              Completed Projects
-            </h1>
-            <p class="mt-2 text-sm text-gray-500">
-              These are projects that have been created and shipped.
-            </p>
-          </div>
-          <div class="mt-4">
-            <div class="space-y-4">
-              <Show
-                when={completedProjects().length > 0}
-                fallback={
-                  <SectionMessage
-                    title="There are no previous projects"
-                    description="Completed projects will appear here once finished"
-                  />
-                }
-              >
-                <Index each={completedProjects()}>
-                  {(item) => <ProjectCard project={item} />}
-                </Index>
-              </Show>
-            </div>
+            <div class="space-y-4"></div>
           </div>
         </div>
       </div>

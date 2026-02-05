@@ -1,10 +1,12 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
 
-import type { GET, POST, User } from "@glassact/data";
+import type { GET, POST, DealershipUser, InternalUser } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
-export async function getUserSelf(): Promise<GET<User>> {
+export async function getUserSelf(): Promise<
+  GET<DealershipUser> | GET<InternalUser>
+> {
   const res = await api.get("/user/self");
   return res.data;
 }
@@ -16,38 +18,82 @@ export function getUserSelfOpts() {
   });
 }
 
-export async function getUsers(): Promise<GET<User>[]> {
-  const res = await api.get("/user");
+export async function getDealershipUsers(): Promise<GET<DealershipUser>[]> {
+  const res = await api.get("/dealership-user");
   return res.data;
 }
 
-export function getUsersOpts() {
+export function getDealershipUsersOpts() {
   return queryOptions({
-    queryKey: ["user"],
-    queryFn: getUsers,
+    queryKey: ["dealership-user"],
+    queryFn: getDealershipUsers,
   });
 }
 
-export async function getUser(uuid: string): Promise<GET<User>> {
-  const res = await api.get(`/user/${uuid}`);
+export async function getDealershipUser(
+  uuid: string,
+): Promise<GET<DealershipUser>> {
+  const res = await api.get(`/dealership-user/${uuid}`);
   return res.data;
 }
 
-export function getUserOpts(uuid: string) {
+export function getDealershipUserOpts(uuid: string) {
   return () =>
     queryOptions({
-      queryKey: ["user", uuid],
-      queryFn: () => getUser(uuid),
+      queryKey: ["dealership-user", uuid],
+      queryFn: () => getDealershipUser(uuid),
     });
 }
 
-export async function postUser(body: POST<User>): Promise<GET<User>> {
-  const res = await api.post("/user", body);
+export async function postDealershipUser(
+  body: POST<DealershipUser>,
+): Promise<GET<DealershipUser>> {
+  const res = await api.post("/dealership-user", body);
   return res.data;
 }
 
-export function postUserOpts() {
+export function postDealershipUserOpts() {
   return mutationOptions({
-    mutationFn: postUser,
+    mutationFn: postDealershipUser,
+  });
+}
+
+export async function getInternalUsers(): Promise<GET<InternalUser>[]> {
+  const res = await api.get("/internal-user");
+  return res.data;
+}
+
+export function getInternalUsersOpts() {
+  return queryOptions({
+    queryKey: ["internal-user"],
+    queryFn: getInternalUsers,
+  });
+}
+
+export async function getInternalUser(
+  uuid: string,
+): Promise<GET<InternalUser>> {
+  const res = await api.get(`/internal-user/${uuid}`);
+  return res.data;
+}
+
+export function getInternalUserOpts(uuid: string) {
+  return () =>
+    queryOptions({
+      queryKey: ["internal-user", uuid],
+      queryFn: () => getInternalUser(uuid),
+    });
+}
+
+export async function postInternalUser(
+  body: POST<InternalUser>,
+): Promise<GET<InternalUser>> {
+  const res = await api.post("/internal-user", body);
+  return res.data;
+}
+
+export function postInternalUserOpts() {
+  return mutationOptions({
+    mutationFn: postInternalUser,
   });
 }

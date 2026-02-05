@@ -1,4 +1,4 @@
-import { GET, Inlay } from "@glassact/data";
+import { GET, Inlay, InlayChat, ChatMessageType } from "@glassact/data";
 import { Button, cn, TextField, TextFieldRoot } from "@glassact/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import { createSignal, Index, Show, type Component } from "solid-js";
@@ -7,29 +7,43 @@ import {
   postInlayChatOpts,
 } from "../queries/inlay-chat";
 import InlayProofDialog from "./inlay-proof-dialog";
+import { useUserContext } from "../providers/user";
 
 interface InlayChatboxProps {
   inlay: () => GET<Inlay>;
 }
+
 const InlayChatbox: Component<InlayChatboxProps> = (props) => {
   const query = useQuery(() =>
     getInlayChatsByInlayUUIDOpts(props.inlay().uuid),
   );
   const postInlayChat = useMutation(postInlayChatOpts);
   const queryClient = useQueryClient();
+  const userContext = useUserContext();
 
   const [newMessage, setNewMessage] = createSignal("");
   const [isDeclineFeedback, setIsDeclineFeedback] = createSignal(false);
   const [declineFeedback, setDeclineFeedback] = createSignal("");
 
+  const isDealershipMessage = (chat: GET<InlayChat>) =>
+    chat.dealership_user_id !== null;
+
   const sendMessage = () => {
     const message = newMessage().trim();
     if (message) {
+      const currentUser = userContext.user();
+      if (!currentUser) return;
+
       postInlayChat.mutate(
         {
           inlay_id: props.inlay().id,
-          sender_type: "customer",
+          dealership_user_id:
+            "dealership_id" in currentUser ? currentUser.id : null,
+          internal_user_id:
+            "dealership_id" in currentUser ? null : currentUser.id,
+          message_type: "text" as ChatMessageType,
           message,
+          attachment_url: null,
         },
         {
           onSettled() {
@@ -92,7 +106,7 @@ const InlayChatbox: Component<InlayChatboxProps> = (props) => {
                   <div
                     class={cn(
                       "flex",
-                      chat().sender_type === "customer"
+                      isDealershipMessage(chat())
                         ? "justify-end"
                         : "justify-start",
                     )}
@@ -100,7 +114,7 @@ const InlayChatbox: Component<InlayChatboxProps> = (props) => {
                     <div
                       class={cn(
                         "max-w-xs lg:max-w-md px-4 py-2 rounded-lg",
-                        chat().sender_type === "customer"
+                        isDealershipMessage(chat())
                           ? "bg-primary text-white"
                           : "bg-gray-100 text-gray-900",
                       )}
@@ -181,7 +195,7 @@ const InlayChatbox: Component<InlayChatboxProps> = (props) => {
                       <p
                         class={cn(
                           "text-xs mt-1",
-                          chat().sender_type === "customer"
+                          isDealershipMessage(chat())
                             ? "text-primary-100"
                             : "text-gray-500",
                         )}
@@ -197,8 +211,9 @@ const InlayChatbox: Component<InlayChatboxProps> = (props) => {
               </Index>
               <Show
                 when={
-                  query.data![query.data!.length - 1]?.sender_type ===
-                  "customer"
+                  query.data &&
+                  query.data.length > 0 &&
+                  isDealershipMessage(query.data[query.data.length - 1])
                 }
               >
                 <div class="flex justify-center">

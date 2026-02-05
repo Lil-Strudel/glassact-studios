@@ -84,17 +84,13 @@ function RouteComponent() {
                                       {inlay().name}
                                     </a>
                                   </h4>
-                                  <p class="ml-4 text-sm font-medium text-gray-900">
-                                    ~{formatMoney(inlay().price_group * 24)}
-                                  </p>
+                                  <p class="ml-4 text-sm font-medium text-gray-900"></p>
                                 </div>
                                 <p class="mt-1 text-sm text-gray-500">
                                   {inlay().type[0].toUpperCase()}
                                   {inlay().type.slice(1)}
                                 </p>
-                                <p class="mt-1 text-sm text-gray-500">
-                                  PG-{inlay().price_group}
-                                </p>
+                                <p class="mt-1 text-sm text-gray-500"></p>
                               </div>
 
                               <div class="mt-4 flex flex-1 items-end justify-between">
@@ -157,12 +153,6 @@ function RouteComponent() {
                     children={(state) => (
                       <dd class="ml-4 text-base font-medium text-gray-900">
                         ~
-                        {formatMoney(
-                          state().inlays.reduce(
-                            (acc, cur) => cur.price_group * 24 + acc,
-                            0,
-                          ),
-                        )}
                       </dd>
                     )}
                   />

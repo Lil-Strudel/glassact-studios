@@ -1,16 +1,3 @@
-import { DealershipUser } from "./dealership-users";
-import { InternalUser } from "./internal-users";
-
-export type User = DealershipUser | InternalUser;
-
-export function isDealershipUser(user: User): user is DealershipUser {
-  return "dealership_id" in user;
-}
-
-export function isInternalUser(user: User): user is InternalUser {
-  return !("dealership_id" in user);
-}
-
 export const PERMISSION_ACTIONS = {
   CREATE_PROJECT: "create_project",
   APPROVE_PROOF: "approve_proof",

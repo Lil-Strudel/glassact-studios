@@ -1,4 +1,11 @@
-import { GET, User, isDealershipUser, isInternalUser, PERMISSION_ACTIONS } from "@glassact/data";
+import {
+  GET,
+  DealershipUser,
+  InternalUser,
+  DealershipUserRole,
+  InternalUserRole,
+  PERMISSION_ACTIONS,
+} from "@glassact/data";
 import {
   createContext,
   createSignal,
@@ -18,7 +25,7 @@ export interface UserState {
   status: () => UserStatus;
   setStatus: Setter<UserStatus>;
   deferredStatus: () => DeferredPromise<SettledUserStatus>;
-  user: () => GET<User> | null;
+  user: () => (GET<DealershipUser> | GET<InternalUser>) | null;
   isDealership: () => boolean;
   isInternal: () => boolean;
   can: (action: string) => boolean;
@@ -58,24 +65,25 @@ export const UserProvider: ParentComponent = (props) => {
 
   const isDealership = () => {
     const u = user();
-    return u ? isDealershipUser(u) : false;
+    return u ? "dealership_id" in u : false;
   };
 
   const isInternal = () => {
     const u = user();
-    return u ? isInternalUser(u) : false;
+    return u ? !("dealership_id" in u) : false;
   };
 
   const can = (action: string) => {
     const u = user();
     if (!u) return false;
 
-    const role = u.role;
-
-    if (isDealershipUser(u)) {
+    if ("dealership_id" in u) {
+      const role = u.role as DealershipUserRole;
       switch (action) {
         case PERMISSION_ACTIONS.CREATE_PROJECT:
-          return role === "submitter" || role === "approver" || role === "admin";
+          return (
+            role === "submitter" || role === "approver" || role === "admin"
+          );
         case PERMISSION_ACTIONS.APPROVE_PROOF:
           return role === "approver" || role === "admin";
         case PERMISSION_ACTIONS.PLACE_ORDER:
@@ -91,7 +99,8 @@ export const UserProvider: ParentComponent = (props) => {
         default:
           return false;
       }
-    } else if (isInternalUser(u)) {
+    } else {
+      const role = u.role as InternalUserRole;
       switch (action) {
         case PERMISSION_ACTIONS.CREATE_PROOF:
           return role === "designer" || role === "admin";
@@ -109,12 +118,20 @@ export const UserProvider: ParentComponent = (props) => {
           return false;
       }
     }
-
-    return false;
   };
 
   return (
-    <UserContext.Provider value={{ status, setStatus, deferredStatus, user, isDealership, isInternal, can }}>
+    <UserContext.Provider
+      value={{
+        status,
+        setStatus,
+        deferredStatus,
+        user,
+        isDealership,
+        isInternal,
+        can,
+      }}
+    >
       {props.children}
     </UserContext.Provider>
   );

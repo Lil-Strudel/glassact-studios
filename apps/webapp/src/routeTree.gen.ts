@@ -26,6 +26,8 @@ import { Route as AppProjectsCreateProjectIndexRouteImport } from './routes/_app
 import { Route as AppProjectsCreateProjectAddInlayRouteImport } from './routes/_app/projects_.create-project.add-inlay'
 import { Route as AppDealershipIdUsersRouteImport } from './routes/_app/dealership.$id.users'
 import { Route as AppDealershipIdSettingsRouteImport } from './routes/_app/dealership.$id.settings'
+import { Route as AppAdminUsersInternalRouteImport } from './routes/_app/admin.users.internal'
+import { Route as AppAdminUsersDealershipRouteImport } from './routes/_app/admin.users.dealership'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -114,6 +116,16 @@ const AppDealershipIdSettingsRoute = AppDealershipIdSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppDealershipIdRoute,
 } as any)
+const AppAdminUsersInternalRoute = AppAdminUsersInternalRouteImport.update({
+  id: '/internal',
+  path: '/internal',
+  getParentRoute: () => AppAdminUsersRoute,
+} as any)
+const AppAdminUsersDealershipRoute = AppAdminUsersDealershipRouteImport.update({
+  id: '/dealership',
+  path: '/dealership',
+  getParentRoute: () => AppAdminUsersRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -124,10 +136,12 @@ export interface FileRoutesByFullPath {
   '/projects': typeof AppProjectsRoute
   '/settings': typeof AppSettingsRoute
   '/admin/dealerships': typeof AppAdminDealershipsRoute
-  '/admin/users': typeof AppAdminUsersRoute
+  '/admin/users': typeof AppAdminUsersRouteWithChildren
   '/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/projects/$id': typeof AppProjectsIdRoute
   '/projects/create-project': typeof AppProjectsCreateProjectRouteWithChildren
+  '/admin/users/dealership': typeof AppAdminUsersDealershipRoute
+  '/admin/users/internal': typeof AppAdminUsersInternalRoute
   '/dealership/$id/settings': typeof AppDealershipIdSettingsRoute
   '/dealership/$id/users': typeof AppDealershipIdUsersRoute
   '/projects/create-project/add-inlay': typeof AppProjectsCreateProjectAddInlayRoute
@@ -142,9 +156,11 @@ export interface FileRoutesByTo {
   '/projects': typeof AppProjectsRoute
   '/settings': typeof AppSettingsRoute
   '/admin/dealerships': typeof AppAdminDealershipsRoute
-  '/admin/users': typeof AppAdminUsersRoute
+  '/admin/users': typeof AppAdminUsersRouteWithChildren
   '/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/projects/$id': typeof AppProjectsIdRoute
+  '/admin/users/dealership': typeof AppAdminUsersDealershipRoute
+  '/admin/users/internal': typeof AppAdminUsersInternalRoute
   '/dealership/$id/settings': typeof AppDealershipIdSettingsRoute
   '/dealership/$id/users': typeof AppDealershipIdUsersRoute
   '/projects/create-project/add-inlay': typeof AppProjectsCreateProjectAddInlayRoute
@@ -161,10 +177,12 @@ export interface FileRoutesById {
   '/_app/projects': typeof AppProjectsRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/admin/dealerships': typeof AppAdminDealershipsRoute
-  '/_app/admin/users': typeof AppAdminUsersRoute
+  '/_app/admin/users': typeof AppAdminUsersRouteWithChildren
   '/_app/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/_app/projects_/$id': typeof AppProjectsIdRoute
   '/_app/projects_/create-project': typeof AppProjectsCreateProjectRouteWithChildren
+  '/_app/admin/users/dealership': typeof AppAdminUsersDealershipRoute
+  '/_app/admin/users/internal': typeof AppAdminUsersInternalRoute
   '/_app/dealership/$id/settings': typeof AppDealershipIdSettingsRoute
   '/_app/dealership/$id/users': typeof AppDealershipIdUsersRoute
   '/_app/projects_/create-project/add-inlay': typeof AppProjectsCreateProjectAddInlayRoute
@@ -185,6 +203,8 @@ export interface FileRouteTypes {
     | '/dealership/$id'
     | '/projects/$id'
     | '/projects/create-project'
+    | '/admin/users/dealership'
+    | '/admin/users/internal'
     | '/dealership/$id/settings'
     | '/dealership/$id/users'
     | '/projects/create-project/add-inlay'
@@ -202,6 +222,8 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/dealership/$id'
     | '/projects/$id'
+    | '/admin/users/dealership'
+    | '/admin/users/internal'
     | '/dealership/$id/settings'
     | '/dealership/$id/users'
     | '/projects/create-project/add-inlay'
@@ -221,6 +243,8 @@ export interface FileRouteTypes {
     | '/_app/dealership/$id'
     | '/_app/projects_/$id'
     | '/_app/projects_/create-project'
+    | '/_app/admin/users/dealership'
+    | '/_app/admin/users/internal'
     | '/_app/dealership/$id/settings'
     | '/_app/dealership/$id/users'
     | '/_app/projects_/create-project/add-inlay'
@@ -354,17 +378,45 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AppDealershipIdSettingsRouteImport
       parentRoute: typeof AppDealershipIdRoute
     }
+    '/_app/admin/users/internal': {
+      id: '/_app/admin/users/internal'
+      path: '/internal'
+      fullPath: '/admin/users/internal'
+      preLoaderRoute: typeof AppAdminUsersInternalRouteImport
+      parentRoute: typeof AppAdminUsersRoute
+    }
+    '/_app/admin/users/dealership': {
+      id: '/_app/admin/users/dealership'
+      path: '/dealership'
+      fullPath: '/admin/users/dealership'
+      preLoaderRoute: typeof AppAdminUsersDealershipRouteImport
+      parentRoute: typeof AppAdminUsersRoute
+    }
   }
 }
 
+interface AppAdminUsersRouteChildren {
+  AppAdminUsersDealershipRoute: typeof AppAdminUsersDealershipRoute
+  AppAdminUsersInternalRoute: typeof AppAdminUsersInternalRoute
+}
+
+const AppAdminUsersRouteChildren: AppAdminUsersRouteChildren = {
+  AppAdminUsersDealershipRoute: AppAdminUsersDealershipRoute,
+  AppAdminUsersInternalRoute: AppAdminUsersInternalRoute,
+}
+
+const AppAdminUsersRouteWithChildren = AppAdminUsersRoute._addFileChildren(
+  AppAdminUsersRouteChildren,
+)
+
 interface AppAdminRouteChildren {
   AppAdminDealershipsRoute: typeof AppAdminDealershipsRoute
-  AppAdminUsersRoute: typeof AppAdminUsersRoute
+  AppAdminUsersRoute: typeof AppAdminUsersRouteWithChildren
 }
 
 const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminDealershipsRoute: AppAdminDealershipsRoute,
-  AppAdminUsersRoute: AppAdminUsersRoute,
+  AppAdminUsersRoute: AppAdminUsersRouteWithChildren,
 }
 
 const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
