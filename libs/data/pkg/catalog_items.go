@@ -180,7 +180,6 @@ func (m CatalogItemModel) GetByID(id int) (*CatalogItem, bool, error) {
 
 	catalogItem := catalogItemFromGen(dest)
 
-	// Load tags
 	tags, err := m.GetTags(int(dest.ID))
 	if err != nil {
 		return nil, false, err
@@ -220,7 +219,6 @@ func (m CatalogItemModel) GetByUUID(uuidStr string) (*CatalogItem, bool, error) 
 
 	catalogItem := catalogItemFromGen(dest)
 
-	// Load tags
 	tags, err := m.GetTags(int(dest.ID))
 	if err != nil {
 		return nil, false, err
@@ -255,7 +253,6 @@ func (m CatalogItemModel) GetByCatalogCode(catalogCode string) (*CatalogItem, bo
 
 	catalogItem := catalogItemFromGen(dest)
 
-	// Load tags
 	tags, err := m.GetTags(int(dest.ID))
 	if err != nil {
 		return nil, false, err
@@ -285,7 +282,6 @@ func (m CatalogItemModel) GetAll() ([]*CatalogItem, error) {
 	for i, d := range dest {
 		catalogItem := catalogItemFromGen(d)
 
-		// Load tags for each item
 		tags, err := m.GetTags(int(d.ID))
 		if err != nil {
 			return nil, err
@@ -359,8 +355,6 @@ func (m CatalogItemModel) Delete(id int) error {
 
 	return nil
 }
-
-// Tag Management
 
 func (m CatalogItemModel) AddTag(catalogItemID int, tag string) error {
 	query := table.CatalogItemTags.INSERT(
@@ -444,7 +438,6 @@ func (m CatalogItemModel) GetByTag(tag string) ([]*CatalogItem, error) {
 	for i, d := range dest {
 		catalogItem := catalogItemFromGen(d)
 
-		// Load tags for each item
 		tags, err := m.GetTags(int(d.ID))
 		if err != nil {
 			return nil, err
@@ -479,7 +472,6 @@ func (m CatalogItemModel) GetByCategory(category string) ([]*CatalogItem, error)
 	for i, d := range dest {
 		catalogItem := catalogItemFromGen(d)
 
-		// Load tags for each item
 		tags, err := m.GetTags(int(d.ID))
 		if err != nil {
 			return nil, err

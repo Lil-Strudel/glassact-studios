@@ -14,20 +14,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type InlayCatalogInfo struct {
-	StandardTable
-	InlayID       int `json:"inlay_id"`
-	CatalogItemID int `json:"catalog_item_id"`
-}
-
-type InlayCustomInfo struct {
-	StandardTable
-	InlayID     int     `json:"inlay_id"`
-	Description string  `json:"description"`
-	Width       float64 `json:"width"`
-	Height      float64 `json:"height"`
-}
-
 type InlayType string
 
 type inlayTypes struct {
@@ -40,15 +26,31 @@ var InlayTypes = inlayTypes{
 	Custom:  InlayType("custom"),
 }
 
+type InlayCatalogInfo struct {
+	StandardTable
+	InlayID            int    `json:"inlay_id"`
+	CatalogItemID      int    `json:"catalog_item_id"`
+	CustomizationNotes string `json:"customization_notes"`
+}
+
+type InlayCustomInfo struct {
+	StandardTable
+	InlayID         int     `json:"inlay_id"`
+	Description     string  `json:"description"`
+	RequestedWidth  float64 `json:"requested_width"`
+	RequestedHeight float64 `json:"requested_height"`
+}
+
 type Inlay struct {
 	StandardTable
-	ProjectID   int               `json:"project_id"`
-	Name        string            `json:"name"`
-	PreviewURL  string            `json:"preview_url"`
-	PriceGroup  int               `json:"price_group"`
-	Type        InlayType         `json:"type"`
-	CatalogInfo *InlayCatalogInfo `json:"catalog_info,omitempty"`
-	CustomInfo  *InlayCustomInfo  `json:"custom_info,omitempty"`
+	ProjectID         int               `json:"project_id"`
+	Name              string            `json:"name"`
+	Type              InlayType         `json:"type"`
+	PreviewURL        string            `json:"preview_url"`
+	ApprovedProofID   *int              `json:"approved_proof_id,omitempty"`
+	ManufacturingStep *string           `json:"manufacturing_step,omitempty"`
+	CatalogInfo       *InlayCatalogInfo `json:"catalog_info,omitempty"`
+	CustomInfo        *InlayCustomInfo  `json:"custom_info,omitempty"`
 }
 
 type InlayModel struct {
@@ -67,9 +69,17 @@ func inlayFromGen(genInlay model.Inlays, genCatalogInfo *model.InlayCatalogInfos
 		},
 		ProjectID:  int(genInlay.ProjectID),
 		Name:       genInlay.Name,
-		PreviewURL: genInlay.PreviewURL,
-		PriceGroup: int(genInlay.PriceGroup),
 		Type:       InlayType(genInlay.Type),
+		PreviewURL: genInlay.PreviewURL,
+	}
+
+	if genInlay.ApprovedProofID != nil {
+		approvedProofID := int(*genInlay.ApprovedProofID)
+		inlay.ApprovedProofID = &approvedProofID
+	}
+
+	if genInlay.ManufacturingStep != nil {
+		inlay.ManufacturingStep = genInlay.ManufacturingStep
 	}
 
 	if genCatalogInfo != nil {
@@ -81,8 +91,9 @@ func inlayFromGen(genInlay model.Inlays, genCatalogInfo *model.InlayCatalogInfos
 				UpdatedAt: genCatalogInfo.UpdatedAt,
 				Version:   int(genCatalogInfo.Version),
 			},
-			InlayID:       int(genCatalogInfo.InlayID),
-			CatalogItemID: int(genCatalogInfo.CatalogItemID),
+			InlayID:            int(genCatalogInfo.InlayID),
+			CatalogItemID:      int(genCatalogInfo.CatalogItemID),
+			CustomizationNotes: genCatalogInfo.CustomizationNotes,
 		}
 	}
 
@@ -95,10 +106,10 @@ func inlayFromGen(genInlay model.Inlays, genCatalogInfo *model.InlayCatalogInfos
 				UpdatedAt: genCustomInfo.UpdatedAt,
 				Version:   int(genCustomInfo.Version),
 			},
-			InlayID:     int(genCustomInfo.InlayID),
-			Description: genCustomInfo.Description,
-			Width:       genCustomInfo.Width,
-			Height:      genCustomInfo.Height,
+			InlayID:         int(genCustomInfo.InlayID),
+			Description:     genCustomInfo.Description,
+			RequestedWidth:  genCustomInfo.RequestedWidth,
+			RequestedHeight: genCustomInfo.RequestedHeight,
 		}
 	}
 
@@ -121,12 +132,20 @@ func inlayToGen(in *Inlay) (*model.Inlays, error) {
 		UUID:       inlayUUID,
 		ProjectID:  int32(in.ProjectID),
 		Name:       in.Name,
-		PreviewURL: in.PreviewURL,
-		PriceGroup: int32(in.PriceGroup),
 		Type:       string(in.Type),
+		PreviewURL: in.PreviewURL,
 		UpdatedAt:  in.UpdatedAt,
 		CreatedAt:  in.CreatedAt,
 		Version:    int32(in.Version),
+	}
+
+	if in.ApprovedProofID != nil {
+		approvedProofID := int32(*in.ApprovedProofID)
+		genInlay.ApprovedProofID = &approvedProofID
+	}
+
+	if in.ManufacturingStep != nil {
+		genInlay.ManufacturingStep = in.ManufacturingStep
 	}
 
 	return &genInlay, nil
@@ -144,13 +163,14 @@ func catalogInfoToGen(ci *InlayCatalogInfo) (*model.InlayCatalogInfos, error) {
 	}
 
 	genCatalogInfo := model.InlayCatalogInfos{
-		ID:            int32(ci.ID),
-		UUID:          ciUUID,
-		InlayID:       int32(ci.InlayID),
-		CatalogItemID: int32(ci.CatalogItemID),
-		UpdatedAt:     ci.UpdatedAt,
-		CreatedAt:     ci.CreatedAt,
-		Version:       int32(ci.Version),
+		ID:                 int32(ci.ID),
+		UUID:               ciUUID,
+		InlayID:            int32(ci.InlayID),
+		CatalogItemID:      int32(ci.CatalogItemID),
+		CustomizationNotes: ci.CustomizationNotes,
+		UpdatedAt:          ci.UpdatedAt,
+		CreatedAt:          ci.CreatedAt,
+		Version:            int32(ci.Version),
 	}
 
 	return &genCatalogInfo, nil
@@ -168,15 +188,15 @@ func customInfoToGen(ci *InlayCustomInfo) (*model.InlayCustomInfos, error) {
 	}
 
 	genCustomInfo := model.InlayCustomInfos{
-		ID:          int32(ci.ID),
-		UUID:        ciUUID,
-		InlayID:     int32(ci.InlayID),
-		Description: ci.Description,
-		Width:       ci.Width,
-		Height:      ci.Height,
-		UpdatedAt:   ci.UpdatedAt,
-		CreatedAt:   ci.CreatedAt,
-		Version:     int32(ci.Version),
+		ID:              int32(ci.ID),
+		UUID:            ciUUID,
+		InlayID:         int32(ci.InlayID),
+		Description:     ci.Description,
+		RequestedWidth:  ci.RequestedWidth,
+		RequestedHeight: ci.RequestedHeight,
+		UpdatedAt:       ci.UpdatedAt,
+		CreatedAt:       ci.CreatedAt,
+		Version:         int32(ci.Version),
 	}
 
 	return &genCustomInfo, nil
@@ -197,6 +217,7 @@ func (m InlayModel) insertInlaySubtypes(ctx context.Context, executor qrm.Querya
 		catalogQuery := table.InlayCatalogInfos.INSERT(
 			table.InlayCatalogInfos.InlayID,
 			table.InlayCatalogInfos.CatalogItemID,
+			table.InlayCatalogInfos.CustomizationNotes,
 		).MODEL(
 			genCatalogInfo,
 		).RETURNING(
@@ -234,8 +255,8 @@ func (m InlayModel) insertInlaySubtypes(ctx context.Context, executor qrm.Querya
 		customQuery := table.InlayCustomInfos.INSERT(
 			table.InlayCustomInfos.InlayID,
 			table.InlayCustomInfos.Description,
-			table.InlayCustomInfos.Width,
-			table.InlayCustomInfos.Height,
+			table.InlayCustomInfos.RequestedWidth,
+			table.InlayCustomInfos.RequestedHeight,
 		).MODEL(
 			genCustomInfo,
 		).RETURNING(
@@ -280,9 +301,8 @@ func (m InlayModel) Insert(inlay *Inlay) error {
 	query := table.Inlays.INSERT(
 		table.Inlays.ProjectID,
 		table.Inlays.Name,
-		table.Inlays.PreviewURL,
-		table.Inlays.PriceGroup,
 		table.Inlays.Type,
+		table.Inlays.PreviewURL,
 	).MODEL(
 		genInlay,
 	).RETURNING(
@@ -330,9 +350,8 @@ func (m InlayModel) TxInsert(tx *sql.Tx, inlay *Inlay) error {
 	query := table.Inlays.INSERT(
 		table.Inlays.ProjectID,
 		table.Inlays.Name,
-		table.Inlays.PreviewURL,
-		table.Inlays.PriceGroup,
 		table.Inlays.Type,
+		table.Inlays.PreviewURL,
 	).MODEL(
 		genInlay,
 	).RETURNING(
@@ -486,9 +505,8 @@ func (m InlayModel) Update(inlay *Inlay) error {
 	query := table.Inlays.UPDATE(
 		table.Inlays.ProjectID,
 		table.Inlays.Name,
-		table.Inlays.PreviewURL,
-		table.Inlays.PriceGroup,
 		table.Inlays.Type,
+		table.Inlays.PreviewURL,
 	).MODEL(
 		genInlay,
 	).WHERE(
@@ -518,6 +536,7 @@ func (m InlayModel) Update(inlay *Inlay) error {
 
 		catalogQuery := table.InlayCatalogInfos.UPDATE(
 			table.InlayCatalogInfos.CatalogItemID,
+			table.InlayCatalogInfos.CustomizationNotes,
 		).MODEL(
 			genCatalogInfo,
 		).WHERE(
@@ -548,8 +567,8 @@ func (m InlayModel) Update(inlay *Inlay) error {
 
 		customQuery := table.InlayCustomInfos.UPDATE(
 			table.InlayCustomInfos.Description,
-			table.InlayCustomInfos.Width,
-			table.InlayCustomInfos.Height,
+			table.InlayCustomInfos.RequestedWidth,
+			table.InlayCustomInfos.RequestedHeight,
 		).MODEL(
 			genCustomInfo,
 		).WHERE(
