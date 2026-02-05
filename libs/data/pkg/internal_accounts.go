@@ -14,21 +14,21 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type Account struct {
+type InternalAccount struct {
 	StandardTable
-	UserID            int    `json:"user_id"`
+	InternalUserID    int    `json:"internal_user_id"`
 	Type              string `json:"type"`
 	Provider          string `json:"provider"`
 	ProviderAccountID string `json:"provider_account_id"`
 }
 
-type AccountModel struct {
+type InternalAccountModel struct {
 	DB   *pgxpool.Pool
 	STDB *sql.DB
 }
 
-func accountFromGen(genAcc model.Accounts) *Account {
-	account := Account{
+func internalAccountFromGen(genAcc model.InternalAccounts) *InternalAccount {
+	account := InternalAccount{
 		StandardTable: StandardTable{
 			ID:        int(genAcc.ID),
 			UUID:      genAcc.UUID.String(),
@@ -36,7 +36,7 @@ func accountFromGen(genAcc model.Accounts) *Account {
 			UpdatedAt: genAcc.UpdatedAt,
 			Version:   int(genAcc.Version),
 		},
-		UserID:            int(genAcc.UserID),
+		InternalUserID:    int(genAcc.InternalUserID),
 		Type:              genAcc.Type,
 		Provider:          genAcc.Provider,
 		ProviderAccountID: genAcc.ProviderAccountID,
@@ -45,7 +45,7 @@ func accountFromGen(genAcc model.Accounts) *Account {
 	return &account
 }
 
-func accountToGen(a *Account) (*model.Accounts, error) {
+func internalAccountToGen(a *InternalAccount) (*model.InternalAccounts, error) {
 	var accountUUID uuid.UUID
 	var err error
 
@@ -56,10 +56,10 @@ func accountToGen(a *Account) (*model.Accounts, error) {
 		}
 	}
 
-	genAcc := model.Accounts{
+	genAcc := model.InternalAccounts{
 		ID:                int32(a.ID),
 		UUID:              accountUUID,
-		UserID:            int32(a.UserID),
+		InternalUserID:    int32(a.InternalUserID),
 		Type:              a.Type,
 		Provider:          a.Provider,
 		ProviderAccountID: a.ProviderAccountID,
@@ -71,31 +71,31 @@ func accountToGen(a *Account) (*model.Accounts, error) {
 	return &genAcc, nil
 }
 
-func (m AccountModel) Insert(account *Account) error {
-	genAcc, err := accountToGen(account)
+func (m InternalAccountModel) Insert(account *InternalAccount) error {
+	genAcc, err := internalAccountToGen(account)
 	if err != nil {
 		return err
 	}
 
-	query := table.Accounts.INSERT(
-		table.Accounts.UserID,
-		table.Accounts.Type,
-		table.Accounts.Provider,
-		table.Accounts.ProviderAccountID,
+	query := table.InternalAccounts.INSERT(
+		table.InternalAccounts.InternalUserID,
+		table.InternalAccounts.Type,
+		table.InternalAccounts.Provider,
+		table.InternalAccounts.ProviderAccountID,
 	).MODEL(
 		genAcc,
 	).RETURNING(
-		table.Accounts.ID,
-		table.Accounts.UUID,
-		table.Accounts.UpdatedAt,
-		table.Accounts.CreatedAt,
-		table.Accounts.Version,
+		table.InternalAccounts.ID,
+		table.InternalAccounts.UUID,
+		table.InternalAccounts.UpdatedAt,
+		table.InternalAccounts.CreatedAt,
+		table.InternalAccounts.Version,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	var dest model.Accounts
+	var dest model.InternalAccounts
 	err = query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		return err
@@ -110,19 +110,19 @@ func (m AccountModel) Insert(account *Account) error {
 	return nil
 }
 
-func (m AccountModel) GetByID(id int) (*Account, bool, error) {
+func (m InternalAccountModel) GetByID(id int) (*InternalAccount, bool, error) {
 	query := postgres.SELECT(
-		table.Accounts.AllColumns,
+		table.InternalAccounts.AllColumns,
 	).FROM(
-		table.Accounts,
+		table.InternalAccounts,
 	).WHERE(
-		table.Accounts.ID.EQ(postgres.Int(int64(id))),
+		table.InternalAccounts.ID.EQ(postgres.Int(int64(id))),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	var dest model.Accounts
+	var dest model.InternalAccounts
 	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		switch {
@@ -133,27 +133,27 @@ func (m AccountModel) GetByID(id int) (*Account, bool, error) {
 		}
 	}
 
-	return accountFromGen(dest), true, nil
+	return internalAccountFromGen(dest), true, nil
 }
 
-func (m AccountModel) GetByUUID(uuidStr string) (*Account, bool, error) {
+func (m InternalAccountModel) GetByUUID(uuidStr string) (*InternalAccount, bool, error) {
 	parsedUUID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return nil, false, err
 	}
 
 	query := postgres.SELECT(
-		table.Accounts.AllColumns,
+		table.InternalAccounts.AllColumns,
 	).FROM(
-		table.Accounts,
+		table.InternalAccounts,
 	).WHERE(
-		table.Accounts.UUID.EQ(postgres.UUID(parsedUUID)),
+		table.InternalAccounts.UUID.EQ(postgres.UUID(parsedUUID)),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	var dest model.Accounts
+	var dest model.InternalAccounts
 	err = query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		switch {
@@ -164,25 +164,25 @@ func (m AccountModel) GetByUUID(uuidStr string) (*Account, bool, error) {
 		}
 	}
 
-	return accountFromGen(dest), true, nil
+	return internalAccountFromGen(dest), true, nil
 }
 
-func (m AccountModel) GetByProvider(provider string, providerAccountID string) (*Account, bool, error) {
+func (m InternalAccountModel) GetByProvider(provider string, providerAccountID string) (*InternalAccount, bool, error) {
 	query := postgres.SELECT(
-		table.Accounts.AllColumns,
+		table.InternalAccounts.AllColumns,
 	).FROM(
-		table.Accounts,
+		table.InternalAccounts,
 	).WHERE(
 		postgres.AND(
-			table.Accounts.Provider.EQ(postgres.String(provider)),
-			table.Accounts.ProviderAccountID.EQ(postgres.String(providerAccountID)),
+			table.InternalAccounts.Provider.EQ(postgres.String(provider)),
+			table.InternalAccounts.ProviderAccountID.EQ(postgres.String(providerAccountID)),
 		),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	var dest model.Accounts
+	var dest model.InternalAccounts
 	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		switch {
@@ -193,36 +193,36 @@ func (m AccountModel) GetByProvider(provider string, providerAccountID string) (
 		}
 	}
 
-	return accountFromGen(dest), true, nil
+	return internalAccountFromGen(dest), true, nil
 }
 
-func (m AccountModel) Update(account *Account) error {
-	genAcc, err := accountToGen(account)
+func (m InternalAccountModel) Update(account *InternalAccount) error {
+	genAcc, err := internalAccountToGen(account)
 	if err != nil {
 		return err
 	}
 
-	query := table.Accounts.UPDATE(
-		table.Accounts.Type,
-		table.Accounts.Provider,
-		table.Accounts.ProviderAccountID,
-		table.Accounts.Version,
+	query := table.InternalAccounts.UPDATE(
+		table.InternalAccounts.Type,
+		table.InternalAccounts.Provider,
+		table.InternalAccounts.ProviderAccountID,
+		table.InternalAccounts.Version,
 	).MODEL(
 		genAcc,
 	).WHERE(
 		postgres.AND(
-			table.Accounts.ID.EQ(postgres.Int(int64(account.ID))),
-			table.Accounts.Version.EQ(postgres.Int(int64(account.Version))),
+			table.InternalAccounts.ID.EQ(postgres.Int(int64(account.ID))),
+			table.InternalAccounts.Version.EQ(postgres.Int(int64(account.Version))),
 		),
 	).RETURNING(
-		table.Accounts.UpdatedAt,
-		table.Accounts.Version,
+		table.InternalAccounts.UpdatedAt,
+		table.InternalAccounts.Version,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	var dest model.Accounts
+	var dest model.InternalAccounts
 	err = query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		return err
@@ -234,9 +234,9 @@ func (m AccountModel) Update(account *Account) error {
 	return nil
 }
 
-func (m AccountModel) Delete(id int) error {
-	query := table.Accounts.DELETE().WHERE(
-		table.Accounts.ID.EQ(postgres.Int(int64(id))),
+func (m InternalAccountModel) Delete(id int) error {
+	query := table.InternalAccounts.DELETE().WHERE(
+		table.InternalAccounts.ID.EQ(postgres.Int(int64(id))),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
