@@ -329,3 +329,68 @@ func (m DealershipUserModel) Delete(id int) error {
 
 	return nil
 }
+
+func (u *DealershipUser) GetID() int {
+	return u.ID
+}
+
+func (u *DealershipUser) GetUUID() string {
+	return u.UUID
+}
+
+func (u *DealershipUser) GetEmail() string {
+	return u.Email
+}
+
+func (u *DealershipUser) GetName() string {
+	return u.Name
+}
+
+func (u *DealershipUser) GetAvatar() string {
+	return u.Avatar
+}
+
+func (u *DealershipUser) GetRole() string {
+	return string(u.Role)
+}
+
+func (u *DealershipUser) GetIsActive() bool {
+	return u.IsActive
+}
+
+func (u *DealershipUser) IsInternal() bool {
+	return false
+}
+
+func (u *DealershipUser) IsDealership() bool {
+	return true
+}
+
+func (u *DealershipUser) GetDealershipID() *int {
+	return &u.DealershipID
+}
+
+func (u *DealershipUser) Can(action string) bool {
+	switch action {
+	case ActionCreateProject:
+		return u.Role == DealershipUserRoles.Submitter ||
+			u.Role == DealershipUserRoles.Approver ||
+			u.Role == DealershipUserRoles.Admin
+	case ActionApproveProof:
+		return u.Role == DealershipUserRoles.Approver ||
+			u.Role == DealershipUserRoles.Admin
+	case ActionPlaceOrder:
+		return u.Role == DealershipUserRoles.Approver ||
+			u.Role == DealershipUserRoles.Admin
+	case ActionPayInvoice:
+		return u.Role == DealershipUserRoles.Admin
+	case ActionManageDealershipUsers:
+		return u.Role == DealershipUserRoles.Admin
+	case ActionViewProjects:
+		return true
+	case ActionViewInvoices:
+		return true
+	default:
+		return false
+	}
+}

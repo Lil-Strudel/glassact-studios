@@ -25,10 +25,24 @@ import (
 	"golang.org/x/oauth2/microsoft"
 )
 
-func (m *AuthModule) login(userID int, w http.ResponseWriter) error {
-	refreshToken, err := m.Db.DealershipTokens.New(userID, 30*24*time.Hour, data.DealershipScopeRefresh)
-	if err != nil {
-		return err
+func (m *AuthModule) login(user data.AuthUser, w http.ResponseWriter) error {
+	var plaintext string
+	var expiry time.Time
+
+	if user.IsDealership() {
+		refreshToken, err := m.Db.DealershipTokens.New(user.GetID(), 30*24*time.Hour, data.DealershipScopeRefresh)
+		if err != nil {
+			return err
+		}
+		plaintext = refreshToken.Plaintext
+		expiry = refreshToken.Expiry
+	} else {
+		refreshToken, err := m.Db.InternalTokens.New(user.GetID(), 30*24*time.Hour, data.InternalScopeRefresh)
+		if err != nil {
+			return err
+		}
+		plaintext = refreshToken.Plaintext
+		expiry = refreshToken.Expiry
 	}
 
 	secure := false
@@ -38,9 +52,9 @@ func (m *AuthModule) login(userID int, w http.ResponseWriter) error {
 
 	cookie := http.Cookie{
 		Name:     "refresh_token",
-		Value:    refreshToken.Plaintext,
+		Value:    plaintext,
 		Path:     "/api/auth",
-		Expires:  refreshToken.Expiry,
+		Expires:  expiry,
 		Secure:   secure,
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
@@ -154,9 +168,7 @@ func getMicrosoftUserInfo(token string) (*microsoftInfoResponse, error) {
 	return &data, nil
 }
 
-func (m *AuthModule) getUserFromProvider(email, provider, providerID string) (*data.DealershipUser, bool, error) {
-	var user *data.DealershipUser
-
+func (m *AuthModule) getUserFromProvider(email, provider, providerID string) (data.AuthUser, bool, error) {
 	existingAccount, found, err := m.Db.DealershipAccounts.GetByProvider(provider, providerID)
 	if err != nil {
 		return nil, false, err
@@ -168,23 +180,21 @@ func (m *AuthModule) getUserFromProvider(email, provider, providerID string) (*d
 			return nil, false, err
 		}
 
-		if !found {
+		if !found || !existingUser.IsActive {
 			return nil, false, nil
 		}
 
-		user = existingUser
-	} else {
-		existingUser, found, err := m.Db.DealershipUsers.GetByEmail(email)
-		if err != nil {
-			return nil, false, err
-		}
+		return existingUser, true, nil
+	}
 
-		if !found {
-			return nil, false, nil
-		}
+	dealershipUser, found, err := m.Db.DealershipUsers.GetByEmail(email)
+	if err != nil {
+		return nil, false, err
+	}
 
+	if found && dealershipUser.IsActive {
 		newAccount := data.DealershipAccount{
-			DealershipUserID:  existingUser.ID,
+			DealershipUserID:  dealershipUser.ID,
 			Type:              "oidc",
 			Provider:          provider,
 			ProviderAccountID: providerID,
@@ -195,10 +205,49 @@ func (m *AuthModule) getUserFromProvider(email, provider, providerID string) (*d
 			return nil, false, err
 		}
 
-		user = existingUser
+		return dealershipUser, true, nil
 	}
 
-	return user, true, nil
+	internalAccount, found, err := m.Db.InternalAccounts.GetByProvider(provider, providerID)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if found {
+		internalUser, found, err := m.Db.InternalUsers.GetByID(internalAccount.InternalUserID)
+		if err != nil {
+			return nil, false, err
+		}
+
+		if !found || !internalUser.IsActive {
+			return nil, false, nil
+		}
+
+		return internalUser, true, nil
+	}
+
+	internalUser, found, err := m.Db.InternalUsers.GetByEmail(email)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if found && internalUser.IsActive {
+		newAccount := data.InternalAccount{
+			InternalUserID:    internalUser.ID,
+			Type:              "oidc",
+			Provider:          provider,
+			ProviderAccountID: providerID,
+		}
+
+		err = m.Db.InternalAccounts.Insert(&newAccount)
+		if err != nil {
+			return nil, false, err
+		}
+
+		return internalUser, true, nil
+	}
+
+	return nil, false, nil
 }
 
 func (m *AuthModule) emailMagicLink(email, token string) error {

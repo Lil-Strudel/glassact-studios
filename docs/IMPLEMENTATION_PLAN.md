@@ -17,19 +17,19 @@ This document outlines the complete implementation plan for the GlassAct Studios
 
 ## Project Status
 
-**Last Updated:** February 4, 2026
+**Last Updated:** February 5, 2026
 
-| Phase                             | Status      | Progress | Notes                                               |
-| --------------------------------- | ----------- | -------- | --------------------------------------------------- |
-| **Phase 1: Foundation**           | ✅ COMPLETE | 100%     | Go models and TypeScript types complete. |
-| **Phase 2: Auth & Permissions**   | ⏳ Pending  | 0%       | Ready to start                                      |
-| **Phase 3: Catalog System**       | ⏳ Pending  | 0%       | Ready to start                                      |
-| **Phase 4: Project & Inlay Flow** | ⏳ Pending  | 0%       | Ready to start                                      |
-| **Phase 5: Chat & Proofs**        | ⏳ Pending  | 0%       | Ready to start                                      |
-| **Phase 6: Manufacturing**        | ⏳ Pending  | 0%       | Ready to start                                      |
-| **Phase 7: Notifications**        | ⏳ Pending  | 0%       | Ready to start                                      |
-| **Phase 8: Invoicing**            | ⏳ Pending  | 0%       | Ready to start                                      |
-| **Phase 9: Dashboards**           | ⏳ Pending  | 0%       | Ready to start                                      |
+| Phase                             | Status      | Progress | Notes                                                           |
+| --------------------------------- | ----------- | -------- | --------------------------------------------------------------- |
+| **Phase 1: Foundation**           | ✅ COMPLETE | 100%     | Go models and TypeScript types complete.                        |
+| **Phase 2: Auth & Permissions**   | ✅ COMPLETE | 100%     | Dual auth, unified OAuth, permissions, user management complete |
+| **Phase 3: Catalog System**       | ⏳ Pending  | 0%       | Ready to start                           |
+| **Phase 4: Project & Inlay Flow** | ⏳ Pending  | 0%       | Ready to start                           |
+| **Phase 5: Chat & Proofs**        | ⏳ Pending  | 0%       | Ready to start                           |
+| **Phase 6: Manufacturing**        | ⏳ Pending  | 0%       | Ready to start                           |
+| **Phase 7: Notifications**        | ⏳ Pending  | 0%       | Ready to start                           |
+| **Phase 8: Invoicing**            | ⏳ Pending  | 0%       | Ready to start                           |
+| **Phase 9: Dashboards**           | ⏳ Pending  | 0%       | Ready to start                           |
 
 ---
 
@@ -502,7 +502,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 | Run migrations, regenerate Jet      | 2h   | 0.5h         | ✅ Complete                              |
 | Update Go models for renamed tables | 4h   | 1h           | ✅ Complete (dealership*\*, internal*\*) |
 | Create new Go models                | 16h  | 3h           | ✅ Complete (18 total models)            |
-| Update TypeScript types             | 8h   | Not started  | ⏳ Pending                               |
+| Update TypeScript types             | 8h   | Not started  | ✅ Complete                              |
 | Update existing tests               | 8h   | Not measured | ✅ Complete                              |
 | Write tests for new models          | 16h  | Not measured | ✅ Complete                              |
 
@@ -560,17 +560,87 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 
 ### Phase 2: Auth & Permissions (1 week)
 
+**Status:** ✅ **COMPLETE** (Feb 5, 2026)
+
 **Goal:** Support dual user types with role-based permissions
 
-| Task                      | Est. | Dependencies    |
-| ------------------------- | ---- | --------------- |
-| Dual auth middleware      | 8h   | Phase 1         |
-| Token system updates      | 4h   | Phase 1         |
-| Permission utilities (Go) | 4h   | Auth middleware |
-| `<Can>` component         | 4h   | -               |
-| Permission hooks          | 4h   | -               |
-| Route protection          | 4h   | `<Can>`         |
-| Internal login flow       | 8h   | Auth middleware |
+#### Completed Features
+
+**Backend Auth System:**
+- ✅ `AuthUser` interface implemented on both `DealershipUser` and `InternalUser`
+- ✅ Unified middleware using `GetAuthUserForToken()` for both user types
+- ✅ Generic `Can(action string)` permission system with 13 permission actions
+- ✅ Context helpers: `ContextSetAuthUser()`, `ContextGetDealershipUser()`, `ContextGetInternalUser()`
+- ✅ Permission utilities: `RequirePermission()` and `RequireRole()` middleware
+
+**Invite-Only Authentication:**
+- ✅ Unified OAuth callback checks both `dealership_users` and `internal_users` tables
+- ✅ Magic link flow supports both user types
+- ✅ Returns 401 if user not pre-registered in either table
+- ✅ Token refresh uses unified lookup with scope mapping
+
+**User Management APIs:**
+- ✅ POST/PATCH/DELETE `/api/dealership-user` (admin only)
+- ✅ POST/PATCH/DELETE `/api/internal-user` (admin only)
+- ✅ Dealership admins can only manage users in their dealership
+- ✅ Internal admins can manage all internal users
+
+**Frontend Auth System:**
+- ✅ Auth union type: `type User = DealershipUser | InternalUser`
+- ✅ Type guards: `isDealershipUser()`, `isInternalUser()`
+- ✅ Auth context with: `isDealership()`, `isInternal()`, `can(action)` helpers
+- ✅ `<Can>` component for permission-based conditional rendering
+- ✅ Permission constants export for consistency
+
+**OAuth Integration:**
+- ✅ Same OAuth flows (Google, Microsoft) for both user types
+- ✅ OAuth callback queries dealership first, then internal users
+- ✅ Automatic account linking for existing emails
+- ✅ `is_active` field enforcement for all auth flows
+
+#### Permission Actions
+
+**Dealership:**
+- `create_project` - submitter, approver, admin
+- `approve_proof` - approver, admin
+- `place_order` - approver, admin
+- `pay_invoice` - admin only
+- `manage_dealership_users` - admin only
+- `view_projects` - all roles
+- `view_invoices` - all roles
+
+**Internal:**
+- `create_proof` - designer, admin
+- `manage_kanban` - production, admin
+- `create_blocker` - production, admin
+- `create_invoice` - billing, admin
+- `manage_internal_users` - admin only
+- `view_all` - admin only
+
+#### Files Created/Modified
+
+**Backend:**
+- `libs/data/pkg/auth.go` - AuthUser interface, scope constants
+- `libs/data/pkg/permissions.go` - Permission action constants
+- `libs/data/pkg/token_lookup.go` - Unified token lookup with scope mapping
+- `libs/data/pkg/dealership_users.go` - Added AuthUser implementation, Can() method
+- `libs/data/pkg/internal_users.go` - Added AuthUser implementation, Can() method
+- `apps/api/app/context.go` - Updated to use AuthUser interface
+- `apps/api/app/permissions.go` - RequirePermission and RequireRole middleware
+- `apps/api/app/errors.go` - Added Forbidden error type
+- `apps/api/modules/auth/authHandlers.go` - Updated all handlers for dual auth
+- `apps/api/modules/auth/authServices.go` - Unified login, user lookup for both types
+- `apps/api/modules/user/userHandlers.go` - Added CRUD endpoints for user management
+- `apps/api/modules/modules.go` - Updated routes for new endpoints
+
+**Frontend:**
+- `libs/data/src/auth.ts` - Union type, type guards, permission constants
+- `libs/data/src/index.ts` - Export auth module
+- `apps/webapp/src/providers/user.tsx` - Updated with permission checking
+- `apps/webapp/src/components/Can.tsx` - Permission-based rendering component
+
+**Documentation:**
+- `.cursor/rules/backend.md` - Added auth usage examples
 
 ### Phase 3: Catalog System (1 week)
 

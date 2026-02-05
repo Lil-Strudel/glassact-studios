@@ -325,3 +325,66 @@ func (m InternalUserModel) Delete(id int) error {
 
 	return nil
 }
+
+func (u *InternalUser) GetID() int {
+	return u.ID
+}
+
+func (u *InternalUser) GetUUID() string {
+	return u.UUID
+}
+
+func (u *InternalUser) GetEmail() string {
+	return u.Email
+}
+
+func (u *InternalUser) GetName() string {
+	return u.Name
+}
+
+func (u *InternalUser) GetAvatar() string {
+	return u.Avatar
+}
+
+func (u *InternalUser) GetRole() string {
+	return string(u.Role)
+}
+
+func (u *InternalUser) GetIsActive() bool {
+	return u.IsActive
+}
+
+func (u *InternalUser) IsInternal() bool {
+	return true
+}
+
+func (u *InternalUser) IsDealership() bool {
+	return false
+}
+
+func (u *InternalUser) GetDealershipID() *int {
+	return nil
+}
+
+func (u *InternalUser) Can(action string) bool {
+	switch action {
+	case ActionCreateProof:
+		return u.Role == InternalUserRoles.Designer ||
+			u.Role == InternalUserRoles.Admin
+	case ActionManageKanban:
+		return u.Role == InternalUserRoles.Production ||
+			u.Role == InternalUserRoles.Admin
+	case ActionCreateBlocker:
+		return u.Role == InternalUserRoles.Production ||
+			u.Role == InternalUserRoles.Admin
+	case ActionCreateInvoice:
+		return u.Role == InternalUserRoles.Billing ||
+			u.Role == InternalUserRoles.Admin
+	case ActionManageInternalUsers:
+		return u.Role == InternalUserRoles.Admin
+	case ActionViewAll:
+		return u.Role == InternalUserRoles.Admin
+	default:
+		return false
+	}
+}

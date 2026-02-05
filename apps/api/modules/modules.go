@@ -57,10 +57,15 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("POST /api/project/with-inlays", protected.ThenFunc(projectModule.HandlePostProjectWithInlays))
 
 	userModule := user.NewUserModule(app)
-	mux.Handle("GET /api/user", protected.ThenFunc(userModule.HandleGetUsers))
 	mux.Handle("GET /api/user/self", protected.ThenFunc(userModule.HandleGetUserSelf))
-	mux.Handle("GET /api/user/{uuid}", protected.ThenFunc(userModule.HandleGetUserByUUID))
-	mux.Handle("POST /api/user", protected.ThenFunc(userModule.HandlePostUser))
+	mux.Handle("GET /api/dealership-user", protected.ThenFunc(userModule.HandleGetUsers))
+	mux.Handle("GET /api/dealership-user/{uuid}", protected.ThenFunc(userModule.HandleGetUserByUUID))
+	mux.Handle("POST /api/dealership-user", protected.ThenFunc(userModule.HandleCreateDealershipUser))
+	mux.Handle("PATCH /api/dealership-user/{uuid}", protected.ThenFunc(userModule.HandleUpdateDealershipUser))
+	mux.Handle("DELETE /api/dealership-user/{uuid}", protected.ThenFunc(userModule.HandleDeleteDealershipUser))
+	mux.Handle("POST /api/internal-user", protected.ThenFunc(userModule.HandleCreateInternalUser))
+	mux.Handle("PATCH /api/internal-user/{uuid}", protected.ThenFunc(userModule.HandleUpdateInternalUser))
+	mux.Handle("DELETE /api/internal-user/{uuid}", protected.ThenFunc(userModule.HandleDeleteInternalUser))
 
 	uploadModule := upload.NewUploadModule(app)
 	mux.Handle("POST /api/upload", protected.ThenFunc(uploadModule.HandlePostUpload))

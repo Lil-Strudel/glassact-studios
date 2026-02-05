@@ -93,10 +93,11 @@ func (m InlayChatModule) HandlePostInlayChat(w http.ResponseWriter, r *http.Requ
 	}
 
 	user := m.ContextGetUser(r)
+	id := user.GetID()
 
 	inlayChat := data.InlayChat{
 		InlayID:          body.InlayID,
-		DealershipUserID: &user.ID,
+		DealershipUserID: &id,
 		MessageType:      body.MessageType,
 		Message:          body.Message,
 	}

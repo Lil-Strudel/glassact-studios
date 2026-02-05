@@ -63,7 +63,12 @@ func (m *AuthModule) HandleGetGoogleAuthCallback(w http.ResponseWriter, r *http.
 		return
 	}
 
-	m.login(user.ID, w)
+	err = m.login(user, w)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
 	http.Redirect(w, r, m.Cfg.BaseURL, http.StatusFound)
 }
 
@@ -110,7 +115,12 @@ func (m *AuthModule) HandleGetMicrosoftAuthCallback(w http.ResponseWriter, r *ht
 		return
 	}
 
-	m.login(user.ID, w)
+	err = m.login(user, w)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
 	http.Redirect(w, r, m.Cfg.BaseURL, http.StatusFound)
 }
 
@@ -125,29 +135,53 @@ func (m *AuthModule) HandlePostMagicLinkAuth(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	user, found, err := m.Db.DealershipUsers.GetByEmail(body.Email)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
-	}
-	if !found {
-		m.WriteError(w, r, m.Err.AccountNotFound, nil)
-		return
-	}
-
-	loginToken, err := m.Db.DealershipTokens.New(user.ID, 2*time.Hour, data.DealershipScopeLogin)
+	dealershipUser, found, err := m.Db.DealershipUsers.GetByEmail(body.Email)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
-	err = m.emailMagicLink(body.Email, loginToken.Plaintext)
+	if found && dealershipUser.IsActive {
+		loginToken, err := m.Db.DealershipTokens.New(dealershipUser.ID, 2*time.Hour, data.DealershipScopeLogin)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+
+		err = m.emailMagicLink(body.Email, loginToken.Plaintext)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+
+		m.WriteJSON(w, r, http.StatusNoContent, nil)
+		return
+	}
+
+	internalUser, found, err := m.Db.InternalUsers.GetByEmail(body.Email)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
-	m.WriteJSON(w, r, http.StatusNoContent, nil)
+	if found && internalUser.IsActive {
+		loginToken, err := m.Db.InternalTokens.New(internalUser.ID, 2*time.Hour, data.InternalScopeLogin)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+
+		err = m.emailMagicLink(body.Email, loginToken.Plaintext)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+
+		m.WriteJSON(w, r, http.StatusNoContent, nil)
+		return
+	}
+
+	m.WriteError(w, r, m.Err.AccountNotFound, nil)
 }
 
 func (m *AuthModule) HandleGetMagicLinkCallback(w http.ResponseWriter, r *http.Request) {
@@ -158,19 +192,39 @@ func (m *AuthModule) HandleGetMagicLinkCallback(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	user, found, err := m.Db.DealershipUsers.GetForToken(data.DealershipScopeLogin, token)
+	dealershipUser, found, err := m.Db.DealershipUsers.GetForToken(data.DealershipScopeLogin, token)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
-	if !found {
-		m.WriteError(w, r, m.Err.AccountNotFound, nil)
+	if found && dealershipUser.IsActive {
+		err = m.login(dealershipUser, w)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+		http.Redirect(w, r, m.Cfg.BaseURL, http.StatusFound)
 		return
 	}
 
-	m.login(user.ID, w)
-	http.Redirect(w, r, m.Cfg.BaseURL, http.StatusFound)
+	internalUser, found, err := m.Db.InternalUsers.GetForToken(data.InternalScopeLogin, token)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	if found && internalUser.IsActive {
+		err = m.login(internalUser, w)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+		http.Redirect(w, r, m.Cfg.BaseURL, http.StatusFound)
+		return
+	}
+
+	m.WriteError(w, r, m.Err.AccountNotFound, nil)
 }
 
 func (m *AuthModule) HandlePostTokenAccess(w http.ResponseWriter, r *http.Request) {
@@ -186,26 +240,48 @@ func (m *AuthModule) HandlePostTokenAccess(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	user, found, err := m.Db.DealershipUsers.GetForToken(data.DealershipScopeRefresh, cookie.Value)
+	user, _, err := data.GetAuthUserForToken(&m.Db, data.ScopeRefresh, cookie.Value)
 	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
-	}
-
-	if !found {
 		m.WriteError(w, r, m.Err.AccountNotFound, nil)
 		return
 	}
 
-	accessToken, err := m.Db.DealershipTokens.New(user.ID, 2*time.Hour, data.DealershipScopeAccess)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
+	if user == nil {
+		m.WriteError(w, r, m.Err.AccountNotFound, nil)
 		return
 	}
 
+	var accessToken *data.DealershipToken
+	var internalAccessToken *data.InternalToken
+
+	if user.IsDealership() {
+		accessToken, err = m.Db.DealershipTokens.New(user.GetID(), 2*time.Hour, data.DealershipScopeAccess)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+	} else {
+		internalAccessToken, err = m.Db.InternalTokens.New(user.GetID(), 2*time.Hour, data.InternalScopeAccess)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+	}
+
+	var plaintext string
+	var expiry time.Time
+
+	if accessToken != nil {
+		plaintext = accessToken.Plaintext
+		expiry = accessToken.Expiry
+	} else {
+		plaintext = internalAccessToken.Plaintext
+		expiry = internalAccessToken.Expiry
+	}
+
 	m.WriteJSON(w, r, http.StatusCreated, map[string]any{
-		"access_token":     accessToken.Plaintext,
-		"access_token_exp": accessToken.Expiry,
+		"access_token":     plaintext,
+		"access_token_exp": expiry,
 	})
 }
 
@@ -224,8 +300,11 @@ func (m *AuthModule) HandleGetLogout(w http.ResponseWriter, r *http.Request) {
 
 	err = m.Db.DealershipTokens.DeleteByPlaintext(data.DealershipScopeRefresh, cookie.Value)
 	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
+		err = m.Db.InternalTokens.DeleteByPlaintext(data.InternalScopeRefresh, cookie.Value)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
 	}
 
 	newCookie := http.Cookie{

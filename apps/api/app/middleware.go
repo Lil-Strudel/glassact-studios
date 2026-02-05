@@ -73,18 +73,13 @@ func (app *Application) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		user, found, err := app.Db.DealershipUsers.GetForToken(data.DealershipScopeAccess, token)
+		user, _, err := data.GetAuthUserForToken(&app.Db, data.ScopeAccess, token)
 		if err != nil {
-			app.WriteError(w, r, app.Err.ServerError, err)
-			return
-		}
-
-		if !found {
 			app.WriteError(w, r, app.Err.AuthenticationError, nil)
 			return
 		}
 
-		r = app.ContextSetUser(r, user)
+		r = app.ContextSetAuthUser(r, user)
 
 		next.ServeHTTP(w, r)
 	})

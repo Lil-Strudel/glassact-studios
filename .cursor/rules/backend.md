@@ -596,3 +596,86 @@ app.Log.Info("user login", "email", email, "token", token)
 // GOOD
 app.Log.Info("user login", "email", email, "user_id", user.ID)
 ```
+
+## Dual Auth System (Phase 2)
+
+### Auth User Interface
+
+Both `DealershipUser` and `InternalUser` implement the `AuthUser` interface:
+
+```go
+type AuthUser interface {
+    GetID() int
+    GetUUID() string
+    GetEmail() string
+    GetName() string
+    GetAvatar() string
+    GetRole() string
+    GetIsActive() bool
+    IsInternal() bool
+    IsDealership() bool
+    GetDealershipID() *int
+    Can(action string) bool
+}
+```
+
+### Permission Checking
+
+All permissions are checked via the generic `Can()` method:
+
+```go
+user := m.ContextGetUser(r)
+
+if !user.Can(data.ActionApproveProof) {
+    m.WriteError(w, r, m.Err.Forbidden, nil)
+    return
+}
+```
+
+### Using Permission Middleware
+
+```go
+// Protect an endpoint with permission middleware
+protected := alice.New(app.Authenticate, app.RequirePermission(data.ActionApproveProof))
+mux.Handle("POST /api/proof/{uuid}/approve", protected.ThenFunc(handler))
+```
+
+### Getting Typed User
+
+Type-safe helpers for specific user types:
+
+```go
+dealershipUser := m.ContextGetDealershipUser(r)  // Panics if not dealership user
+internalUser := m.ContextGetInternalUser(r)      // Panics if not internal user
+```
+
+### Creating Users (Admin Only)
+
+```go
+user := m.ContextGetUser(r)
+
+if !user.Can(data.ActionManageDealershipUsers) {
+    m.WriteError(w, r, m.Err.Forbidden, nil)
+    return
+}
+
+newUser := &data.DealershipUser{
+    DealershipID: dealershipUser.DealershipID,
+    Name:         body.Name,
+    Email:        body.Email,
+    Role:         body.Role,
+    IsActive:     true,
+}
+
+err = m.Db.DealershipUsers.Insert(newUser)
+```
+
+### Auth Flow (Unified OAuth)
+
+OAuth callbacks now check both dealership and internal user tables (invite-only):
+
+1. User completes OAuth with provider
+2. Backend queries `dealership_users` first
+3. If not found, queries `internal_users`
+4. If found in either table and active, creates tokens and sets cookies
+5. If not found in either table, returns 401 "Account not found"

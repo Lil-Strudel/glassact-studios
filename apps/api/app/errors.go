@@ -11,6 +11,7 @@ type appError struct {
 	RecordNotFound      ErrorType
 	ServerError         ErrorType
 	AuthenticationError ErrorType
+	Forbidden           ErrorType
 	BadRequest          ErrorType
 	MissingRefreshToken ErrorType
 	AccountNotFound     ErrorType
@@ -21,6 +22,7 @@ var AppError = appError{
 	RecordNotFound:      ErrorType("record-not-found"),
 	ServerError:         ErrorType("server-error"),
 	AuthenticationError: ErrorType("authentication-error"),
+	Forbidden:           ErrorType("forbidden"),
 	BadRequest:          ErrorType("bad-request"),
 	MissingRefreshToken: ErrorType("missing-refresh-token"),
 	AccountNotFound:     ErrorType("account-not-found"),
@@ -51,6 +53,11 @@ var ErrorMap = map[ErrorType]ErrorConfig{
 	AppError.AuthenticationError: {
 		Status:   http.StatusUnauthorized,
 		Message:  `Invalid authentication credentials. Please provide an "Authorization" header in "Bearer $access_token" format.`,
+		Expected: true,
+	},
+	AppError.Forbidden: {
+		Status:   http.StatusForbidden,
+		Message:  `You do not have permission to access this resource.`,
 		Expected: true,
 	},
 	AppError.BadRequest: {
