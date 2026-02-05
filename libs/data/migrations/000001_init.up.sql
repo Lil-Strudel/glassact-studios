@@ -34,7 +34,7 @@ CREATE TYPE notification_event_type AS ENUM (
 CREATE TABLE price_groups (
     id SERIAL PRIMARY KEY,
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     base_price_cents INTEGER NOT NULL,
     description TEXT,
     is_active BOOLEAN NOT NULL DEFAULT true,
@@ -70,7 +70,7 @@ CREATE TABLE dealership_users (
     name TEXT NOT NULL,
     email CITEXT UNIQUE NOT NULL,
     avatar TEXT NOT NULL DEFAULT '',
-    role VARCHAR(50) NOT NULL CHECK (role IN ('viewer', 'submitter', 'approver', 'admin')),
+    role VARCHAR(255) NOT NULL CHECK (role IN ('viewer', 'submitter', 'approver', 'admin')),
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -112,7 +112,7 @@ CREATE TABLE internal_users (
     name TEXT NOT NULL,
     email CITEXT UNIQUE NOT NULL,
     avatar TEXT NOT NULL DEFAULT '',
-    role VARCHAR(50) NOT NULL CHECK (role IN ('designer', 'production', 'billing', 'admin')),
+    role VARCHAR(255) NOT NULL CHECK (role IN ('designer', 'production', 'billing', 'admin')),
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -149,17 +149,16 @@ CREATE INDEX idx_internal_tokens_user ON internal_tokens(internal_user_id);
 CREATE TABLE catalog_items (
     id SERIAL PRIMARY KEY,
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
-    catalog_code VARCHAR(50) UNIQUE NOT NULL,
+    catalog_code VARCHAR(255) UNIQUE NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
-    category VARCHAR(100) NOT NULL,
+    category VARCHAR(255) NOT NULL,
     default_width DOUBLE PRECISION NOT NULL,
     default_height DOUBLE PRECISION NOT NULL,
     min_width DOUBLE PRECISION NOT NULL,
     min_height DOUBLE PRECISION NOT NULL,
     default_price_group_id INTEGER NOT NULL REFERENCES price_groups ON DELETE RESTRICT,
-    preview_image_url TEXT NOT NULL,
-    design_asset_url TEXT,
+    svg_url TEXT NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -172,24 +171,12 @@ CREATE INDEX idx_catalog_items_active ON catalog_items(is_active) WHERE is_activ
 CREATE TABLE catalog_item_tags (
     id SERIAL PRIMARY KEY,
     catalog_item_id INTEGER NOT NULL REFERENCES catalog_items ON DELETE CASCADE,
-    tag VARCHAR(100) NOT NULL,
+    tag VARCHAR(255) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE(catalog_item_id, tag)
 );
 
 CREATE INDEX idx_catalog_item_tags_tag ON catalog_item_tags(tag);
-
-CREATE TABLE catalog_item_images (
-    id SERIAL PRIMARY KEY,
-    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
-    catalog_item_id INTEGER NOT NULL REFERENCES catalog_items ON DELETE CASCADE,
-    image_url TEXT NOT NULL,
-    is_primary BOOLEAN NOT NULL DEFAULT false,
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_catalog_item_images_item ON catalog_item_images(catalog_item_id);
 
 --------------------------------------------------------------------------------
 -- PROJECTS
@@ -200,7 +187,7 @@ CREATE TABLE projects (
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     dealership_id INTEGER NOT NULL REFERENCES dealerships ON DELETE RESTRICT,
     name TEXT NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'draft' CHECK (status IN (
+    status VARCHAR(255) NOT NULL DEFAULT 'draft' CHECK (status IN (
         'draft',
         'designing',
         'pending-approval',
@@ -232,10 +219,10 @@ CREATE TABLE inlays (
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     project_id INTEGER NOT NULL REFERENCES projects ON DELETE RESTRICT,
     name TEXT NOT NULL,
-    type VARCHAR(50) NOT NULL CHECK (type IN ('catalog', 'custom')),
+    type VARCHAR(255) NOT NULL CHECK (type IN ('catalog', 'custom')),
     preview_url TEXT NOT NULL DEFAULT '',
     approved_proof_id INTEGER,
-    manufacturing_step VARCHAR(50) CHECK (manufacturing_step IS NULL OR manufacturing_step IN (
+    manufacturing_step VARCHAR(255) CHECK (manufacturing_step IS NULL OR manufacturing_step IN (
         'ordered', 'materials-prep', 'cutting', 'fire-polish', 'packaging', 'shipped', 'delivered'
     )),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -251,7 +238,7 @@ CREATE TABLE inlay_catalog_infos (
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     inlay_id INTEGER NOT NULL UNIQUE REFERENCES inlays ON DELETE CASCADE,
     catalog_item_id INTEGER NOT NULL REFERENCES catalog_items ON DELETE RESTRICT,
-    customization_notes TEXT,
+    customization_notes TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     version INTEGER NOT NULL DEFAULT 1
@@ -262,8 +249,8 @@ CREATE TABLE inlay_custom_infos (
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     inlay_id INTEGER NOT NULL UNIQUE REFERENCES inlays ON DELETE CASCADE,
     description TEXT NOT NULL,
-    requested_width DOUBLE PRECISION,
-    requested_height DOUBLE PRECISION,
+    requested_width DOUBLE PRECISION NOT NULL,
+    requested_height DOUBLE PRECISION NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     version INTEGER NOT NULL DEFAULT 1
@@ -290,7 +277,7 @@ CREATE TABLE inlay_chats (
     inlay_id INTEGER NOT NULL REFERENCES inlays ON DELETE CASCADE,
     dealership_user_id INTEGER REFERENCES dealership_users ON DELETE SET NULL,
     internal_user_id INTEGER REFERENCES internal_users ON DELETE SET NULL,
-    message_type VARCHAR(50) NOT NULL DEFAULT 'text' CHECK (message_type IN (
+    message_type VARCHAR(255) NOT NULL DEFAULT 'text' CHECK (message_type IN (
         'text', 'image', 'proof_sent', 'proof_approved', 'proof_declined', 'system'
     )),
     message TEXT NOT NULL,
@@ -317,15 +304,14 @@ CREATE TABLE inlay_proofs (
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     inlay_id INTEGER NOT NULL REFERENCES inlays ON DELETE RESTRICT,
     version_number INTEGER NOT NULL,
-    preview_url TEXT NOT NULL,
-    design_asset_url TEXT,
+    design_asset_url TEXT NOT NULL,
     width DOUBLE PRECISION NOT NULL,
     height DOUBLE PRECISION NOT NULL,
     price_group_id INTEGER REFERENCES price_groups,
     price_cents INTEGER,
     scale_factor DOUBLE PRECISION NOT NULL DEFAULT 1.0,
     color_overrides JSONB NOT NULL DEFAULT '{}',
-    status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN (
+    status VARCHAR(255) NOT NULL DEFAULT 'pending' CHECK (status IN (
         'pending', 'approved', 'declined', 'superseded'
     )),
     approved_at TIMESTAMPTZ,
@@ -333,7 +319,7 @@ CREATE TABLE inlay_proofs (
     declined_at TIMESTAMPTZ,
     declined_by INTEGER REFERENCES dealership_users,
     decline_reason TEXT,
-    sent_in_chat_id INTEGER REFERENCES inlay_chats,
+    sent_in_chat_id INTEGER REFERENCES inlay_chats NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     version INTEGER NOT NULL DEFAULT 1,
@@ -354,12 +340,11 @@ CREATE TABLE inlay_milestones (
     id SERIAL PRIMARY KEY,
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     inlay_id INTEGER NOT NULL REFERENCES inlays ON DELETE RESTRICT,
-    step VARCHAR(50) NOT NULL CHECK (step IN (
+    step VARCHAR(255) NOT NULL CHECK (step IN (
         'ordered', 'materials-prep', 'cutting', 'fire-polish', 'packaging', 'shipped', 'delivered'
     )),
-    event_type VARCHAR(50) NOT NULL CHECK (event_type IN ('entered', 'exited', 'reverted')),
-    performed_by INTEGER REFERENCES internal_users,
-    notes TEXT,
+    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('entered', 'exited', 'reverted')),
+    performed_by INTEGER REFERENCES internal_users NOT NULL,
     event_time TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -374,9 +359,9 @@ CREATE TABLE inlay_blockers (
     id SERIAL PRIMARY KEY,
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     inlay_id INTEGER NOT NULL REFERENCES inlays ON DELETE RESTRICT,
-    blocker_type VARCHAR(50) NOT NULL CHECK (blocker_type IN ('soft', 'hard')),
+    blocker_type VARCHAR(255) NOT NULL CHECK (blocker_type IN ('soft', 'hard')),
     reason TEXT NOT NULL,
-    step_blocked VARCHAR(50) NOT NULL,
+    step_blocked VARCHAR(255) NOT NULL,
     created_by INTEGER REFERENCES internal_users,
     resolved_at TIMESTAMPTZ,
     resolved_by INTEGER REFERENCES internal_users,
@@ -399,7 +384,7 @@ CREATE TABLE project_chats (
     project_id INTEGER NOT NULL REFERENCES projects ON DELETE RESTRICT,
     dealership_user_id INTEGER REFERENCES dealership_users ON DELETE SET NULL,
     internal_user_id INTEGER REFERENCES internal_users ON DELETE SET NULL,
-    message_type VARCHAR(50) NOT NULL DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'system')),
+    message_type VARCHAR(255) NOT NULL DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'system')),
     message TEXT NOT NULL,
     attachment_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -442,11 +427,11 @@ CREATE TABLE invoices (
     id SERIAL PRIMARY KEY,
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     project_id INTEGER NOT NULL UNIQUE REFERENCES projects ON DELETE RESTRICT,
-    invoice_number VARCHAR(50) UNIQUE NOT NULL,
+    invoice_number VARCHAR(255) UNIQUE NOT NULL,
     subtotal_cents INTEGER NOT NULL,
     tax_cents INTEGER NOT NULL DEFAULT 0,
     total_cents INTEGER NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'paid', 'void')),
+    status VARCHAR(255) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'paid', 'void')),
     sent_at TIMESTAMPTZ,
     sent_to_email TEXT,
     paid_at TIMESTAMPTZ,

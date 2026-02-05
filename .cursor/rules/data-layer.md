@@ -5,12 +5,14 @@ These rules apply to the shared data layer in `libs/data/`.
 ## Overview
 
 The `libs/data/` package serves two purposes:
+
 1. **TypeScript types** (`src/`) - Shared types for frontend and type-safe API contracts
 2. **Go data layer** (`pkg/`) - Database models and Jet-based queries
 
 ## TypeScript Types
 
 ### Location
+
 All types live in `libs/data/src/`, one file per entity:
 
 ```
@@ -48,6 +50,7 @@ export type StandardTable<T> = hasMetadata<hasDoubleId<T>>;
 ```
 
 **Usage:**
+
 ```typescript
 // projects.ts
 import { StandardTable } from "./helpers";
@@ -203,12 +206,12 @@ export type InlayProof = StandardTable<{
   inlay_id: number;
   version_number: number;
   preview_url: string;
-  design_asset_url: string | null;  // Optional S3 URL
-  price_group_id: number | null;    // Set when proof is sent
-  price_cents: number | null;       // Future per-inlay pricing
-  approved_at: string | null;       // Set when approved
-  approved_by: number | null;       // FK to dealership_user
-  decline_reason: string | null;    // Set when declined
+  design_asset_url: string | null; // Optional S3 URL
+  price_group_id: number | null; // Set when proof is sent
+  price_cents: number | null; // Future per-inlay pricing
+  approved_at: string | null; // Set when approved
+  approved_by: number | null; // FK to dealership_user
+  decline_reason: string | null; // Set when declined
 }>;
 ```
 
@@ -343,7 +346,7 @@ func projectFromGen(gen model.Projects) *Project {
         Status:       ProjectStatus(gen.Status),
         DealershipID: int(gen.DealershipID),
     }
-    
+
     if gen.OrderedAt != nil {
         project.OrderedAt = gen.OrderedAt
     }
@@ -351,7 +354,7 @@ func projectFromGen(gen model.Projects) *Project {
         orderedBy := int(*gen.OrderedBy)
         project.OrderedBy = &orderedBy
     }
-    
+
     return project
 }
 
@@ -377,7 +380,7 @@ func projectToGen(p *Project) (*model.Projects, error) {
         UpdatedAt:    p.UpdatedAt,
         Version:      int32(p.Version),
     }
-    
+
     if p.OrderedAt != nil {
         gen.OrderedAt = p.OrderedAt
     }
@@ -643,19 +646,19 @@ func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 
 ### Naming Conventions
 
-| Concept | TypeScript | Go | SQL |
-|---------|------------|-----|-----|
-| Fields | snake_case | CamelCase | snake_case |
-| Types | PascalCase | PascalCase | snake_case |
-| Enums | string union | type + const struct | CHECK constraint |
-| FK columns | `{table}_id` | `{Table}ID` | `{table}_id` |
+| Concept    | TypeScript   | Go                  | SQL              |
+| ---------- | ------------ | ------------------- | ---------------- |
+| Fields     | snake_case   | CamelCase           | snake_case       |
+| Types      | PascalCase   | PascalCase          | snake_case       |
+| Enums      | string union | type + const struct | CHECK constraint |
+| FK columns | `{table}_id` | `{Table}ID`         | `{table}_id`     |
 
 ### Regenerating Jet Code
 
 After schema changes:
 
 ```bash
-pnpm jet:gen
+pnpm db:gen
 # or
 jet -dsn="postgresql://user:pass@localhost:5432/glassact?sslmode=disable" -path=./libs/data/pkg/gen
 ```
