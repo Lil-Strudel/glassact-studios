@@ -138,7 +138,33 @@ func getTestModels(t *testing.T) Models {
 
 func cleanupTables(t *testing.T) {
 	t.Helper()
-	_, err := testDB.STDB.Exec("TRUNCATE TABLE inlay_proofs, inlay_chats, inlay_custom_infos, inlay_catalog_infos, inlays, projects, catalog_items, tokens, accounts, users, dealerships CASCADE")
+	_, err := testDB.STDB.Exec(`TRUNCATE TABLE 
+		inlay_blockers,
+		inlay_milestones,
+		inlay_proofs,
+		inlay_chats,
+		inlay_custom_reference_images,
+		inlay_custom_infos,
+		inlay_catalog_infos,
+		inlays,
+		order_snapshots,
+		invoice_line_items,
+		invoices,
+		project_chats,
+		projects,
+		catalog_item_tags,
+		catalog_items,
+		price_groups,
+		dealership_tokens,
+		dealership_accounts,
+		internal_tokens,
+		internal_accounts,
+		dealership_user_notification_prefs,
+		internal_user_notification_prefs,
+		notifications,
+		dealership_users,
+		internal_users,
+		dealerships CASCADE`)
 	if err != nil {
 		t.Fatalf("Failed to truncate tables: %v", err)
 	}
@@ -169,20 +195,21 @@ func createTestDealership(t *testing.T, models Models) *Dealership {
 	return dealership
 }
 
-func createTestUser(t *testing.T, models Models, dealershipID int) *User {
+func createTestDealershipUser(t *testing.T, models Models, dealershipID int) *DealershipUser {
 	t.Helper()
 
-	user := &User{
+	user := &DealershipUser{
+		DealershipID: dealershipID,
 		Name:         "Test User",
 		Email:        fmt.Sprintf("test%d@example.com", time.Now().UnixNano()),
 		Avatar:       "https://example.com/avatar.png",
-		DealershipID: dealershipID,
-		Role:         UserRoles.User,
+		Role:         DealershipUserRoles.Submitter,
+		IsActive:     true,
 	}
 
-	err := models.Users.Insert(user)
+	err := models.DealershipUsers.Insert(user)
 	if err != nil {
-		t.Fatalf("Failed to create test user: %v", err)
+		t.Fatalf("Failed to create test dealership user: %v", err)
 	}
 
 	return user
@@ -192,10 +219,9 @@ func createTestProject(t *testing.T, models Models, dealershipID int) *Project {
 	t.Helper()
 
 	project := &Project{
-		Name:         "Test Project",
-		Status:       ProjectStatusi.AwaitingProof,
-		Approved:     false,
 		DealershipID: dealershipID,
+		Name:         "Test Project",
+		Status:       ProjectStatuses.Draft,
 	}
 
 	err := models.Projects.Insert(project)
@@ -206,14 +232,43 @@ func createTestProject(t *testing.T, models Models, dealershipID int) *Project {
 	return project
 }
 
-func createTestCatalogItem(t *testing.T, models Models) int {
+func createTestPriceGroup(t *testing.T, models Models) *PriceGroup {
 	t.Helper()
 
-	var id int
-	err := testDB.STDB.QueryRow("INSERT INTO catalog_items DEFAULT VALUES RETURNING id").Scan(&id)
+	priceGroup := &PriceGroup{
+		Name:           "Test Price Group",
+		BasePriceCents: 10000,
+		IsActive:       true,
+	}
+
+	err := models.PriceGroups.Insert(priceGroup)
+	if err != nil {
+		t.Fatalf("Failed to create test price group: %v", err)
+	}
+
+	return priceGroup
+}
+
+func createTestCatalogItem(t *testing.T, models Models, priceGroupID int) *CatalogItem {
+	t.Helper()
+
+	catalogItem := &CatalogItem{
+		CatalogCode:         "TEST-ITEM-001",
+		Name:                "Test Catalog Item",
+		Category:            "test-category",
+		DefaultWidth:        10.0,
+		DefaultHeight:       15.0,
+		MinWidth:            5.0,
+		MinHeight:           8.0,
+		DefaultPriceGroupID: priceGroupID,
+		SvgURL:              "https://example.com/item.svg",
+		IsActive:            true,
+	}
+
+	err := models.CatalogItems.Insert(catalogItem)
 	if err != nil {
 		t.Fatalf("Failed to create test catalog item: %v", err)
 	}
 
-	return id
+	return catalogItem
 }
