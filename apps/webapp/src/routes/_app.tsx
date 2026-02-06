@@ -39,8 +39,12 @@ const navigation = [
   { name: "Admin", to: "/admin" },
 ];
 const userNavigation = [
-  { name: "Settings", to: "/settings", props: {} },
-  { name: "Logout", to: "/api/auth/logout", props: { rel: "external" } },
+  { component: Link, name: "Settings", props: { to: "/settings" } },
+  {
+    component: "a",
+    name: "Logout",
+    props: { href: "/api/auth/logout", rel: "external" },
+  },
 ];
 
 function RouteComponent() {
@@ -99,11 +103,7 @@ function RouteComponent() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         {userNavigation.map((item) => (
-                          <DropdownMenuItem
-                            as={Link}
-                            to={item.to}
-                            {...item.props}
-                          >
+                          <DropdownMenuItem as={item.component} {...item.props}>
                             {item.name}
                           </DropdownMenuItem>
                         ))}
@@ -162,19 +162,30 @@ function RouteComponent() {
                         </Button>
                       </div>
                       <div class="mt-3 space-y-1">
-                        {userNavigation.map((item) => (
-                          <Link
-                            to={item.to}
-                            class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
-                            activeProps={{ class: "border-primary bg-red-50" }}
-                            inactiveProps={{
-                              class:
-                                "border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800",
-                            }}
-                          >
-                            {item.name}
-                          </Link>
-                        ))}
+                        {userNavigation.map((item) =>
+                          item.component === "a" ? (
+                            <a
+                              {...item.props}
+                              class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
+                            >
+                              {item.name}
+                            </a>
+                          ) : (
+                            <item.component
+                              {...item.props}
+                              class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
+                              activeProps={{
+                                class: "border-primary bg-red-50",
+                              }}
+                              inactiveProps={{
+                                class:
+                                  "border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800",
+                              }}
+                            >
+                              {item.name}
+                            </item.component>
+                          ),
+                        )}
                       </div>
                     </>
                   )}
