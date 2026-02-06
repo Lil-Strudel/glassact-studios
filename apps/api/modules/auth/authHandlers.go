@@ -300,11 +300,14 @@ func (m *AuthModule) HandleGetLogout(w http.ResponseWriter, r *http.Request) {
 
 	err = m.Db.DealershipTokens.DeleteByPlaintext(data.DealershipScopeRefresh, cookie.Value)
 	if err != nil {
-		err = m.Db.InternalTokens.DeleteByPlaintext(data.InternalScopeRefresh, cookie.Value)
-		if err != nil {
-			m.WriteError(w, r, m.Err.ServerError, err)
-			return
-		}
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	err = m.Db.InternalTokens.DeleteByPlaintext(data.InternalScopeRefresh, cookie.Value)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
 	}
 
 	newCookie := http.Cookie{

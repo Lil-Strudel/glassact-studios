@@ -6,6 +6,8 @@
     "pnpm": "10"
   },
   "scripts": {
+    "api:test": "go test -v ./apps/api/modules/...",
+    "api:test:coverage": "go test -v -coverprofile=coverage.out ./apps/api/modules/modules_test.go && go tool cover -html=coverage.out -o coverage.html",
     "dev": "mprocs",
     "dev:api": "pnpm --filter @glassact/api dev",
     "dev:landing": "pnpm --filter @glassact/landing dev",
@@ -20,8 +22,6 @@
     "db:seed": "pnpm --filter @glassact/data seed",
     "db:test": "pnpm --filter @glassact/data test",
     "db:test:coverage": "pnpm --filter @glassact/data test:coverage",
-    "db:test:race": "pnpm --filter @glassact/data test:race",
-    "db:test:bench": "pnpm --filter @glassact/data test:bench",
     "libs:build": "pnpm --filter './libs/**' build"
   },
   "devDependencies": {
