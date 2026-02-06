@@ -99,7 +99,11 @@ function RouteComponent() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         {userNavigation.map((item) => (
-                          <DropdownMenuItem as={Link} to={item.to} {...item.props}>
+                          <DropdownMenuItem
+                            as={Link}
+                            to={item.to}
+                            {...item.props}
+                          >
                             {item.name}
                           </DropdownMenuItem>
                         ))}
@@ -134,47 +138,47 @@ function RouteComponent() {
                 ))}
               </div>
               <div class="border-t border-gray-200 pb-3 pt-4">
-               <Show when={user()}>
-                   {(currentUser) => (
-                     <>
-                       <div class="flex items-center px-4">
-                         <div class="shrink-0">
-                           <img
-                             class="size-10 rounded-full"
-                             src={currentUser().avatar}
-                             alt="Avatar"
-                           />
-                         </div>
-                         <div class="ml-3">
-                           <div class="text-base font-medium text-gray-800">
-                             {currentUser().name}
-                           </div>
-                           <div class="text-sm font-medium text-gray-500">
-                             {currentUser().email}
-                           </div>
-                         </div>
-                         <Button size="icon" variant="ghost" class="ml-auto">
-                           <IoNotificationsOutline size={24} />
-                         </Button>
-                       </div>
-                       <div class="mt-3 space-y-1">
-                         {userNavigation.map((item) => (
-                           <Link
-                             to={item.to}
-                             class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
-                             activeProps={{ class: "border-primary bg-red-50" }}
-                             inactiveProps={{
-                               class:
-                                 "border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800",
-                             }}
-                           >
-                             {item.name}
-                           </Link>
-                         ))}
-                       </div>
-                     </>
-                   )}
-                 </Show>
+                <Show when={user()}>
+                  {(currentUser) => (
+                    <>
+                      <div class="flex items-center px-4">
+                        <div class="shrink-0">
+                          <img
+                            class="size-10 rounded-full"
+                            src={currentUser().avatar}
+                            alt="Avatar"
+                          />
+                        </div>
+                        <div class="ml-3">
+                          <div class="text-base font-medium text-gray-800">
+                            {currentUser().name}
+                          </div>
+                          <div class="text-sm font-medium text-gray-500">
+                            {currentUser().email}
+                          </div>
+                        </div>
+                        <Button size="icon" variant="ghost" class="ml-auto">
+                          <IoNotificationsOutline size={24} />
+                        </Button>
+                      </div>
+                      <div class="mt-3 space-y-1">
+                        {userNavigation.map((item) => (
+                          <Link
+                            to={item.to}
+                            class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
+                            activeProps={{ class: "border-primary bg-red-50" }}
+                            inactiveProps={{
+                              class:
+                                "border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800",
+                            }}
+                          >
+                            {item.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </Show>
               </div>
             </div>
           )}

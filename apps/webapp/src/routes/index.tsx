@@ -1,22 +1,21 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/solid-router";
+import { createFileRoute, Link, redirect } from "@tanstack/solid-router";
 import { Button } from "@glassact/ui";
-import { createEffect } from "solid-js";
-import { useAuthContext } from "../providers/auth";
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
+  beforeLoad: async ({ context }) => {
+    const status = await context.auth.deferredStatus().promise;
+
+    if (status === "authenticated") {
+      throw redirect({
+        to: "/dashboard",
+        replace: true,
+      });
+    }
+  },
 });
 
 function RouteComponent() {
-  const auth = useAuthContext();
-  const navigate = useNavigate();
-
-  createEffect(() => {
-    if (auth.status() === "authenticated") {
-      navigate({ to: "/dashboard", replace: true });
-    }
-  });
-
   return (
     <div>
       <div class="min-h-full">

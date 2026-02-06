@@ -4,7 +4,7 @@ packages:
 
 catalog:
   '@tanstack/solid-form': ^1.28.0
-  '@tanstack/solid-router': ^1.157.18
+  '@tanstack/solid-router': ^1.158.1
   prettier: ^3.8.1
   tailwindcss: ^3.4.19
   typescript: ^5.9.3

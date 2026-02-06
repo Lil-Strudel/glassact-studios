@@ -1,6 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/solid-router";
-import { useAuthContext } from "../providers/auth";
-import { createEffect, createSignal } from "solid-js";
+import { createFileRoute, redirect } from "@tanstack/solid-router";
+import { createSignal } from "solid-js";
 import { Button, Form, showToast } from "@glassact/ui";
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
@@ -9,11 +8,19 @@ import { postAuthMagicLinkOpts } from "../queries/auth";
 
 export const Route = createFileRoute("/login")({
   component: RouteComponent,
+  beforeLoad: async ({ context }) => {
+    const status = await context.auth.deferredStatus().promise;
+
+    if (status === "authenticated") {
+      throw redirect({
+        to: "/dashboard",
+        replace: true,
+      });
+    }
+  },
 });
 
 function RouteComponent() {
-  const auth = useAuthContext();
-  const navigate = useNavigate();
   const postAuthMagicLink = useMutation(postAuthMagicLinkOpts);
 
   const [emailSent, setEmailSent] = createSignal(false);
@@ -42,12 +49,6 @@ function RouteComponent() {
       });
     },
   }));
-
-  createEffect(() => {
-    if (auth.status() === "authenticated") {
-      navigate({ to: "/dashboard", replace: true });
-    }
-  });
 
   return (
     <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
