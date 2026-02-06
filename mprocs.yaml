@@ -3,6 +3,10 @@ procs:
     shell: "pnpm dev:webapp"
   api:
     shell: "pnpm dev:api"
+    depend_on:
+      - database
+  database:
+    shell: "docker run --rm --name glassact-postgres -e POSTGRES_USER=dev -e POSTGRES_PASSWORD=1234 -e POSTGRES_DB=glassact -v postgres_data:/var/lib/postgresql -p 5432:5432 postgis/postgis:18-3.6"
   landing:
     shell: "pnpm dev:landing"
 hide_keymap_window: true

@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 	ctx := context.Background()
 
 	container, err := postgres.Run(ctx,
-		"postgis/postgis:16-3.4",
+		"postgis/postgis:18-3.6",
 		postgres.WithDatabase("testdb"),
 		postgres.WithUsername("testuser"),
 		postgres.WithPassword("testpass"),
