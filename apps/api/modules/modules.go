@@ -9,6 +9,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dealership"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay"
 	inlayChat "github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay-chat"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/pricegroup"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/project"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/upload"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/user"
@@ -91,6 +92,14 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/catalog/browse", protected.ThenFunc(catalogModule.HandleBrowseCatalog))
 	mux.Handle("GET /api/catalog/categories", protected.ThenFunc(catalogModule.HandleGetCategories))
 	mux.Handle("GET /api/catalog/tags", protected.ThenFunc(catalogModule.HandleGetAllTags))
+
+	// Price Group routes (internal admin only)
+	priceGroupModule := pricegroup.NewPriceGroupModule(app)
+	mux.Handle("GET /api/price-groups", internalAdmin.ThenFunc(priceGroupModule.HandleGetPriceGroups))
+	mux.Handle("POST /api/price-groups", internalAdmin.ThenFunc(priceGroupModule.HandlePostPriceGroup))
+	mux.Handle("GET /api/price-groups/{uuid}", internalAdmin.ThenFunc(priceGroupModule.HandleGetPriceGroup))
+	mux.Handle("PATCH /api/price-groups/{uuid}", internalAdmin.ThenFunc(priceGroupModule.HandlePatchPriceGroup))
+	mux.Handle("DELETE /api/price-groups/{uuid}", internalAdmin.ThenFunc(priceGroupModule.HandleDeletePriceGroup))
 
 	mux.Handle("/", unprotected.ThenFunc(app.HandleNotFound))
 	return standard.Then(mux)
