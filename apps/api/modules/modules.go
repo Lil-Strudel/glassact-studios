@@ -5,6 +5,7 @@ import (
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/auth"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/catalog"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dealership"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay"
 	inlayChat "github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay-chat"
@@ -69,6 +70,27 @@ func GetRoutes(app *app.Application) http.Handler {
 
 	uploadModule := upload.NewUploadModule(app)
 	mux.Handle("POST /api/upload", protected.ThenFunc(uploadModule.HandlePostUpload))
+
+	// Catalog routes
+	internalAdmin := alice.New(app.Authenticate, app.RequireRole("admin"))
+
+	catalogModule := catalog.NewCatalogModule(app)
+
+	// Internal admin only
+	mux.Handle("GET /api/catalog", internalAdmin.ThenFunc(catalogModule.HandleGetCatalog))
+	mux.Handle("POST /api/catalog", internalAdmin.ThenFunc(catalogModule.HandlePostCatalog))
+	mux.Handle("PATCH /api/catalog/{uuid}", internalAdmin.ThenFunc(catalogModule.HandlePatchCatalog))
+	mux.Handle("DELETE /api/catalog/{uuid}", internalAdmin.ThenFunc(catalogModule.HandleDeleteCatalog))
+
+	mux.Handle("POST /api/catalog/{uuid}/tags", internalAdmin.ThenFunc(catalogModule.HandlePostTag))
+	mux.Handle("DELETE /api/catalog/{uuid}/tags/{tag}", internalAdmin.ThenFunc(catalogModule.HandleDeleteTag))
+
+	// Public routes (authenticated dealership users)
+	mux.Handle("GET /api/catalog/{uuid}", protected.ThenFunc(catalogModule.HandleGetCatalogItem))
+	mux.Handle("GET /api/catalog/{uuid}/tags", protected.ThenFunc(catalogModule.HandleGetTags))
+	mux.Handle("GET /api/catalog/browse", protected.ThenFunc(catalogModule.HandleBrowseCatalog))
+	mux.Handle("GET /api/catalog/categories", protected.ThenFunc(catalogModule.HandleGetCategories))
+	mux.Handle("GET /api/catalog/tags", protected.ThenFunc(catalogModule.HandleGetAllTags))
 
 	mux.Handle("/", unprotected.ThenFunc(app.HandleNotFound))
 	return standard.Then(mux)

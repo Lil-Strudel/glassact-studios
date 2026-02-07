@@ -169,6 +169,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      solid-icons:
+        specifier: ^1.2.0
+        version: 1.2.0(solid-js@1.9.11)
       solid-js:
         specifier: catalog:solid
         version: 1.9.11

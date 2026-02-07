@@ -8,13 +8,13 @@ import {
   Button,
   DialogTriggerProps,
   Form,
+  FileUpload,
 } from "@glassact/ui";
 import { createForm } from "@tanstack/solid-form";
 import { useQueryClient } from "@tanstack/solid-query";
 import { IoIceCreamOutline } from "solid-icons/io";
 import { type Component } from "solid-js";
 import { z } from "zod";
-import { FileUpload } from "./fileupload";
 
 const InlayProofDialog: Component = () => {
   const queryClient = useQueryClient();
@@ -61,7 +61,16 @@ const InlayProofDialog: Component = () => {
             )}
           />
 
-          <FileUpload />
+          <FileUpload
+            onUrlChange={(url) => {
+              console.log("Proof uploaded:", url);
+            }}
+            uploadPath="proofs"
+            accept=".pdf,.png,.jpg,.jpeg"
+            fileTypeLabel="PDF or Image"
+            label="Proof File"
+            description="Upload your proof design"
+          />
 
           <Button type="submit">Upload</Button>
         </form>

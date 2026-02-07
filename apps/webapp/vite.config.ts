@@ -18,6 +18,11 @@ export default defineConfig({
     port: 4000,
     proxy: {
       "/api": "http://localhost:4100",
+      "/images": {
+        target: "https://your-bucket.s3.your-region.amazonaws.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/images/, ""),
+      },
     },
   },
   build: {

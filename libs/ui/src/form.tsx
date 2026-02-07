@@ -21,6 +21,13 @@ import {
   ComboboxLabel,
   ComboboxTrigger,
 } from "./combobox";
+import {
+  FileFieldRoot,
+  FileFieldLabel,
+  FileFieldDescription,
+  FileFieldErrorMessage,
+} from "./filefield";
+import { FileUpload } from "./file-upload";
 
 function useValidationState(field: () => AnyFieldApi) {
   const [validationState, setValidationState] = createSignal<
@@ -211,9 +218,68 @@ function FormErrorLabel(props: FormErrorLabelProps) {
   );
 }
 
+interface FormFileUploadProps {
+  field: () => AnyFieldApi;
+  accept?: string;
+  maxSizeBytes?: number;
+  fileTypeLabel?: string;
+  uploadPath: string;
+  multiple?: boolean;
+  label?: string;
+  placeholder?: string;
+  description?: string;
+  class?: string;
+  fullWidth?: boolean;
+}
+
+function FormFileUpload(props: FormFileUploadProps) {
+  const {
+    field,
+    accept,
+    maxSizeBytes,
+    fileTypeLabel,
+    uploadPath,
+    multiple,
+    label,
+    placeholder,
+    description,
+    fullWidth = true,
+  } = props;
+  const validationState = useValidationState(field);
+
+  return (
+    <FileFieldRoot
+      class={cn(fullWidth && "w-full", props.class)}
+      data-invalid={validationState() === "invalid"}
+    >
+      {label && <FileFieldLabel>{label}</FileFieldLabel>}
+      <FileUpload
+        onUrlChange={(url) => field().handleChange(url)}
+        initialUrls={field().state.value}
+        accept={accept}
+        maxSizeBytes={maxSizeBytes}
+        fileTypeLabel={fileTypeLabel}
+        uploadPath={uploadPath}
+        multiple={multiple}
+        placeholder={placeholder}
+        description={description}
+      />
+      {description && (
+        <FileFieldDescription>{description}</FileFieldDescription>
+      )}
+      <FileFieldErrorMessage>
+        {field()
+          .state.meta.errors.map((error) => error?.message)
+          .join(", ")}
+      </FileFieldErrorMessage>
+    </FileFieldRoot>
+  );
+}
+
 export const Form = {
   TextField: FormTextField,
   TextArea: FormTextArea,
   Combobox: FormCombobox,
+  FileUpload: FormFileUpload,
   ErrorLabel: FormErrorLabel,
 } as const;

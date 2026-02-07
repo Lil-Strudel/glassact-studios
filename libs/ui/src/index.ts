@@ -19,6 +19,8 @@ export * from "./dropdown-menu";
 
 export * from "./filefield";
 
+export * from "./file-upload";
+
 export * from "./form";
 
 export * from "./select";

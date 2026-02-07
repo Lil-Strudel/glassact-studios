@@ -11,6 +11,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/config"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/google/uuid"
 )
 
 type UploadResult struct {
@@ -30,17 +31,33 @@ func UploadFileToS3(
 	filename string,
 	size int64,
 	contentType string,
+	uploadPath string,
 ) (*UploadResult, error) {
 	if s3Client == nil {
 		return nil, fmt.Errorf("S3 client not initialized")
 	}
 
+	// Sanitize filename and extract extension
 	filename = filepath.Base(filename)
 	filename = strings.ReplaceAll(filename, "..", "")
 	filename = strings.TrimSpace(filename)
 
-	timestamp := time.Now().Unix()
-	key := fmt.Sprintf("uploads/%d-%s", timestamp, filename)
+	ext := filepath.Ext(filename)
+	if ext == "" {
+		ext = ".bin"
+	}
+
+	// Generate UUID-based filename: {uuid}.{ext}
+	newFilename := uuid.New().String() + ext
+
+	// Ensure uploadPath is not empty
+	if uploadPath == "" {
+		uploadPath = "uploads"
+	} else {
+		uploadPath = "uploads/" + uploadPath
+	}
+
+	key := fmt.Sprintf("%s/%s", uploadPath, newFilename)
 
 	_, err := s3Client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:        aws.String(cfg.S3.Bucket),
@@ -53,10 +70,11 @@ func UploadFileToS3(
 		return nil, fmt.Errorf("failed to upload file to S3: %w", err)
 	}
 
-	url := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", cfg.S3.Bucket, cfg.S3.Region, key)
+	// Return relative path for proxy to handle
+	relativeURL := fmt.Sprintf("/images/%s", key)
 
 	result := &UploadResult{
-		URL:         url,
+		URL:         relativeURL,
 		Filename:    filename,
 		Size:        size,
 		ContentType: contentType,
