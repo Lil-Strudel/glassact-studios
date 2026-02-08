@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/solid-router";
 import { createSignal, Show } from "solid-js";
 import { useQuery } from "@tanstack/solid-query";
 import { browseCatalogOpts } from "../../queries/catalog-browse";
-import { FilterSidebar } from "./catalog/components/filter-sidebar";
-import { CatalogGrid } from "./catalog/components/catalog-grid";
+import { FilterSidebar } from "../../components/catalog/filter-sidebar";
+import { CatalogGrid } from "../../components/catalog/catalog-grid";
 
 export const Route = createFileRoute("/_app/catalog/")({
   component: RouteComponent,

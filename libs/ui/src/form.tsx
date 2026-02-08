@@ -8,7 +8,7 @@ import {
   textfieldLabel,
 } from "./textfield";
 import { cn } from "./cn";
-import { createEffect, createMemo, createSignal, JSX, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, JSX, Show, For } from "solid-js";
 import { TextArea } from "./textarea";
 import {
   Combobox,
@@ -276,10 +276,64 @@ function FormFileUpload(props: FormFileUploadProps) {
   );
 }
 
+interface FormSelectProps {
+  field: () => AnyFieldApi;
+  options: { label: string; value: string | number }[];
+  class?: JSX.HTMLAttributes<"div">["class"];
+  label?: string;
+  placeholder?: string;
+  description?: string;
+  fullWidth?: boolean;
+}
+
+function FormSelect(props: FormSelectProps) {
+  const {
+    field,
+    label,
+    placeholder,
+    description,
+    options,
+    fullWidth = true,
+  } = props;
+  const validationState = useValidationState(field);
+
+  return (
+    <TextFieldRoot
+      class={cn(fullWidth && "w-full", props.class)}
+      validationState={validationState()}
+    >
+      {label && <TextFieldLabel>{label}</TextFieldLabel>}
+      <select
+        value={field().state.value || ""}
+        onChange={(e) => {
+          const val = e.currentTarget.value;
+          field().handleChange(val ? (isNaN(Number(val)) ? val : Number(val)) : undefined);
+        }}
+        onBlur={field().handleBlur}
+        class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <option value="">{placeholder ?? "Select..."}</option>
+        <For each={options}>
+          {(opt) => <option value={opt.value}>{opt.label}</option>}
+        </For>
+      </select>
+      {description && (
+        <TextFieldDescription>{description}</TextFieldDescription>
+      )}
+      <TextFieldErrorMessage>
+        {field()
+          .state.meta.errors.map((error) => error?.message)
+          .join(", ")}
+      </TextFieldErrorMessage>
+    </TextFieldRoot>
+  );
+}
+
 export const Form = {
   TextField: FormTextField,
   TextArea: FormTextArea,
   Combobox: FormCombobox,
   FileUpload: FormFileUpload,
+  Select: FormSelect,
   ErrorLabel: FormErrorLabel,
 } as const;

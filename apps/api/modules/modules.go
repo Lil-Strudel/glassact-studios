@@ -86,12 +86,12 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("POST /api/catalog/{uuid}/tags", internalAdmin.ThenFunc(catalogModule.HandlePostTag))
 	mux.Handle("DELETE /api/catalog/{uuid}/tags/{tag}", internalAdmin.ThenFunc(catalogModule.HandleDeleteTag))
 
-	// Public routes (authenticated dealership users)
-	mux.Handle("GET /api/catalog/{uuid}", protected.ThenFunc(catalogModule.HandleGetCatalogItem))
-	mux.Handle("GET /api/catalog/{uuid}/tags", protected.ThenFunc(catalogModule.HandleGetTags))
+	// Public routes (authenticated dealership users) - MUST come before wildcard {uuid} route
 	mux.Handle("GET /api/catalog/browse", protected.ThenFunc(catalogModule.HandleBrowseCatalog))
 	mux.Handle("GET /api/catalog/categories", protected.ThenFunc(catalogModule.HandleGetCategories))
 	mux.Handle("GET /api/catalog/tags", protected.ThenFunc(catalogModule.HandleGetAllTags))
+	mux.Handle("GET /api/catalog/{uuid}", protected.ThenFunc(catalogModule.HandleGetCatalogItem))
+	mux.Handle("GET /api/catalog/{uuid}/tags", protected.ThenFunc(catalogModule.HandleGetTags))
 
 	// Price Group routes (internal admin only)
 	priceGroupModule := pricegroup.NewPriceGroupModule(app)

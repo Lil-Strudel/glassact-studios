@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { useMutation, useQueryClient } from "@tanstack/solid-query";
 import { postCatalogOpts, postCatalogTagOpts } from "../../queries/catalog";
 import { CatalogItem, POST } from "@glassact/data";
-import { CatalogForm } from "./admin/catalog/catalog-form";
+import { CatalogForm } from "../../components/admin/catalog-form";
 import { Show } from "solid-js";
 
 export const Route = createFileRoute("/_app/admin/catalog/create")({

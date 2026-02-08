@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/solid-query";
 import {
   getCatalogCategoriesOpts,
   getCatalogAllTagsOpts,
-} from "../../../../queries/catalog-browse";
+} from "../../queries/catalog-browse";
 
 interface FilterSidebarProps {
   onSearchChange: (value: string) => void;

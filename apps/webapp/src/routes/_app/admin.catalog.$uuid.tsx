@@ -9,7 +9,7 @@ import {
   deleteCatalogOpts,
 } from "../../queries/catalog";
 import { CatalogItem, PATCH } from "@glassact/data";
-import { CatalogForm } from "./admin/catalog/catalog-form";
+import { CatalogForm } from "../../components/admin/catalog-form";
 import { Show, createSignal, createMemo } from "solid-js";
 import { Button } from "@glassact/ui";
 

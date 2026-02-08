@@ -51,6 +51,86 @@ const formSchema = z.object({
 
 type FormSchema = z.infer<typeof formSchema>;
 
+interface PriceGroupFormProps {
+  defaultValues?: FormSchema;
+  onSubmit: (data: FormSchema) => void;
+  isLoading: boolean;
+  submitButtonLabel: string;
+}
+
+function PriceGroupForm(props: PriceGroupFormProps) {
+  const form = createForm(() => ({
+    defaultValues: props.defaultValues ?? {
+      name: "",
+      base_price_cents: 0,
+      description: "",
+      is_active: true,
+    },
+    onSubmit: async ({ value }) => {
+      props.onSubmit(value as FormSchema);
+    },
+  }));
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        form.handleSubmit();
+      }}
+      class="flex flex-col gap-4"
+    >
+      <form.Field
+        name="name"
+        children={(field) => (
+          <Form.TextField field={field} label="Name" placeholder="Price group name" />
+        )}
+      />
+
+      <form.Field
+        name="base_price_cents"
+        children={(field) => (
+          <Form.TextField
+            field={field}
+            label="Base Price (cents)"
+            placeholder="0"
+          />
+        )}
+      />
+
+      <form.Field
+        name="description"
+        children={(field) => (
+          <Form.TextArea
+            field={field}
+            label="Description (optional)"
+            placeholder="Optional description"
+          />
+        )}
+      />
+
+      <form.Field
+        name="is_active"
+        children={(field) => (
+          <label class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={field().state.value}
+              onChange={(e) => field().handleChange(e.currentTarget.checked)}
+              class="rounded border-gray-300"
+            />
+            <span class="text-sm font-medium text-gray-900">Active</span>
+          </label>
+        )}
+      />
+
+      <Button type="submit" disabled={props.isLoading}>
+        {props.isLoading ? `${props.submitButtonLabel}...` : props.submitButtonLabel}
+      </Button>
+    </form>
+  );
+}
+
 const defaultColumns: ColumnDef<GET<PriceGroup>>[] = [
   {
     id: "actions",
@@ -126,31 +206,22 @@ function EditButton(props: EditButtonProps) {
   const queryClient = useQueryClient();
   const patchMutation = useMutation(() => patchPriceGroupOpts(props.item.uuid));
 
-  const form = createForm(() => ({
-    defaultValues: {
-      name: props.item.name,
-      base_price_cents: props.item.base_price_cents,
-      description: props.item.description ?? "",
-      is_active: props.item.is_active,
-    },
-    onSubmit: async ({ value }) => {
-      patchMutation.mutate(
-        {
-          name: value.name,
-          base_price_cents: value.base_price_cents as number,
-          description: (value.description as string) || null,
-          is_active: value.is_active,
+  const handleSubmit = (data: FormSchema) => {
+    patchMutation.mutate(
+      {
+        name: data.name,
+        base_price_cents: data.base_price_cents as number,
+        description: (data.description as string) || null,
+        is_active: data.is_active,
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["price-groups"] });
+          setIsOpen(false);
         },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["price-groups"] });
-            setIsOpen(false);
-            form.reset();
-          },
-        },
-      );
-    },
-  }));
+      },
+    );
+  };
 
   return (
     <Dialog open={isOpen()} onOpenChange={setIsOpen}>
@@ -161,78 +232,17 @@ function EditButton(props: EditButtonProps) {
         <DialogHeader>
           <DialogTitle>Edit Price Group</DialogTitle>
         </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
+        <PriceGroupForm
+          defaultValues={{
+            name: props.item.name,
+            base_price_cents: props.item.base_price_cents,
+            description: props.item.description ?? "",
+            is_active: props.item.is_active,
           }}
-          class="flex flex-col gap-4"
-        >
-          <form.Field
-            name="name"
-            children={(field) => (
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-gray-900">Name</label>
-                <input
-                  type="text"
-                  value={field().state.value}
-                  onInput={(e) => field().handleChange(e.currentTarget.value)}
-                  class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
-              </div>
-            )}
-          />
-
-              <form.Field
-                name="base_price_cents"
-                children={(field) => (
-                  <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-900">Base Price (cents)</label>
-                    <input
-                      type="number"
-                      value={field().state.value}
-                      onInput={(e) => field().handleChange(Number(e.currentTarget.value))}
-                      class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    />
-                  </div>
-                )}
-              />
-
-          <form.Field
-            name="description"
-            children={(field) => (
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-gray-900">Description (optional)</label>
-                <textarea
-                  value={field().state.value}
-                  onInput={(e) => field().handleChange(e.currentTarget.value)}
-                  class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  rows={3}
-                />
-              </div>
-            )}
-          />
-
-          <form.Field
-            name="is_active"
-            children={(field) => (
-              <label class="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={field().state.value}
-                  onChange={(e) => field().handleChange(e.currentTarget.checked)}
-                  class="rounded border-gray-300"
-                />
-                <span class="text-sm font-medium text-gray-900">Active</span>
-              </label>
-            )}
-          />
-
-          <Button type="submit" disabled={patchMutation.isPending}>
-            {patchMutation.isPending ? "Updating..." : "Update"}
-          </Button>
-        </form>
+          onSubmit={handleSubmit}
+          isLoading={patchMutation.isPending}
+          submitButtonLabel="Update"
+        />
       </DialogContent>
     </Dialog>
   );
@@ -243,6 +253,7 @@ function RouteComponent() {
   const query = useQuery(getPriceGroupsOpts as any);
   const postMutation = useMutation(() => postPriceGroupOpts());
   const queryClient = useQueryClient();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = createSignal(false);
 
   const table = createSolidTable({
     get data() {
@@ -258,30 +269,22 @@ function RouteComponent() {
     onGlobalFilterChange: setFilterValue,
   });
 
-  const form = createForm(() => ({
-    defaultValues: {
-      name: "",
-      base_price_cents: 0,
-      description: "",
-      is_active: true,
-    },
-    onSubmit: async ({ value }) => {
-      postMutation.mutate(
-        {
-          name: value.name,
-          base_price_cents: value.base_price_cents as number,
-          description: (value.description as string) || null,
-          is_active: value.is_active,
+  const handleCreateSubmit = (data: FormSchema) => {
+    postMutation.mutate(
+      {
+        name: data.name,
+        base_price_cents: data.base_price_cents as number,
+        description: (data.description as string) || null,
+        is_active: data.is_active,
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["price-groups"] });
+          setIsCreateDialogOpen(false);
         },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["price-groups"] });
-            form.reset();
-          },
-        },
-      );
-    },
-  }));
+      },
+    );
+  };
 
   return (
     <div>
@@ -292,84 +295,17 @@ function RouteComponent() {
         >
           <TextField placeholder="Filter by name..." class="max-w-sm" />
         </TextFieldRoot>
-        <Dialog>
+        <Dialog open={isCreateDialogOpen()} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger as={Button}>Add a new price group</DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add a new price group</DialogTitle>
             </DialogHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                form.handleSubmit();
-              }}
-              class="flex flex-col gap-4"
-            >
-              <form.Field
-                name="name"
-                children={(field) => (
-                  <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-900">Name</label>
-                    <input
-                      type="text"
-                      value={field().state.value}
-                      onInput={(e) => field().handleChange(e.currentTarget.value)}
-                      class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    />
-                  </div>
-                )}
-              />
-
-              <form.Field
-                name="base_price_cents"
-                children={(field) => (
-                  <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-gray-900">Base Price (cents)</label>
-                    <input
-                      type="number"
-                      value={field().state.value}
-                      onInput={(e) => field().handleChange(Number(e.currentTarget.value))}
-                      class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    />
-                  </div>
-                )}
-              />
-
-                <form.Field
-                  name="description"
-                  children={(field) => (
-                    <div class="flex flex-col gap-2">
-                      <label class="text-sm font-medium text-gray-900">Description (optional)</label>
-                      <textarea
-                        value={field().state.value}
-                        onInput={(e) => field().handleChange(e.currentTarget.value)}
-                        class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        rows={3}
-                      />
-                    </div>
-                  )}
-                />
-
-              <form.Field
-                name="is_active"
-                children={(field) => (
-                  <label class="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={field().state.value}
-                      onChange={(e) => field().handleChange(e.currentTarget.checked)}
-                      class="rounded border-gray-300"
-                    />
-                    <span class="text-sm font-medium text-gray-900">Active</span>
-                  </label>
-                )}
-              />
-
-              <Button type="submit" disabled={postMutation.isPending}>
-                {postMutation.isPending ? "Adding..." : "Add"}
-              </Button>
-            </form>
+            <PriceGroupForm
+              onSubmit={handleCreateSubmit}
+              isLoading={postMutation.isPending}
+              submitButtonLabel="Add"
+            />
           </DialogContent>
         </Dialog>
       </div>
