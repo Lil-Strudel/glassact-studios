@@ -51,7 +51,6 @@ func (m UploadModule) HandlePostUpload(w http.ResponseWriter, r *http.Request) {
 		contentType = "application/octet-stream"
 	}
 
-	// Extract uploadPath from form data
 	uploadPath := r.FormValue("uploadPath")
 	if uploadPath == "" {
 		uploadPath = "uploads"

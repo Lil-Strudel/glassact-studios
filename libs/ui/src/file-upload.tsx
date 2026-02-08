@@ -42,21 +42,16 @@ interface FileUploadItemState {
 }
 
 export interface FileUploadProps {
-  // Callbacks
   onUrlChange: (url: string | null | string[]) => void;
 
-  // File constraints
   accept?: string;
   maxSizeBytes?: number;
   fileTypeLabel?: string;
 
-  // Multiple vs single
   multiple?: boolean;
 
-  // S3 path configuration
   uploadPath: string;
 
-  // Customization
   label?: string;
   description?: string;
   placeholder?: string;
@@ -64,11 +59,9 @@ export interface FileUploadProps {
   dropzoneClass?: string;
   previewClass?: string;
 
-  // Initial values
   initialUrls?: string | string[];
   initialFilenames?: string | string[];
 
-  // Behavior
   disabled?: boolean;
 }
 
@@ -80,7 +73,6 @@ function formatBytes(bytes: number): string {
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
-// Simple UUID v4 generator without external dependency
 function generateUUID(): string {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0;
@@ -104,11 +96,11 @@ function validateFile(
   file: File,
   acceptedExtensions: string[],
   maxSize: number,
-  fileTypeLabel: string
+  fileTypeLabel: string,
 ): { valid: boolean; error?: string } {
   if (acceptedExtensions.length > 0) {
     const hasValidExtension = acceptedExtensions.some((ext) =>
-      file.name.toLowerCase().endsWith(ext)
+      file.name.toLowerCase().endsWith(ext),
     );
 
     if (!hasValidExtension) {
@@ -129,7 +121,9 @@ function validateFile(
   return { valid: true };
 }
 
-function simulateFakeProgress(onProgress: (percent: number) => void): ReturnType<typeof setInterval> {
+function simulateFakeProgress(
+  onProgress: (percent: number) => void,
+): ReturnType<typeof setInterval> {
   const intervals: number[] = [0, 30, 60, 90];
   let current = 0;
 
@@ -148,7 +142,7 @@ function simulateFakeProgress(onProgress: (percent: number) => void): ReturnType
 
 async function uploadFileToS3(
   file: File,
-  uploadPath: string
+  uploadPath: string,
 ): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append("file", file);
@@ -168,18 +162,20 @@ async function uploadFileToS3(
 }
 
 export const FileUpload = (props: FileUploadProps) => {
-  const [fileStates, setFileStates] = createSignal<Map<File, FileUploadItemState>>(
-    new Map()
+  const [fileStates, setFileStates] = createSignal<
+    Map<File, FileUploadItemState>
+  >(new Map());
+
+  const [validationError, setValidationError] = createSignal<string | null>(
+    null,
   );
 
-  const [validationError, setValidationError] = createSignal<string | null>(null);
-
   const acceptedExtensions = parseAcceptString(props.accept);
-  const maxSizeBytes = props.maxSizeBytes !== undefined ? props.maxSizeBytes : 50 * 1024 * 1024;
+  const maxSizeBytes =
+    props.maxSizeBytes !== undefined ? props.maxSizeBytes : 50 * 1024 * 1024;
   const fileTypeLabel = props.fileTypeLabel ?? "file";
   const isMultiple = props.multiple ?? false;
 
-  // Initialize with initial URLs if provided
   createEffect(() => {
     if (props.initialUrls) {
       const urls = Array.isArray(props.initialUrls)
@@ -190,7 +186,6 @@ export const FileUpload = (props: FileUploadProps) => {
         ? props.initialFilenames
         : [props.initialFilenames ?? ""];
 
-      // Create placeholder files for initial URLs
       urls.forEach((url, idx) => {
         const filename = filenames[idx] ?? url.split("/").pop() ?? "file";
         const file = new File([], filename);
@@ -211,7 +206,6 @@ export const FileUpload = (props: FileUploadProps) => {
   async function handleFileAccept(files: File[]) {
     setValidationError(null);
 
-    // If single mode and we already have a file, replace it
     if (!isMultiple && fileStates().size > 0) {
       setFileStates(new Map());
     }
@@ -221,7 +215,7 @@ export const FileUpload = (props: FileUploadProps) => {
         file,
         acceptedExtensions,
         maxSizeBytes,
-        fileTypeLabel
+        fileTypeLabel,
       );
 
       if (!validation.valid) {
@@ -266,7 +260,6 @@ export const FileUpload = (props: FileUploadProps) => {
           return next;
         });
 
-        // Call onUrlChange with appropriate value
         const allUrls = Array.from(fileStates().values())
           .map((state) => state.url)
           .filter((url): url is string => !!url);
@@ -342,7 +335,6 @@ export const FileUpload = (props: FileUploadProps) => {
       return next;
     });
 
-    // Update parent callback
     const allUrls = Array.from(fileStates().values())
       .filter((state) => state.file !== file)
       .map((state) => state.url)
@@ -368,7 +360,7 @@ export const FileUpload = (props: FileUploadProps) => {
       <FileFieldDropzone
         class={cn(
           "flex justify-center items-center gap-2 min-h-[120px] w-full rounded-md border-2 border-dashed border-input bg-muted/30 px-4 py-6 text-sm transition-colors hover:border-primary hover:bg-muted/50 data-[invalid]:border-destructive data-[invalid]:bg-destructive/5",
-          props.dropzoneClass
+          props.dropzoneClass,
         )}
       >
         <div class="flex flex-col items-center gap-2 text-center">
@@ -409,7 +401,7 @@ export const FileUpload = (props: FileUploadProps) => {
             <FileFieldItem
               class={cn(
                 "relative overflow-hidden rounded-lg aspect-video bg-black flex items-center justify-center",
-                props.previewClass
+                props.previewClass,
               )}
             >
               <FileFieldItemPreviewImage class="absolute inset-0 w-full h-full object-cover" />
@@ -417,10 +409,12 @@ export const FileUpload = (props: FileUploadProps) => {
               <div
                 class={cn(
                   "absolute inset-0 bg-gradient-to-b to-transparent transition-colors",
-                  status() === "success" && "from-green-500/80 via-green-500/20",
+                  status() === "success" &&
+                    "from-green-500/80 via-green-500/20",
                   status() === "error" && "from-red-500/80 via-red-500/20",
-                  status() === "uploading" && "from-blue-500/80 via-blue-500/20",
-                  status() === "idle" && "from-gray-500/30 via-gray-500/10"
+                  status() === "uploading" &&
+                    "from-blue-500/80 via-blue-500/20",
+                  status() === "idle" && "from-gray-500/30 via-gray-500/10",
                 )}
               />
 
@@ -445,7 +439,9 @@ export const FileUpload = (props: FileUploadProps) => {
                             <IoReload size={12} class="animate-spin" />
                             Uploading...
                           </div>
-                          <div class="text-[10px] opacity-90">{progress()}%</div>
+                          <div class="text-[10px] opacity-90">
+                            {progress()}%
+                          </div>
                         </div>
                       </Match>
                       <Match when={status() === "success"}>

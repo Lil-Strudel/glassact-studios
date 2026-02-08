@@ -17,7 +17,6 @@ func NewPriceGroupModule(app *app.Application) *PriceGroupModule {
 	return &PriceGroupModule{app}
 }
 
-// HandleGetPriceGroups lists all price groups (internal admin only)
 func (m *PriceGroupModule) HandleGetPriceGroups(w http.ResponseWriter, r *http.Request) {
 	limit := 50
 	offset := 0
@@ -40,7 +39,6 @@ func (m *PriceGroupModule) HandleGetPriceGroups(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Paginate
 	end := offset + limit
 	if end > len(items) {
 		end = len(items)
@@ -60,7 +58,6 @@ func (m *PriceGroupModule) HandleGetPriceGroups(w http.ResponseWriter, r *http.R
 	})
 }
 
-// HandlePostPriceGroup creates a new price group (internal admin only)
 func (m *PriceGroupModule) HandlePostPriceGroup(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Name           string  `json:"name" validate:"required,min=1,max=255"`
@@ -91,7 +88,6 @@ func (m *PriceGroupModule) HandlePostPriceGroup(w http.ResponseWriter, r *http.R
 	m.WriteJSON(w, r, http.StatusCreated, priceGroup)
 }
 
-// HandleGetPriceGroup retrieves a single price group by UUID (internal admin only)
 func (m *PriceGroupModule) HandleGetPriceGroup(w http.ResponseWriter, r *http.Request) {
 	uuid := r.PathValue("uuid")
 	if uuid == "" {
@@ -113,7 +109,6 @@ func (m *PriceGroupModule) HandleGetPriceGroup(w http.ResponseWriter, r *http.Re
 	m.WriteJSON(w, r, http.StatusOK, priceGroup)
 }
 
-// HandlePatchPriceGroup updates a price group (internal admin only)
 func (m *PriceGroupModule) HandlePatchPriceGroup(w http.ResponseWriter, r *http.Request) {
 	uuid := r.PathValue("uuid")
 	if uuid == "" {
@@ -167,7 +162,6 @@ func (m *PriceGroupModule) HandlePatchPriceGroup(w http.ResponseWriter, r *http.
 	m.WriteJSON(w, r, http.StatusOK, priceGroup)
 }
 
-// HandleDeletePriceGroup soft deletes a price group (internal admin only)
 func (m *PriceGroupModule) HandleDeletePriceGroup(w http.ResponseWriter, r *http.Request) {
 	uuid := r.PathValue("uuid")
 	if uuid == "" {
@@ -186,7 +180,6 @@ func (m *PriceGroupModule) HandleDeletePriceGroup(w http.ResponseWriter, r *http
 		return
 	}
 
-	// Soft delete: mark as inactive
 	priceGroup.IsActive = false
 	err = m.Db.PriceGroups.Update(priceGroup)
 	if err != nil {

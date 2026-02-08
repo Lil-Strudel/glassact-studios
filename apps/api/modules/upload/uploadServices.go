@@ -37,7 +37,6 @@ func UploadFileToS3(
 		return nil, fmt.Errorf("S3 client not initialized")
 	}
 
-	// Sanitize filename and extract extension
 	filename = filepath.Base(filename)
 	filename = strings.ReplaceAll(filename, "..", "")
 	filename = strings.TrimSpace(filename)
@@ -47,10 +46,8 @@ func UploadFileToS3(
 		ext = ".bin"
 	}
 
-	// Generate UUID-based filename: {uuid}.{ext}
 	newFilename := uuid.New().String() + ext
 
-	// Ensure uploadPath is not empty
 	if uploadPath == "" {
 		uploadPath = "uploads"
 	} else {
@@ -70,7 +67,6 @@ func UploadFileToS3(
 		return nil, fmt.Errorf("failed to upload file to S3: %w", err)
 	}
 
-	// Return relative path for proxy to handle
 	relativeURL := fmt.Sprintf("/images/%s", key)
 
 	result := &UploadResult{

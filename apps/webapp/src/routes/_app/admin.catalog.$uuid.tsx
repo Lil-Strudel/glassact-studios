@@ -23,7 +23,7 @@ function RouteComponent() {
   const queryClient = useQueryClient();
 
   const [isDeleting, setIsDeleting] = createSignal(false);
-  
+
   const uuid = createMemo(() => (params as any).uuid);
 
   const itemQuery = useQuery(getCatalogItemOpts(uuid()) as any);
@@ -36,11 +36,11 @@ function RouteComponent() {
 
     patchMutation.mutate(data, {
       onSuccess: async () => {
-        // Handle tag changes
-        const tagsToRemove = currentTags.filter((t: any) => !newTags.includes(t));
+        const tagsToRemove = currentTags.filter(
+          (t: any) => !newTags.includes(t),
+        );
         const tagsToAdd = newTags.filter((t: any) => !currentTags.includes(t));
 
-        // Remove tags
         for (const tag of tagsToRemove) {
           try {
             const deleteOpts = deleteCatalogTagOpts(uuid(), tag) as any;
@@ -50,7 +50,6 @@ function RouteComponent() {
           }
         }
 
-        // Add tags
         for (const tag of tagsToAdd) {
           try {
             const addOpts = postCatalogTagOpts(uuid()) as any;
@@ -60,7 +59,6 @@ function RouteComponent() {
           }
         }
 
-        // Invalidate queries and navigate
         queryClient.invalidateQueries({ queryKey: ["catalog"] });
         navigate({ to: "/admin/catalog" });
       },
@@ -73,7 +71,7 @@ function RouteComponent() {
   const handleDelete = async () => {
     if (
       !window.confirm(
-        "Are you sure you want to delete this catalog item? This action cannot be undone."
+        "Are you sure you want to delete this catalog item? This action cannot be undone.",
       )
     ) {
       return;
@@ -102,7 +100,9 @@ function RouteComponent() {
                 <h1 class="text-2xl font-bold text-gray-900">
                   Edit Catalog Item: {(item() as any).name}
                 </h1>
-                <p class="text-gray-600 mt-1">Code: {(item() as any).catalog_code}</p>
+                <p class="text-gray-600 mt-1">
+                  Code: {(item() as any).catalog_code}
+                </p>
               </div>
 
               <Button

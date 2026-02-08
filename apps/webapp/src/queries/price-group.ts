@@ -3,18 +3,21 @@ import api from "./api";
 import type { PriceGroup, GET, POST, PATCH } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
-// List price groups
-
 export async function getPriceGroups(params?: {
   limit?: number;
   offset?: number;
-}): Promise<{ items: GET<PriceGroup>[]; total: number; limit: number; offset: number }> {
+}): Promise<{
+  items: GET<PriceGroup>[];
+  total: number;
+  limit: number;
+  offset: number;
+}> {
   const queryParams = new URLSearchParams();
   if (params?.limit) queryParams.append("limit", String(params.limit));
   if (params?.offset) queryParams.append("offset", String(params.offset));
 
   const res = await api.get(
-    `/price-groups${queryParams.toString() ? "?" + queryParams.toString() : ""}`
+    `/price-groups${queryParams.toString() ? "?" + queryParams.toString() : ""}`,
   );
   return res.data;
 }
@@ -30,8 +33,6 @@ export function getPriceGroupsOpts(params?: {
     });
 }
 
-// Single price group
-
 export async function getPriceGroup(uuid: string): Promise<GET<PriceGroup>> {
   const res = await api.get(`/price-groups/${uuid}`);
   return res.data;
@@ -45,9 +46,9 @@ export function getPriceGroupOpts(uuid: string) {
     });
 }
 
-// Create
-
-export async function postPriceGroup(body: POST<PriceGroup>): Promise<GET<PriceGroup>> {
+export async function postPriceGroup(
+  body: POST<PriceGroup>,
+): Promise<GET<PriceGroup>> {
   const res = await api.post("/price-groups", body);
   return res.data;
 }
@@ -58,11 +59,9 @@ export function postPriceGroupOpts() {
   });
 }
 
-// Update
-
 export async function patchPriceGroup(
   uuid: string,
-  body: PATCH<PriceGroup>
+  body: PATCH<PriceGroup>,
 ): Promise<GET<PriceGroup>> {
   const res = await api.patch(`/price-groups/${uuid}`, body);
   return res.data;
@@ -74,9 +73,9 @@ export function patchPriceGroupOpts(uuid: string) {
   });
 }
 
-// Delete
-
-export async function deletePriceGroup(uuid: string): Promise<{ success: boolean }> {
+export async function deletePriceGroup(
+  uuid: string,
+): Promise<{ success: boolean }> {
   const res = await api.delete(`/price-groups/${uuid}`);
   return res.data;
 }

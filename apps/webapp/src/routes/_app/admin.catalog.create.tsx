@@ -18,7 +18,6 @@ function RouteComponent() {
     const submitData = data as any;
     postMutation.mutate(submitData, {
       onSuccess: async (result: any) => {
-        // Add tags to the newly created item
         const tagOpts = postCatalogTagOpts(result.uuid) as any;
         for (const tag of tags) {
           try {
@@ -28,7 +27,6 @@ function RouteComponent() {
           }
         }
 
-        // Invalidate queries and navigate
         queryClient.invalidateQueries({ queryKey: ["catalog"] });
         navigate({ to: "/admin/catalog" });
       },

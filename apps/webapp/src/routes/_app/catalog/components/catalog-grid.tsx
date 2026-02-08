@@ -15,7 +15,6 @@ interface CatalogGridProps {
 export function CatalogGrid(props: CatalogGridProps) {
   return (
     <div class="flex-1 flex flex-col gap-6">
-      {/* Grid */}
       <Show
         when={!props.isLoading && props.items.length > 0}
         fallback={
@@ -34,7 +33,6 @@ export function CatalogGrid(props: CatalogGridProps) {
           <For each={props.items}>
             {(item) => (
               <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                {/* Preview */}
                 <div class="bg-gray-50 p-4 flex items-center justify-center h-64 overflow-hidden">
                   <img
                     src={item.svg_url}
@@ -43,7 +41,6 @@ export function CatalogGrid(props: CatalogGridProps) {
                   />
                 </div>
 
-                {/* Content */}
                 <div class="p-4 flex flex-col gap-3">
                   <div>
                     <code class="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
@@ -58,12 +55,10 @@ export function CatalogGrid(props: CatalogGridProps) {
                     <p class="text-xs text-gray-500 mt-1">{item.category}</p>
                   </div>
 
-                  {/* Tags Placeholder */}
                   <div class="text-xs text-gray-400 py-1">
                     Tags available in detail view
                   </div>
 
-                  {/* Details Button */}
                   <ItemDetailModal item={item}>
                     <Button variant="outline" class="w-full text-xs">
                       View Details
@@ -76,13 +71,10 @@ export function CatalogGrid(props: CatalogGridProps) {
         </div>
       </Show>
 
-      {/* Empty State */}
       <Show when={!props.isLoading && props.items.length === 0}>
         <div class="flex-1 flex items-center justify-center py-12">
           <div class="text-center">
-            <h3 class="text-lg font-semibold text-gray-900">
-              No items found
-            </h3>
+            <h3 class="text-lg font-semibold text-gray-900">No items found</h3>
             <p class="text-gray-600 mt-2">
               Try adjusting your filters or search criteria
             </p>
@@ -90,7 +82,6 @@ export function CatalogGrid(props: CatalogGridProps) {
         </div>
       </Show>
 
-      {/* Load More */}
       <Show
         when={
           !props.isLoading &&

@@ -11,7 +11,7 @@ interface CatalogFormProps {
   defaultValues?: GET<CatalogItem>;
   onSubmit: (
     data: POST<CatalogItem> | PATCH<CatalogItem>,
-    tags: string[]
+    tags: string[],
   ) => Promise<void>;
   isLoading?: boolean;
   isEditMode?: boolean;
@@ -47,8 +47,7 @@ export function CatalogForm(props: CatalogFormProps) {
     const existingTags = new Set(tags());
     return tagsQuery.data
       .filter(
-        (tag) =>
-          tag.toLowerCase().includes(input) && !existingTags.has(tag)
+        (tag) => tag.toLowerCase().includes(input) && !existingTags.has(tag),
       )
       .slice(0, 10);
   };
@@ -72,7 +71,6 @@ export function CatalogForm(props: CatalogFormProps) {
     },
   }));
 
-  // Validate min dimensions don't exceed defaults
   const validateMinDimensions = (field: "min_width" | "min_height") => {
     const minValue =
       field === "min_width"
@@ -98,12 +96,13 @@ export function CatalogForm(props: CatalogFormProps) {
       }}
       class="flex flex-col gap-6"
     >
-      {/* Catalog Code */}
       <form.Field
         name="catalog_code"
         children={(field) => (
           <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium text-gray-900">Catalog Code</label>
+            <label class="text-sm font-medium text-gray-900">
+              Catalog Code
+            </label>
             <input
               type="text"
               value={field().state.value}
@@ -116,7 +115,6 @@ export function CatalogForm(props: CatalogFormProps) {
         )}
       />
 
-      {/* Name */}
       <form.Field
         name="name"
         children={(field) => (
@@ -124,7 +122,6 @@ export function CatalogForm(props: CatalogFormProps) {
         )}
       />
 
-      {/* Description */}
       <form.Field
         name="description"
         children={(field) => (
@@ -136,7 +133,6 @@ export function CatalogForm(props: CatalogFormProps) {
         )}
       />
 
-      {/* Category */}
       <form.Field
         name="category"
         children={(field) => (
@@ -148,7 +144,6 @@ export function CatalogForm(props: CatalogFormProps) {
         )}
       />
 
-      {/* Dimensions Section */}
       <div class="border-t pt-4">
         <h3 class="text-sm font-medium text-gray-900 mb-4">Dimensions</h3>
 
@@ -157,11 +152,15 @@ export function CatalogForm(props: CatalogFormProps) {
             name="default_width"
             children={(field) => (
               <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-gray-900">Default Width</label>
+                <label class="text-sm font-medium text-gray-900">
+                  Default Width
+                </label>
                 <input
                   type="number"
                   value={field().state.value}
-                  onInput={(e) => field().handleChange(Number(e.currentTarget.value))}
+                  onInput={(e) =>
+                    field().handleChange(Number(e.currentTarget.value))
+                  }
                   step="0.1"
                   class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 />
@@ -173,11 +172,15 @@ export function CatalogForm(props: CatalogFormProps) {
             name="default_height"
             children={(field) => (
               <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-gray-900">Default Height</label>
+                <label class="text-sm font-medium text-gray-900">
+                  Default Height
+                </label>
                 <input
                   type="number"
                   value={field().state.value}
-                  onInput={(e) => field().handleChange(Number(e.currentTarget.value))}
+                  onInput={(e) =>
+                    field().handleChange(Number(e.currentTarget.value))
+                  }
                   step="0.1"
                   class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 />
@@ -191,16 +194,22 @@ export function CatalogForm(props: CatalogFormProps) {
             name="min_width"
             children={(field) => (
               <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-gray-900">Minimum Width</label>
+                <label class="text-sm font-medium text-gray-900">
+                  Minimum Width
+                </label>
                 <input
                   type="number"
                   value={field().state.value}
-                  onInput={(e) => field().handleChange(Number(e.currentTarget.value))}
+                  onInput={(e) =>
+                    field().handleChange(Number(e.currentTarget.value))
+                  }
                   step="0.1"
                   class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 />
                 <Show when={validateMinDimensions("min_width")}>
-                  <span class="text-sm text-red-600">{validateMinDimensions("min_width")}</span>
+                  <span class="text-sm text-red-600">
+                    {validateMinDimensions("min_width")}
+                  </span>
                 </Show>
               </div>
             )}
@@ -210,16 +219,22 @@ export function CatalogForm(props: CatalogFormProps) {
             name="min_height"
             children={(field) => (
               <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-gray-900">Minimum Height</label>
+                <label class="text-sm font-medium text-gray-900">
+                  Minimum Height
+                </label>
                 <input
                   type="number"
                   value={field().state.value}
-                  onInput={(e) => field().handleChange(Number(e.currentTarget.value))}
+                  onInput={(e) =>
+                    field().handleChange(Number(e.currentTarget.value))
+                  }
                   step="0.1"
                   class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 />
                 <Show when={validateMinDimensions("min_height")}>
-                  <span class="text-sm text-red-600">{validateMinDimensions("min_height")}</span>
+                  <span class="text-sm text-red-600">
+                    {validateMinDimensions("min_height")}
+                  </span>
                 </Show>
               </div>
             )}
@@ -227,7 +242,6 @@ export function CatalogForm(props: CatalogFormProps) {
         </div>
       </div>
 
-      {/* Price Group */}
       <form.Field
         name="default_price_group_id"
         children={(field) => (
@@ -261,7 +275,6 @@ export function CatalogForm(props: CatalogFormProps) {
         )}
       />
 
-      {/* SVG Upload */}
       <form.Field
         name="svg_url"
         children={(field) => (
@@ -277,7 +290,6 @@ export function CatalogForm(props: CatalogFormProps) {
         )}
       />
 
-      {/* Active Toggle */}
       <form.Field
         name="is_active"
         children={(field) => (
@@ -293,11 +305,9 @@ export function CatalogForm(props: CatalogFormProps) {
         )}
       />
 
-      {/* Tags Section */}
       <div class="border-t pt-4">
         <h3 class="text-sm font-medium text-gray-900 mb-3">Tags</h3>
 
-        {/* Tag Input with Combobox */}
         <div class="relative mb-4">
           <input
             type="text"
@@ -324,7 +334,6 @@ export function CatalogForm(props: CatalogFormProps) {
             class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
 
-          {/* Suggestions Dropdown */}
           <Show when={showTagSuggestions() && filteredSuggestions().length > 0}>
             <div class="absolute top-full left-0 right-0 mt-1 bg-white border border-input rounded-md shadow-lg z-10">
               <For each={filteredSuggestions()}>
@@ -349,7 +358,6 @@ export function CatalogForm(props: CatalogFormProps) {
           </Show>
         </div>
 
-        {/* Added Tags */}
         <div class="flex flex-wrap gap-2">
           <For each={tags()}>
             {(tag) => (

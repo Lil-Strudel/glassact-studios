@@ -24,14 +24,13 @@ function RouteComponent() {
       tags: tags(),
       limit,
       offset: offset(),
-    })
+    }),
   );
 
   const handleLoadMore = () => {
     setOffset(offset() + limit);
   };
 
-  // Reset offset when filters change
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setOffset(0);
@@ -49,7 +48,6 @@ function RouteComponent() {
 
   return (
     <div class="flex flex-col lg:flex-row gap-6">
-      {/* Sidebar */}
       <FilterSidebar
         searchValue={search()}
         selectedCategory={category()}
@@ -59,7 +57,6 @@ function RouteComponent() {
         onTagsChange={handleTagsChange}
       />
 
-      {/* Main Content */}
       <CatalogGrid
         items={query.data?.items ?? []}
         isLoading={query.isLoading}

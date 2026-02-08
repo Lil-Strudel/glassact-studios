@@ -8,7 +8,6 @@ import {
   Button,
 } from "@glassact/ui";
 import { Show } from "solid-js";
-import { IoClose } from "solid-icons/io";
 
 interface ItemDetailModalProps {
   item: GET<CatalogItem>;
@@ -18,7 +17,14 @@ interface ItemDetailModalProps {
 export function ItemDetailModal(props: ItemDetailModalProps) {
   return (
     <Dialog>
-      <Show when={props.children} fallback={<DialogTrigger as={Button} variant="outline">View Details</DialogTrigger>}>
+      <Show
+        when={props.children}
+        fallback={
+          <DialogTrigger as={Button} variant="outline">
+            View Details
+          </DialogTrigger>
+        }
+      >
         {props.children}
       </Show>
       <DialogContent class="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -27,7 +33,6 @@ export function ItemDetailModal(props: ItemDetailModalProps) {
         </DialogHeader>
 
         <div class="flex flex-col gap-6">
-          {/* SVG Preview */}
           <div class="bg-gray-50 rounded-md p-4 flex items-center justify-center min-h-[400px]">
             <img
               src={props.item.svg_url}
@@ -36,7 +41,6 @@ export function ItemDetailModal(props: ItemDetailModalProps) {
             />
           </div>
 
-          {/* Details */}
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="text-sm font-medium text-gray-900">Code</label>

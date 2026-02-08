@@ -28,8 +28,7 @@ export function FilterSidebar(props: FilterSidebarProps) {
     const selectedSet = new Set(props.selectedTags);
     return tagsQuery.data
       .filter(
-        (tag) =>
-          tag.toLowerCase().includes(input) && !selectedSet.has(tag)
+        (tag) => tag.toLowerCase().includes(input) && !selectedSet.has(tag),
       )
       .slice(0, 10);
   };
@@ -55,21 +54,16 @@ export function FilterSidebar(props: FilterSidebarProps) {
   return (
     <div class="w-full lg:w-64 flex-shrink-0 bg-white lg:border-r border-gray-200 p-4 lg:p-6">
       <div class="flex flex-col gap-6">
-        {/* Search */}
         <div>
           <label class="text-sm font-medium text-gray-900">Search</label>
           <TextFieldRoot
             value={props.searchValue}
             onChange={(value) => props.onSearchChange(value)}
           >
-            <TextField
-              placeholder="Search by name or code..."
-              class="mt-2"
-            />
+            <TextField placeholder="Search by name or code..." class="mt-2" />
           </TextFieldRoot>
         </div>
 
-        {/* Category */}
         <div>
           <label class="text-sm font-medium text-gray-900">Category</label>
           <select
@@ -84,11 +78,9 @@ export function FilterSidebar(props: FilterSidebarProps) {
           </select>
         </div>
 
-        {/* Tags */}
         <div>
           <label class="text-sm font-medium text-gray-900">Tags</label>
 
-          {/* Tag Input */}
           <div class="relative mt-2">
             <input
               type="text"
@@ -114,11 +106,8 @@ export function FilterSidebar(props: FilterSidebarProps) {
               class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
 
-            {/* Suggestions Dropdown */}
             <Show
-              when={
-                showTagSuggestions() && filteredTagSuggestions().length > 0
-              }
+              when={showTagSuggestions() && filteredTagSuggestions().length > 0}
             >
               <div class="absolute top-full left-0 right-0 mt-1 bg-white border border-input rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
                 <For each={filteredTagSuggestions()}>
@@ -139,7 +128,6 @@ export function FilterSidebar(props: FilterSidebarProps) {
             </Show>
           </div>
 
-          {/* Selected Tags */}
           <div class="flex flex-wrap gap-2 mt-3">
             <For each={props.selectedTags}>
               {(tag) => (
@@ -158,12 +146,7 @@ export function FilterSidebar(props: FilterSidebarProps) {
           </div>
         </div>
 
-        {/* Clear Filters */}
-        <Button
-          variant="outline"
-          class="w-full"
-          onClick={clearFilters}
-        >
+        <Button variant="outline" class="w-full" onClick={clearFilters}>
           Clear filters
         </Button>
       </div>
