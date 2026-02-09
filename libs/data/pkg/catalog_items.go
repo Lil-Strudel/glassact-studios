@@ -483,3 +483,86 @@ func (m CatalogItemModel) GetByCategory(category string) ([]*CatalogItem, error)
 
 	return catalogItems, nil
 }
+
+func (m CatalogItemModel) GetAllActive() ([]*CatalogItem, error) {
+	query := postgres.SELECT(
+		table.CatalogItems.AllColumns,
+	).FROM(
+		table.CatalogItems,
+	).WHERE(
+		table.CatalogItems.IsActive.EQ(postgres.Bool(true)),
+	).ORDER_BY(
+		table.CatalogItems.CreatedAt.DESC(),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest []model.CatalogItems
+	err := query.QueryContext(ctx, m.STDB, &dest)
+	if err != nil {
+		return nil, err
+	}
+
+	catalogItems := make([]*CatalogItem, len(dest))
+	for i, d := range dest {
+		catalogItem := catalogItemFromGen(d)
+
+		tags, err := m.GetTags(int(d.ID))
+		if err != nil {
+			return nil, err
+		}
+		catalogItem.Tags = tags
+
+		catalogItems[i] = catalogItem
+	}
+
+	return catalogItems, nil
+}
+
+func (m CatalogItemModel) GetCategories() ([]string, error) {
+	query := postgres.SELECT(
+		table.CatalogItems.Category,
+	).FROM(
+		table.CatalogItems,
+	).WHERE(
+		table.CatalogItems.IsActive.EQ(postgres.Bool(true)),
+	).DISTINCT()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var categories []string
+	err := query.QueryContext(ctx, m.STDB, &categories)
+	if err != nil {
+		return nil, err
+	}
+
+	return categories, nil
+}
+
+func (m CatalogItemModel) GetAllTags() ([]string, error) {
+	query := postgres.SELECT(
+		table.CatalogItemTags.Tag,
+	).FROM(
+		table.CatalogItemTags.INNER_JOIN(
+			table.CatalogItems,
+			table.CatalogItemTags.CatalogItemID.EQ(table.CatalogItems.ID),
+		),
+	).WHERE(
+		table.CatalogItems.IsActive.EQ(postgres.Bool(true)),
+	).DISTINCT().ORDER_BY(
+		table.CatalogItemTags.Tag.ASC(),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var tags []string
+	err := query.QueryContext(ctx, m.STDB, &tags)
+	if err != nil {
+		return nil, err
+	}
+
+	return tags, nil
+}

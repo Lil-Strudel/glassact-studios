@@ -51,6 +51,11 @@ func (m UploadModule) HandlePostUpload(w http.ResponseWriter, r *http.Request) {
 		contentType = "application/octet-stream"
 	}
 
+	uploadPath := r.FormValue("uploadPath")
+	if uploadPath == "" {
+		uploadPath = "uploads"
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -62,6 +67,7 @@ func (m UploadModule) HandlePostUpload(w http.ResponseWriter, r *http.Request) {
 		header.Filename,
 		header.Size,
 		contentType,
+		uploadPath,
 	)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)

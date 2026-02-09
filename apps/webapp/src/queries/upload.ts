@@ -9,9 +9,13 @@ export interface UploadResponse {
   uploaded_at: string;
 }
 
-export async function postUpload(file: File): Promise<UploadResponse> {
+export async function postUpload(
+  file: File,
+  uploadPath: string
+): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("uploadPath", uploadPath);
 
   const res = await api.post("/upload", formData);
 

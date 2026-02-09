@@ -7,6 +7,8 @@ export * from "./breadcrumb";
 export * from "./button";
 export * from "./button-variants";
 
+export * from "./badge";
+
 export * from "./card";
 
 export * from "./checkbox";
@@ -18,6 +20,8 @@ export * from "./dialog";
 export * from "./dropdown-menu";
 
 export * from "./filefield";
+
+export * from "./file-upload";
 
 export * from "./form";
 

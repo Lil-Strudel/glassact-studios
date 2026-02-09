@@ -5,11 +5,6 @@ export type CatalogItemTag = StandardTable<{
   tag: string;
 }>;
 
-export type CatalogItemImage = StandardTable<{
-  catalog_item_id: number;
-  image_url: string;
-}>;
-
 export type CatalogItem = StandardTable<{
   catalog_code: string;
   name: string;

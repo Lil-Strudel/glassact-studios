@@ -5,7 +5,12 @@ import {
   redirect,
 } from "@tanstack/solid-router";
 import { For } from "solid-js";
-import { IoPersonOutline, IoBusinessOutline } from "solid-icons/io";
+import {
+  IoPersonOutline,
+  IoBusinessOutline,
+  IoShapesOutline,
+  IoPricetagOutline,
+} from "solid-icons/io";
 
 export const Route = createFileRoute("/_app/admin")({
   component: RouteComponent,
@@ -26,6 +31,16 @@ const navigationItems = [
     label: "Users",
     icon: IoPersonOutline,
     path: "/admin/users",
+  },
+  {
+    label: "Catalog",
+    icon: IoShapesOutline,
+    path: "/admin/catalog",
+  },
+  {
+    label: "Price Groups",
+    icon: IoPricetagOutline,
+    path: "/admin/price-groups",
   },
 ];
 function RouteComponent() {
