@@ -37,6 +37,7 @@ import {
   patchPriceGroupOpts,
   deletePriceGroupOpts,
 } from "../../queries/price-group";
+import { zodStringNumber } from "../../utils/zod-string-number";
 
 export const Route = createFileRoute("/_app/admin/price-groups")({
   component: RouteComponent,
@@ -44,7 +45,10 @@ export const Route = createFileRoute("/_app/admin/price-groups")({
 
 const formSchema = z.object({
   name: z.string().min(1).max(255),
-  base_price_cents: z.number().positive().int(),
+  base_price_cents: z
+    .string()
+    .min(1)
+    .refine(...zodStringNumber),
   description: z.string().max(1000).optional().or(z.literal("")),
   is_active: z.boolean(),
 });
@@ -62,12 +66,15 @@ function PriceGroupForm(props: PriceGroupFormProps) {
   const form = createForm(() => ({
     defaultValues: props.defaultValues ?? {
       name: "",
-      base_price_cents: 0,
+      base_price_cents: "",
       description: "",
       is_active: true,
     },
+    validators: {
+      onBlur: formSchema,
+    },
     onSubmit: async ({ value }) => {
-      props.onSubmit(value as FormSchema);
+      props.onSubmit(value);
     },
   }));
 
@@ -83,18 +90,18 @@ function PriceGroupForm(props: PriceGroupFormProps) {
       <form.Field
         name="name"
         children={(field) => (
-          <Form.TextField field={field} label="Name" placeholder="Price group name" />
+          <Form.TextField
+            field={field}
+            label="Name"
+            placeholder="Price group name"
+          />
         )}
       />
 
       <form.Field
         name="base_price_cents"
         children={(field) => (
-          <Form.TextField
-            field={field}
-            label="Base Price (cents)"
-            placeholder="0"
-          />
+          <Form.TextField field={field} label="Base Price (cnts)" />
         )}
       />
 
@@ -125,7 +132,9 @@ function PriceGroupForm(props: PriceGroupFormProps) {
       />
 
       <Button type="submit" disabled={props.isLoading}>
-        {props.isLoading ? `${props.submitButtonLabel}...` : props.submitButtonLabel}
+        {props.isLoading
+          ? `${props.submitButtonLabel}...`
+          : props.submitButtonLabel}
       </Button>
     </form>
   );
@@ -138,7 +147,9 @@ const defaultColumns: ColumnDef<GET<PriceGroup>>[] = [
     header: "Actions",
     cell: (props) => {
       const queryClient = useQueryClient();
-      const deleteMutation = useMutation(() => deletePriceGroupOpts(props.row.original.uuid));
+      const deleteMutation = useMutation(() =>
+        deletePriceGroupOpts(props.row.original.uuid),
+      );
 
       return (
         <div class="flex gap-2">
@@ -210,7 +221,7 @@ function EditButton(props: EditButtonProps) {
     patchMutation.mutate(
       {
         name: data.name,
-        base_price_cents: data.base_price_cents as number,
+        base_price_cents: Number(data.base_price_cents),
         description: (data.description as string) || null,
         is_active: data.is_active,
       },
@@ -235,7 +246,7 @@ function EditButton(props: EditButtonProps) {
         <PriceGroupForm
           defaultValues={{
             name: props.item.name,
-            base_price_cents: props.item.base_price_cents,
+            base_price_cents: String(props.item.base_price_cents),
             description: props.item.description ?? "",
             is_active: props.item.is_active,
           }}
@@ -250,14 +261,14 @@ function EditButton(props: EditButtonProps) {
 
 function RouteComponent() {
   const [filterValue, setFilterValue] = createSignal("");
-  const query = useQuery(getPriceGroupsOpts as any);
+  const query = useQuery(getPriceGroupsOpts({ limit: 99, offset: 0 }));
   const postMutation = useMutation(() => postPriceGroupOpts());
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = createSignal(false);
 
   const table = createSolidTable({
     get data() {
-      return (query.data as any)?.items ?? [];
+      return query.data?.items ?? [];
     },
     columns: defaultColumns,
     getCoreRowModel: getCoreRowModel(),
@@ -273,7 +284,7 @@ function RouteComponent() {
     postMutation.mutate(
       {
         name: data.name,
-        base_price_cents: data.base_price_cents as number,
+        base_price_cents: Number(data.base_price_cents),
         description: (data.description as string) || null,
         is_active: data.is_active,
       },
@@ -295,7 +306,10 @@ function RouteComponent() {
         >
           <TextField placeholder="Filter by name..." class="max-w-sm" />
         </TextFieldRoot>
-        <Dialog open={isCreateDialogOpen()} onOpenChange={setIsCreateDialogOpen}>
+        <Dialog
+          open={isCreateDialogOpen()}
+          onOpenChange={setIsCreateDialogOpen}
+        >
           <DialogTrigger as={Button}>Add a new price group</DialogTrigger>
           <DialogContent>
             <DialogHeader>
