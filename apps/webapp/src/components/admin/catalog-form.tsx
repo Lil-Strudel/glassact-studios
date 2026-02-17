@@ -6,6 +6,7 @@ import { z } from "zod";
 import { For, Show, createSignal, createEffect } from "solid-js";
 import { getPriceGroupsOpts } from "../../queries/price-group";
 import { getCatalogAllTagsOpts } from "../../queries/catalog-browse";
+import api from "../../queries/api";
 
 interface CatalogFormProps {
   defaultValues?: GET<CatalogItem>;
@@ -40,6 +41,15 @@ export function CatalogForm(props: CatalogFormProps) {
 
   const priceGroupsQuery = useQuery(getPriceGroupsOpts({ limit: 100 }));
   const tagsQuery = useQuery(getCatalogAllTagsOpts());
+
+  const handleFileUpload = async (file: File, uploadPath: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("uploadPath", uploadPath);
+
+    const response = await api.post("/upload", formData);
+    return response.data;
+  };
 
   const filteredSuggestions = () => {
     if (!tagInput() || !tagsQuery.data) return [];
@@ -149,130 +159,130 @@ export function CatalogForm(props: CatalogFormProps) {
         )}
       />
 
-       <div class="border-t pt-4">
-         <h3 class="text-sm font-medium text-gray-900 mb-4">Dimensions</h3>
+      <div class="border-t pt-4">
+        <h3 class="text-sm font-medium text-gray-900 mb-4">Dimensions</h3>
 
-         <div class="grid grid-cols-2 gap-4">
-           <form.Field
-             name="default_width"
-             children={(field) => (
-               <div class="flex flex-col gap-2">
-                 <label class="text-sm font-medium text-gray-900">
-                   Default Width
-                 </label>
-                 <input
-                   type="number"
-                   value={field().state.value}
-                   onInput={(e) =>
-                     field().handleChange(Number(e.currentTarget.value))
-                   }
-                   step="0.1"
-                   class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                 />
-                 <Show when={field().state.meta.errors.length > 0}>
-                   <span class="text-sm text-red-600">
-                     {field().state.meta.errors[0]}
-                   </span>
-                 </Show>
-               </div>
-             )}
-           />
+        <div class="grid grid-cols-2 gap-4">
+          <form.Field
+            name="default_width"
+            children={(field) => (
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-900">
+                  Default Width
+                </label>
+                <input
+                  type="number"
+                  value={field().state.value}
+                  onInput={(e) =>
+                    field().handleChange(Number(e.currentTarget.value))
+                  }
+                  step="0.1"
+                  class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+                <Show when={field().state.meta.errors.length > 0}>
+                  <span class="text-sm text-red-600">
+                    {field().state.meta.errors[0]}
+                  </span>
+                </Show>
+              </div>
+            )}
+          />
 
-           <form.Field
-             name="default_height"
-             children={(field) => (
-               <div class="flex flex-col gap-2">
-                 <label class="text-sm font-medium text-gray-900">
-                   Default Height
-                 </label>
-                 <input
-                   type="number"
-                   value={field().state.value}
-                   onInput={(e) =>
-                     field().handleChange(Number(e.currentTarget.value))
-                   }
-                   step="0.1"
-                   class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                 />
-                 <Show when={field().state.meta.errors.length > 0}>
-                   <span class="text-sm text-red-600">
-                     {field().state.meta.errors[0]}
-                   </span>
-                 </Show>
-               </div>
-             )}
-           />
-         </div>
+          <form.Field
+            name="default_height"
+            children={(field) => (
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-900">
+                  Default Height
+                </label>
+                <input
+                  type="number"
+                  value={field().state.value}
+                  onInput={(e) =>
+                    field().handleChange(Number(e.currentTarget.value))
+                  }
+                  step="0.1"
+                  class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+                <Show when={field().state.meta.errors.length > 0}>
+                  <span class="text-sm text-red-600">
+                    {field().state.meta.errors[0]}
+                  </span>
+                </Show>
+              </div>
+            )}
+          />
+        </div>
 
-         <div class="grid grid-cols-2 gap-4 mt-4">
-           <form.Field
-             name="min_width"
-             children={(field) => (
-               <div class="flex flex-col gap-2">
-                 <label class="text-sm font-medium text-gray-900">
-                   Minimum Width
-                 </label>
-                 <input
-                   type="number"
-                   value={field().state.value}
-                   onInput={(e) =>
-                     field().handleChange(Number(e.currentTarget.value))
-                   }
-                   step="0.1"
-                   class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                 />
-                 <Show when={validateMinDimensions("min_width")}>
-                   <span class="text-sm text-red-600">
-                     {validateMinDimensions("min_width")}
-                   </span>
-                 </Show>
-               </div>
-             )}
-           />
+        <div class="grid grid-cols-2 gap-4 mt-4">
+          <form.Field
+            name="min_width"
+            children={(field) => (
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-900">
+                  Minimum Width
+                </label>
+                <input
+                  type="number"
+                  value={field().state.value}
+                  onInput={(e) =>
+                    field().handleChange(Number(e.currentTarget.value))
+                  }
+                  step="0.1"
+                  class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+                <Show when={validateMinDimensions("min_width")}>
+                  <span class="text-sm text-red-600">
+                    {validateMinDimensions("min_width")}
+                  </span>
+                </Show>
+              </div>
+            )}
+          />
 
-           <form.Field
-             name="min_height"
-             children={(field) => (
-               <div class="flex flex-col gap-2">
-                 <label class="text-sm font-medium text-gray-900">
-                   Minimum Height
-                 </label>
-                 <input
-                   type="number"
-                   value={field().state.value}
-                   onInput={(e) =>
-                     field().handleChange(Number(e.currentTarget.value))
-                   }
-                   step="0.1"
-                   class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                 />
-                 <Show when={validateMinDimensions("min_height")}>
-                   <span class="text-sm text-red-600">
-                     {validateMinDimensions("min_height")}
-                   </span>
-                 </Show>
-               </div>
-             )}
-           />
-         </div>
-       </div>
+          <form.Field
+            name="min_height"
+            children={(field) => (
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-gray-900">
+                  Minimum Height
+                </label>
+                <input
+                  type="number"
+                  value={field().state.value}
+                  onInput={(e) =>
+                    field().handleChange(Number(e.currentTarget.value))
+                  }
+                  step="0.1"
+                  class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+                <Show when={validateMinDimensions("min_height")}>
+                  <span class="text-sm text-red-600">
+                    {validateMinDimensions("min_height")}
+                  </span>
+                </Show>
+              </div>
+            )}
+          />
+        </div>
+      </div>
 
-       <form.Field
-         name="default_price_group_id"
-         children={(field) => (
-           <Form.Select
-             field={field}
-             label="Default Price Group"
-             placeholder="Select a price group..."
-             options={
-               priceGroupsQuery.data?.items?.map((pg) => ({
-                 label: `${pg.name} ($${(pg.base_price_cents / 100).toFixed(2)})`,
-                 value: pg.id,
-               })) ?? []
-             }
-           />
-         )}
-       />
+      <form.Field
+        name="default_price_group_id"
+        children={(field) => (
+          <Form.Select
+            field={field}
+            label="Default Price Group"
+            placeholder="Select a price group..."
+            options={
+              priceGroupsQuery.data?.items?.map((pg) => ({
+                label: `${pg.name} ($${(pg.base_price_cents / 100).toFixed(2)})`,
+                value: pg.id,
+              })) ?? []
+            }
+          />
+        )}
+      />
 
       <form.Field
         name="svg_url"
@@ -285,6 +295,7 @@ export function CatalogForm(props: CatalogFormProps) {
             fileTypeLabel="SVG"
             description="Upload the SVG file for this catalog item"
             multiple={false}
+            uploadFn={handleFileUpload}
           />
         )}
       />

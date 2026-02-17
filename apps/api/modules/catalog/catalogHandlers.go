@@ -18,7 +18,6 @@ func NewCatalogModule(app *app.Application) *CatalogModule {
 	return &CatalogModule{app}
 }
 
-// HandleGetCatalog lists all catalog items (internal admin only)
 func (m *CatalogModule) HandleGetCatalog(w http.ResponseWriter, r *http.Request) {
 	limit := 50
 	offset := 0
@@ -45,10 +44,8 @@ func (m *CatalogModule) HandleGetCatalog(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Filter in-memory for simplicity
 	filtered := filterCatalogItems(items, search, category, isActive)
 
-	// Paginate
 	end := offset + limit
 	if end > len(filtered) {
 		end = len(filtered)
@@ -68,7 +65,6 @@ func (m *CatalogModule) HandleGetCatalog(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-// HandlePostCatalog creates a new catalog item (internal admin only)
 func (m *CatalogModule) HandlePostCatalog(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		CatalogCode         string  `json:"catalog_code" validate:"required,min=1,max=255"`
@@ -81,6 +77,7 @@ func (m *CatalogModule) HandlePostCatalog(w http.ResponseWriter, r *http.Request
 		MinHeight           float64 `json:"min_height" validate:"required,gt=0"`
 		DefaultPriceGroupID int     `json:"default_price_group_id" validate:"required,gt=0"`
 		SvgURL              string  `json:"svg_url" validate:"required,min=1"`
+		IsActive            bool    `json:"is_active"`
 	}
 
 	err := m.ReadJSONBody(w, r, &body)
@@ -89,7 +86,6 @@ func (m *CatalogModule) HandlePostCatalog(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Validate dimensions
 	if body.DefaultWidth < body.MinWidth || body.DefaultHeight < body.MinHeight {
 		m.WriteError(w, r, m.Err.BadRequest, errors.New("default dimensions must be >= minimum dimensions"))
 		return
@@ -106,7 +102,7 @@ func (m *CatalogModule) HandlePostCatalog(w http.ResponseWriter, r *http.Request
 		MinHeight:           body.MinHeight,
 		DefaultPriceGroupID: body.DefaultPriceGroupID,
 		SvgURL:              body.SvgURL,
-		IsActive:            true,
+		IsActive:            body.IsActive,
 	}
 
 	err = m.Db.CatalogItems.Insert(catalogItem)

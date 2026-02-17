@@ -62,6 +62,8 @@ export interface FileUploadProps {
   initialFilenames?: string | string[];
 
   disabled?: boolean;
+
+  uploadFn?: (file: File, uploadPath: string) => Promise<UploadResponse>;
 }
 
 function formatBytes(bytes: number): string {
@@ -160,6 +162,12 @@ async function uploadFileToS3(
   return response.json();
 }
 
+function getUploadFunction(
+  customUploadFn?: (file: File, uploadPath: string) => Promise<UploadResponse>,
+): (file: File, uploadPath: string) => Promise<UploadResponse> {
+  return customUploadFn || uploadFileToS3;
+}
+
 export const FileUpload = (props: FileUploadProps) => {
   const [fileStates, setFileStates] = createSignal<
     Map<File, FileUploadItemState>
@@ -244,7 +252,8 @@ export const FileUpload = (props: FileUploadProps) => {
           });
         });
 
-        const result = await uploadFileToS3(file, props.uploadPath);
+        const uploadFn = getUploadFunction(props.uploadFn);
+        const result = await uploadFn(file, props.uploadPath);
 
         clearInterval(progressTimer);
 

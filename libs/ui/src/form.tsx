@@ -230,6 +230,7 @@ interface FormFileUploadProps {
   description?: string;
   class?: string;
   fullWidth?: boolean;
+  uploadFn?: (file: File, uploadPath: string) => Promise<{ url: string; filename: string; size: number; content_type: string; key: string; uploaded_at: string }>;
 }
 
 function FormFileUpload(props: FormFileUploadProps) {
@@ -263,6 +264,7 @@ function FormFileUpload(props: FormFileUploadProps) {
         multiple={multiple}
         placeholder={placeholder}
         description={description}
+        uploadFn={props.uploadFn}
       />
       {description && (
         <FileFieldDescription>{description}</FileFieldDescription>

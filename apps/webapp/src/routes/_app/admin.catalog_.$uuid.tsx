@@ -13,7 +13,7 @@ import { CatalogForm } from "../../components/admin/catalog-form";
 import { Show, createSignal, createMemo } from "solid-js";
 import { Button } from "@glassact/ui";
 
-export const Route = createFileRoute("/_app/admin/catalog/$uuid")({
+export const Route = createFileRoute("/_app/admin/catalog_/$uuid")({
   component: RouteComponent,
 });
 
