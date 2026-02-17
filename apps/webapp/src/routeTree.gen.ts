@@ -31,7 +31,7 @@ import { Route as AppDealershipIdUsersRouteImport } from './routes/_app/dealersh
 import { Route as AppDealershipIdSettingsRouteImport } from './routes/_app/dealership.$id.settings'
 import { Route as AppAdminUsersInternalRouteImport } from './routes/_app/admin.users.internal'
 import { Route as AppAdminUsersDealershipRouteImport } from './routes/_app/admin.users.dealership'
-import { Route as AppAdminCatalogCreateRouteImport } from './routes/_app/admin.catalog.create'
+import { Route as AppAdminCatalogCreateRouteImport } from './routes/_app/admin.catalog_.create'
 import { Route as AppAdminCatalogUuidRouteImport } from './routes/_app/admin.catalog.$uuid'
 
 const LoginRoute = LoginRouteImport.update({
@@ -147,9 +147,9 @@ const AppAdminUsersDealershipRoute = AppAdminUsersDealershipRouteImport.update({
   getParentRoute: () => AppAdminUsersRoute,
 } as any)
 const AppAdminCatalogCreateRoute = AppAdminCatalogCreateRouteImport.update({
-  id: '/create',
-  path: '/create',
-  getParentRoute: () => AppAdminCatalogRoute,
+  id: '/catalog_/create',
+  path: '/catalog/create',
+  getParentRoute: () => AppAdminRoute,
 } as any)
 const AppAdminCatalogUuidRoute = AppAdminCatalogUuidRouteImport.update({
   id: '/$uuid',
@@ -225,7 +225,7 @@ export interface FileRoutesById {
   '/_app/projects_/create-project': typeof AppProjectsCreateProjectRouteWithChildren
   '/_app/catalog/': typeof AppCatalogIndexRoute
   '/_app/admin/catalog/$uuid': typeof AppAdminCatalogUuidRoute
-  '/_app/admin/catalog/create': typeof AppAdminCatalogCreateRoute
+  '/_app/admin/catalog_/create': typeof AppAdminCatalogCreateRoute
   '/_app/admin/users/dealership': typeof AppAdminUsersDealershipRoute
   '/_app/admin/users/internal': typeof AppAdminUsersInternalRoute
   '/_app/dealership/$id/settings': typeof AppDealershipIdSettingsRoute
@@ -302,7 +302,7 @@ export interface FileRouteTypes {
     | '/_app/projects_/create-project'
     | '/_app/catalog/'
     | '/_app/admin/catalog/$uuid'
-    | '/_app/admin/catalog/create'
+    | '/_app/admin/catalog_/create'
     | '/_app/admin/users/dealership'
     | '/_app/admin/users/internal'
     | '/_app/dealership/$id/settings'
@@ -473,12 +473,12 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AppAdminUsersDealershipRouteImport
       parentRoute: typeof AppAdminUsersRoute
     }
-    '/_app/admin/catalog/create': {
-      id: '/_app/admin/catalog/create'
-      path: '/create'
+    '/_app/admin/catalog_/create': {
+      id: '/_app/admin/catalog_/create'
+      path: '/catalog/create'
       fullPath: '/admin/catalog/create'
       preLoaderRoute: typeof AppAdminCatalogCreateRouteImport
-      parentRoute: typeof AppAdminCatalogRoute
+      parentRoute: typeof AppAdminRoute
     }
     '/_app/admin/catalog/$uuid': {
       id: '/_app/admin/catalog/$uuid'
@@ -492,12 +492,10 @@ declare module '@tanstack/solid-router' {
 
 interface AppAdminCatalogRouteChildren {
   AppAdminCatalogUuidRoute: typeof AppAdminCatalogUuidRoute
-  AppAdminCatalogCreateRoute: typeof AppAdminCatalogCreateRoute
 }
 
 const AppAdminCatalogRouteChildren: AppAdminCatalogRouteChildren = {
   AppAdminCatalogUuidRoute: AppAdminCatalogUuidRoute,
-  AppAdminCatalogCreateRoute: AppAdminCatalogCreateRoute,
 }
 
 const AppAdminCatalogRouteWithChildren = AppAdminCatalogRoute._addFileChildren(
@@ -523,6 +521,7 @@ interface AppAdminRouteChildren {
   AppAdminDealershipsRoute: typeof AppAdminDealershipsRoute
   AppAdminPriceGroupsRoute: typeof AppAdminPriceGroupsRoute
   AppAdminUsersRoute: typeof AppAdminUsersRouteWithChildren
+  AppAdminCatalogCreateRoute: typeof AppAdminCatalogCreateRoute
 }
 
 const AppAdminRouteChildren: AppAdminRouteChildren = {
@@ -530,6 +529,7 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminDealershipsRoute: AppAdminDealershipsRoute,
   AppAdminPriceGroupsRoute: AppAdminPriceGroupsRoute,
   AppAdminUsersRoute: AppAdminUsersRouteWithChildren,
+  AppAdminCatalogCreateRoute: AppAdminCatalogCreateRoute,
 }
 
 const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(

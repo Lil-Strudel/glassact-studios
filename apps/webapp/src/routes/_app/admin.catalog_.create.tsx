@@ -5,7 +5,7 @@ import { CatalogItem, POST } from "@glassact/data";
 import { CatalogForm } from "../../components/admin/catalog-form";
 import { Show } from "solid-js";
 
-export const Route = createFileRoute("/_app/admin/catalog/create")({
+export const Route = createFileRoute("/_app/admin/catalog_/create")({
   component: RouteComponent,
 });
 
