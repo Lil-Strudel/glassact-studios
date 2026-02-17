@@ -10,7 +10,6 @@ import {
   FileFieldItemSize,
   FileFieldItemName,
   FileFieldItemDeleteTrigger,
-  FileFieldDescription,
   FileFieldErrorMessage,
 } from "./filefield";
 import { cn } from "./cn";
@@ -492,10 +491,6 @@ export const FileUpload = (props: FileUploadProps) => {
           );
         }}
       </FileFieldItemList>
-
-      {props.description && (
-        <FileFieldDescription>{props.description}</FileFieldDescription>
-      )}
       <FileFieldErrorMessage />
     </FileFieldRoot>
   );
