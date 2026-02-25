@@ -1,10 +1,12 @@
 import { defineConfig } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import { devtools } from "@tanstack/devtools-vite";
 import checker from "vite-plugin-checker";
 
 export default defineConfig({
   plugins: [
+    devtools(),
     tanstackRouter({
       target: "solid",
       autoCodeSplitting: true,
