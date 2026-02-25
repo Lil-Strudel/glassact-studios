@@ -73,7 +73,7 @@ export function CatalogForm(props: CatalogFormProps) {
   const form = createForm(() => ({
     defaultValues,
     validators: {
-      onBlur: catalogSchema,
+      onChange: catalogSchema,
       onSubmit: catalogSchema,
     },
     onSubmit: async ({ value }) => {
