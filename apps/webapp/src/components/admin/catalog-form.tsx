@@ -1,19 +1,16 @@
-import { CatalogItem, GET, POST, PATCH } from "@glassact/data";
+import { CatalogItem, GET, POST } from "@glassact/data";
 import { Form, Button, Badge } from "@glassact/ui";
 import { createForm } from "@tanstack/solid-form";
 import { useQuery } from "@tanstack/solid-query";
 import { z } from "zod";
-import { For, Show, createSignal, createEffect } from "solid-js";
-import { getPriceGroupsOpts } from "../../queries/price-group";
+import { For, Show, createSignal } from "solid-js";
 import { getCatalogAllTagsOpts } from "../../queries/catalog-browse";
 import api from "../../queries/api";
+import PriceGroupCombobox from "../price-group-combobox";
 
 interface CatalogFormProps {
-  defaultValues?: GET<CatalogItem>;
-  onSubmit: (
-    data: POST<CatalogItem> | PATCH<CatalogItem>,
-    tags: string[],
-  ) => Promise<void>;
+  defaultValues?: POST<CatalogItem>;
+  onSubmit: (data: POST<CatalogItem>, tags: string[]) => Promise<void>;
   isLoading?: boolean;
   isEditMode?: boolean;
 }
@@ -21,25 +18,22 @@ interface CatalogFormProps {
 const catalogSchema = z.object({
   catalog_code: z.string().min(1).max(255),
   name: z.string().min(1).max(255),
-  description: z.string().max(2000).nullable().optional(),
+  description: z.string().max(2000).nullable(),
   category: z.string().min(1).max(255),
   default_width: z.number().positive(),
   default_height: z.number().positive(),
   min_width: z.number().positive(),
   min_height: z.number().positive(),
-  default_price_group_id: z.number().positive().int(),
+  default_price_group_id: z.number().int(),
   svg_url: z.string().min(1),
-  is_active: z.boolean().default(true),
+  is_active: z.boolean(),
 });
-
-type CatalogSchema = z.infer<typeof catalogSchema>;
 
 export function CatalogForm(props: CatalogFormProps) {
   const [tags, setTags] = createSignal<string[]>([]);
   const [tagInput, setTagInput] = createSignal("");
   const [showTagSuggestions, setShowTagSuggestions] = createSignal(false);
 
-  const priceGroupsQuery = useQuery(getPriceGroupsOpts({ limit: 100 }));
   const tagsQuery = useQuery(getCatalogAllTagsOpts());
 
   const handleFileUpload = async (file: File, uploadPath: string) => {
@@ -62,40 +56,30 @@ export function CatalogForm(props: CatalogFormProps) {
       .slice(0, 10);
   };
 
+  const defaultValues: POST<CatalogItem> = props.defaultValues ?? {
+    catalog_code: "",
+    name: "",
+    description: "",
+    category: "",
+    default_width: "" as unknown as number,
+    default_height: "" as unknown as number,
+    min_width: "" as unknown as number,
+    min_height: "" as unknown as number,
+    default_price_group_id: 0,
+    svg_url: "",
+    is_active: true,
+  };
+
   const form = createForm(() => ({
-    defaultValues: props.defaultValues ?? {
-      catalog_code: "",
-      name: "",
-      description: null,
-      category: "",
-      default_width: 0,
-      default_height: 0,
-      min_width: 0,
-      min_height: 0,
-      default_price_group_id: 0,
-      svg_url: "",
-      is_active: true,
+    defaultValues,
+    validators: {
+      onBlur: catalogSchema,
+      onSubmit: catalogSchema,
     },
     onSubmit: async ({ value }) => {
-      await props.onSubmit(value as any, tags());
+      await props.onSubmit(value, tags());
     },
   }));
-
-  const validateMinDimensions = (field: "min_width" | "min_height") => {
-    const minValue =
-      field === "min_width"
-        ? form.getFieldValue("min_width")
-        : form.getFieldValue("min_height");
-    const maxValue =
-      field === "min_width"
-        ? form.getFieldValue("default_width")
-        : form.getFieldValue("default_height");
-
-    if (minValue > maxValue) {
-      return `Must be ≤ default ${field === "min_width" ? "width" : "height"}`;
-    }
-    return undefined;
-  };
 
   return (
     <form
@@ -109,24 +93,11 @@ export function CatalogForm(props: CatalogFormProps) {
       <form.Field
         name="catalog_code"
         children={(field) => (
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium text-gray-900">
-              Catalog Code
-            </label>
-            <input
-              type="text"
-              value={field().state.value}
-              onInput={(e) => field().handleChange(e.currentTarget.value)}
-              placeholder="e.g., CAT-001"
-              disabled={props.isEditMode}
-              class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            />
-            <Show when={field().state.meta.errors.length > 0}>
-              <span class="text-sm text-red-600">
-                {field().state.meta.errors[0]}
-              </span>
-            </Show>
-          </div>
+          <Form.TextField
+            field={field}
+            label="Catalog Code"
+            placeholder="ABC-234-V2"
+          />
         )}
       />
 
@@ -166,50 +137,24 @@ export function CatalogForm(props: CatalogFormProps) {
           <form.Field
             name="default_width"
             children={(field) => (
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-gray-900">
-                  Default Width
-                </label>
-                <input
-                  type="number"
-                  value={field().state.value}
-                  onInput={(e) =>
-                    field().handleChange(Number(e.currentTarget.value))
-                  }
-                  step="0.1"
-                  class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
-                <Show when={field().state.meta.errors.length > 0}>
-                  <span class="text-sm text-red-600">
-                    {field().state.meta.errors[0]}
-                  </span>
-                </Show>
-              </div>
+              <Form.NumberField
+                field={field}
+                label="Default Width"
+                decimalPlaces={2}
+                placeholder="e.g., 100.50"
+              />
             )}
           />
 
           <form.Field
             name="default_height"
             children={(field) => (
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-gray-900">
-                  Default Height
-                </label>
-                <input
-                  type="number"
-                  value={field().state.value}
-                  onInput={(e) =>
-                    field().handleChange(Number(e.currentTarget.value))
-                  }
-                  step="0.1"
-                  class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
-                <Show when={field().state.meta.errors.length > 0}>
-                  <span class="text-sm text-red-600">
-                    {field().state.meta.errors[0]}
-                  </span>
-                </Show>
-              </div>
+              <Form.NumberField
+                field={field}
+                label="Default Height"
+                decimalPlaces={2}
+                placeholder="e.g., 100.50"
+              />
             )}
           />
         </div>
@@ -218,50 +163,24 @@ export function CatalogForm(props: CatalogFormProps) {
           <form.Field
             name="min_width"
             children={(field) => (
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-gray-900">
-                  Minimum Width
-                </label>
-                <input
-                  type="number"
-                  value={field().state.value}
-                  onInput={(e) =>
-                    field().handleChange(Number(e.currentTarget.value))
-                  }
-                  step="0.1"
-                  class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
-                <Show when={validateMinDimensions("min_width")}>
-                  <span class="text-sm text-red-600">
-                    {validateMinDimensions("min_width")}
-                  </span>
-                </Show>
-              </div>
+              <Form.NumberField
+                field={field}
+                label="Minimum Width"
+                decimalPlaces={2}
+                placeholder="e.g., 50.25"
+              />
             )}
           />
 
           <form.Field
             name="min_height"
             children={(field) => (
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-gray-900">
-                  Minimum Height
-                </label>
-                <input
-                  type="number"
-                  value={field().state.value}
-                  onInput={(e) =>
-                    field().handleChange(Number(e.currentTarget.value))
-                  }
-                  step="0.1"
-                  class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
-                <Show when={validateMinDimensions("min_height")}>
-                  <span class="text-sm text-red-600">
-                    {validateMinDimensions("min_height")}
-                  </span>
-                </Show>
-              </div>
+              <Form.NumberField
+                field={field}
+                label="Minimum Height"
+                decimalPlaces={2}
+                placeholder="e.g., 50.25"
+              />
             )}
           />
         </div>
@@ -269,19 +188,7 @@ export function CatalogForm(props: CatalogFormProps) {
 
       <form.Field
         name="default_price_group_id"
-        children={(field) => (
-          <Form.Select
-            field={field}
-            label="Default Price Group"
-            placeholder="Select a price group..."
-            options={
-              priceGroupsQuery.data?.items?.map((pg) => ({
-                label: `${pg.name} ($${(pg.base_price_cents / 100).toFixed(2)})`,
-                value: pg.id,
-              })) ?? []
-            }
-          />
-        )}
+        children={(field) => <PriceGroupCombobox field={field} />}
       />
 
       <form.Field
@@ -302,17 +209,7 @@ export function CatalogForm(props: CatalogFormProps) {
 
       <form.Field
         name="is_active"
-        children={(field) => (
-          <label class="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={field().state.value}
-              onChange={(e) => field().handleChange(e.currentTarget.checked)}
-              class="rounded border-gray-300"
-            />
-            <span class="text-sm font-medium text-gray-900">Active</span>
-          </label>
-        )}
+        children={(field) => <Form.Checkbox field={field} label="Active" />}
       />
 
       <div class="border-t pt-4">

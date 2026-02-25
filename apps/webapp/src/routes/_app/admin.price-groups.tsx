@@ -261,7 +261,7 @@ function EditButton(props: EditButtonProps) {
 
 function RouteComponent() {
   const [filterValue, setFilterValue] = createSignal("");
-  const query = useQuery(getPriceGroupsOpts({ limit: 99, offset: 0 }));
+  const query = useQuery(() => getPriceGroupsOpts({ limit: 99, offset: 0 }));
   const postMutation = useMutation(() => postPriceGroupOpts());
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = createSignal(false);

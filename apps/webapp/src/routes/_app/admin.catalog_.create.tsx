@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/solid-query";
 import { postCatalogOpts, postCatalogTagOpts } from "../../queries/catalog";
 import { CatalogForm } from "../../components/admin/catalog-form";
 import { Show } from "solid-js";
+import { CatalogItem, POST } from "@glassact/data";
 
 export const Route = createFileRoute("/_app/admin/catalog_/create")({
   component: RouteComponent,
@@ -11,16 +12,16 @@ export const Route = createFileRoute("/_app/admin/catalog_/create")({
 function RouteComponent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const postMutation = useMutation(() => postCatalogOpts());
+  const postCatalog = useMutation(() => postCatalogOpts());
+  const postTag = useMutation(() => postCatalogTagOpts());
 
-  const handleSubmit = async (data: any, tags: string[]) => {
-    const submitData = data as any;
-    postMutation.mutate(submitData, {
-      onSuccess: async (result: any) => {
-        const tagOpts = postCatalogTagOpts(result.uuid) as any;
+  const handleSubmit = async (data: POST<CatalogItem>, tags: string[]) => {
+    console.log("here: ", data);
+    postCatalog.mutate(data, {
+      onSuccess: async (result) => {
         for (const tag of tags) {
           try {
-            await tagOpts().mutationFn(tag);
+            await postTag.mutateAsync({ uuid: result.uuid, tag });
           } catch (e) {
             console.error("Failed to add tag:", tag, e);
           }
@@ -50,11 +51,11 @@ function RouteComponent() {
         </button>
       </div>
 
-      <Show when={postMutation.isError}>
+      <Show when={postCatalog.isError}>
         <div class="bg-red-50 border border-red-200 rounded-md p-4">
           <p class="text-sm text-red-600">
-            {postMutation.error instanceof Error
-              ? postMutation.error.message
+            {postCatalog.error instanceof Error
+              ? postCatalog.error.message
               : "Failed to create catalog item"}
           </p>
         </div>
@@ -62,7 +63,7 @@ function RouteComponent() {
 
       <CatalogForm
         onSubmit={handleSubmit}
-        isLoading={postMutation.isPending}
+        isLoading={postCatalog.isPending}
         isEditMode={false}
       />
     </div>

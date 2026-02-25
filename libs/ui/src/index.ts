@@ -33,6 +33,7 @@ export * from "./tabs";
 
 export * from "./textarea";
 export * from "./textfield";
+export * from "./numberfield";
 
 export * from "./toast";
 

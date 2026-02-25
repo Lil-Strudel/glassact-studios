@@ -114,7 +114,6 @@ func (m *CatalogModule) HandlePostCatalog(w http.ResponseWriter, r *http.Request
 	m.WriteJSON(w, r, http.StatusCreated, catalogItem)
 }
 
-// HandleGetCatalogItem gets a single catalog item (public)
 func (m *CatalogModule) HandleGetCatalogItem(w http.ResponseWriter, r *http.Request) {
 	uuid := r.PathValue("uuid")
 
@@ -132,7 +131,6 @@ func (m *CatalogModule) HandleGetCatalogItem(w http.ResponseWriter, r *http.Requ
 	m.WriteJSON(w, r, http.StatusOK, item)
 }
 
-// HandlePatchCatalog updates a catalog item (internal admin only)
 func (m *CatalogModule) HandlePatchCatalog(w http.ResponseWriter, r *http.Request) {
 	uuid := r.PathValue("uuid")
 
@@ -166,7 +164,6 @@ func (m *CatalogModule) HandlePatchCatalog(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Apply updates
 	if body.Name != nil {
 		item.Name = *body.Name
 	}
@@ -198,7 +195,6 @@ func (m *CatalogModule) HandlePatchCatalog(w http.ResponseWriter, r *http.Reques
 		item.IsActive = *body.IsActive
 	}
 
-	// Validate dimensions
 	if item.DefaultWidth < item.MinWidth || item.DefaultHeight < item.MinHeight {
 		m.WriteError(w, r, m.Err.BadRequest, errors.New("default dimensions must be >= minimum dimensions"))
 		return
@@ -213,7 +209,6 @@ func (m *CatalogModule) HandlePatchCatalog(w http.ResponseWriter, r *http.Reques
 	m.WriteJSON(w, r, http.StatusOK, item)
 }
 
-// HandleDeleteCatalog soft deletes a catalog item (internal admin only)
 func (m *CatalogModule) HandleDeleteCatalog(w http.ResponseWriter, r *http.Request) {
 	uuid := r.PathValue("uuid")
 
@@ -228,7 +223,6 @@ func (m *CatalogModule) HandleDeleteCatalog(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Soft delete
 	item.IsActive = false
 	err = m.Db.CatalogItems.Update(item)
 	if err != nil {
@@ -239,7 +233,6 @@ func (m *CatalogModule) HandleDeleteCatalog(w http.ResponseWriter, r *http.Reque
 	m.WriteJSON(w, r, http.StatusOK, map[string]bool{"success": true})
 }
 
-// HandleGetTags gets tags for a catalog item (public)
 func (m *CatalogModule) HandleGetTags(w http.ResponseWriter, r *http.Request) {
 	uuid := r.PathValue("uuid")
 
@@ -257,7 +250,6 @@ func (m *CatalogModule) HandleGetTags(w http.ResponseWriter, r *http.Request) {
 	m.WriteJSON(w, r, http.StatusOK, item.Tags)
 }
 
-// HandlePostTag adds a tag to a catalog item (internal admin only)
 func (m *CatalogModule) HandlePostTag(w http.ResponseWriter, r *http.Request) {
 	uuid := r.PathValue("uuid")
 
@@ -282,7 +274,6 @@ func (m *CatalogModule) HandlePostTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check for duplicate
 	for _, existing := range item.Tags {
 		if existing == body.Tag {
 			m.WriteError(w, r, m.Err.BadRequest, errors.New("tag already exists"))
@@ -300,7 +291,6 @@ func (m *CatalogModule) HandlePostTag(w http.ResponseWriter, r *http.Request) {
 	m.WriteJSON(w, r, http.StatusOK, item.Tags)
 }
 
-// HandleDeleteTag removes a tag from a catalog item (internal admin only)
 func (m *CatalogModule) HandleDeleteTag(w http.ResponseWriter, r *http.Request) {
 	uuid := r.PathValue("uuid")
 	tag := r.PathValue("tag")
@@ -322,7 +312,6 @@ func (m *CatalogModule) HandleDeleteTag(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Update item's tags
 	filtered := make([]string, 0, len(item.Tags))
 	for _, t := range item.Tags {
 		if t != tag {
@@ -333,7 +322,6 @@ func (m *CatalogModule) HandleDeleteTag(w http.ResponseWriter, r *http.Request) 
 	m.WriteJSON(w, r, http.StatusOK, filtered)
 }
 
-// HandleBrowseCatalog returns active catalog items for dealership users (dealership)
 func (m *CatalogModule) HandleBrowseCatalog(w http.ResponseWriter, r *http.Request) {
 	limit := 50
 	offset := 0
@@ -368,10 +356,8 @@ func (m *CatalogModule) HandleBrowseCatalog(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Filter
 	filtered := filterCatalogItemsWithTags(items, search, category, tags)
 
-	// Paginate
 	end := offset + limit
 	if end > len(filtered) {
 		end = len(filtered)
@@ -391,7 +377,6 @@ func (m *CatalogModule) HandleBrowseCatalog(w http.ResponseWriter, r *http.Reque
 	})
 }
 
-// HandleGetCategories returns all distinct categories (dealership)
 func (m *CatalogModule) HandleGetCategories(w http.ResponseWriter, r *http.Request) {
 	categories, err := m.Db.CatalogItems.GetCategories()
 	if err != nil {
@@ -402,7 +387,6 @@ func (m *CatalogModule) HandleGetCategories(w http.ResponseWriter, r *http.Reque
 	m.WriteJSON(w, r, http.StatusOK, categories)
 }
 
-// HandleGetAllTags returns all distinct tags (dealership)
 func (m *CatalogModule) HandleGetAllTags(w http.ResponseWriter, r *http.Request) {
 	tags, err := m.Db.CatalogItems.GetAllTags()
 	if err != nil {
@@ -413,13 +397,10 @@ func (m *CatalogModule) HandleGetAllTags(w http.ResponseWriter, r *http.Request)
 	m.WriteJSON(w, r, http.StatusOK, tags)
 }
 
-// Helper functions
-
 func filterCatalogItems(items []*data.CatalogItem, search, category, isActive string) []*data.CatalogItem {
 	filtered := make([]*data.CatalogItem, 0, len(items))
 
 	for _, item := range items {
-		// Search filter
 		if search != "" {
 			searchLower := strings.ToLower(search)
 			if !strings.Contains(strings.ToLower(item.Name), searchLower) &&
@@ -428,12 +409,10 @@ func filterCatalogItems(items []*data.CatalogItem, search, category, isActive st
 			}
 		}
 
-		// Category filter
 		if category != "" && item.Category != category {
 			continue
 		}
 
-		// Active filter
 		if isActive != "" {
 			active := isActive == "true"
 			if item.IsActive != active {
@@ -451,7 +430,6 @@ func filterCatalogItemsWithTags(items []*data.CatalogItem, search, category stri
 	filtered := make([]*data.CatalogItem, 0, len(items))
 
 	for _, item := range items {
-		// Search filter
 		if search != "" {
 			searchLower := strings.ToLower(search)
 			if !strings.Contains(strings.ToLower(item.Name), searchLower) &&
@@ -460,12 +438,10 @@ func filterCatalogItemsWithTags(items []*data.CatalogItem, search, category stri
 			}
 		}
 
-		// Category filter
 		if category != "" && item.Category != category {
 			continue
 		}
 
-		// Tags filter - ALL tags must match
 		if len(tags) > 0 {
 			hasAllTags := true
 			for _, requiredTag := range tags {

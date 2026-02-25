@@ -1,4 +1,4 @@
-import type { AnyFieldApi } from "@tanstack/solid-form";
+import type { AnyFieldApi, AnyFormApi } from "@tanstack/solid-form";
 import {
   TextFieldRoot,
   TextFieldLabel,
@@ -7,8 +7,9 @@ import {
   TextFieldErrorMessage,
   textfieldLabel,
 } from "./textfield";
+import { NumberField } from "./numberfield";
 import { cn } from "./cn";
-import { createEffect, createMemo, createSignal, JSX, Show, For } from "solid-js";
+import { createEffect, createSignal, JSX, Show, For } from "solid-js";
 import { TextArea } from "./textarea";
 import {
   Combobox,
@@ -28,6 +29,7 @@ import {
   FileFieldErrorMessage,
 } from "./filefield";
 import { FileUpload } from "./file-upload";
+import { Checkbox, CheckboxControl, CheckboxLabel } from "./checkbox";
 
 function useValidationState(field: () => AnyFieldApi) {
   const [validationState, setValidationState] = createSignal<
@@ -106,6 +108,66 @@ function FormTextArea(props: FormTextAreaProps) {
         value={field().state.value}
         onBlur={field().handleBlur}
         onChange={(e) => field().handleChange(e.target.value)}
+      />
+      {description && (
+        <TextFieldDescription>{description}</TextFieldDescription>
+      )}
+      <TextFieldErrorMessage>
+        {field()
+          .state.meta.errors.map((error) => error?.message)
+          .join(", ")}
+      </TextFieldErrorMessage>
+    </TextFieldRoot>
+  );
+}
+
+interface FormNumberFieldProps {
+  field: () => AnyFieldApi;
+  class?: JSX.HTMLAttributes<"div">["class"];
+  label?: string;
+  placeholder?: string;
+  description?: string;
+  fullWidth?: boolean;
+  int?: boolean;
+  decimalPlaces?: number;
+}
+function FormNumberField(props: FormNumberFieldProps) {
+  const {
+    field,
+    label,
+    placeholder,
+    description,
+    fullWidth = true,
+    int,
+    decimalPlaces,
+  } = props;
+  const validationState = useValidationState(field);
+
+  const handleChange = (value: string) => {
+    if (value === "") {
+      field().handleChange("");
+    } else {
+      const numValue = parseFloat(value);
+      if (!isNaN(numValue)) {
+        field().handleChange(numValue);
+      }
+    }
+  };
+
+  return (
+    <TextFieldRoot
+      class={cn(fullWidth && "w-full", props.class)}
+      validationState={validationState()}
+    >
+      {label && <TextFieldLabel>{label}</TextFieldLabel>}
+      <NumberField
+        placeholder={placeholder}
+        name={field().name}
+        value={field().state.value?.toString() || ""}
+        onBlur={field().handleBlur}
+        onChange={handleChange}
+        int={int}
+        decimalPlaces={decimalPlaces}
       />
       {description && (
         <TextFieldDescription>{description}</TextFieldDescription>
@@ -230,7 +292,17 @@ interface FormFileUploadProps {
   description?: string;
   class?: string;
   fullWidth?: boolean;
-  uploadFn?: (file: File, uploadPath: string) => Promise<{ url: string; filename: string; size: number; content_type: string; key: string; uploaded_at: string }>;
+  uploadFn?: (
+    file: File,
+    uploadPath: string,
+  ) => Promise<{
+    url: string;
+    filename: string;
+    size: number;
+    content_type: string;
+    key: string;
+    uploaded_at: string;
+  }>;
 }
 
 function FormFileUpload(props: FormFileUploadProps) {
@@ -309,7 +381,9 @@ function FormSelect(props: FormSelectProps) {
         value={field().state.value || ""}
         onChange={(e) => {
           const val = e.currentTarget.value;
-          field().handleChange(val ? (isNaN(Number(val)) ? val : Number(val)) : undefined);
+          field().handleChange(
+            val ? (isNaN(Number(val)) ? val : Number(val)) : undefined,
+          );
         }}
         onBlur={field().handleBlur}
         class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -331,11 +405,53 @@ function FormSelect(props: FormSelectProps) {
   );
 }
 
+interface FormCheckboxProps {
+  field: () => AnyFieldApi;
+  class?: JSX.HTMLAttributes<"div">["class"];
+  label?: string;
+  description?: string;
+}
+
+function FormCheckbox(props: FormCheckboxProps) {
+  const { field, label, description } = props;
+  const validationState = useValidationState(field);
+
+  return (
+    <div class={cn("flex flex-col gap-2", props.class)}>
+      <Checkbox
+        checked={field().state.value}
+        onChange={(checked) => field().handleChange(checked)}
+        onBlur={field().handleBlur}
+        validationState={validationState()}
+      >
+        <div class="flex items-center gap-2">
+          <CheckboxControl />
+          {label && <CheckboxLabel>{label}</CheckboxLabel>}
+        </div>
+      </Checkbox>
+      {description && (
+        <p class={cn(textfieldLabel({ description: true, label: false }))}>
+          {description}
+        </p>
+      )}
+      <Show when={field().state.meta.errors.length > 0}>
+        <span class={cn(textfieldLabel({ error: true }))}>
+          {field()
+            .state.meta.errors.map((error) => error?.message)
+            .join(", ")}
+        </span>
+      </Show>
+    </div>
+  );
+}
+
 export const Form = {
   TextField: FormTextField,
   TextArea: FormTextArea,
+  NumberField: FormNumberField,
   Combobox: FormCombobox,
   FileUpload: FormFileUpload,
   Select: FormSelect,
+  Checkbox: FormCheckbox,
   ErrorLabel: FormErrorLabel,
 } as const;

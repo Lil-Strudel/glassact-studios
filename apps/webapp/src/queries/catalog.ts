@@ -69,17 +69,17 @@ export function postCatalogOpts() {
   });
 }
 
-export async function patchCatalog(
-  uuid: string,
-  body: PATCH<CatalogItem>,
-): Promise<GET<CatalogItem>> {
-  const res = await api.patch(`/catalog/${uuid}`, body);
+export async function patchCatalog(params: {
+  uuid: string;
+  body: PATCH<CatalogItem>;
+}): Promise<GET<CatalogItem>> {
+  const res = await api.patch(`/catalog/${params.uuid}`, params.body);
   return res.data;
 }
 
-export function patchCatalogOpts(uuid: string) {
+export function patchCatalogOpts() {
   return mutationOptions({
-    mutationFn: (body: PATCH<CatalogItem>) => patchCatalog(uuid, body),
+    mutationFn: patchCatalog,
   });
 }
 
@@ -90,9 +90,9 @@ export async function deleteCatalog(
   return res.data;
 }
 
-export function deleteCatalogOpts(uuid: string) {
+export function deleteCatalogOpts() {
   return mutationOptions({
-    mutationFn: () => deleteCatalog(uuid),
+    mutationFn: deleteCatalog,
   });
 }
 
@@ -109,32 +109,34 @@ export function getCatalogTagsOpts(uuid: string) {
     });
 }
 
-export async function postCatalogTag(
-  uuid: string,
-  tag: string,
-): Promise<string[]> {
-  const res = await api.post(`/catalog/${uuid}/tags`, { tag });
+export async function postCatalogTag(params: {
+  uuid: string;
+  tag: string;
+}): Promise<string[]> {
+  const res = await api.post(`/catalog/${params.uuid}/tags`, {
+    tag: params.tag,
+  });
   return res.data;
 }
 
-export function postCatalogTagOpts(uuid: string) {
+export function postCatalogTagOpts() {
   return mutationOptions({
-    mutationFn: (tag: string) => postCatalogTag(uuid, tag),
+    mutationFn: postCatalogTag,
   });
 }
 
-export async function deleteCatalogTag(
-  uuid: string,
-  tag: string,
-): Promise<string[]> {
+export async function deleteCatalogTag(params: {
+  uuid: string;
+  tag: string;
+}): Promise<string[]> {
   const res = await api.delete(
-    `/catalog/${uuid}/tags/${encodeURIComponent(tag)}`,
+    `/catalog/${params.uuid}/tags/${encodeURIComponent(params.tag)}`,
   );
   return res.data;
 }
 
-export function deleteCatalogTagOpts(uuid: string, tag: string) {
+export function deleteCatalogTagOpts() {
   return mutationOptions({
-    mutationFn: () => deleteCatalogTag(uuid, tag),
+    mutationFn: deleteCatalogTag,
   });
 }

@@ -23,10 +23,7 @@ import {
 import { CatalogItem, GET } from "@glassact/data";
 import { IoPencilOutline, IoTrashOutline } from "solid-icons/io";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
-import {
-  getCatalogListOpts,
-  deleteCatalogOpts,
-} from "../../queries/catalog";
+import { getCatalogListOpts, deleteCatalogOpts } from "../../queries/catalog";
 
 export const Route = createFileRoute("/_app/admin/catalog")({
   component: RouteComponent,
@@ -39,7 +36,7 @@ const defaultColumns: ColumnDef<GET<CatalogItem>>[] = [
     header: "Actions",
     cell: (props) => {
       const queryClient = useQueryClient();
-      const deleteMutation = useMutation(() => deleteCatalogOpts(props.row.original.uuid));
+      const deleteCatalog = useMutation(() => deleteCatalogOpts());
 
       return (
         <div class="flex gap-2">
@@ -57,17 +54,17 @@ const defaultColumns: ColumnDef<GET<CatalogItem>>[] = [
             onClick={async () => {
               if (
                 window.confirm(
-                  "Are you sure you want to delete this catalog item?"
+                  "Are you sure you want to delete this catalog item?",
                 )
               ) {
-                deleteMutation.mutate(undefined, {
+                deleteCatalog.mutate(props.row.original.uuid, {
                   onSuccess: () => {
                     queryClient.invalidateQueries({ queryKey: ["catalog"] });
                   },
                 });
               }
             }}
-            disabled={deleteMutation.isPending}
+            disabled={deleteCatalog.isPending}
           >
             <IoTrashOutline size={20} />
           </Button>
@@ -125,7 +122,7 @@ function RouteComponent() {
       isActive: !showInactive(),
       limit: 50,
       offset: 0,
-    })
+    }),
   );
 
   const table = createSolidTable({

@@ -8,9 +8,9 @@ import {
   deleteCatalogTagOpts,
   deleteCatalogOpts,
 } from "../../queries/catalog";
-import { CatalogItem, PATCH } from "@glassact/data";
+import { CatalogItem, PATCH, POST } from "@glassact/data";
 import { CatalogForm } from "../../components/admin/catalog-form";
-import { Show, createSignal, createMemo } from "solid-js";
+import { Show } from "solid-js";
 import { Button } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/admin/catalog_/$uuid")({
@@ -22,50 +22,51 @@ function RouteComponent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [isDeleting, setIsDeleting] = createSignal(false);
+  const itemQuery = useQuery(getCatalogItemOpts(params().uuid));
+  const tagsQuery = useQuery(getCatalogTagsOpts(params().uuid));
+  const patchCatalog = useMutation(() => patchCatalogOpts());
+  const deleteCatalog = useMutation(() => deleteCatalogOpts());
+  const deleteTag = useMutation(() => deleteCatalogTagOpts());
+  const postTag = useMutation(() => postCatalogTagOpts());
 
-  const uuid = createMemo(() => (params as any).uuid);
+  const handleSubmit = async (data: POST<CatalogItem>, newTags: string[]) => {
+    const currentTags = tagsQuery.data ?? [];
 
-  const itemQuery = useQuery(getCatalogItemOpts(uuid()) as any);
-  const tagsQuery = useQuery(getCatalogTagsOpts(uuid()) as any);
-  const patchMutation = useMutation(() => patchCatalogOpts(uuid()));
-  const deleteMutation = useMutation(() => deleteCatalogOpts(uuid()));
+    patchCatalog.mutate(
+      { uuid: params().uuid, body: data },
+      {
+        onSuccess: async () => {
+          const tagsToRemove = currentTags.filter(
+            (t: any) => !newTags.includes(t),
+          );
+          const tagsToAdd = newTags.filter(
+            (t: any) => !currentTags.includes(t),
+          );
 
-  const handleSubmit = async (data: PATCH<CatalogItem>, newTags: string[]) => {
-    const currentTags = (tagsQuery.data ?? []) as any;
-
-    patchMutation.mutate(data, {
-      onSuccess: async () => {
-        const tagsToRemove = currentTags.filter(
-          (t: any) => !newTags.includes(t),
-        );
-        const tagsToAdd = newTags.filter((t: any) => !currentTags.includes(t));
-
-        for (const tag of tagsToRemove) {
-          try {
-            const deleteOpts = deleteCatalogTagOpts(uuid(), tag) as any;
-            await deleteOpts().mutationFn();
-          } catch (e) {
-            console.error("Failed to remove tag:", tag, e);
+          for (const tag of tagsToRemove) {
+            try {
+              deleteTag.mutateAsync({ uuid: params().uuid, tag });
+            } catch (e) {
+              console.error("Failed to remove tag:", tag, e);
+            }
           }
-        }
 
-        for (const tag of tagsToAdd) {
-          try {
-            const addOpts = postCatalogTagOpts(uuid()) as any;
-            await addOpts().mutationFn(tag);
-          } catch (e) {
-            console.error("Failed to add tag:", tag, e);
+          for (const tag of tagsToAdd) {
+            try {
+              postTag.mutateAsync({ uuid: params().uuid, tag });
+            } catch (e) {
+              console.error("Failed to add tag:", tag, e);
+            }
           }
-        }
 
-        queryClient.invalidateQueries({ queryKey: ["catalog"] });
-        navigate({ to: "/admin/catalog" });
+          queryClient.invalidateQueries({ queryKey: ["catalog"] });
+          navigate({ to: "/admin/catalog" });
+        },
+        onError: (error) => {
+          console.error("Failed to update catalog item:", error);
+        },
       },
-      onError: (error) => {
-        console.error("Failed to update catalog item:", error);
-      },
-    });
+    );
   };
 
   const handleDelete = async () => {
@@ -77,67 +78,63 @@ function RouteComponent() {
       return;
     }
 
-    setIsDeleting(true);
-    deleteMutation.mutate(undefined, {
+    deleteCatalog.mutate(params().uuid, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["catalog"] });
         navigate({ to: "/admin/catalog" });
       },
       onError: (error) => {
         console.error("Failed to delete catalog item:", error);
-        setIsDeleting(false);
       },
     });
   };
 
   return (
     <div class="flex flex-col gap-6">
-      <Show when={itemQuery.data as any}>
+      <Show when={itemQuery.data}>
         {(item) => (
           <>
             <div class="flex items-center justify-between">
               <div>
                 <h1 class="text-2xl font-bold text-gray-900">
-                  Edit Catalog Item: {(item() as any).name}
+                  Edit Catalog Item: {item().name}
                 </h1>
-                <p class="text-gray-600 mt-1">
-                  Code: {(item() as any).catalog_code}
-                </p>
+                <p class="text-gray-600 mt-1">Code: {item().catalog_code}</p>
               </div>
 
               <Button
                 variant="destructive"
                 onClick={handleDelete}
-                disabled={isDeleting()}
+                disabled={deleteCatalog.isPending}
               >
-                {isDeleting() ? "Deleting..." : "Delete Item"}
+                {deleteCatalog.isPending ? "Deleting..." : "Delete Item"}
               </Button>
             </div>
 
-            <Show when={patchMutation.isError}>
+            <Show when={patchCatalog.isError}>
               <div class="bg-red-50 border border-red-200 rounded-md p-4">
                 <p class="text-sm text-red-600">
-                  {patchMutation.error instanceof Error
-                    ? patchMutation.error.message
+                  {patchCatalog.error instanceof Error
+                    ? patchCatalog.error.message
                     : "Failed to update catalog item"}
                 </p>
               </div>
             </Show>
 
-            <Show when={deleteMutation.isError}>
+            <Show when={deleteCatalog.isError}>
               <div class="bg-red-50 border border-red-200 rounded-md p-4">
                 <p class="text-sm text-red-600">
-                  {deleteMutation.error instanceof Error
-                    ? deleteMutation.error.message
+                  {deleteCatalog.error instanceof Error
+                    ? deleteCatalog.error.message
                     : "Failed to delete catalog item"}
                 </p>
               </div>
             </Show>
 
             <CatalogForm
-              defaultValues={item() as any}
+              defaultValues={item()}
               onSubmit={handleSubmit}
-              isLoading={patchMutation.isPending}
+              isLoading={patchCatalog.isPending}
               isEditMode={true}
             />
           </>

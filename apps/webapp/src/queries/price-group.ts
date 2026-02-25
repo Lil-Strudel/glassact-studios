@@ -26,11 +26,10 @@ export function getPriceGroupsOpts(params?: {
   limit?: number;
   offset?: number;
 }) {
-  return () =>
-    queryOptions({
-      queryKey: ["price-groups", params],
-      queryFn: () => getPriceGroups(params),
-    });
+  return queryOptions({
+    queryKey: ["price-groups", params],
+    queryFn: () => getPriceGroups(params),
+  });
 }
 
 export async function getPriceGroup(uuid: string): Promise<GET<PriceGroup>> {
