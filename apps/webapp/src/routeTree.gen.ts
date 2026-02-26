@@ -27,6 +27,7 @@ import { Route as AppAdminDealershipsRouteImport } from './routes/_app/admin.dea
 import { Route as AppAdminCatalogRouteImport } from './routes/_app/admin.catalog'
 import { Route as AppProjectsCreateProjectIndexRouteImport } from './routes/_app/projects_.create-project.index'
 import { Route as AppProjectsCreateProjectAddInlayRouteImport } from './routes/_app/projects_.create-project.add-inlay'
+import { Route as AppProjectsIdAddInlayRouteImport } from './routes/_app/projects_.$id.add-inlay'
 import { Route as AppDealershipIdUsersRouteImport } from './routes/_app/dealership.$id.users'
 import { Route as AppDealershipIdSettingsRouteImport } from './routes/_app/dealership.$id.settings'
 import { Route as AppAdminUsersInternalRouteImport } from './routes/_app/admin.users.internal'
@@ -126,6 +127,11 @@ const AppProjectsCreateProjectAddInlayRoute =
     path: '/add-inlay',
     getParentRoute: () => AppProjectsCreateProjectRoute,
   } as any)
+const AppProjectsIdAddInlayRoute = AppProjectsIdAddInlayRouteImport.update({
+  id: '/add-inlay',
+  path: '/add-inlay',
+  getParentRoute: () => AppProjectsIdRoute,
+} as any)
 const AppDealershipIdUsersRoute = AppDealershipIdUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -170,7 +176,7 @@ export interface FileRoutesByFullPath {
   '/admin/price-groups': typeof AppAdminPriceGroupsRoute
   '/admin/users': typeof AppAdminUsersRouteWithChildren
   '/dealership/$id': typeof AppDealershipIdRouteWithChildren
-  '/projects/$id': typeof AppProjectsIdRoute
+  '/projects/$id': typeof AppProjectsIdRouteWithChildren
   '/projects/create-project': typeof AppProjectsCreateProjectRouteWithChildren
   '/catalog/': typeof AppCatalogIndexRoute
   '/admin/catalog/$uuid': typeof AppAdminCatalogUuidRoute
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/admin/users/internal': typeof AppAdminUsersInternalRoute
   '/dealership/$id/settings': typeof AppDealershipIdSettingsRoute
   '/dealership/$id/users': typeof AppDealershipIdUsersRoute
+  '/projects/$id/add-inlay': typeof AppProjectsIdAddInlayRoute
   '/projects/create-project/add-inlay': typeof AppProjectsCreateProjectAddInlayRoute
   '/projects/create-project/': typeof AppProjectsCreateProjectIndexRoute
 }
@@ -195,7 +202,7 @@ export interface FileRoutesByTo {
   '/admin/price-groups': typeof AppAdminPriceGroupsRoute
   '/admin/users': typeof AppAdminUsersRouteWithChildren
   '/dealership/$id': typeof AppDealershipIdRouteWithChildren
-  '/projects/$id': typeof AppProjectsIdRoute
+  '/projects/$id': typeof AppProjectsIdRouteWithChildren
   '/catalog': typeof AppCatalogIndexRoute
   '/admin/catalog/$uuid': typeof AppAdminCatalogUuidRoute
   '/admin/catalog/create': typeof AppAdminCatalogCreateRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/admin/users/internal': typeof AppAdminUsersInternalRoute
   '/dealership/$id/settings': typeof AppDealershipIdSettingsRoute
   '/dealership/$id/users': typeof AppDealershipIdUsersRoute
+  '/projects/$id/add-inlay': typeof AppProjectsIdAddInlayRoute
   '/projects/create-project/add-inlay': typeof AppProjectsCreateProjectAddInlayRoute
   '/projects/create-project': typeof AppProjectsCreateProjectIndexRoute
 }
@@ -221,7 +229,7 @@ export interface FileRoutesById {
   '/_app/admin/price-groups': typeof AppAdminPriceGroupsRoute
   '/_app/admin/users': typeof AppAdminUsersRouteWithChildren
   '/_app/dealership/$id': typeof AppDealershipIdRouteWithChildren
-  '/_app/projects_/$id': typeof AppProjectsIdRoute
+  '/_app/projects_/$id': typeof AppProjectsIdRouteWithChildren
   '/_app/projects_/create-project': typeof AppProjectsCreateProjectRouteWithChildren
   '/_app/catalog/': typeof AppCatalogIndexRoute
   '/_app/admin/catalog_/$uuid': typeof AppAdminCatalogUuidRoute
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/_app/admin/users/internal': typeof AppAdminUsersInternalRoute
   '/_app/dealership/$id/settings': typeof AppDealershipIdSettingsRoute
   '/_app/dealership/$id/users': typeof AppDealershipIdUsersRoute
+  '/_app/projects_/$id/add-inlay': typeof AppProjectsIdAddInlayRoute
   '/_app/projects_/create-project/add-inlay': typeof AppProjectsCreateProjectAddInlayRoute
   '/_app/projects_/create-project/': typeof AppProjectsCreateProjectIndexRoute
 }
@@ -257,6 +266,7 @@ export interface FileRouteTypes {
     | '/admin/users/internal'
     | '/dealership/$id/settings'
     | '/dealership/$id/users'
+    | '/projects/$id/add-inlay'
     | '/projects/create-project/add-inlay'
     | '/projects/create-project/'
   fileRoutesByTo: FileRoutesByTo
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/admin/users/internal'
     | '/dealership/$id/settings'
     | '/dealership/$id/users'
+    | '/projects/$id/add-inlay'
     | '/projects/create-project/add-inlay'
     | '/projects/create-project'
   id:
@@ -307,6 +318,7 @@ export interface FileRouteTypes {
     | '/_app/admin/users/internal'
     | '/_app/dealership/$id/settings'
     | '/_app/dealership/$id/users'
+    | '/_app/projects_/$id/add-inlay'
     | '/_app/projects_/create-project/add-inlay'
     | '/_app/projects_/create-project/'
   fileRoutesById: FileRoutesById
@@ -445,6 +457,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AppProjectsCreateProjectAddInlayRouteImport
       parentRoute: typeof AppProjectsCreateProjectRoute
     }
+    '/_app/projects_/$id/add-inlay': {
+      id: '/_app/projects_/$id/add-inlay'
+      path: '/add-inlay'
+      fullPath: '/projects/$id/add-inlay'
+      preLoaderRoute: typeof AppProjectsIdAddInlayRouteImport
+      parentRoute: typeof AppProjectsIdRoute
+    }
     '/_app/dealership/$id/users': {
       id: '/_app/dealership/$id/users'
       path: '/users'
@@ -540,6 +559,18 @@ const AppDealershipIdRouteWithChildren = AppDealershipIdRoute._addFileChildren(
   AppDealershipIdRouteChildren,
 )
 
+interface AppProjectsIdRouteChildren {
+  AppProjectsIdAddInlayRoute: typeof AppProjectsIdAddInlayRoute
+}
+
+const AppProjectsIdRouteChildren: AppProjectsIdRouteChildren = {
+  AppProjectsIdAddInlayRoute: AppProjectsIdAddInlayRoute,
+}
+
+const AppProjectsIdRouteWithChildren = AppProjectsIdRoute._addFileChildren(
+  AppProjectsIdRouteChildren,
+)
+
 interface AppProjectsCreateProjectRouteChildren {
   AppProjectsCreateProjectAddInlayRoute: typeof AppProjectsCreateProjectAddInlayRoute
   AppProjectsCreateProjectIndexRoute: typeof AppProjectsCreateProjectIndexRoute
@@ -564,7 +595,7 @@ interface AppRouteChildren {
   AppProjectsRoute: typeof AppProjectsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppDealershipIdRoute: typeof AppDealershipIdRouteWithChildren
-  AppProjectsIdRoute: typeof AppProjectsIdRoute
+  AppProjectsIdRoute: typeof AppProjectsIdRouteWithChildren
   AppProjectsCreateProjectRoute: typeof AppProjectsCreateProjectRouteWithChildren
   AppCatalogIndexRoute: typeof AppCatalogIndexRoute
 }
@@ -576,7 +607,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProjectsRoute: AppProjectsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppDealershipIdRoute: AppDealershipIdRouteWithChildren,
-  AppProjectsIdRoute: AppProjectsIdRoute,
+  AppProjectsIdRoute: AppProjectsIdRouteWithChildren,
   AppProjectsCreateProjectRoute: AppProjectsCreateProjectRouteWithChildren,
   AppCatalogIndexRoute: AppCatalogIndexRoute,
 }

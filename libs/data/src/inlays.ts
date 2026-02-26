@@ -1,4 +1,4 @@
-import { StandardTable } from "./helpers";
+import type { GET, StandardTable } from "./helpers";
 
 export type InlayType = "catalog" | "custom";
 
@@ -32,3 +32,8 @@ export type Inlay = StandardTable<{
   approved_proof_id: number | null;
   manufacturing_step: ManufacturingStep | null;
 }>;
+
+export type InlayWithInfo = GET<Inlay> & {
+  catalog_info?: GET<InlayCatalogInfo> | null;
+  custom_info?: GET<InlayCustomInfo> | null;
+};

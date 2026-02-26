@@ -13,6 +13,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/project"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/upload"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/user"
+	data "github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
 	"github.com/justinas/alice"
 )
 
@@ -41,22 +42,29 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/dealership/{uuid}", protected.ThenFunc(dealershipModule.HandleGetDealershipByUUID))
 	mux.Handle("POST /api/dealership", protected.ThenFunc(dealershipModule.HandlePostDealership))
 
+	canCreateProject := alice.New(app.Authenticate, app.RequirePermission(data.ActionCreateProject))
+
+	projectModule := project.NewProjectModule(app)
+	mux.Handle("GET /api/project", protected.ThenFunc(projectModule.HandleGetProjects))
+	mux.Handle("POST /api/project", canCreateProject.ThenFunc(projectModule.HandlePostProject))
+	mux.Handle("POST /api/project/with-inlays", canCreateProject.ThenFunc(projectModule.HandlePostProjectWithInlays))
+	mux.Handle("GET /api/project/{uuid}", protected.ThenFunc(projectModule.HandleGetProjectByUUID))
+	mux.Handle("PATCH /api/project/{uuid}", protected.ThenFunc(projectModule.HandlePatchProject))
+	mux.Handle("DELETE /api/project/{uuid}", protected.ThenFunc(projectModule.HandleDeleteProject))
+
 	inlayModule := inlay.NewInlayModule(app)
-	mux.Handle("GET /api/inlay", protected.ThenFunc(inlayModule.HandleGetInlays))
+	mux.Handle("GET /api/project/{uuid}/inlays", protected.ThenFunc(inlayModule.HandleGetInlaysByProject))
+	mux.Handle("POST /api/project/{uuid}/inlays/catalog", canCreateProject.ThenFunc(inlayModule.HandlePostCatalogInlay))
+	mux.Handle("POST /api/project/{uuid}/inlays/custom", canCreateProject.ThenFunc(inlayModule.HandlePostCustomInlay))
 	mux.Handle("GET /api/inlay/{uuid}", protected.ThenFunc(inlayModule.HandleGetInlayByUUID))
-	mux.Handle("POST /api/inlay", protected.ThenFunc(inlayModule.HandlePostInlay))
+	mux.Handle("PATCH /api/inlay/{uuid}", protected.ThenFunc(inlayModule.HandlePatchInlay))
+	mux.Handle("DELETE /api/inlay/{uuid}", protected.ThenFunc(inlayModule.HandleDeleteInlay))
 
 	inlayChatModule := inlayChat.NewInlayChatModule(app)
 	mux.Handle("GET /api/inlay-chat", protected.ThenFunc(inlayChatModule.HandleGetInlayChats))
 	mux.Handle("GET /api/inlay-chat/inlay/{uuid}", protected.ThenFunc(inlayChatModule.HandleGetInlayChatsByInlayUUID))
 	mux.Handle("GET /api/inlay-chat/{uuid}", protected.ThenFunc(inlayChatModule.HandleGetInlayChatByUUID))
 	mux.Handle("POST /api/inlay-chat", protected.ThenFunc(inlayChatModule.HandlePostInlayChat))
-
-	projectModule := project.NewProjectModule(app)
-	mux.Handle("GET /api/project", protected.ThenFunc(projectModule.HandleGetProjects))
-	mux.Handle("GET /api/project/{uuid}", protected.ThenFunc(projectModule.HandleGetProjectByUUID))
-	mux.Handle("POST /api/project", protected.ThenFunc(projectModule.HandlePostProject))
-	mux.Handle("POST /api/project/with-inlays", protected.ThenFunc(projectModule.HandlePostProjectWithInlays))
 
 	userModule := user.NewUserModule(app)
 	mux.Handle("GET /api/user/self", protected.ThenFunc(userModule.HandleGetUserSelf))

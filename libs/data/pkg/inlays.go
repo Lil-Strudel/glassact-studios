@@ -487,6 +487,42 @@ func (m InlayModel) GetAll() ([]*Inlay, error) {
 	return inlays, nil
 }
 
+func (m InlayModel) GetByProjectID(projectID int) ([]*Inlay, error) {
+	query := postgres.SELECT(
+		table.Inlays.AllColumns,
+		table.InlayCatalogInfos.AllColumns,
+		table.InlayCustomInfos.AllColumns,
+	).FROM(
+		table.Inlays.
+			LEFT_JOIN(table.InlayCatalogInfos, table.InlayCatalogInfos.InlayID.EQ(table.Inlays.ID)).
+			LEFT_JOIN(table.InlayCustomInfos, table.InlayCustomInfos.InlayID.EQ(table.Inlays.ID)),
+	).WHERE(
+		table.Inlays.ProjectID.EQ(postgres.Int(int64(projectID))),
+	).ORDER_BY(
+		table.Inlays.CreatedAt.ASC(),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest []struct {
+		model.Inlays
+		InlayCatalogInfos *model.InlayCatalogInfos
+		InlayCustomInfos  *model.InlayCustomInfos
+	}
+	err := query.QueryContext(ctx, m.STDB, &dest)
+	if err != nil {
+		return nil, err
+	}
+
+	inlays := make([]*Inlay, len(dest))
+	for i, d := range dest {
+		inlays[i] = inlayFromGen(d.Inlays, d.InlayCatalogInfos, d.InlayCustomInfos)
+	}
+
+	return inlays, nil
+}
+
 func (m InlayModel) Update(inlay *Inlay) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
