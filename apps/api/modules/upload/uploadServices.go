@@ -49,12 +49,10 @@ func UploadFileToS3(
 	newFilename := uuid.New().String() + ext
 
 	if uploadPath == "" {
-		uploadPath = "uploads"
-	} else {
-		uploadPath = "uploads/" + uploadPath
+		uploadPath = "default"
 	}
 
-	key := fmt.Sprintf("%s/%s", uploadPath, newFilename)
+	key := fmt.Sprintf("file/%s/%s", uploadPath, newFilename)
 
 	_, err := s3Client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:        aws.String(cfg.S3.Bucket),
@@ -67,7 +65,7 @@ func UploadFileToS3(
 		return nil, fmt.Errorf("failed to upload file to S3: %w", err)
 	}
 
-	relativeURL := fmt.Sprintf("/images/%s", key)
+	relativeURL := fmt.Sprintf("/file/%s/%s", uploadPath, newFilename)
 
 	result := &UploadResult{
 		URL:         relativeURL,
@@ -79,4 +77,41 @@ func UploadFileToS3(
 	}
 
 	return result, nil
+}
+
+func GenerateSignedURL(
+	ctx context.Context,
+	s3Client *s3.Client,
+	cfg *config.Config,
+	key string,
+	expirationDuration time.Duration,
+) (string, error) {
+	if s3Client == nil {
+		return "", fmt.Errorf("S3 client not initialized")
+	}
+
+	if key == "" {
+		return "", fmt.Errorf("S3 key cannot be empty")
+	}
+
+	if expirationDuration == 0 {
+		expirationDuration = 15 * time.Minute
+	}
+
+	getObjectInput := &s3.GetObjectInput{
+		Bucket: aws.String(cfg.S3.Bucket),
+		Key:    aws.String(key),
+	}
+
+	presignClient := s3.NewPresignClient(s3Client)
+	presignedURL, err := presignClient.PresignGetObject(ctx, getObjectInput,
+		func(opts *s3.PresignOptions) {
+			opts.Expires = expirationDuration
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+
+	return presignedURL.URL, nil
 }

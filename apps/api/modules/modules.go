@@ -79,6 +79,7 @@ func GetRoutes(app *app.Application) http.Handler {
 
 	uploadModule := upload.NewUploadModule(app)
 	mux.Handle("POST /api/upload", protected.ThenFunc(uploadModule.HandlePostUpload))
+	mux.Handle("GET /file/{path...}", unprotected.ThenFunc(uploadModule.HandleGetFile))
 
 	// Catalog routes
 	internalAdmin := alice.New(app.Authenticate, app.RequireRole("admin"))
