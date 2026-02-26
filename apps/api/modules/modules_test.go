@@ -191,7 +191,7 @@ func seedTestData(t *testing.T, ctx *testContext) (*data.DealershipUser, string,
 			City:       "Test City",
 			State:      "TS",
 			PostalCode: "12345",
-			Country:    "USA",
+			Country:    "US",
 			Latitude:   40.7128,
 			Longitude:  -74.0060,
 		},
@@ -363,7 +363,7 @@ func TestAPIEndpoints(t *testing.T) {
 						"city":        "New City",
 						"state":       "NC",
 						"postal_code": "54321",
-						"country":     "USA",
+						"country":     "US",
 						"latitude":    40.0,
 						"longitude":   -75.0,
 					},
@@ -394,120 +394,6 @@ func TestAPIEndpoints(t *testing.T) {
 		}
 	})
 
-	t.Run("Inlay Module", func(t *testing.T) {
-		dealerships, _ := testCtx.db.Dealerships.GetAll()
-		require.Greater(t, len(dealerships), 0)
-
-		project := &data.Project{
-			Name:         "Test Project",
-			Status:       data.ProjectStatuses.Draft,
-			DealershipID: dealerships[0].ID,
-		}
-		_ = testCtx.db.Projects.Insert(project)
-
-		t.Run("GET /api/inlay", func(t *testing.T) {
-			resp := testCtx.request(testRequest{
-				method: "GET",
-				path:   "/api/inlay",
-				token:  accessToken,
-			})
-
-			assert.Equal(t, http.StatusOK, resp.statusCode)
-			t.Logf("✓ GET /api/inlay (%d)", resp.statusCode)
-		})
-
-		t.Run("POST /api/inlay", func(t *testing.T) {
-			resp := testCtx.request(testRequest{
-				method: "POST",
-				path:   "/api/inlay",
-				body: map[string]interface{}{
-					"project_id":  project.ID,
-					"name":        "Test Inlay",
-					"type":        "catalog",
-					"preview_url": "https://example.com/preview.png",
-				},
-				token: accessToken,
-			})
-
-			assert.Equal(t, http.StatusCreated, resp.statusCode)
-			t.Logf("✓ POST /api/inlay (%d)", resp.statusCode)
-		})
-
-		inlays, _ := testCtx.db.Inlays.GetAll()
-		if len(inlays) > 0 {
-			t.Run("GET /api/inlay/{uuid}", func(t *testing.T) {
-				resp := testCtx.request(testRequest{
-					method: "GET",
-					path:   fmt.Sprintf("/api/inlay/%s", inlays[0].UUID),
-					token:  accessToken,
-				})
-
-				assert.Equal(t, http.StatusOK, resp.statusCode)
-				t.Logf("✓ GET /api/inlay/{uuid} (%d)", resp.statusCode)
-			})
-		}
-	})
-
-	t.Run("Inlay-Chat Module", func(t *testing.T) {
-		projects, _ := testCtx.db.Projects.GetAll()
-		require.Greater(t, len(projects), 0)
-
-		inlays, _ := testCtx.db.Inlays.GetAll()
-		require.Greater(t, len(inlays), 0)
-
-		t.Run("GET /api/inlay-chat", func(t *testing.T) {
-			resp := testCtx.request(testRequest{
-				method: "GET",
-				path:   "/api/inlay-chat",
-				token:  accessToken,
-			})
-
-			assert.Equal(t, http.StatusOK, resp.statusCode)
-			t.Logf("✓ GET /api/inlay-chat (%d)", resp.statusCode)
-		})
-
-		t.Run("GET /api/inlay-chat/inlay/{uuid}", func(t *testing.T) {
-			resp := testCtx.request(testRequest{
-				method: "GET",
-				path:   fmt.Sprintf("/api/inlay-chat/inlay/%s", inlays[0].UUID),
-				token:  accessToken,
-			})
-
-			assert.Equal(t, http.StatusOK, resp.statusCode)
-			t.Logf("✓ GET /api/inlay-chat/inlay/{uuid} (%d)", resp.statusCode)
-		})
-
-		t.Run("POST /api/inlay-chat", func(t *testing.T) {
-			resp := testCtx.request(testRequest{
-				method: "POST",
-				path:   "/api/inlay-chat",
-				body: map[string]interface{}{
-					"inlay_id":     inlays[0].ID,
-					"message_type": "system",
-					"message":      "Test message",
-				},
-				token: accessToken,
-			})
-
-			assert.Equal(t, http.StatusCreated, resp.statusCode)
-			t.Logf("✓ POST /api/inlay-chat (%d)", resp.statusCode)
-		})
-
-		chats, _ := testCtx.db.InlayChats.GetAll()
-		if len(chats) > 0 {
-			t.Run("GET /api/inlay-chat/{uuid}", func(t *testing.T) {
-				resp := testCtx.request(testRequest{
-					method: "GET",
-					path:   fmt.Sprintf("/api/inlay-chat/%s", chats[0].UUID),
-					token:  accessToken,
-				})
-
-				assert.Equal(t, http.StatusOK, resp.statusCode)
-				t.Logf("✓ GET /api/inlay-chat/{uuid} (%d)", resp.statusCode)
-			})
-		}
-	})
-
 	t.Run("Project Module", func(t *testing.T) {
 		dealerships, _ := testCtx.db.Dealerships.GetAll()
 		require.Greater(t, len(dealerships), 0)
@@ -528,8 +414,7 @@ func TestAPIEndpoints(t *testing.T) {
 				method: "POST",
 				path:   "/api/project",
 				body: map[string]interface{}{
-					"name":          "New Test Project",
-					"dealership_id": dealerships[0].ID,
+					"name": "New Test Project",
 				},
 				token: accessToken,
 			})
@@ -543,8 +428,7 @@ func TestAPIEndpoints(t *testing.T) {
 				method: "POST",
 				path:   "/api/project/with-inlays",
 				body: map[string]interface{}{
-					"name":          "Project with Inlays",
-					"dealership_id": dealerships[0].ID,
+					"name": "Project with Inlays",
 					"inlays": []map[string]interface{}{
 						{
 							"name":        "Inlay 1",

@@ -82,5 +82,5 @@ func (m DealershipModule) HandlePostDealership(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	m.WriteJSON(w, r, http.StatusOK, dealership)
+	m.WriteJSON(w, r, http.StatusCreated, dealership)
 }
