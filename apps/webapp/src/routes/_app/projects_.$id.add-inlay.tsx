@@ -13,16 +13,14 @@ import {
 } from "@glassact/ui";
 import { IoClose } from "solid-icons/io";
 import { createForm } from "@tanstack/solid-form";
-import { createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, Show, untrack } from "solid-js";
 import { z } from "zod";
 import { zodStringNumber } from "../../utils/zod-string-number";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import { browseCatalogOpts } from "../../queries/catalog-browse";
+import { useDebounce } from "../../hooks/use-debounce";
 import { FilterSidebar } from "../../components/catalog/filter-sidebar";
-import {
-  postCatalogInlayOpts,
-  postCustomInlayOpts,
-} from "../../queries/inlay";
+import { postCatalogInlayOpts, postCustomInlayOpts } from "../../queries/inlay";
 import { getProjectOpts } from "../../queries/project";
 import { isApiError } from "../../utils/is-api-error";
 import type { CatalogItem, GET } from "@glassact/data";
@@ -36,9 +34,14 @@ function RouteComponent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const projectQuery = useQuery(getProjectOpts(params().id));
+  const projectQuery = useQuery(() => getProjectOpts(params().id));
 
-  const projectName = () => projectQuery.data?.name ?? "Project";
+  const projectName = createMemo(() => {
+    if (projectQuery.isSuccess) {
+      return untrack(() => projectQuery.data.name);
+    }
+    return "asdfkj";
+  });
 
   function handleSuccess() {
     queryClient.invalidateQueries({
@@ -106,9 +109,11 @@ function CatalogSelector(props: CatalogSelectorProps) {
 
   const limit = 50;
 
-  const query = useQuery(
+  const debouncedSearch = useDebounce(search, 300);
+
+  const query = useQuery(() =>
     browseCatalogOpts({
-      search: search(),
+      search: debouncedSearch(),
       category: category(),
       tags: tags(),
       limit,

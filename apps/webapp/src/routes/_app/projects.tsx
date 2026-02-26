@@ -1,6 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import type { GET, Project, ProjectStatus } from "@glassact/data";
-import { Button, Breadcrumb, Badge, Card, CardHeader, CardTitle } from "@glassact/ui";
+import {
+  Button,
+  Breadcrumb,
+  Badge,
+  Card,
+  CardHeader,
+  CardTitle,
+} from "@glassact/ui";
 import { IoAddCircleOutline } from "solid-icons/io";
 import { Component, createMemo, For, Match, Show, Switch } from "solid-js";
 import { useQuery } from "@tanstack/solid-query";
@@ -68,7 +75,7 @@ const INTERNAL_GROUPS: StatusGroup[] = [
 
 function RouteComponent() {
   const { isDealership } = useUserContext();
-  const query = useQuery(getProjectsOpts());
+  const query = useQuery(() => getProjectsOpts());
 
   const groups = createMemo(() =>
     isDealership() ? DEALERSHIP_GROUPS : INTERNAL_GROUPS,

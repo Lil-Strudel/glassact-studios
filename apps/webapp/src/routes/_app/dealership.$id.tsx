@@ -37,7 +37,7 @@ const navigationItems = [
 ];
 function RouteComponent() {
   const params = Route.useParams();
-  const query = useQuery(getDealershipOpts(params().id));
+  const query = useQuery(() => getDealershipOpts(params().id));
 
   return (
     <div>

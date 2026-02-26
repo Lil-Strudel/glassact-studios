@@ -20,6 +20,7 @@ import { useProjectFormContext } from "./projects_.create-project";
 import type { PostProjectWithInlaysRequest } from "../../queries/project";
 import { useQuery } from "@tanstack/solid-query";
 import { browseCatalogOpts } from "../../queries/catalog-browse";
+import { useDebounce } from "../../hooks/use-debounce";
 import { FilterSidebar } from "../../components/catalog/filter-sidebar";
 import type { CatalogItem, GET } from "@glassact/data";
 
@@ -90,9 +91,11 @@ function CatalogSelector(props: CatalogSelectorProps) {
 
   const limit = 50;
 
-  const query = useQuery(
+  const debouncedSearch = useDebounce(search, 300);
+
+  const query = useQuery(() =>
     browseCatalogOpts({
-      search: search(),
+      search: debouncedSearch(),
       category: category(),
       tags: tags(),
       limit,
@@ -369,11 +372,7 @@ function CustomInlayForm(props: CustomInlayFormProps) {
             </div>
           </div>
           <div class="mx-auto flex gap-4">
-            <Button
-              variant="outline"
-              as={Link}
-              to="/projects/create-project"
-            >
+            <Button variant="outline" as={Link} to="/projects/create-project">
               Cancel
             </Button>
             <Button type="submit">Add to Project</Button>

@@ -38,11 +38,10 @@ export async function getPriceGroup(uuid: string): Promise<GET<PriceGroup>> {
 }
 
 export function getPriceGroupOpts(uuid: string) {
-  return () =>
-    queryOptions({
-      queryKey: ["price-groups", uuid],
-      queryFn: () => getPriceGroup(uuid),
-    });
+  return queryOptions({
+    queryKey: ["price-groups", uuid],
+    queryFn: () => getPriceGroup(uuid),
+  });
 }
 
 export async function postPriceGroup(

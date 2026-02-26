@@ -24,6 +24,7 @@ import { CatalogItem, GET } from "@glassact/data";
 import { IoPencilOutline, IoTrashOutline } from "solid-icons/io";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import { getCatalogListOpts, deleteCatalogOpts } from "../../queries/catalog";
+import { useDebounce } from "../../hooks/use-debounce";
 
 export const Route = createFileRoute("/_app/admin/catalog")({
   component: RouteComponent,
@@ -116,9 +117,11 @@ function RouteComponent() {
   const [filterValue, setFilterValue] = createSignal("");
   const [showInactive, setShowInactive] = createSignal(false);
 
-  const query = useQuery(
+  const debouncedFilterValue = useDebounce(filterValue, 300);
+
+  const query = useQuery(() =>
     getCatalogListOpts({
-      search: filterValue(),
+      search: debouncedFilterValue(),
       isActive: !showInactive(),
       limit: 50,
       offset: 0,

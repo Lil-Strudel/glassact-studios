@@ -77,9 +77,9 @@ const colors = [
 ];
 
 function RouteComponent() {
-  const query = useQuery(getDealershipUsersOpts);
+  const query = useQuery(() => getDealershipUsersOpts());
   const queryClient = useQueryClient();
-  const postUser = useMutation(postDealershipUserOpts);
+  const postUser = useMutation(() => postDealershipUserOpts());
 
   const table = createSolidTable({
     get data() {
@@ -155,9 +155,7 @@ function RouteComponent() {
       <div class="flex items-center justify-between py-4">
         <TextFieldRoot
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(value) =>
-            table.getColumn("name")?.setFilterValue(value)
-          }
+          onChange={(value) => table.getColumn("name")?.setFilterValue(value)}
         >
           <TextField placeholder="Filter by name..." class="max-w-sm" />
         </TextFieldRoot>

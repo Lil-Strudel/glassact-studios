@@ -22,8 +22,8 @@ function RouteComponent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const itemQuery = useQuery(getCatalogItemOpts(params().uuid));
-  const tagsQuery = useQuery(getCatalogTagsOpts(params().uuid));
+  const itemQuery = useQuery(() => getCatalogItemOpts(params().uuid));
+  const tagsQuery = useQuery(() => getCatalogTagsOpts(params().uuid));
   const patchCatalog = useMutation(() => patchCatalogOpts());
   const deleteCatalog = useMutation(() => deleteCatalogOpts());
   const deleteTag = useMutation(() => deleteCatalogTagOpts());

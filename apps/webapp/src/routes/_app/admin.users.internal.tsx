@@ -30,10 +30,7 @@ import { GET, InternalUser, InternalUserRole } from "@glassact/data";
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
-import {
-  getInternalUsersOpts,
-  postInternalUserOpts,
-} from "../../queries/user";
+import { getInternalUsersOpts, postInternalUserOpts } from "../../queries/user";
 import { isApiError } from "../../utils/is-api-error";
 
 export const Route = createFileRoute("/_app/admin/users/internal")({
@@ -71,9 +68,9 @@ const colors = [
 ];
 
 function RouteComponent() {
-  const query = useQuery(getInternalUsersOpts);
+  const query = useQuery(() => getInternalUsersOpts());
   const queryClient = useQueryClient();
-  const postUser = useMutation(postInternalUserOpts);
+  const postUser = useMutation(() => postInternalUserOpts());
 
   const table = createSolidTable({
     get data() {
@@ -147,9 +144,7 @@ function RouteComponent() {
       <div class="flex items-center justify-between py-4">
         <TextFieldRoot
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(value) =>
-            table.getColumn("name")?.setFilterValue(value)
-          }
+          onChange={(value) => table.getColumn("name")?.setFilterValue(value)}
         >
           <TextField placeholder="Filter by name..." class="max-w-sm" />
         </TextFieldRoot>

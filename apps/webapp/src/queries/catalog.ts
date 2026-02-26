@@ -36,11 +36,10 @@ export function getCatalogListOpts(params?: {
   limit?: number;
   offset?: number;
 }) {
-  return () =>
-    queryOptions({
-      queryKey: ["catalog", params],
-      queryFn: () => getCatalogList(params),
-    });
+  return queryOptions({
+    queryKey: ["catalog", params],
+    queryFn: () => getCatalogList(params),
+  });
 }
 
 export async function getCatalogItem(uuid: string): Promise<GET<CatalogItem>> {
@@ -49,11 +48,10 @@ export async function getCatalogItem(uuid: string): Promise<GET<CatalogItem>> {
 }
 
 export function getCatalogItemOpts(uuid: string) {
-  return () =>
-    queryOptions({
-      queryKey: ["catalog", uuid],
-      queryFn: () => getCatalogItem(uuid),
-    });
+  return queryOptions({
+    queryKey: ["catalog", uuid],
+    queryFn: () => getCatalogItem(uuid),
+  });
 }
 
 export async function postCatalog(
@@ -102,11 +100,10 @@ export async function getCatalogTags(uuid: string): Promise<string[]> {
 }
 
 export function getCatalogTagsOpts(uuid: string) {
-  return () =>
-    queryOptions({
-      queryKey: ["catalog", uuid, "tags"],
-      queryFn: () => getCatalogTags(uuid),
-    });
+  return queryOptions({
+    queryKey: ["catalog", uuid, "tags"],
+    queryFn: () => getCatalogTags(uuid),
+  });
 }
 
 export async function postCatalogTag(params: {

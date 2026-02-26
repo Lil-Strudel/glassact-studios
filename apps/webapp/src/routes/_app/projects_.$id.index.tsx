@@ -8,6 +8,7 @@ import {
   CardTitle,
   CardDescription,
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -17,17 +18,14 @@ import {
 import { createMemo, For, Match, Show, Switch } from "solid-js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import { getProjectOpts, deleteProjectOpts } from "../../queries/project";
-import {
-  getInlaysByProjectOpts,
-  deleteInlayOpts,
-} from "../../queries/inlay";
+import { getInlaysByProjectOpts, deleteInlayOpts } from "../../queries/inlay";
 import type { ProjectStatus, InlayWithInfo } from "@glassact/data";
 import { ProjectStatusBadge } from "../../components/project/status-badge";
 import { Can } from "../../components/Can";
 import { isApiError } from "../../utils/is-api-error";
 import { IoTrashOutline, IoAddCircleOutline } from "solid-icons/io";
 
-export const Route = createFileRoute("/_app/projects_/$id")({
+export const Route = createFileRoute("/_app/projects_/$id/")({
   component: RouteComponent,
 });
 
@@ -70,8 +68,8 @@ function RouteComponent() {
   const params = Route.useParams();
   const queryClient = useQueryClient();
 
-  const projectQuery = useQuery(getProjectOpts(params().id));
-  const inlaysQuery = useQuery(getInlaysByProjectOpts(params().id));
+  const projectQuery = useQuery(() => getProjectOpts(params().id));
+  const inlaysQuery = useQuery(() => getInlaysByProjectOpts(params().id));
   const cancelProject = useMutation(deleteProjectOpts);
   const removeInlay = useMutation(deleteInlayOpts);
 
@@ -154,9 +152,7 @@ function RouteComponent() {
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
             <For each={[1, 2, 3]}>
-              {() => (
-                <div class="h-48 bg-gray-200 rounded-lg animate-pulse" />
-              )}
+              {() => <div class="h-48 bg-gray-200 rounded-lg animate-pulse" />}
             </For>
           </div>
         </div>
@@ -215,9 +211,13 @@ function RouteComponent() {
                       ? This action cannot be undone.
                     </p>
                     <div class="flex justify-end gap-3 mt-4">
-                      <Button variant="outline" disabled={cancelProject.isPending}>
+                      <DialogClose
+                        as={Button}
+                        variant="outline"
+                        disabled={cancelProject.isPending}
+                      >
                         Close
-                      </Button>
+                      </DialogClose>
                       <Button
                         variant="destructive"
                         onClick={handleCancel}
@@ -300,9 +300,7 @@ function RouteComponent() {
 
               <Match when={inlaysQuery.isError}>
                 <div class="border-2 border-dashed border-red-300 rounded-xl p-8 text-center">
-                  <p class="text-red-600 font-medium">
-                    Failed to load inlays
-                  </p>
+                  <p class="text-red-600 font-medium">Failed to load inlays</p>
                   <Button
                     variant="outline"
                     class="mt-4"
@@ -313,11 +311,11 @@ function RouteComponent() {
                 </div>
               </Match>
 
-              <Match when={inlaysQuery.isSuccess && inlaysQuery.data!.length === 0}>
+              <Match
+                when={inlaysQuery.isSuccess && inlaysQuery.data!.length === 0}
+              >
                 <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-                  <p class="text-gray-400 text-lg font-medium">
-                    No inlays yet
-                  </p>
+                  <p class="text-gray-400 text-lg font-medium">No inlays yet</p>
                   <p class="text-gray-400 text-sm mt-2">
                     Add inlays to this project to get started.
                   </p>
@@ -336,7 +334,9 @@ function RouteComponent() {
                 </div>
               </Match>
 
-              <Match when={inlaysQuery.isSuccess && inlaysQuery.data!.length > 0}>
+              <Match
+                when={inlaysQuery.isSuccess && inlaysQuery.data!.length > 0}
+              >
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <For each={inlaysQuery.data!}>
                     {(inlay) => (
@@ -427,9 +427,13 @@ function InlayCard(props: InlayCardProps) {
                 project?
               </p>
               <div class="flex justify-end gap-3 mt-4">
-                <Button variant="outline" disabled={props.isDeleting}>
+                <DialogClose
+                  as={Button}
+                  variant="outline"
+                  disabled={props.isDeleting}
+                >
                   Close
-                </Button>
+                </DialogClose>
                 <Button
                   variant="destructive"
                   onClick={props.onDelete}

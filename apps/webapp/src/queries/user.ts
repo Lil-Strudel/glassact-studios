@@ -38,11 +38,10 @@ export async function getDealershipUser(
 }
 
 export function getDealershipUserOpts(uuid: string) {
-  return () =>
-    queryOptions({
-      queryKey: ["dealership-user", uuid],
-      queryFn: () => getDealershipUser(uuid),
-    });
+  return queryOptions({
+    queryKey: ["dealership-user", uuid],
+    queryFn: () => getDealershipUser(uuid),
+  });
 }
 
 export async function postDealershipUser(
@@ -78,11 +77,10 @@ export async function getInternalUser(
 }
 
 export function getInternalUserOpts(uuid: string) {
-  return () =>
-    queryOptions({
-      queryKey: ["internal-user", uuid],
-      queryFn: () => getInternalUser(uuid),
-    });
+  return queryOptions({
+    queryKey: ["internal-user", uuid],
+    queryFn: () => getInternalUser(uuid),
+  });
 }
 
 export async function postInternalUser(

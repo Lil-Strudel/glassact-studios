@@ -8,7 +8,7 @@ interface DealershipComboboxProps {
   field: () => AnyFieldApi;
 }
 const DealershipCombobox: Component<DealershipComboboxProps> = (props) => {
-  const query = useQuery(getDealershipsOpts);
+  const query = useQuery(() => getDealershipsOpts());
 
   const options = () =>
     query.isSuccess

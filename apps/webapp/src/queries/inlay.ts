@@ -11,11 +11,10 @@ export async function getInlaysByProject(
 }
 
 export function getInlaysByProjectOpts(projectUuid: string) {
-  return () =>
-    queryOptions({
-      queryKey: ["project", projectUuid, "inlays"],
-      queryFn: () => getInlaysByProject(projectUuid),
-    });
+  return queryOptions({
+    queryKey: ["project", projectUuid, "inlays"],
+    queryFn: () => getInlaysByProject(projectUuid),
+  });
 }
 
 export async function getInlay(uuid: string): Promise<InlayWithInfo> {
@@ -24,11 +23,10 @@ export async function getInlay(uuid: string): Promise<InlayWithInfo> {
 }
 
 export function getInlayOpts(uuid: string) {
-  return () =>
-    queryOptions({
-      queryKey: ["inlay", uuid],
-      queryFn: () => getInlay(uuid),
-    });
+  return queryOptions({
+    queryKey: ["inlay", uuid],
+    queryFn: () => getInlay(uuid),
+  });
 }
 
 export interface PostCatalogInlayRequest {
@@ -92,9 +90,7 @@ export function patchInlayOpts() {
   });
 }
 
-export async function deleteInlay(
-  uuid: string,
-): Promise<{ success: boolean }> {
+export async function deleteInlay(uuid: string): Promise<{ success: boolean }> {
   const res = await api.delete(`/inlay/${uuid}`);
   return res.data;
 }

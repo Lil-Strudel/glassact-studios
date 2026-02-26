@@ -1,12 +1,7 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
 
-import type {
-  Project,
-  GET,
-  InlayType,
-  InlayWithInfo,
-} from "@glassact/data";
+import type { Project, GET, InlayType, InlayWithInfo } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
 export async function getProjects(): Promise<GET<Project>[]> {
@@ -15,11 +10,10 @@ export async function getProjects(): Promise<GET<Project>[]> {
 }
 
 export function getProjectsOpts() {
-  return () =>
-    queryOptions({
-      queryKey: ["project"],
-      queryFn: getProjects,
-    });
+  return queryOptions({
+    queryKey: ["project"],
+    queryFn: getProjects,
+  });
 }
 
 export async function getProject(uuid: string): Promise<GET<Project>> {
@@ -28,11 +22,10 @@ export async function getProject(uuid: string): Promise<GET<Project>> {
 }
 
 export function getProjectOpts(uuid: string) {
-  return () =>
-    queryOptions({
-      queryKey: ["project", uuid],
-      queryFn: () => getProject(uuid),
-    });
+  return queryOptions({
+    queryKey: ["project", uuid],
+    queryFn: () => getProject(uuid),
+  });
 }
 
 export async function postProject(body: {
