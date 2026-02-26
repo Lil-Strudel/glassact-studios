@@ -23,7 +23,7 @@ This document outlines the complete implementation plan for the GlassAct Studios
 | --------------------------------- | ----------- | -------- | --------------------------------------------------------------- |
 | **Phase 1: Foundation**           | ✅ COMPLETE | 100%     | Go models and TypeScript types complete.                        |
 | **Phase 2: Auth & Permissions**   | ✅ COMPLETE | 100%     | Dual auth, unified OAuth, permissions, user management complete |
-| **Phase 3: Catalog System**       | ⏳ Pending  | 0%       | Ready to start                           |
+| **Phase 3: Catalog System**       | ✅ COMPLETE | 100%     | Admin CRUD, browsing, filtering, SVG upload complete            |
 | **Phase 4: Project & Inlay Flow** | ⏳ Pending  | 0%       | Ready to start                           |
 | **Phase 5: Chat & Proofs**        | ⏳ Pending  | 0%       | Ready to start                           |
 | **Phase 6: Manufacturing**        | ⏳ Pending  | 0%       | Ready to start                           |
@@ -488,7 +488,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 
 ## Implementation Phases
 
-### Phase 1: Foundation (2 weeks)
+### Phase 1: Foundation
 
 **Goal:** Update data layer to match new schema
 
@@ -496,14 +496,14 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 
 #### Completed Tasks
 
-| Task                                | Est. | Actual       | Status                                   |
-| ----------------------------------- | ---- | ------------ | ---------------------------------------- |
-| Run migrations, regenerate Jet      | 2h   | 0.5h         | ✅ Complete                              |
-| Update Go models for renamed tables | 4h   | 1h           | ✅ Complete (dealership*\*, internal*\*) |
-| Create new Go models                | 16h  | 3h           | ✅ Complete (18 total models)            |
-| Update TypeScript types             | 8h   | Not started  | ✅ Complete                              |
-| Update existing tests               | 8h   | Not measured | ✅ Complete                              |
-| Write tests for new models          | 16h  | Not measured | ✅ Complete                              |
+| Task                                | Status                                   |
+| ----------------------------------- | ---------------------------------------- |
+| Run migrations, regenerate Jet      | ✅ Complete                              |
+| Update Go models for renamed tables | ✅ Complete (dealership*\*, internal*\*) |
+| Create new Go models                | ✅ Complete (18 total models)            |
+| Update TypeScript types             | ✅ Complete                              |
+| Update existing tests               | ✅ Complete                              |
+| Write tests for new models          | ✅ Complete                              |
 
 #### Phase 1 Deliverables
 
@@ -557,7 +557,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - Updated NewModels() factory function
 - Alphabetically organized for maintainability
 
-### Phase 2: Auth & Permissions (1 week)
+### Phase 2: Auth & Permissions
 
 **Status:** ✅ **COMPLETE** (Feb 5, 2026)
 
@@ -641,93 +641,189 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 **Documentation:**
 - `.cursor/rules/backend.md` - Added auth usage examples
 
-### Phase 3: Catalog System (1 week)
+### Phase 3: Catalog System
+
+**Status:** ✅ **COMPLETE** (Feb 5, 2026)
 
 **Goal:** Complete catalog management and browsing
 
-| Task                       | Est. | Dependencies |
-| -------------------------- | ---- | ------------ |
-| Catalog API endpoints      | 8h   | Phase 1      |
-| Image upload to S3         | 4h   | Phase 1      |
-| Tag management API         | 4h   | Phase 1      |
-| Internal catalog UI        | 12h  | Catalog API  |
-| Dealership catalog browser | 12h  | Catalog API  |
+#### Completed Features
 
-### Phase 4: Project & Inlay Flow (2 weeks)
+**Backend API Endpoints:**
+- ✅ `GET /api/catalog` - List items with pagination, filtering (name, code, category, active status)
+- ✅ `POST /api/catalog` - Create new catalog item
+- ✅ `GET /api/catalog/:uuid` - Get single item details
+- ✅ `PATCH /api/catalog/:uuid` - Update catalog item (partial updates supported)
+- ✅ `DELETE /api/catalog/:uuid` - Soft delete catalog item
+- ✅ `POST /api/catalog/:uuid/tags` - Add tag to item
+- ✅ `DELETE /api/catalog/:uuid/tags/:tag` - Remove tag from item
+- ✅ `GET /api/catalog/browse` - Public catalog browsing with multi-criteria filtering
+- ✅ `GET /api/catalog/categories` - Get distinct categories from active items
+- ✅ `GET /api/catalog/tags` - Get all available tags
+
+**Admin-Side Features:**
+
+**Admin Catalog List Page** (`admin.catalog.tsx`)
+- ✅ Full-featured data table with TanStack Solid Table
+- ✅ Sortable and filterable columns
+- ✅ Search by code and name
+- ✅ Category display with dimensions
+- ✅ Active/Inactive status badges
+- ✅ Pagination (50 items per page, max 100)
+- ✅ Toggle to include/exclude inactive items
+- ✅ Edit and delete actions per item
+
+**Admin Create Catalog Item Page** (`admin.catalog_.create.tsx`)
+- ✅ Dedicated creation route
+- ✅ Form validation and error handling
+- ✅ Success redirection
+- ✅ Tag creation on item creation
+- ✅ Back navigation button
+
+**Admin Edit Catalog Item Page** (`admin.catalog_.$uuid.tsx`)
+- ✅ Dynamic routing by UUID
+- ✅ Load full item details
+- ✅ Update item properties
+- ✅ Add and remove tags
+- ✅ Delete entire item with confirmation
+- ✅ Tag synchronization and validation
+- ✅ Error state handling
+
+**Catalog Form Component** (`/apps/webapp/src/components/admin/catalog-form.tsx`)
+- ✅ Basic fields: catalog code, name, description, category, active status
+- ✅ Dimensions: default and minimum width/height with validation
+- ✅ Pricing: price group selection via combobox
+- ✅ SVG asset upload (file upload integration)
+- ✅ Tag management: input with autocomplete, suggestions from existing tags
+- ✅ Comprehensive Zod schema validation
+- ✅ Dynamic price group loading
+- ✅ Duplicate tag prevention
+
+**Customer-Facing Features:**
+
+**Public Catalog Browse Page** (`/apps/webapp/src/routes/_app/catalog.index.tsx`)
+- ✅ Two-panel layout: filter sidebar + responsive grid
+- ✅ Responsive design (1 col mobile, 2 col tablet, 3 col desktop)
+- ✅ Infinite scroll with "Load More" button
+- ✅ Item cards showing: SVG preview, code, name, category
+- ✅ Loading skeletons and empty states
+
+**Filter Sidebar Component** (`/apps/webapp/src/components/catalog/filter-sidebar.tsx`)
+- ✅ Search input (searches name and code)
+- ✅ Category dropdown (populated from API)
+- ✅ Tag multi-select with autocomplete
+- ✅ Clear all filters button
+- ✅ Dynamic filter suggestions
+
+**Catalog Grid Component** (`/apps/webapp/src/components/catalog/catalog-grid.tsx`)
+- ✅ Responsive grid layout with proper spacing
+- ✅ Item cards with SVG preview images
+- ✅ Catalog code badge (monospace)
+- ✅ "View Details" button per item
+- ✅ Loading and empty states
+
+**Item Detail Modal** (`/apps/webapp/src/components/catalog/item-detail-modal.tsx`)
+- ✅ Full-screen modal dialog
+- ✅ Large SVG preview
+- ✅ Complete item information display
+- ✅ Tags display
+- ✅ Scrollable for small screens
+
+**Data Layer & Models:**
+- ✅ `CatalogItem` and `CatalogItemTag` Go models with full CRUD
+- ✅ Comprehensive query methods: GetByCode, GetByTag, GetActive, etc.
+- ✅ Tag management in data layer
+- ✅ Version-based optimistic locking
+- ✅ TypeScript types aligned with Go models
+
+**Integration Points:**
+- ✅ Price group integration (select during item creation/editing)
+- ✅ SVG file upload via `/api/upload` endpoint
+- ✅ File storage with "catalog-items" path
+- ✅ Soft delete implementation (is_active flag)
+- ✅ Permission-based access (admin for write, authenticated for read)
+
+#### Permission Controls
+
+- ✅ Admin-only CRUD endpoints (`RequireRole("admin")` middleware)
+- ✅ Public browse endpoints (requires authentication)
+- ✅ Category and tag lists (requires authentication)
+
+### Phase 4: Project & Inlay Flow
 
 **Goal:** Complete project creation and order placement
 
-| Task                    | Est. | Dependencies |
-| ----------------------- | ---- | ------------ |
-| Update project API      | 8h   | Phase 1      |
-| Update inlay API        | 8h   | Phase 1      |
-| Order placement API     | 12h  | Phase 1      |
-| Project creation UI     | 16h  | Project API  |
-| Inlay management UI     | 12h  | Inlay API    |
-| Order placement UI      | 8h   | Order API    |
-| Order snapshot creation | 8h   | Order API    |
+| Task                    | Dependencies |
+| ----------------------- | ------------ |
+| Update project API      | Phase 1      |
+| Update inlay API        | Phase 1      |
+| Order placement API     | Phase 1      |
+| Project creation UI     | Project API  |
+| Inlay management UI     | Inlay API    |
+| Order placement UI      | Order API    |
+| Order snapshot creation | Order API    |
 
-### Phase 5: Chat & Proofs (1.5 weeks)
+### Phase 5: Chat & Proofs
 
 **Goal:** Design discussion and approval workflow
 
-| Task                  | Est. | Dependencies |
-| --------------------- | ---- | ------------ |
-| Update chat API       | 8h   | Phase 1      |
-| Proof API             | 12h  | Phase 1      |
-| Approve/decline API   | 8h   | Proof API    |
-| Chat UI refactor      | 12h  | Chat API     |
-| Proof display in chat | 8h   | Proof API    |
-| Proof version history | 8h   | Proof API    |
+| Task                  | Dependencies |
+| --------------------- | ------------ |
+| Update chat API       | Phase 1      |
+| Proof API             | Phase 1      |
+| Approve/decline API   | Proof API    |
+| Chat UI refactor      | Chat API     |
+| Proof display in chat | Proof API    |
+| Proof version history | Proof API    |
 
-### Phase 6: Manufacturing (1.5 weeks)
+### Phase 6: Manufacturing
 
 **Goal:** Kanban and blocker management
 
-| Task                     | Est. | Dependencies  |
-| ------------------------ | ---- | ------------- |
-| Kanban API               | 8h   | Phase 1       |
-| Milestone API            | 8h   | Phase 1       |
-| Blocker API              | 8h   | Phase 1       |
-| Kanban board UI          | 16h  | Kanban API    |
-| Blocker management UI    | 8h   | Blocker API   |
-| Dealership progress view | 8h   | Milestone API |
+| Task                     | Dependencies  |
+| ------------------------ | ------------- |
+| Kanban API               | Phase 1       |
+| Milestone API            | Phase 1       |
+| Blocker API              | Phase 1       |
+| Kanban board UI          | Kanban API    |
+| Blocker management UI    | Blocker API   |
+| Dealership progress view | Milestone API |
 
-### Phase 7: Notifications (1 week)
+### Phase 7: Notifications
 
 **Goal:** Email notifications and in-app viewing
 
-| Task                          | Est. | Dependencies         |
-| ----------------------------- | ---- | -------------------- |
-| Notification service          | 8h   | Phase 1              |
-| Email integration (SES)       | 8h   | Notification service |
-| Event-to-notification mapping | 8h   | All previous phases  |
-| Notification API              | 4h   | Notification service |
-| Preferences API               | 4h   | Phase 1              |
-| In-app notification UI        | 12h  | Notification API     |
+| Task                          | Dependencies         |
+| ----------------------------- | -------------------- |
+| Notification service          | Phase 1              |
+| Email integration (SES)       | Notification service |
+| Event-to-notification mapping | All previous phases  |
+| Notification API              | Notification service |
+| Preferences API               | Phase 1              |
+| In-app notification UI        | Notification API     |
 
-### Phase 8: Invoicing (1 week)
+### Phase 8: Invoicing
 
 **Goal:** Invoice creation and management
 
-| Task                      | Est. | Dependencies |
-| ------------------------- | ---- | ------------ |
-| Invoice API               | 12h  | Phase 1      |
-| Invoice number generation | 2h   | Invoice API  |
-| Internal invoice UI       | 12h  | Invoice API  |
-| Dealership invoice view   | 8h   | Invoice API  |
-| PDF generation            | 8h   | Invoice API  |
+| Task                      | Dependencies |
+| ------------------------- | ------------ |
+| Invoice API               | Phase 1      |
+| Invoice number generation | Invoice API  |
+| Internal invoice UI       | Invoice API  |
+| Dealership invoice view   | Invoice API  |
+| PDF generation            | Invoice API  |
 
-### Phase 9: Dashboards (1 week)
+### Phase 9: Dashboards
 
 **Goal:** Overview and quick actions
 
-| Task                   | Est. | Dependencies      |
-| ---------------------- | ---- | ----------------- |
-| Dashboard queries      | 8h   | All previous      |
-| Dealership dashboard   | 12h  | Dashboard queries |
-| Internal dashboard     | 12h  | Dashboard queries |
-| Action item components | 8h   | Dashboard queries |
+| Task                   | Dependencies      |
+| ---------------------- | ----------------- |
+| Dashboard queries      | All previous      |
+| Dealership dashboard   | Dashboard queries |
+| Internal dashboard     | Dashboard queries |
+| Action item components | Dashboard queries |
 
 ---
 
