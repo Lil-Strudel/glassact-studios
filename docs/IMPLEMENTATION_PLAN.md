@@ -139,7 +139,6 @@ INTERNAL_USERS ─────────────────────�
 
 CATALOG_ITEMS
     └── catalog_item_tags
-    └── catalog_item_images
 
 PRICE_GROUPS
     └── (referenced by catalog_items, proofs)
@@ -803,7 +802,7 @@ Types to create/update in `libs/data/src/`:
 | `dealership-users.ts` | `DealershipUserRole`, `DealershipUser`                                           | New     |
 | `internal-users.ts`   | `InternalUserRole`, `InternalUser`                                               | New     |
 | `price-groups.ts`     | `PriceGroup`                                                                     | New     |
-| `catalog-items.ts`    | `CatalogItem`, `CatalogItemTag`, `CatalogItemImage`                              | Update  |
+| `catalog-items.ts`    | `CatalogItem`, `CatalogItemTag`                                                  | Update  |
 | `projects.ts`         | `ProjectStatus`, `Project`                                                       | Update  |
 | `inlays.ts`           | `InlayType`, `ManufacturingStep`, `Inlay`, `InlayCatalogInfo`, `InlayCustomInfo` | Update  |
 | `inlay-chats.ts`      | `ChatMessageType`, `InlayChat`                                                   | Update  |

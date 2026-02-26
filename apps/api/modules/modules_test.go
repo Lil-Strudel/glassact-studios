@@ -183,7 +183,7 @@ func (tc *testContext) request(req testRequest) *testResponse {
 	}
 }
 
-func seedTestData(t *testing.T, ctx *testContext) (*data.DealershipUser, string) {
+func seedTestData(t *testing.T, ctx *testContext) (*data.DealershipUser, string, *data.InternalUser, string) {
 	dealership := &data.Dealership{
 		Name: "Test Dealership",
 		Address: data.Address{
@@ -199,27 +199,73 @@ func seedTestData(t *testing.T, ctx *testContext) (*data.DealershipUser, string)
 	err := ctx.db.Dealerships.Insert(dealership)
 	require.NoError(t, err)
 
-	user := &data.DealershipUser{
+	dealershipUser := &data.DealershipUser{
 		DealershipID: dealership.ID,
 		Name:         "Test User",
 		Email:        fmt.Sprintf("test%d@example.com", time.Now().UnixNano()),
 		Role:         "admin",
 		IsActive:     true,
 	}
-	err = ctx.db.DealershipUsers.Insert(user)
+	err = ctx.db.DealershipUsers.Insert(dealershipUser)
 	require.NoError(t, err)
 
-	token, err := ctx.db.DealershipTokens.New(user.ID, 2*time.Hour, data.DealershipScopeAccess)
+	dealershipToken, err := ctx.db.DealershipTokens.New(dealershipUser.ID, 2*time.Hour, data.DealershipScopeAccess)
 	require.NoError(t, err)
 
-	return user, token.Plaintext
+	// Create internal admin user
+	internalUser := &data.InternalUser{
+		Name:     "Internal Admin",
+		Email:    fmt.Sprintf("admin%d@example.com", time.Now().UnixNano()),
+		Role:     "admin",
+		IsActive: true,
+	}
+	err = ctx.db.InternalUsers.Insert(internalUser)
+	require.NoError(t, err)
+
+	internalToken, err := ctx.db.InternalTokens.New(internalUser.ID, 2*time.Hour, data.InternalScopeAccess)
+	require.NoError(t, err)
+
+	return dealershipUser, dealershipToken.Plaintext, internalUser, internalToken.Plaintext
+}
+
+func seedPriceGroup(t *testing.T, ctx *testContext, name string) *data.PriceGroup {
+	priceGroup := &data.PriceGroup{
+		Name:           name,
+		BasePriceCents: 10000, // $100.00
+		IsActive:       true,
+	}
+	err := ctx.db.PriceGroups.Insert(priceGroup)
+	require.NoError(t, err)
+	return priceGroup
+}
+
+func seedCatalogItem(t *testing.T, ctx *testContext, priceGroupID int, catalogCode string) *data.CatalogItem {
+	item := &data.CatalogItem{
+		CatalogCode:         catalogCode,
+		Name:                "Test Item " + catalogCode,
+		Category:            "test",
+		DefaultWidth:        10.0,
+		DefaultHeight:       10.0,
+		MinWidth:            5.0,
+		MinHeight:           5.0,
+		DefaultPriceGroupID: priceGroupID,
+		SvgURL:              "https://example.com/test.svg",
+		IsActive:            true,
+	}
+	err := ctx.db.CatalogItems.Insert(item)
+	require.NoError(t, err)
+	return item
 }
 
 func TestAPIEndpoints(t *testing.T) {
 	testCtx, cleanup := setupTestApp(t)
 	defer cleanup()
 
-	user, accessToken := seedTestData(t, testCtx)
+	dealershipUser, dealershipToken, internalUser, internalAdminToken := seedTestData(t, testCtx)
+	_ = dealershipUser // Keep for compatibility with existing tests
+	_ = internalUser   // Keep for compatibility
+	accessToken := dealershipToken
+	user := dealershipUser
 
 	t.Run("Auth Module", func(t *testing.T) {
 		t.Run("GET /api/auth/google", func(t *testing.T) {
@@ -664,6 +710,521 @@ func TestAPIEndpoints(t *testing.T) {
 
 			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
 			t.Logf("✓ POST /api/upload (missing file) (%d)", resp.statusCode)
+		})
+	})
+
+	t.Run("Catalog Module", func(t *testing.T) {
+		// Create test data
+		priceGroup := seedPriceGroup(t, testCtx, "Test Price Group")
+		catalogItem := seedCatalogItem(t, testCtx, priceGroup.ID, "TEST-001")
+
+		t.Run("POST /api/catalog (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   "/api/catalog",
+				body: map[string]interface{}{
+					"catalog_code":           "NEW-ITEM-001",
+					"name":                   "New Catalog Item",
+					"category":               "stained-glass",
+					"default_width":          12.5,
+					"default_height":         15.0,
+					"min_width":              10.0,
+					"min_height":             12.0,
+					"default_price_group_id": priceGroup.ID,
+					"svg_url":                "https://example.com/new.svg",
+					"is_active":              true,
+				},
+				token: internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusCreated, resp.statusCode)
+			t.Logf("✓ POST /api/catalog (happy path) (%d)", resp.statusCode)
+
+			var item map[string]interface{}
+			_ = json.Unmarshal(resp.body, &item)
+			assert.Equal(t, "NEW-ITEM-001", item["catalog_code"])
+		})
+
+		t.Run("POST /api/catalog (missing required field)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   "/api/catalog",
+				body: map[string]interface{}{
+					"catalog_code": "INVALID-001",
+					// missing name
+					"category":               "stained-glass",
+					"default_width":          12.5,
+					"default_height":         15.0,
+					"min_width":              10.0,
+					"min_height":             12.0,
+					"default_price_group_id": priceGroup.ID,
+					"svg_url":                "https://example.com/new.svg",
+				},
+				token: internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
+			t.Logf("✓ POST /api/catalog (missing required field) (%d)", resp.statusCode)
+		})
+
+		t.Run("POST /api/catalog (invalid dimensions)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   "/api/catalog",
+				body: map[string]interface{}{
+					"catalog_code":           "DIM-TEST-001",
+					"name":                   "Dimension Test",
+					"category":               "stained-glass",
+					"default_width":          5.0, // Less than min
+					"default_height":         8.0, // Less than min
+					"min_width":              10.0,
+					"min_height":             12.0,
+					"default_price_group_id": priceGroup.ID,
+					"svg_url":                "https://example.com/new.svg",
+				},
+				token: internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
+			t.Logf("✓ POST /api/catalog (invalid dimensions) (%d)", resp.statusCode)
+		})
+
+		t.Run("GET /api/catalog (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   "/api/catalog",
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ GET /api/catalog (happy path) (%d)", resp.statusCode)
+
+			var body map[string]interface{}
+			_ = json.Unmarshal(resp.body, &body)
+			assert.NotNil(t, body["items"])
+			assert.NotNil(t, body["total"])
+		})
+
+		t.Run("GET /api/catalog (with pagination)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   "/api/catalog?limit=10&offset=0",
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ GET /api/catalog (with pagination) (%d)", resp.statusCode)
+
+			var body map[string]interface{}
+			_ = json.Unmarshal(resp.body, &body)
+			assert.Equal(t, float64(10), body["limit"])
+			assert.Equal(t, float64(0), body["offset"])
+		})
+
+		t.Run("GET /api/catalog (with search filter)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   "/api/catalog?search=TEST",
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ GET /api/catalog (with search filter) (%d)", resp.statusCode)
+		})
+
+		t.Run("GET /api/catalog/{uuid} (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   fmt.Sprintf("/api/catalog/%s", catalogItem.UUID),
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ GET /api/catalog/{uuid} (happy path) (%d)", resp.statusCode)
+
+			var item map[string]interface{}
+			_ = json.Unmarshal(resp.body, &item)
+			assert.Equal(t, catalogItem.UUID, item["uuid"])
+		})
+
+		t.Run("GET /api/catalog/{uuid} (not found)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   "/api/catalog/00000000-0000-0000-0000-000000000000",
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusNotFound, resp.statusCode)
+			t.Logf("✓ GET /api/catalog/{uuid} (not found) (%d)", resp.statusCode)
+		})
+
+		t.Run("PATCH /api/catalog/{uuid} (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "PATCH",
+				path:   fmt.Sprintf("/api/catalog/%s", catalogItem.UUID),
+				body: map[string]interface{}{
+					"name": "Updated Catalog Item",
+				},
+				token: internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ PATCH /api/catalog/{uuid} (happy path) (%d)", resp.statusCode)
+
+			var item map[string]interface{}
+			_ = json.Unmarshal(resp.body, &item)
+			assert.Equal(t, "Updated Catalog Item", item["name"])
+		})
+
+		t.Run("PATCH /api/catalog/{uuid} (invalid dimensions)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "PATCH",
+				path:   fmt.Sprintf("/api/catalog/%s", catalogItem.UUID),
+				body: map[string]interface{}{
+					"default_width":  3.0, // Less than min
+					"default_height": 3.0, // Less than min
+				},
+				token: internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
+			t.Logf("✓ PATCH /api/catalog/{uuid} (invalid dimensions) (%d)", resp.statusCode)
+		})
+
+		t.Run("PATCH /api/catalog/{uuid} (not found)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "PATCH",
+				path:   "/api/catalog/00000000-0000-0000-0000-000000000000",
+				body: map[string]interface{}{
+					"name": "Updated",
+				},
+				token: internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusNotFound, resp.statusCode)
+			t.Logf("✓ PATCH /api/catalog/{uuid} (not found) (%d)", resp.statusCode)
+		})
+
+		t.Run("DELETE /api/catalog/{uuid} (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "DELETE",
+				path:   fmt.Sprintf("/api/catalog/%s", catalogItem.UUID),
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ DELETE /api/catalog/{uuid} (happy path) (%d)", resp.statusCode)
+
+			var body map[string]interface{}
+			_ = json.Unmarshal(resp.body, &body)
+			assert.Equal(t, true, body["success"])
+		})
+
+		t.Run("DELETE /api/catalog/{uuid} (not found)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "DELETE",
+				path:   "/api/catalog/00000000-0000-0000-0000-000000000000",
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusNotFound, resp.statusCode)
+			t.Logf("✓ DELETE /api/catalog/{uuid} (not found) (%d)", resp.statusCode)
+		})
+
+		t.Run("POST /api/catalog/{uuid}/tags (happy path)", func(t *testing.T) {
+			catalogItem2 := seedCatalogItem(t, testCtx, priceGroup.ID, "TAG-TEST-001")
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/catalog/%s/tags", catalogItem2.UUID),
+				body: map[string]interface{}{
+					"tag": "premium",
+				},
+				token: internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ POST /api/catalog/{uuid}/tags (happy path) (%d)", resp.statusCode)
+
+			var tags []interface{}
+			_ = json.Unmarshal(resp.body, &tags)
+			assert.Greater(t, len(tags), 0)
+		})
+
+		t.Run("POST /api/catalog/{uuid}/tags (duplicate tag error)", func(t *testing.T) {
+			catalogItem3 := seedCatalogItem(t, testCtx, priceGroup.ID, "DUPTEST-001")
+			// Add tag first time
+			testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/catalog/%s/tags", catalogItem3.UUID),
+				body: map[string]interface{}{
+					"tag": "duplicate-tag",
+				},
+				token: internalAdminToken,
+			})
+
+			// Try to add same tag again
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/catalog/%s/tags", catalogItem3.UUID),
+				body: map[string]interface{}{
+					"tag": "duplicate-tag",
+				},
+				token: internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
+			t.Logf("✓ POST /api/catalog/{uuid}/tags (duplicate tag error) (%d)", resp.statusCode)
+		})
+
+		t.Run("GET /api/catalog/{uuid}/tags (happy path)", func(t *testing.T) {
+			catalogItem4 := seedCatalogItem(t, testCtx, priceGroup.ID, "GETTAG-001")
+			testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/catalog/%s/tags", catalogItem4.UUID),
+				body: map[string]interface{}{
+					"tag": "test-tag",
+				},
+				token: internalAdminToken,
+			})
+
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   fmt.Sprintf("/api/catalog/%s/tags", catalogItem4.UUID),
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ GET /api/catalog/{uuid}/tags (happy path) (%d)", resp.statusCode)
+		})
+
+		t.Run("DELETE /api/catalog/{uuid}/tags/{tag} (happy path)", func(t *testing.T) {
+			catalogItem5 := seedCatalogItem(t, testCtx, priceGroup.ID, "DELTAG-001")
+			testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/catalog/%s/tags", catalogItem5.UUID),
+				body: map[string]interface{}{
+					"tag": "remove-me",
+				},
+				token: internalAdminToken,
+			})
+
+			resp := testCtx.request(testRequest{
+				method: "DELETE",
+				path:   fmt.Sprintf("/api/catalog/%s/tags/remove-me", catalogItem5.UUID),
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ DELETE /api/catalog/{uuid}/tags/{tag} (happy path) (%d)", resp.statusCode)
+		})
+
+		t.Run("GET /api/catalog/browse (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   "/api/catalog/browse",
+				token:  accessToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ GET /api/catalog/browse (happy path) (%d)", resp.statusCode)
+		})
+
+		t.Run("GET /api/catalog/categories (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   "/api/catalog/categories",
+				token:  accessToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ GET /api/catalog/categories (happy path) (%d)", resp.statusCode)
+		})
+
+		t.Run("GET /api/catalog/tags (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   "/api/catalog/tags",
+				token:  accessToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ GET /api/catalog/tags (happy path) (%d)", resp.statusCode)
+		})
+	})
+
+	t.Run("Price Group Module", func(t *testing.T) {
+		t.Run("POST /api/price-groups (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   "/api/price-groups",
+				body: map[string]interface{}{
+					"name":             "Premium Tier",
+					"base_price_cents": 25000, // $250.00
+					"description":      "Premium pricing tier",
+					"is_active":        true,
+				},
+				token: internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusCreated, resp.statusCode)
+			t.Logf("✓ POST /api/price-groups (happy path) (%d)", resp.statusCode)
+
+			var priceGroup map[string]interface{}
+			_ = json.Unmarshal(resp.body, &priceGroup)
+			assert.Equal(t, "Premium Tier", priceGroup["name"])
+			assert.Equal(t, float64(25000), priceGroup["base_price_cents"])
+		})
+
+		t.Run("POST /api/price-groups (missing required field)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   "/api/price-groups",
+				body: map[string]interface{}{
+					// missing name
+					"base_price_cents": 15000,
+					"is_active":        true,
+				},
+				token: internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
+			t.Logf("✓ POST /api/price-groups (missing required field) (%d)", resp.statusCode)
+		})
+
+		t.Run("POST /api/price-groups (invalid price)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   "/api/price-groups",
+				body: map[string]interface{}{
+					"name":             "Bad Price",
+					"base_price_cents": 0, // Must be > 0
+					"is_active":        true,
+				},
+				token: internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
+			t.Logf("✓ POST /api/price-groups (invalid price) (%d)", resp.statusCode)
+		})
+
+		priceGroup := seedPriceGroup(t, testCtx, "Standard Tier")
+
+		t.Run("GET /api/price-groups (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   "/api/price-groups",
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ GET /api/price-groups (happy path) (%d)", resp.statusCode)
+
+			var body map[string]interface{}
+			_ = json.Unmarshal(resp.body, &body)
+			assert.NotNil(t, body["items"])
+			assert.NotNil(t, body["total"])
+		})
+
+		t.Run("GET /api/price-groups (with pagination)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   "/api/price-groups?limit=10&offset=0",
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ GET /api/price-groups (with pagination) (%d)", resp.statusCode)
+
+			var body map[string]interface{}
+			_ = json.Unmarshal(resp.body, &body)
+			assert.Equal(t, float64(10), body["limit"])
+			assert.Equal(t, float64(0), body["offset"])
+		})
+
+		t.Run("GET /api/price-groups/{uuid} (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   fmt.Sprintf("/api/price-groups/%s", priceGroup.UUID),
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ GET /api/price-groups/{uuid} (happy path) (%d)", resp.statusCode)
+
+			var pg map[string]interface{}
+			_ = json.Unmarshal(resp.body, &pg)
+			assert.Equal(t, priceGroup.UUID, pg["uuid"])
+		})
+
+		t.Run("GET /api/price-groups/{uuid} (not found)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   "/api/price-groups/00000000-0000-0000-0000-000000000000",
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusNotFound, resp.statusCode)
+			t.Logf("✓ GET /api/price-groups/{uuid} (not found) (%d)", resp.statusCode)
+		})
+
+		t.Run("PATCH /api/price-groups/{uuid} (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "PATCH",
+				path:   fmt.Sprintf("/api/price-groups/%s", priceGroup.UUID),
+				body: map[string]interface{}{
+					"name": "Updated Standard Tier",
+				},
+				token: internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ PATCH /api/price-groups/{uuid} (happy path) (%d)", resp.statusCode)
+
+			var pg map[string]interface{}
+			_ = json.Unmarshal(resp.body, &pg)
+			assert.Equal(t, "Updated Standard Tier", pg["name"])
+		})
+
+		t.Run("PATCH /api/price-groups/{uuid} (not found)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "PATCH",
+				path:   "/api/price-groups/00000000-0000-0000-0000-000000000000",
+				body: map[string]interface{}{
+					"name": "Updated",
+				},
+				token: internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusNotFound, resp.statusCode)
+			t.Logf("✓ PATCH /api/price-groups/{uuid} (not found) (%d)", resp.statusCode)
+		})
+
+		t.Run("DELETE /api/price-groups/{uuid} (happy path)", func(t *testing.T) {
+			priceGroupToDelete := seedPriceGroup(t, testCtx, "To Delete")
+
+			resp := testCtx.request(testRequest{
+				method: "DELETE",
+				path:   fmt.Sprintf("/api/price-groups/%s", priceGroupToDelete.UUID),
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ DELETE /api/price-groups/{uuid} (happy path) (%d)", resp.statusCode)
+
+			var body map[string]interface{}
+			_ = json.Unmarshal(resp.body, &body)
+			assert.Equal(t, true, body["success"])
+		})
+
+		t.Run("DELETE /api/price-groups/{uuid} (not found)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "DELETE",
+				path:   "/api/price-groups/00000000-0000-0000-0000-000000000000",
+				token:  internalAdminToken,
+			})
+
+			assert.Equal(t, http.StatusNotFound, resp.statusCode)
+			t.Logf("✓ DELETE /api/price-groups/{uuid} (not found) (%d)", resp.statusCode)
 		})
 	})
 

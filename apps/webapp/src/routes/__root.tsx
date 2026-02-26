@@ -1,6 +1,8 @@
 import { Outlet, createRootRouteWithContext } from "@tanstack/solid-router";
-import { TanStackRouterDevtools } from "@tanstack/solid-router-devtools";
-import { SolidQueryDevtools } from "@tanstack/solid-query-devtools";
+import { TanStackDevtools } from "@tanstack/solid-devtools";
+import { SolidQueryDevtoolsPanel } from "@tanstack/solid-query-devtools";
+import { TanStackRouterDevtoolsPanel } from "@tanstack/solid-router-devtools";
+import { formDevtoolsPlugin } from "@tanstack/solid-form-devtools";
 import { RouterContext } from "../App";
 import { Toaster } from "@glassact/ui";
 
@@ -14,8 +16,19 @@ function RootComponent() {
     <>
       <Outlet />
       <Toaster />
-      <TanStackRouterDevtools />
-      <SolidQueryDevtools buttonPosition="bottom-left" />
+      <TanStackDevtools
+        plugins={[
+          {
+            name: "TanStack Query",
+            render: () => <SolidQueryDevtoolsPanel />,
+          },
+          {
+            name: "TanStack Router",
+            render: () => <TanStackRouterDevtoolsPanel />,
+          },
+          formDevtoolsPlugin(),
+        ]}
+      />
     </>
   );
 }
