@@ -15,4 +15,6 @@ const (
 	ActionCreateInvoice       = "create_invoice"
 	ActionManageInternalUsers = "manage_internal_users"
 	ActionViewAll             = "view_all"
+	ActionManageCatalog       = "manage_catalog"
+	ActionManagePriceGroups   = "manage_price_groups"
 )

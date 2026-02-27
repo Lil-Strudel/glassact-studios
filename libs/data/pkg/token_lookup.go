@@ -21,7 +21,7 @@ func GetAuthUserForToken(models *Models, tokenScope, tokenPlaintext string) (Aut
 
 	dealershipUser, found, err := models.DealershipUsers.GetForToken(dealershipScopeStr, tokenPlaintext)
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("dealership token lookup failed: %w", err)
 	}
 
 	if found && dealershipUser.IsActive {
@@ -30,7 +30,7 @@ func GetAuthUserForToken(models *Models, tokenScope, tokenPlaintext string) (Aut
 
 	internalUser, found, err := models.InternalUsers.GetForToken(internalScopeStr, tokenPlaintext)
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("internal token lookup failed: %w", err)
 	}
 
 	if found && internalUser.IsActive {
