@@ -34,11 +34,10 @@ export function browseCatalogOpts(params?: {
   limit?: number;
   offset?: number;
 }) {
-  return () =>
-    queryOptions({
-      queryKey: ["catalog-browse", params],
-      queryFn: () => browseCatalog(params),
-    });
+  return queryOptions({
+    queryKey: ["catalog-browse", params],
+    queryFn: () => browseCatalog(params),
+  });
 }
 
 export async function getCatalogCategories(): Promise<string[]> {
@@ -47,11 +46,10 @@ export async function getCatalogCategories(): Promise<string[]> {
 }
 
 export function getCatalogCategoriesOpts() {
-  return () =>
-    queryOptions({
-      queryKey: ["catalog-categories"],
-      queryFn: getCatalogCategories,
-    });
+  return queryOptions({
+    queryKey: ["catalog-categories"],
+    queryFn: getCatalogCategories,
+  });
 }
 
 export async function getCatalogAllTags(): Promise<string[]> {
@@ -60,9 +58,8 @@ export async function getCatalogAllTags(): Promise<string[]> {
 }
 
 export function getCatalogAllTagsOpts() {
-  return () =>
-    queryOptions({
-      queryKey: ["catalog-all-tags"],
-      queryFn: getCatalogAllTags,
-    });
+  return queryOptions({
+    queryKey: ["catalog-all-tags"],
+    queryFn: getCatalogAllTags,
+  });
 }

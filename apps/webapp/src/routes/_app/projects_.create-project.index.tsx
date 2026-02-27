@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
-import { Breadcrumb, Button, Form } from "@glassact/ui";
+import { Breadcrumb, Button, Badge, Form } from "@glassact/ui";
 import { Index, Show } from "solid-js";
-import { formatMoney } from "../../utils/format-money";
 import { useProjectFormContext } from "./projects_.create-project";
 
 export const Route = createFileRoute("/_app/projects_/create-project/")({
@@ -66,53 +65,48 @@ function RouteComponent() {
                         {(inlay, index) => (
                           <li class="flex py-6">
                             <div class="shrink-0">
-                              <img
-                                src={inlay().preview_url}
-                                alt={inlay().name}
-                                class="size-24 rounded-md object-cover sm:size-32"
-                              />
+                              <Show
+                                when={inlay().preview_url}
+                                fallback={
+                                  <div class="size-24 sm:size-32 rounded-md bg-gray-100 flex items-center justify-center">
+                                    <span class="text-gray-400 text-xs">
+                                      No preview
+                                    </span>
+                                  </div>
+                                }
+                              >
+                                <img
+                                  src={inlay().preview_url}
+                                  alt={inlay().name}
+                                  class="size-24 rounded-md object-cover sm:size-32"
+                                />
+                              </Show>
                             </div>
 
                             <div class="ml-4 flex flex-1 flex-col sm:ml-6">
                               <div>
                                 <div class="flex justify-between">
-                                  <h4 class="text-sm">
-                                    <a
-                                      href="#"
-                                      class="font-medium text-gray-700 hover:text-gray-800"
-                                    >
-                                      {inlay().name}
-                                    </a>
+                                  <h4 class="text-sm font-medium text-gray-700">
+                                    {inlay().name}
                                   </h4>
-                                  <p class="ml-4 text-sm font-medium text-gray-900"></p>
                                 </div>
                                 <p class="mt-1 text-sm text-gray-500">
-                                  {inlay().type[0].toUpperCase()}
-                                  {inlay().type.slice(1)}
+                                  <Badge variant="outline" class="text-xs">
+                                    {inlay().type === "catalog"
+                                      ? "Catalog"
+                                      : "Custom"}
+                                  </Badge>
                                 </p>
-                                <p class="mt-1 text-sm text-gray-500"></p>
                               </div>
 
                               <div class="mt-4 flex flex-1 items-end justify-between">
-                                <p class="flex items-center space-x-2 text-sm text-gray-700">
-                                  <svg
-                                    class="size-5 shrink-0 text-green-500"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                    data-slot="icon"
-                                  >
-                                    <path
-                                      fill-rule="evenodd"
-                                      d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
-                                      clip-rule="evenodd"
-                                    />
-                                  </svg>
-                                  <span>Lorem Ipsum</span>
+                                <p class="text-xs text-gray-500">
+                                  Price determined after proof approval
                                 </p>
                                 <div class="ml-4">
                                   <Button
                                     variant="text"
-                                    class="p-0"
+                                    class="p-0 text-red-600 hover:text-red-700"
                                     onClick={() => field().removeValue(index)}
                                   >
                                     Remove
@@ -146,16 +140,9 @@ function RouteComponent() {
                   <dt class="text-base font-medium text-gray-900">
                     Estimated Total
                   </dt>
-                  <form.Subscribe
-                    selector={(state) => ({
-                      inlays: state.values.inlays,
-                    })}
-                    children={(state) => (
-                      <dd class="ml-4 text-base font-medium text-gray-900">
-                        ~
-                      </dd>
-                    )}
-                  />
+                  <dd class="ml-4 text-base font-medium text-gray-500">
+                    Price determined after proof approval
+                  </dd>
                 </div>
               </dl>
               <p class="mt-1 text-sm text-gray-500">

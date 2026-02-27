@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
@@ -75,4 +76,31 @@ func (m UploadModule) HandlePostUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	m.WriteJSON(w, r, http.StatusOK, result)
+}
+
+func (m UploadModule) HandleGetFile(w http.ResponseWriter, r *http.Request) {
+	path := r.PathValue("path")
+	if path == "" {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("file path is required"))
+		return
+	}
+
+	path = strings.TrimPrefix(path, "/")
+	if path == "" {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("file path cannot be empty"))
+		return
+	}
+
+	key := fmt.Sprintf("file/%s", path)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	signedURL, err := GenerateSignedURL(ctx, m.S3, m.Cfg, key, 15*time.Minute)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	http.Redirect(w, r, signedURL, http.StatusFound)
 }

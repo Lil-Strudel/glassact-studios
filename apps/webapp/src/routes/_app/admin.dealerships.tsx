@@ -91,7 +91,7 @@ const formSchema = z.object({
 });
 
 function RouteComponent() {
-  const query = useQuery(getDealershipsOpts);
+  const query = useQuery(() => getDealershipsOpts());
 
   const postDealership = useMutation(postDealershipOpts);
 

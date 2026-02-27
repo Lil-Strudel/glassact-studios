@@ -22,11 +22,10 @@ export async function getDealership(uuid: string): Promise<GET<Dealership>> {
 }
 
 export function getDealershipOpts(uuid: string) {
-  return () =>
-    queryOptions({
-      queryKey: ["dealership", uuid],
-      queryFn: () => getDealership(uuid),
-    });
+  return queryOptions({
+    queryKey: ["dealership", uuid],
+    queryFn: () => getDealership(uuid),
+  });
 }
 
 export async function postDealership(

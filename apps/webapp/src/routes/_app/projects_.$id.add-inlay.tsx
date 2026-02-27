@@ -9,37 +9,45 @@ import {
   Breadcrumb,
   Form,
   textfieldLabel,
-  Badge,
+  showToast,
 } from "@glassact/ui";
 import { IoClose } from "solid-icons/io";
 import { createForm } from "@tanstack/solid-form";
-import { createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, Show, untrack } from "solid-js";
 import { z } from "zod";
 import { zodStringNumber } from "../../utils/zod-string-number";
-import { useProjectFormContext } from "./projects_.create-project";
-import type { PostProjectWithInlaysRequest } from "../../queries/project";
-import { useQuery } from "@tanstack/solid-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import { browseCatalogOpts } from "../../queries/catalog-browse";
 import { useDebounce } from "../../hooks/use-debounce";
 import { FilterSidebar } from "../../components/catalog/filter-sidebar";
+import { postCatalogInlayOpts, postCustomInlayOpts } from "../../queries/inlay";
+import { getProjectOpts } from "../../queries/project";
+import { isApiError } from "../../utils/is-api-error";
 import type { CatalogItem, GET } from "@glassact/data";
 
-export const Route = createFileRoute(
-  "/_app/projects_/create-project/add-inlay",
-)({
+export const Route = createFileRoute("/_app/projects_/$id/add-inlay")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const form = useProjectFormContext();
+  const params = Route.useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  function addInlay(inlay: PostProjectWithInlaysRequest["inlays"][number]) {
-    form.setFieldValue("inlays", (oldInlays) => {
-      oldInlays.push(inlay);
-      return oldInlays;
+  const projectQuery = useQuery(() => getProjectOpts(params().id));
+
+  const projectName = createMemo(() => {
+    if (projectQuery.isSuccess) {
+      return untrack(() => projectQuery.data.name);
+    }
+    return "asdfkj";
+  });
+
+  function handleSuccess() {
+    queryClient.invalidateQueries({
+      queryKey: ["project", params().id, "inlays"],
     });
-    navigate({ to: "/projects/create-project" });
+    navigate({ to: `/projects/${params().id}` });
   }
 
   return (
@@ -47,13 +55,16 @@ function RouteComponent() {
       <Breadcrumb
         crumbs={[
           { title: "Projects", to: "/projects" },
-          { title: "Create Project", to: "/projects/create-project" },
-          { title: "Add Inlay", to: "/projects/create-project/add-inlay" },
+          { title: projectName(), to: `/projects/${params().id}` },
+          {
+            title: "Add Inlay",
+            to: `/projects/${params().id}/add-inlay`,
+          },
         ]}
       />
       <Tabs defaultValue="catalog">
         <h1 class="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-          Add Item
+          Add Inlay
         </h1>
         <div class="max-w-[400px] mx-auto mt-4">
           <TabsList>
@@ -64,10 +75,16 @@ function RouteComponent() {
         </div>
         <div class="mt-6">
           <TabsContent value="catalog">
-            <CatalogSelector onSelect={addInlay} />
+            <CatalogSelector
+              projectUuid={params().id}
+              onSuccess={handleSuccess}
+            />
           </TabsContent>
           <TabsContent value="custom">
-            <CustomInlayForm onSubmit={addInlay} />
+            <CustomInlayForm
+              projectUuid={params().id}
+              onSuccess={handleSuccess}
+            />
           </TabsContent>
         </div>
       </Tabs>
@@ -76,7 +93,8 @@ function RouteComponent() {
 }
 
 interface CatalogSelectorProps {
-  onSelect: (inlay: PostProjectWithInlaysRequest["inlays"][number]) => void;
+  projectUuid: string;
+  onSuccess: () => void;
 }
 
 function CatalogSelector(props: CatalogSelectorProps) {
@@ -103,19 +121,41 @@ function CatalogSelector(props: CatalogSelectorProps) {
     }),
   );
 
+  const postCatalogInlay = useMutation(postCatalogInlayOpts);
+
   function handleConfirm() {
     const item = selectedItem();
     if (!item) return;
 
-    props.onSelect({
-      name: item.name,
-      type: "catalog",
-      preview_url: item.svg_url,
-      catalog_info: {
-        catalog_item_id: item.id,
-        customization_notes: customizationNotes(),
+    postCatalogInlay.mutate(
+      {
+        projectUuid: props.projectUuid,
+        body: {
+          name: item.name,
+          catalog_item_id: item.id,
+          customization_notes: customizationNotes() || undefined,
+        },
       },
-    });
+      {
+        onSuccess() {
+          showToast({
+            title: "Inlay added",
+            description: `${item.name} has been added to the project.`,
+            variant: "success",
+          });
+          props.onSuccess();
+        },
+        onError(error) {
+          if (isApiError(error)) {
+            showToast({
+              title: "Failed to add inlay",
+              description: error?.data?.error ?? "Unknown error",
+              variant: "error",
+            });
+          }
+        },
+      },
+    );
   }
 
   return (
@@ -164,10 +204,16 @@ function CatalogSelector(props: CatalogSelectorProps) {
                   setSelectedItem(null);
                   setCustomizationNotes("");
                 }}
+                disabled={postCatalogInlay.isPending}
               >
                 Back to Catalog
               </Button>
-              <Button onClick={handleConfirm}>Add to Project</Button>
+              <Button
+                onClick={handleConfirm}
+                disabled={postCatalogInlay.isPending}
+              >
+                {postCatalogInlay.isPending ? "Adding..." : "Add to Project"}
+              </Button>
             </div>
           </div>
         </div>
@@ -273,7 +319,11 @@ function CatalogSelector(props: CatalogSelectorProps) {
       </div>
 
       <div class="flex justify-center mt-6">
-        <Button variant="outline" as={Link} to="/projects/create-project">
+        <Button
+          variant="outline"
+          as={Link}
+          to={`/projects/${props.projectUuid}`}
+        >
           Cancel
         </Button>
       </div>
@@ -282,10 +332,13 @@ function CatalogSelector(props: CatalogSelectorProps) {
 }
 
 interface CustomInlayFormProps {
-  onSubmit: (inlay: PostProjectWithInlaysRequest["inlays"][number]) => void;
+  projectUuid: string;
+  onSuccess: () => void;
 }
 
 function CustomInlayForm(props: CustomInlayFormProps) {
+  const postCustomInlay = useMutation(postCustomInlayOpts);
+
   const customForm = createForm(() => ({
     defaultValues: {
       name: "",
@@ -308,16 +361,36 @@ function CustomInlayForm(props: CustomInlayFormProps) {
       }),
     },
     onSubmit: async ({ value }) => {
-      props.onSubmit({
-        name: value.name,
-        type: "custom",
-        preview_url: "",
-        custom_info: {
-          description: value.description,
-          requested_width: parseFloat(value.width),
-          requested_height: parseFloat(value.height),
+      postCustomInlay.mutate(
+        {
+          projectUuid: props.projectUuid,
+          body: {
+            name: value.name,
+            description: value.description,
+            requested_width: parseFloat(value.width),
+            requested_height: parseFloat(value.height),
+          },
         },
-      });
+        {
+          onSuccess() {
+            showToast({
+              title: "Inlay added",
+              description: `${value.name} has been added to the project.`,
+              variant: "success",
+            });
+            props.onSuccess();
+          },
+          onError(error) {
+            if (isApiError(error)) {
+              showToast({
+                title: "Failed to add inlay",
+                description: error?.data?.error ?? "Unknown error",
+                variant: "error",
+              });
+            }
+          },
+        },
+      );
     },
   }));
 
@@ -372,10 +445,17 @@ function CustomInlayForm(props: CustomInlayFormProps) {
             </div>
           </div>
           <div class="mx-auto flex gap-4">
-            <Button variant="outline" as={Link} to="/projects/create-project">
+            <Button
+              variant="outline"
+              as={Link}
+              to={`/projects/${props.projectUuid}`}
+              disabled={postCustomInlay.isPending}
+            >
               Cancel
             </Button>
-            <Button type="submit">Add to Project</Button>
+            <Button type="submit" disabled={postCustomInlay.isPending}>
+              {postCustomInlay.isPending ? "Adding..." : "Add to Project"}
+            </Button>
           </div>
         </div>
       </form>

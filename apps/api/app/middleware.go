@@ -69,13 +69,13 @@ func (app *Application) Authenticate(next http.Handler) http.Handler {
 
 		err := app.Validate.Var(token, "required,len=26")
 		if err != nil {
-			app.WriteError(w, r, app.Err.AuthenticationError, nil)
+			app.WriteError(w, r, app.Err.AuthenticationError, err)
 			return
 		}
 
 		user, _, err := data.GetAuthUserForToken(&app.Db, data.ScopeAccess, token)
 		if err != nil {
-			app.WriteError(w, r, app.Err.AuthenticationError, nil)
+			app.WriteError(w, r, app.Err.AuthenticationError, err)
 			return
 		}
 

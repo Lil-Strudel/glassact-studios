@@ -36,11 +36,10 @@ export async function getInlayChat(uuid: string): Promise<GET<InlayChat>> {
 }
 
 export function getInlayChatOpts(uuid: string) {
-  return () =>
-    queryOptions({
-      queryKey: ["inlay-chat", uuid],
-      queryFn: () => getInlayChat(uuid),
-    });
+  return queryOptions({
+    queryKey: ["inlay-chat", uuid],
+    queryFn: () => getInlayChat(uuid),
+  });
 }
 
 export async function postInlayChat(

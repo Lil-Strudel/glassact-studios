@@ -17,7 +17,7 @@ function RouteComponent() {
 
   const limit = 50;
 
-  const query = useQuery(
+  const query = useQuery(() =>
     browseCatalogOpts({
       search: search(),
       category: category(),

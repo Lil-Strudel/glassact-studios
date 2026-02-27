@@ -35,12 +35,16 @@ export const AuthProvider: ParentComponent = (props) => {
     new DeferredPromise<SettledAuthStatus>(),
   );
 
-  const queryOptions = postAuthTokenAccessOpts();
-  queryOptions.staleTime = Infinity;
-  queryOptions.retry = false;
-  queryOptions.refetchInterval = 1000 * 60 * 60 * 1.5;
+  const queryOptions = () => {
+    const queryOptions = postAuthTokenAccessOpts();
+    queryOptions.staleTime = Infinity;
+    queryOptions.retry = false;
+    queryOptions.refetchInterval = 1000 * 60 * 60 * 1.5;
 
-  const query = useQuery(() => queryOptions);
+    return queryOptions;
+  };
+
+  const query = useQuery(queryOptions);
 
   createEffect(() => {
     switch (query.status) {

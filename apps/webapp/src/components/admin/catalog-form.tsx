@@ -34,7 +34,7 @@ export function CatalogForm(props: CatalogFormProps) {
   const [tagInput, setTagInput] = createSignal("");
   const [showTagSuggestions, setShowTagSuggestions] = createSignal(false);
 
-  const tagsQuery = useQuery(getCatalogAllTagsOpts());
+  const tagsQuery = useQuery(() => getCatalogAllTagsOpts());
 
   const handleFileUpload = async (file: File, uploadPath: string) => {
     const formData = new FormData();

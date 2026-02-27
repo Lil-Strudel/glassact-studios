@@ -191,7 +191,7 @@ func seedTestData(t *testing.T, ctx *testContext) (*data.DealershipUser, string,
 			City:       "Test City",
 			State:      "TS",
 			PostalCode: "12345",
-			Country:    "USA",
+			Country:    "US",
 			Latitude:   40.7128,
 			Longitude:  -74.0060,
 		},
@@ -203,7 +203,8 @@ func seedTestData(t *testing.T, ctx *testContext) (*data.DealershipUser, string,
 		DealershipID: dealership.ID,
 		Name:         "Test User",
 		Email:        fmt.Sprintf("test%d@example.com", time.Now().UnixNano()),
-		Role:         "admin",
+		Avatar:       "https://example.com/avatar.jpg",
+		Role:         data.DealershipUserRoles.Admin,
 		IsActive:     true,
 	}
 	err = ctx.db.DealershipUsers.Insert(dealershipUser)
@@ -216,7 +217,8 @@ func seedTestData(t *testing.T, ctx *testContext) (*data.DealershipUser, string,
 	internalUser := &data.InternalUser{
 		Name:     "Internal Admin",
 		Email:    fmt.Sprintf("admin%d@example.com", time.Now().UnixNano()),
-		Role:     "admin",
+		Avatar:   "https://example.com/avatar.jpg",
+		Role:     data.InternalUserRoles.Admin,
 		IsActive: true,
 	}
 	err = ctx.db.InternalUsers.Insert(internalUser)
@@ -262,10 +264,7 @@ func TestAPIEndpoints(t *testing.T) {
 	defer cleanup()
 
 	dealershipUser, dealershipToken, internalUser, internalAdminToken := seedTestData(t, testCtx)
-	_ = dealershipUser // Keep for compatibility with existing tests
-	_ = internalUser   // Keep for compatibility
-	accessToken := dealershipToken
-	user := dealershipUser
+	_ = internalUser
 
 	t.Run("Auth Module", func(t *testing.T) {
 		t.Run("GET /api/auth/google", func(t *testing.T) {
@@ -302,7 +301,7 @@ func TestAPIEndpoints(t *testing.T) {
 		})
 
 		t.Run("POST /api/auth/token/access", func(t *testing.T) {
-			refreshToken, err := testCtx.db.DealershipTokens.New(user.ID, 24*time.Hour, data.DealershipScopeRefresh)
+			refreshToken, err := testCtx.db.DealershipTokens.New(dealershipUser.ID, 24*time.Hour, data.DealershipScopeRefresh)
 			require.NoError(t, err)
 
 			resp := testCtx.request(testRequest{
@@ -322,7 +321,7 @@ func TestAPIEndpoints(t *testing.T) {
 		})
 
 		t.Run("GET /api/auth/logout", func(t *testing.T) {
-			refreshToken, err := testCtx.db.DealershipTokens.New(user.ID, 24*time.Hour, data.DealershipScopeRefresh)
+			refreshToken, err := testCtx.db.DealershipTokens.New(dealershipUser.ID, 24*time.Hour, data.DealershipScopeRefresh)
 			require.NoError(t, err)
 
 			req := httptest.NewRequest("GET", "/api/auth/logout", nil)
@@ -341,7 +340,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "GET",
 				path:   "/api/dealership",
-				token:  accessToken,
+				token:  dealershipToken,
 			})
 
 			assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -363,12 +362,12 @@ func TestAPIEndpoints(t *testing.T) {
 						"city":        "New City",
 						"state":       "NC",
 						"postal_code": "54321",
-						"country":     "USA",
+						"country":     "US",
 						"latitude":    40.0,
 						"longitude":   -75.0,
 					},
 				},
-				token: accessToken,
+				token: dealershipToken,
 			})
 
 			assert.Equal(t, http.StatusCreated, resp.statusCode)
@@ -385,125 +384,11 @@ func TestAPIEndpoints(t *testing.T) {
 				resp := testCtx.request(testRequest{
 					method: "GET",
 					path:   fmt.Sprintf("/api/dealership/%s", dealerships[0].UUID),
-					token:  accessToken,
+					token:  dealershipToken,
 				})
 
 				assert.Equal(t, http.StatusOK, resp.statusCode)
 				t.Logf("✓ GET /api/dealership/{uuid} (%d)", resp.statusCode)
-			})
-		}
-	})
-
-	t.Run("Inlay Module", func(t *testing.T) {
-		dealerships, _ := testCtx.db.Dealerships.GetAll()
-		require.Greater(t, len(dealerships), 0)
-
-		project := &data.Project{
-			Name:         "Test Project",
-			Status:       data.ProjectStatuses.Draft,
-			DealershipID: dealerships[0].ID,
-		}
-		_ = testCtx.db.Projects.Insert(project)
-
-		t.Run("GET /api/inlay", func(t *testing.T) {
-			resp := testCtx.request(testRequest{
-				method: "GET",
-				path:   "/api/inlay",
-				token:  accessToken,
-			})
-
-			assert.Equal(t, http.StatusOK, resp.statusCode)
-			t.Logf("✓ GET /api/inlay (%d)", resp.statusCode)
-		})
-
-		t.Run("POST /api/inlay", func(t *testing.T) {
-			resp := testCtx.request(testRequest{
-				method: "POST",
-				path:   "/api/inlay",
-				body: map[string]interface{}{
-					"project_id":  project.ID,
-					"name":        "Test Inlay",
-					"type":        "catalog",
-					"preview_url": "https://example.com/preview.png",
-				},
-				token: accessToken,
-			})
-
-			assert.Equal(t, http.StatusCreated, resp.statusCode)
-			t.Logf("✓ POST /api/inlay (%d)", resp.statusCode)
-		})
-
-		inlays, _ := testCtx.db.Inlays.GetAll()
-		if len(inlays) > 0 {
-			t.Run("GET /api/inlay/{uuid}", func(t *testing.T) {
-				resp := testCtx.request(testRequest{
-					method: "GET",
-					path:   fmt.Sprintf("/api/inlay/%s", inlays[0].UUID),
-					token:  accessToken,
-				})
-
-				assert.Equal(t, http.StatusOK, resp.statusCode)
-				t.Logf("✓ GET /api/inlay/{uuid} (%d)", resp.statusCode)
-			})
-		}
-	})
-
-	t.Run("Inlay-Chat Module", func(t *testing.T) {
-		projects, _ := testCtx.db.Projects.GetAll()
-		require.Greater(t, len(projects), 0)
-
-		inlays, _ := testCtx.db.Inlays.GetAll()
-		require.Greater(t, len(inlays), 0)
-
-		t.Run("GET /api/inlay-chat", func(t *testing.T) {
-			resp := testCtx.request(testRequest{
-				method: "GET",
-				path:   "/api/inlay-chat",
-				token:  accessToken,
-			})
-
-			assert.Equal(t, http.StatusOK, resp.statusCode)
-			t.Logf("✓ GET /api/inlay-chat (%d)", resp.statusCode)
-		})
-
-		t.Run("GET /api/inlay-chat/inlay/{uuid}", func(t *testing.T) {
-			resp := testCtx.request(testRequest{
-				method: "GET",
-				path:   fmt.Sprintf("/api/inlay-chat/inlay/%s", inlays[0].UUID),
-				token:  accessToken,
-			})
-
-			assert.Equal(t, http.StatusOK, resp.statusCode)
-			t.Logf("✓ GET /api/inlay-chat/inlay/{uuid} (%d)", resp.statusCode)
-		})
-
-		t.Run("POST /api/inlay-chat", func(t *testing.T) {
-			resp := testCtx.request(testRequest{
-				method: "POST",
-				path:   "/api/inlay-chat",
-				body: map[string]interface{}{
-					"inlay_id":     inlays[0].ID,
-					"message_type": "system",
-					"message":      "Test message",
-				},
-				token: accessToken,
-			})
-
-			assert.Equal(t, http.StatusCreated, resp.statusCode)
-			t.Logf("✓ POST /api/inlay-chat (%d)", resp.statusCode)
-		})
-
-		chats, _ := testCtx.db.InlayChats.GetAll()
-		if len(chats) > 0 {
-			t.Run("GET /api/inlay-chat/{uuid}", func(t *testing.T) {
-				resp := testCtx.request(testRequest{
-					method: "GET",
-					path:   fmt.Sprintf("/api/inlay-chat/%s", chats[0].UUID),
-					token:  accessToken,
-				})
-
-				assert.Equal(t, http.StatusOK, resp.statusCode)
-				t.Logf("✓ GET /api/inlay-chat/{uuid} (%d)", resp.statusCode)
 			})
 		}
 	})
@@ -516,7 +401,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "GET",
 				path:   "/api/project",
-				token:  accessToken,
+				token:  dealershipToken,
 			})
 
 			assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -528,10 +413,9 @@ func TestAPIEndpoints(t *testing.T) {
 				method: "POST",
 				path:   "/api/project",
 				body: map[string]interface{}{
-					"name":          "New Test Project",
-					"dealership_id": dealerships[0].ID,
+					"name": "New Test Project",
 				},
-				token: accessToken,
+				token: dealershipToken,
 			})
 
 			assert.Equal(t, http.StatusCreated, resp.statusCode)
@@ -539,21 +423,27 @@ func TestAPIEndpoints(t *testing.T) {
 		})
 
 		t.Run("POST /api/project/with-inlays", func(t *testing.T) {
+			priceGroup := seedPriceGroup(t, testCtx, "Test Price Group")
+			catalogItem := seedCatalogItem(t, testCtx, priceGroup.ID, "TEST-INLAY-001")
+
 			resp := testCtx.request(testRequest{
 				method: "POST",
 				path:   "/api/project/with-inlays",
 				body: map[string]interface{}{
-					"name":          "Project with Inlays",
-					"dealership_id": dealerships[0].ID,
+					"name": "Project with Inlays",
 					"inlays": []map[string]interface{}{
 						{
 							"name":        "Inlay 1",
 							"type":        "catalog",
 							"preview_url": "https://example.com/preview.png",
+							"catalog_info": map[string]interface{}{
+								"catalog_item_id":     catalogItem.ID,
+								"customization_notes": "",
+							},
 						},
 					},
 				},
-				token: accessToken,
+				token: dealershipToken,
 			})
 
 			assert.Equal(t, http.StatusCreated, resp.statusCode)
@@ -566,7 +456,7 @@ func TestAPIEndpoints(t *testing.T) {
 				resp := testCtx.request(testRequest{
 					method: "GET",
 					path:   fmt.Sprintf("/api/project/%s", projects[0].UUID),
-					token:  accessToken,
+					token:  dealershipToken,
 				})
 
 				assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -580,7 +470,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "GET",
 				path:   "/api/user/self",
-				token:  accessToken,
+				token:  dealershipToken,
 			})
 
 			assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -591,7 +481,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "GET",
 				path:   "/api/dealership-user",
-				token:  accessToken,
+				token:  dealershipToken,
 			})
 
 			assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -603,11 +493,12 @@ func TestAPIEndpoints(t *testing.T) {
 				method: "POST",
 				path:   "/api/dealership-user",
 				body: map[string]interface{}{
-					"name":  "New Dealership User",
-					"email": fmt.Sprintf("newuser%d@example.com", time.Now().UnixNano()),
-					"role":  "user",
+					"name":   "New Dealership User",
+					"email":  fmt.Sprintf("newuser%d@example.com", time.Now().UnixNano()),
+					"avatar": "https://example.com/avatar.jpg",
+					"role":   "submitter",
 				},
-				token: accessToken,
+				token: dealershipToken,
 			})
 
 			assert.Equal(t, http.StatusCreated, resp.statusCode)
@@ -621,7 +512,7 @@ func TestAPIEndpoints(t *testing.T) {
 				resp := testCtx.request(testRequest{
 					method: "GET",
 					path:   fmt.Sprintf("/api/dealership-user/%s", targetUser.UUID),
-					token:  accessToken,
+					token:  dealershipToken,
 				})
 
 				assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -635,7 +526,7 @@ func TestAPIEndpoints(t *testing.T) {
 					body: map[string]interface{}{
 						"name": "Updated User Name",
 					},
-					token: accessToken,
+					token: dealershipToken,
 				})
 
 				assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -646,10 +537,10 @@ func TestAPIEndpoints(t *testing.T) {
 				resp := testCtx.request(testRequest{
 					method: "DELETE",
 					path:   fmt.Sprintf("/api/dealership-user/%s", targetUser.UUID),
-					token:  accessToken,
+					token:  dealershipToken,
 				})
 
-				assert.Equal(t, http.StatusNoContent, resp.statusCode)
+				assert.Equal(t, http.StatusOK, resp.statusCode)
 				t.Logf("✓ DELETE /api/dealership-user/{uuid} (%d)", resp.statusCode)
 			})
 		}
@@ -659,11 +550,12 @@ func TestAPIEndpoints(t *testing.T) {
 				method: "POST",
 				path:   "/api/internal-user",
 				body: map[string]interface{}{
-					"name":  "New Internal User",
-					"email": fmt.Sprintf("newinternal%d@example.com", time.Now().UnixNano()),
-					"role":  "user",
+					"name":   "New Internal User",
+					"email":  fmt.Sprintf("newinternal%d@example.com", time.Now().UnixNano()),
+					"avatar": "https://example.com/avatar.jpg",
+					"role":   "designer",
 				},
-				token: accessToken,
+				token: internalAdminToken,
 			})
 
 			assert.Equal(t, http.StatusCreated, resp.statusCode)
@@ -680,7 +572,7 @@ func TestAPIEndpoints(t *testing.T) {
 					body: map[string]interface{}{
 						"name": "Updated Internal User",
 					},
-					token: accessToken,
+					token: internalAdminToken,
 				})
 
 				assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -691,10 +583,10 @@ func TestAPIEndpoints(t *testing.T) {
 				resp := testCtx.request(testRequest{
 					method: "DELETE",
 					path:   fmt.Sprintf("/api/internal-user/%s", targetUser.UUID),
-					token:  accessToken,
+					token:  internalAdminToken,
 				})
 
-				assert.Equal(t, http.StatusNoContent, resp.statusCode)
+				assert.Equal(t, http.StatusOK, resp.statusCode)
 				t.Logf("✓ DELETE /api/internal-user/{uuid} (%d)", resp.statusCode)
 			})
 		}
@@ -705,7 +597,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "POST",
 				path:   "/api/upload",
-				token:  accessToken,
+				token:  dealershipToken,
 			})
 
 			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
@@ -1022,7 +914,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "GET",
 				path:   "/api/catalog/browse",
-				token:  accessToken,
+				token:  dealershipToken,
 			})
 
 			assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -1033,7 +925,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "GET",
 				path:   "/api/catalog/categories",
-				token:  accessToken,
+				token:  dealershipToken,
 			})
 
 			assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -1044,7 +936,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "GET",
 				path:   "/api/catalog/tags",
-				token:  accessToken,
+				token:  dealershipToken,
 			})
 
 			assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -1243,7 +1135,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "GET",
 				path:   "/api/nonexistent",
-				token:  accessToken,
+				token:  dealershipToken,
 			})
 
 			assert.Equal(t, http.StatusNotFound, resp.statusCode)

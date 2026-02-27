@@ -19,8 +19,8 @@ export function FilterSidebar(props: FilterSidebarProps) {
   const [showTagSuggestions, setShowTagSuggestions] = createSignal(false);
   const [tagInput, setTagInput] = createSignal("");
 
-  const categoriesQuery = useQuery(getCatalogCategoriesOpts());
-  const tagsQuery = useQuery(getCatalogAllTagsOpts());
+  const categoriesQuery = useQuery(() => getCatalogCategoriesOpts());
+  const tagsQuery = useQuery(() => getCatalogAllTagsOpts());
 
   const filteredTagSuggestions = () => {
     if (!tagInput() || !tagsQuery.data) return [];

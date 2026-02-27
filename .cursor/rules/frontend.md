@@ -4,23 +4,25 @@ These rules apply to all frontend code in `apps/webapp/` and `libs/ui/`.
 
 ## Tech Stack
 
-| Purpose | Library |
-|---------|---------|
-| UI Framework | SolidJS |
-| Routing | TanStack Router |
-| Server State | TanStack Query |
-| Forms | TanStack Form |
-| Tables | TanStack Table |
-| Styling | Tailwind CSS |
-| Primitives | Kobalte |
-| Validation | Zod |
+| Purpose      | Library         |
+| ------------ | --------------- |
+| UI Framework | SolidJS         |
+| Routing      | TanStack Router |
+| Server State | TanStack Query  |
+| Forms        | TanStack Form   |
+| Tables       | TanStack Table  |
+| Styling      | Tailwind CSS    |
+| Primitives   | Kobalte         |
+| Validation   | Zod             |
 
 ## SolidJS-Specific Rules
 
 ### This is NOT React
+
 SolidJS has different mental models. Do not apply React patterns blindly.
 
 **Signals are called to get values:**
+
 ```tsx
 // BAD: Treating signal like React state
 const [count, setCount] = createSignal(0);
@@ -31,6 +33,7 @@ return <div>{count()}</div>;
 ```
 
 **Destructuring props breaks reactivity:**
+
 ```tsx
 // BAD: Destructured props lose reactivity
 function UserCard({ name, email }) {
@@ -44,12 +47,13 @@ function UserCard(props) {
 
 // ALSO GOOD: Use splitProps for specific needs
 function UserCard(props) {
-  const [local, rest] = splitProps(props, ['name']);
+  const [local, rest] = splitProps(props, ["name"]);
   return <div {...rest}>{local.name}</div>;
 }
 ```
 
 **Use createMemo for derived state:**
+
 ```tsx
 // BAD: Recalculating on every render
 function Component() {
@@ -61,14 +65,13 @@ function Component() {
 // GOOD: Memoized derivation
 function Component() {
   const items = useItems();
-  const total = createMemo(() => 
-    items().reduce((sum, i) => sum + i.price, 0)
-  );
+  const total = createMemo(() => items().reduce((sum, i) => sum + i.price, 0));
   return <div>{total()}</div>;
 }
 ```
 
 **createEffect sparingly:**
+
 ```tsx
 // BAD: Effect for derived state
 createEffect(() => {
@@ -87,6 +90,7 @@ createEffect(() => {
 ## Type Safety
 
 ### Use Types from @glassact/data
+
 All API types come from the shared data library. Never define API types in the frontend.
 
 ```typescript
@@ -100,6 +104,7 @@ type CreateProjectRequest = POST<Project>;
 ```
 
 ### Never Use `any`
+
 ```typescript
 // BAD
 function processData(data: any) { ... }
@@ -116,6 +121,7 @@ function processData<T>(data: T): ProcessedData<T> { ... }
 ```
 
 ### Zod for Runtime Validation
+
 ```typescript
 import { z } from "zod";
 
@@ -147,11 +153,10 @@ export async function getProject(uuid: string): Promise<GET<Project>> {
 
 // 2. Query options factory (returns a function for reactivity)
 export function getProjectOpts(uuid: string) {
-  return () =>
-    queryOptions({
-      queryKey: ["project", uuid],
-      queryFn: () => getProject(uuid),
-    });
+  return queryOptions({
+    queryKey: ["project", uuid],
+    queryFn: () => getProject(uuid),
+  });
 }
 
 // 3. For lists
@@ -161,11 +166,10 @@ export async function getProjects(): Promise<GET<Project>[]> {
 }
 
 export function getProjectsOpts() {
-  return () =>
-    queryOptions({
-      queryKey: ["project"],
-      queryFn: getProjects,
-    });
+  return queryOptions({
+    queryKey: ["project"],
+    queryFn: getProjects,
+  });
 }
 
 // 4. Mutations
@@ -182,10 +186,11 @@ export function postProjectOpts() {
 ```
 
 **Usage in components:**
+
 ```tsx
 function ProjectDetail(props: { uuid: string }) {
   const query = useQuery(() => getProjectOpts(props.uuid)());
-  
+
   return (
     <Show when={query.data} fallback={<Loading />}>
       {(project) => <div>{project().name}</div>}
@@ -195,42 +200,45 @@ function ProjectDetail(props: { uuid: string }) {
 ```
 
 **Query Key Conventions:**
+
 ```typescript
 // Entity list
-["project"]
-["inlay"]
-
-// Single entity
-["project", uuid]
-["inlay", uuid]
-
-// Nested resources
-["project", projectUuid, "inlays"]
-["inlay", inlayUuid, "proofs"]
-
-// Filtered lists
-["project", { status: "ordered" }]
+["project"]["inlay"][
+  // Single entity
+  ("project", uuid)
+][("inlay", uuid)][
+  // Nested resources
+  ("project", projectUuid, "inlays")
+][("inlay", inlayUuid, "proofs")][
+  // Filtered lists
+  ("project", { status: "ordered" })
+];
 ```
 
 ## Permission Handling
 
 ### The `<Can>` Component
+
 All permission checks should use the centralized `<Can>` component. This allows permission logic to be updated in one place.
 
 ```tsx
 // GOOD: Using <Can>
 <Can permission="approve_designs">
   <Button onClick={handleApprove}>Approve</Button>
-</Can>
+</Can>;
 
 // BAD: Inline permission checks
-{user().role === "approver" && (
-  <Button onClick={handleApprove}>Approve</Button>
-)}
+{
+  user().role === "approver" && (
+    <Button onClick={handleApprove}>Approve</Button>
+  );
+}
 ```
 
 ### Permission Hook
+
 For programmatic checks:
+
 ```tsx
 function useCanApprove() {
   const { hasPermission } = usePermissions();
@@ -239,7 +247,7 @@ function useCanApprove() {
 
 function ProofActions() {
   const canApprove = useCanApprove();
-  
+
   const handleSubmit = () => {
     if (!canApprove) {
       toast.error("You don't have permission to approve");
@@ -253,6 +261,7 @@ function ProofActions() {
 ## Component Patterns
 
 ### One Component Per File
+
 ```
 components/
 ├── inlay-card.tsx      # InlayCard
@@ -261,6 +270,7 @@ components/
 ```
 
 ### Props Interface Pattern
+
 ```tsx
 interface InlayCardProps {
   inlay: GET<Inlay>;
@@ -274,9 +284,10 @@ export function InlayCard(props: InlayCardProps) {
 ```
 
 ### Composition Over Configuration
+
 ```tsx
 // BAD: Overly configurable
-<Card 
+<Card
   title="Project"
   showActions={true}
   actionPosition="top-right"
@@ -343,7 +354,7 @@ function CreateProjectForm() {
           </div>
         )}
       </form.Field>
-      
+
       <Button type="submit" disabled={form.state.isSubmitting}>
         {form.state.isSubmitting ? "Creating..." : "Create"}
       </Button>
@@ -355,6 +366,7 @@ function CreateProjectForm() {
 ## Styling with Tailwind
 
 ### Use Design System Classes
+
 Prefer semantic/design system classes from the UI library over raw Tailwind:
 
 ```tsx
@@ -366,13 +378,17 @@ Prefer semantic/design system classes from the UI library over raw Tailwind:
 ```
 
 ### Consistent Spacing
+
 Use Tailwind's spacing scale consistently:
+
 - `gap-2`, `gap-4`, `gap-6` for flex/grid gaps
 - `p-4`, `p-6` for card padding
 - `mb-4`, `mt-6` for vertical rhythm
 
 ### Responsive Design
+
 Mobile-first approach:
+
 ```tsx
 <div class="flex flex-col md:flex-row gap-4">
   <div class="w-full md:w-1/3">Sidebar</div>
@@ -383,10 +399,11 @@ Mobile-first approach:
 ## Error Handling
 
 ### Query Error States
+
 ```tsx
 function ProjectList() {
   const query = useQuery(() => getProjectsOpts()());
-  
+
   return (
     <Switch>
       <Match when={query.isLoading}>
@@ -408,6 +425,7 @@ function ProjectList() {
 ```
 
 ### Mutation Error Handling
+
 ```tsx
 const mutation = createMutation(() => postProjectOpts());
 
@@ -444,6 +462,7 @@ routes/
 ```
 
 ### Route Data Loading
+
 ```tsx
 export const Route = createFileRoute("/_app/projects/$id")({
   loader: ({ params }) => ({
