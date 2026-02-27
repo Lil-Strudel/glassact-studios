@@ -316,3 +316,73 @@ func (m InlayModule) HandleDeleteInlay(w http.ResponseWriter, r *http.Request) {
 
 	m.WriteJSON(w, r, http.StatusOK, map[string]bool{"success": true})
 }
+
+var preOrderStatuses = map[data.ProjectStatus]bool{
+	data.ProjectStatuses.Draft:           true,
+	data.ProjectStatuses.Designing:       true,
+	data.ProjectStatuses.PendingApproval: true,
+	data.ProjectStatuses.Approved:        true,
+}
+
+func (m InlayModule) HandleExcludeInlay(w http.ResponseWriter, r *http.Request) {
+	inlayUUID := r.PathValue("uuid")
+
+	err := m.Validate.Var(inlayUUID, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	var body struct {
+		Excluded bool `json:"excluded"`
+	}
+
+	err = m.ReadJSONBody(w, r, &body)
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	inlay, found, err := m.Db.Inlays.GetByUUID(inlayUUID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	project, ok := m.validateInlayOwnership(w, r, inlay)
+	if !ok {
+		return
+	}
+
+	if !preOrderStatuses[project.Status] {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("can only change inlay inclusion on projects before ordering"))
+		return
+	}
+
+	inlay.ExcludedFromOrder = body.Excluded
+
+	tx, err := m.Db.STDB.Begin()
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	err = m.Db.Inlays.TxUpdateFields(tx, inlay)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, inlay)
+}

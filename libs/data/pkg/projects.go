@@ -303,7 +303,7 @@ func (m ProjectModel) GetAll() ([]*Project, error) {
 	return projects, nil
 }
 
-func (m ProjectModel) Update(project *Project) error {
+func (m ProjectModel) updateProject(ctx context.Context, executor qrm.Queryable, project *Project) error {
 	genProj, err := projectToGen(project)
 	if err != nil {
 		return err
@@ -327,11 +327,8 @@ func (m ProjectModel) Update(project *Project) error {
 		table.Projects.Version,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
 	var dest model.Projects
-	err = query.QueryContext(ctx, m.STDB, &dest)
+	err = query.QueryContext(ctx, executor, &dest)
 	if err != nil {
 		return err
 	}
@@ -340,6 +337,20 @@ func (m ProjectModel) Update(project *Project) error {
 	project.Version = int(dest.Version)
 
 	return nil
+}
+
+func (m ProjectModel) Update(project *Project) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return m.updateProject(ctx, m.STDB, project)
+}
+
+func (m ProjectModel) TxUpdate(tx *sql.Tx, project *Project) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return m.updateProject(ctx, tx, project)
 }
 
 func (m ProjectModel) Delete(id int) error {

@@ -31,6 +31,7 @@ export type Inlay = StandardTable<{
   preview_url: string;
   approved_proof_id: number | null;
   manufacturing_step: ManufacturingStep | null;
+  excluded_from_order: boolean;
 }>;
 
 export type InlayWithInfo = GET<Inlay> & {

@@ -98,3 +98,16 @@ export function deleteProjectOpts() {
     mutationFn: deleteProject,
   });
 }
+
+export async function postSubmitProject(
+  uuid: string,
+): Promise<GET<Project>> {
+  const res = await api.post(`/project/${uuid}/submit`);
+  return res.data;
+}
+
+export function postSubmitProjectOpts() {
+  return mutationOptions({
+    mutationFn: postSubmitProject,
+  });
+}

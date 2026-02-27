@@ -3,6 +3,7 @@ package project
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 	data "github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
@@ -334,6 +335,197 @@ func (m ProjectModule) HandleDeleteProject(w http.ResponseWriter, r *http.Reques
 	project.Status = data.ProjectStatuses.Cancelled
 
 	err = m.Db.Projects.Update(project)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, project)
+}
+
+func (m ProjectModule) HandleSubmitProject(w http.ResponseWriter, r *http.Request) {
+	projectUUID := r.PathValue("uuid")
+
+	err := m.Validate.Var(projectUUID, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	project, found, err := m.Db.Projects.GetByUUID(projectUUID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	user := m.ContextGetUser(r)
+	if user.IsDealership() {
+		dealershipID := user.GetDealershipID()
+		if dealershipID == nil || *dealershipID != project.DealershipID {
+			m.WriteError(w, r, m.Err.Forbidden, nil)
+			return
+		}
+	}
+
+	if project.Status != data.ProjectStatuses.Draft {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("project must be in draft status to submit, currently: %s", project.Status))
+		return
+	}
+
+	includedCount, err := m.Db.Inlays.CountIncludedByProjectID(project.ID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	if includedCount == 0 {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("project must have at least one included inlay to submit"))
+		return
+	}
+
+	project.Status = data.ProjectStatuses.Designing
+
+	err = m.Db.Projects.Update(project)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to update project status: %w", err))
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, project)
+}
+
+func (m ProjectModule) HandlePlaceOrder(w http.ResponseWriter, r *http.Request) {
+	projectUUID := r.PathValue("uuid")
+
+	err := m.Validate.Var(projectUUID, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	project, found, err := m.Db.Projects.GetByUUID(projectUUID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	user := m.ContextGetUser(r)
+	if user.IsDealership() {
+		dealershipID := user.GetDealershipID()
+		if dealershipID == nil || *dealershipID != project.DealershipID {
+			m.WriteError(w, r, m.Err.Forbidden, nil)
+			return
+		}
+	}
+
+	if project.Status != data.ProjectStatuses.Approved {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("project must be in approved status to place order, currently: %s", project.Status))
+		return
+	}
+
+	allInlays, err := m.Db.Inlays.GetByProjectID(project.ID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	// Filter to only included inlays
+	var inlays []*data.Inlay
+	for _, inlayItem := range allInlays {
+		if !inlayItem.ExcludedFromOrder {
+			inlays = append(inlays, inlayItem)
+		}
+	}
+
+	if len(inlays) == 0 {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("project has no included inlays"))
+		return
+	}
+
+	for _, inlayItem := range inlays {
+		if inlayItem.ApprovedProofID == nil {
+			m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("inlay %q has no approved proof", inlayItem.Name))
+			return
+		}
+	}
+
+	tx, err := m.Db.STDB.Begin()
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	orderedStep := "ordered"
+	for _, inlayItem := range inlays {
+		approvedProof, proofFound, proofErr := m.Db.InlayProofs.GetByID(*inlayItem.ApprovedProofID)
+		if proofErr != nil {
+			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to get approved proof for inlay %q: %w", inlayItem.Name, proofErr))
+			return
+		}
+
+		if !proofFound {
+			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("approved proof not found for inlay %q", inlayItem.Name))
+			return
+		}
+
+		priceGroupID := 0
+		if approvedProof.PriceGroupID != nil {
+			priceGroupID = *approvedProof.PriceGroupID
+		}
+
+		priceCents := 0
+		if approvedProof.PriceCents != nil {
+			priceCents = *approvedProof.PriceCents
+		}
+
+		snapshot := data.OrderSnapshot{
+			ProjectID:    project.ID,
+			InlayID:      inlayItem.ID,
+			ProofID:      approvedProof.ID,
+			PriceGroupID: priceGroupID,
+			PriceCents:   priceCents,
+			Width:        approvedProof.Width,
+			Height:       approvedProof.Height,
+		}
+
+		snapshotErr := m.Db.OrderSnapshots.TxInsert(tx, &snapshot)
+		if snapshotErr != nil {
+			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to create order snapshot for inlay %q: %w", inlayItem.Name, snapshotErr))
+			return
+		}
+
+		inlayItem.ManufacturingStep = &orderedStep
+		inlayErr := m.Db.Inlays.TxUpdateFields(tx, inlayItem)
+		if inlayErr != nil {
+			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to update inlay manufacturing step: %w", inlayErr))
+			return
+		}
+	}
+
+	now := time.Now()
+	userID := user.GetID()
+	project.Status = data.ProjectStatuses.Ordered
+	project.OrderedAt = &now
+	project.OrderedBy = &userID
+
+	err = m.Db.Projects.TxUpdate(tx, project)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to update project status: %w", err))
+		return
+	}
+
+	err = tx.Commit()
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return

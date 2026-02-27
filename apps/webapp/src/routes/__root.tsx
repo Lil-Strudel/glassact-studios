@@ -65,7 +65,7 @@ function ErrorComponent(props: ErrorComponentProps) {
           An Error Happened
         </h1>
         <p class="mt-6 text-pretty text-lg font-medium text-gray-500 sm:text-xl/8">
-          Something went wrong in the code. Sorry.
+          {props.error.message}
         </p>
         <div class="mt-10 flex items-center justify-center gap-x-6"></div>
       </div>

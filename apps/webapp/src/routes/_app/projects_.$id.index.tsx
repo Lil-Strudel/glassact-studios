@@ -13,12 +13,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
   showToast,
 } from "@glassact/ui";
 import { createMemo, For, Match, Show, Switch } from "solid-js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
-import { getProjectOpts, deleteProjectOpts } from "../../queries/project";
-import { getInlaysByProjectOpts, deleteInlayOpts } from "../../queries/inlay";
+import {
+  getProjectOpts,
+  deleteProjectOpts,
+  postSubmitProjectOpts,
+} from "../../queries/project";
+import {
+  getInlaysByProjectOpts,
+  deleteInlayOpts,
+  patchExcludeInlayOpts,
+} from "../../queries/inlay";
+import { postPlaceOrderOpts } from "../../queries/order";
 import type { ProjectStatus, InlayWithInfo } from "@glassact/data";
 import { ProjectStatusBadge } from "../../components/project/status-badge";
 import { Can } from "../../components/Can";
@@ -72,6 +82,9 @@ function RouteComponent() {
   const inlaysQuery = useQuery(() => getInlaysByProjectOpts(params().id));
   const cancelProject = useMutation(deleteProjectOpts);
   const removeInlay = useMutation(deleteInlayOpts);
+  const placeOrder = useMutation(() => postPlaceOrderOpts());
+  const submitProject = useMutation(postSubmitProjectOpts);
+  const excludeInlay = useMutation(patchExcludeInlayOpts);
 
   const canCancel = createMemo(() => {
     if (!projectQuery.isSuccess) return false;
@@ -81,6 +94,30 @@ function RouteComponent() {
   const canEditInlays = createMemo(() => {
     if (!projectQuery.isSuccess) return false;
     return EDITABLE_STATUSES.includes(projectQuery.data.status);
+  });
+
+  const canExcludeInlays = createMemo(() => {
+    if (!projectQuery.isSuccess) return false;
+    return PRE_ORDERED_STATUSES.includes(projectQuery.data.status);
+  });
+
+  const includedInlays = createMemo(() => {
+    const inlays = inlaysQuery.data ?? [];
+    return inlays.filter((inlay) => !inlay.excluded_from_order);
+  });
+
+  const canSubmit = createMemo(() => {
+    if (!projectQuery.isSuccess) return false;
+    if (projectQuery.data.status !== "draft") return false;
+    return includedInlays().length > 0;
+  });
+
+  const canPlaceOrder = createMemo(() => {
+    if (!projectQuery.isSuccess) return false;
+    if (projectQuery.data.status !== "approved") return false;
+    const included = includedInlays();
+    if (included.length === 0) return false;
+    return included.every((inlay) => inlay.approved_proof_id !== null);
   });
 
   const currentStepIndex = createMemo(() => {
@@ -112,6 +149,30 @@ function RouteComponent() {
     });
   }
 
+  function handlePlaceOrder() {
+    if (!projectQuery.isSuccess) return;
+    placeOrder.mutate(projectQuery.data.uuid, {
+      onSuccess() {
+        showToast({
+          title: "Order placed",
+          description: `Order for ${projectQuery.data!.name} has been placed successfully.`,
+          variant: "success",
+        });
+        queryClient.invalidateQueries({ queryKey: ["project"] });
+        queryClient.invalidateQueries({ queryKey: ["project", params().id, "inlays"] });
+      },
+      onError(error) {
+        if (isApiError(error)) {
+          showToast({
+            title: "Failed to place order",
+            description: error?.data?.error ?? "Unknown error",
+            variant: "error",
+          });
+        }
+      },
+    });
+  }
+
   function handleDeleteInlay(inlay: InlayWithInfo) {
     removeInlay.mutate(inlay.uuid, {
       onSuccess() {
@@ -134,6 +195,58 @@ function RouteComponent() {
         }
       },
     });
+  }
+
+  function handleSubmit() {
+    if (!projectQuery.isSuccess) return;
+    submitProject.mutate(projectQuery.data.uuid, {
+      onSuccess() {
+        showToast({
+          title: "Project submitted",
+          description: `${projectQuery.data!.name} has been submitted for design.`,
+          variant: "success",
+        });
+        queryClient.invalidateQueries({ queryKey: ["project"] });
+      },
+      onError(error) {
+        if (isApiError(error)) {
+          showToast({
+            title: "Failed to submit project",
+            description: error?.data?.error ?? "Unknown error",
+            variant: "error",
+          });
+        }
+      },
+    });
+  }
+
+  function handleExcludeInlay(inlay: InlayWithInfo, excluded: boolean) {
+    excludeInlay.mutate(
+      { uuid: inlay.uuid, excluded },
+      {
+        onSuccess() {
+          showToast({
+            title: excluded ? "Inlay excluded" : "Inlay included",
+            description: excluded
+              ? `${inlay.name} has been excluded from the order.`
+              : `${inlay.name} has been included in the order.`,
+            variant: "success",
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["project", params().id, "inlays"],
+          });
+        },
+        onError(error) {
+          if (isApiError(error)) {
+            showToast({
+              title: "Failed to update inlay",
+              description: error?.data?.error ?? "Unknown error",
+              variant: "error",
+            });
+          }
+        },
+      },
+    );
   }
 
   return (
@@ -231,7 +344,119 @@ function RouteComponent() {
                   </DialogContent>
                 </Dialog>
               </Show>
-              <Button disabled>Place Order</Button>
+              <Can permission="create_project">
+                <Show when={projectQuery.data!.status === "draft"}>
+                  <Dialog>
+                    <DialogTrigger as={Button} disabled={!canSubmit()}>
+                      Submit for Design
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Submit for Design</DialogTitle>
+                      </DialogHeader>
+                      <div class="space-y-3">
+                        <p class="text-sm text-gray-600">
+                          Submit{" "}
+                          <span class="font-semibold">
+                            {projectQuery.data!.name}
+                          </span>{" "}
+                          for design? The GlassAct team will begin creating
+                          proofs for your inlays.
+                        </p>
+                        <p class="text-sm text-gray-500">
+                          {includedInlays().length} inlay
+                          {includedInlays().length !== 1 ? "s" : ""} will be
+                          submitted.
+                        </p>
+                      </div>
+                      <DialogFooter class="flex justify-end gap-3 mt-4">
+                        <DialogClose
+                          as={Button}
+                          variant="outline"
+                          disabled={submitProject.isPending}
+                        >
+                          Cancel
+                        </DialogClose>
+                        <Button
+                          onClick={handleSubmit}
+                          disabled={submitProject.isPending}
+                        >
+                          {submitProject.isPending
+                            ? "Submitting..."
+                            : "Submit for Design"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </Show>
+              </Can>
+              <Can permission="place_order">
+                <Dialog>
+                  <DialogTrigger as={Button} disabled={!canPlaceOrder()}>
+                    Place Order
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Place Order</DialogTitle>
+                    </DialogHeader>
+                    <div class="space-y-4">
+                      <p class="text-sm text-gray-600">
+                        You are about to place an order for{" "}
+                        <span class="font-semibold">{projectQuery.data!.name}</span>.
+                        This will lock pricing and begin manufacturing.
+                      </p>
+                      <Show
+                        when={
+                          (inlaysQuery.data ?? []).length !==
+                          includedInlays().length
+                        }
+                      >
+                        <p class="text-sm text-gray-500">
+                          Ordering {includedInlays().length} of{" "}
+                          {(inlaysQuery.data ?? []).length} inlays (
+                          {(inlaysQuery.data ?? []).length -
+                            includedInlays().length}{" "}
+                          excluded).
+                        </p>
+                      </Show>
+                      <div class="border rounded-lg divide-y">
+                        <For each={includedInlays()}>
+                          {(inlay) => (
+                            <div class="p-3 flex items-center justify-between">
+                              <div class="flex items-center gap-2">
+                                <Show when={inlay.preview_url}>
+                                  <img
+                                    src={inlay.preview_url}
+                                    alt={inlay.name}
+                                    class="w-8 h-8 object-contain rounded"
+                                  />
+                                </Show>
+                                <span class="text-sm font-medium">{inlay.name}</span>
+                              </div>
+                              <Show when={inlay.approved_proof_id}>
+                                <Badge variant="outline" class="bg-green-50 text-green-700 border-green-200 text-xs">
+                                  Approved
+                                </Badge>
+                              </Show>
+                            </div>
+                          )}
+                        </For>
+                      </div>
+                    </div>
+                    <DialogFooter class="flex justify-end gap-3 mt-4">
+                      <DialogClose as={Button} variant="outline" disabled={placeOrder.isPending}>
+                        Cancel
+                      </DialogClose>
+                      <Button
+                        onClick={handlePlaceOrder}
+                        disabled={placeOrder.isPending}
+                      >
+                        {placeOrder.isPending ? "Placing Order..." : "Confirm Order"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </Can>
             </div>
           </div>
 
@@ -342,9 +567,15 @@ function RouteComponent() {
                     {(inlay) => (
                       <InlayCard
                         inlay={inlay}
+                        projectId={params().id}
                         canDelete={canEditInlays()}
                         onDelete={() => handleDeleteInlay(inlay)}
                         isDeleting={removeInlay.isPending}
+                        canExclude={canExcludeInlays()}
+                        onToggleExclude={(excluded) =>
+                          handleExcludeInlay(inlay, excluded)
+                        }
+                        isExcluding={excludeInlay.isPending}
                       />
                     )}
                   </For>
@@ -360,9 +591,13 @@ function RouteComponent() {
 
 interface InlayCardProps {
   inlay: InlayWithInfo;
+  projectId: string;
   canDelete: boolean;
   onDelete: () => void;
   isDeleting: boolean;
+  canExclude: boolean;
+  onToggleExclude: (excluded: boolean) => void;
+  isExcluding: boolean;
 }
 
 function InlayCard(props: InlayCardProps) {
@@ -376,76 +611,135 @@ function InlayCard(props: InlayCardProps) {
     return null;
   };
 
+  const proofStatusBadge = () => {
+    if (props.inlay.approved_proof_id) {
+      return { label: "Proof Approved", class: "bg-green-50 text-green-700 border-green-200" };
+    }
+    return null;
+  };
+
+  const isExcluded = () => props.inlay.excluded_from_order;
+
   return (
-    <Card class="overflow-hidden">
-      <Show when={props.inlay.preview_url}>
-        <div class="bg-gray-50 p-4 flex items-center justify-center h-40 overflow-hidden">
-          <img
-            src={props.inlay.preview_url}
-            alt={props.inlay.name}
-            class="max-w-full max-h-full object-contain"
-          />
-        </div>
-      </Show>
-      <Show when={!props.inlay.preview_url}>
-        <div class="bg-gray-100 p-4 flex items-center justify-center h-40">
-          <p class="text-gray-400 text-sm">No preview</p>
-        </div>
-      </Show>
-      <CardHeader class="space-y-2">
-        <div class="flex items-start justify-between gap-2">
-          <CardTitle class="text-sm truncate">{props.inlay.name}</CardTitle>
-          <Badge variant="outline" class="text-xs flex-shrink-0">
-            {props.inlay.type === "catalog" ? "Catalog" : "Custom"}
-          </Badge>
-        </div>
-        <Show when={description()}>
-          {(desc) => (
-            <CardDescription class="text-xs line-clamp-2">
-              {desc()}
-            </CardDescription>
-          )}
+    <Card
+      class={`overflow-hidden transition-opacity ${isExcluded() ? "opacity-50" : ""}`}
+    >
+      <Link
+        to="/projects/$id/inlay/$inlayId"
+        params={{ id: props.projectId, inlayId: props.inlay.uuid }}
+        class="block hover:bg-gray-50/50 transition-colors"
+      >
+        <Show when={props.inlay.preview_url}>
+          <div class="bg-gray-50 p-4 flex items-center justify-center h-40 overflow-hidden relative">
+            <img
+              src={props.inlay.preview_url}
+              alt={props.inlay.name}
+              class={`max-w-full max-h-full object-contain ${isExcluded() ? "grayscale" : ""}`}
+            />
+            <Show when={isExcluded()}>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <Badge variant="secondary" class="text-xs">
+                  Excluded
+                </Badge>
+              </div>
+            </Show>
+          </div>
         </Show>
-        <Show when={props.canDelete}>
-          <Dialog>
-            <DialogTrigger
-              as={Button}
+        <Show when={!props.inlay.preview_url}>
+          <div class="bg-gray-100 p-4 flex items-center justify-center h-40">
+            <p class="text-gray-400 text-sm">
+              {isExcluded() ? "Excluded" : "No preview"}
+            </p>
+          </div>
+        </Show>
+        <CardHeader class="space-y-2">
+          <div class="flex items-start justify-between gap-2">
+            <CardTitle
+              class={`text-sm truncate ${isExcluded() ? "line-through text-gray-400" : ""}`}
+            >
+              {props.inlay.name}
+            </CardTitle>
+            <Badge variant="outline" class="text-xs flex-shrink-0">
+              {props.inlay.type === "catalog" ? "Catalog" : "Custom"}
+            </Badge>
+          </div>
+          <Show when={description()}>
+            {(desc) => (
+              <CardDescription class="text-xs line-clamp-2">
+                {desc()}
+              </CardDescription>
+            )}
+          </Show>
+          <Show when={proofStatusBadge()}>
+            {(badge) => (
+              <Badge variant="outline" class={`text-xs ${badge().class}`}>
+                {badge().label}
+              </Badge>
+            )}
+          </Show>
+        </CardHeader>
+      </Link>
+      <Show when={props.canDelete || props.canExclude}>
+        <div class="px-6 pb-4 flex flex-col gap-2">
+          <Show when={props.canExclude}>
+            <Button
               variant="ghost"
               size="sm"
-              class="text-red-600 hover:text-red-700 hover:bg-red-50 w-full mt-2"
+              class={
+                isExcluded()
+                  ? "text-green-600 hover:text-green-700 hover:bg-green-50 w-full"
+                  : "text-gray-600 hover:text-gray-700 hover:bg-gray-50 w-full"
+              }
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                props.onToggleExclude(!isExcluded());
+              }}
+              disabled={props.isExcluding}
             >
-              <IoTrashOutline size={16} class="mr-1" />
-              Remove
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Remove Inlay</DialogTitle>
-              </DialogHeader>
-              <p class="text-sm text-gray-600">
-                Are you sure you want to remove{" "}
-                <span class="font-semibold">{props.inlay.name}</span> from this
-                project?
-              </p>
-              <div class="flex justify-end gap-3 mt-4">
-                <DialogClose
-                  as={Button}
-                  variant="outline"
-                  disabled={props.isDeleting}
-                >
-                  Close
-                </DialogClose>
-                <Button
-                  variant="destructive"
-                  onClick={props.onDelete}
-                  disabled={props.isDeleting}
-                >
-                  {props.isDeleting ? "Removing..." : "Remove Inlay"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </Show>
-      </CardHeader>
+              {isExcluded() ? "Include in Order" : "Exclude from Order"}
+            </Button>
+          </Show>
+          <Show when={props.canDelete}>
+            <Dialog>
+              <DialogTrigger
+                as={Button}
+                variant="ghost"
+                size="sm"
+                class="text-red-600 hover:text-red-700 hover:bg-red-50 w-full"
+              >
+                <IoTrashOutline size={16} class="mr-1" />
+                Remove
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Remove Inlay</DialogTitle>
+                </DialogHeader>
+                <p class="text-sm text-gray-600">
+                  Are you sure you want to remove{" "}
+                  <span class="font-semibold">{props.inlay.name}</span> from
+                  this project?
+                </p>
+                <div class="flex justify-end gap-3 mt-4">
+                  <DialogClose
+                    as={Button}
+                    variant="outline"
+                    disabled={props.isDeleting}
+                  >
+                    Close
+                  </DialogClose>
+                  <Button
+                    variant="destructive"
+                    onClick={props.onDelete}
+                    disabled={props.isDeleting}
+                  >
+                    {props.isDeleting ? "Removing..." : "Remove Inlay"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </Show>
+        </div>
+      </Show>
     </Card>
   );
 }

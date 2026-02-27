@@ -30,13 +30,13 @@ const DEALERSHIP_GROUPS: StatusGroup[] = [
   {
     title: "Needs Action",
     description:
-      "Projects with proofs awaiting approval or invoices waiting to be paid.",
-    statuses: ["pending-approval", "approved", "invoiced"],
+      "Projects needing submission, proof approval, or invoice payment.",
+    statuses: ["draft", "pending-approval", "approved", "invoiced"],
   },
   {
     title: "Pending",
-    description: "Projects that are being prepared or designed.",
-    statuses: ["draft", "designing"],
+    description: "Projects currently being designed.",
+    statuses: ["designing"],
   },
   {
     title: "Active",
@@ -55,6 +55,12 @@ const INTERNAL_GROUPS: StatusGroup[] = [
     title: "Needs Action",
     description: "Projects requiring design work or delivery confirmation.",
     statuses: ["designing", "delivered"],
+  },
+  {
+    title: "Incoming",
+    description:
+      "New projects from dealerships that are still being prepared.",
+    statuses: ["draft"],
   },
   {
     title: "Pending",

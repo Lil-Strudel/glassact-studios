@@ -100,3 +100,19 @@ export function deleteInlayOpts() {
     mutationFn: deleteInlay,
   });
 }
+
+export async function patchExcludeInlay(params: {
+  uuid: string;
+  excluded: boolean;
+}): Promise<InlayWithInfo> {
+  const res = await api.patch(`/inlay/${params.uuid}/exclude`, {
+    excluded: params.excluded,
+  });
+  return res.data;
+}
+
+export function patchExcludeInlayOpts() {
+  return mutationOptions({
+    mutationFn: patchExcludeInlay,
+  });
+}

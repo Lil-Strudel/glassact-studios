@@ -183,7 +183,7 @@ func inlayProofToGen(ip *InlayProof) (*model.InlayProofs, error) {
 	return &genProof, nil
 }
 
-func (m InlayProofModel) Insert(proof *InlayProof) error {
+func (m InlayProofModel) insertProof(ctx context.Context, executor qrm.Queryable, proof *InlayProof) error {
 	genProof, err := inlayProofToGen(proof)
 	if err != nil {
 		return err
@@ -211,11 +211,8 @@ func (m InlayProofModel) Insert(proof *InlayProof) error {
 		table.InlayProofs.Version,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
 	var dest model.InlayProofs
-	err = query.QueryContext(ctx, m.STDB, &dest)
+	err = query.QueryContext(ctx, executor, &dest)
 	if err != nil {
 		return err
 	}
@@ -227,6 +224,20 @@ func (m InlayProofModel) Insert(proof *InlayProof) error {
 	proof.Version = int(dest.Version)
 
 	return nil
+}
+
+func (m InlayProofModel) Insert(proof *InlayProof) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return m.insertProof(ctx, m.STDB, proof)
+}
+
+func (m InlayProofModel) TxInsert(tx *sql.Tx, proof *InlayProof) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return m.insertProof(ctx, tx, proof)
 }
 
 func (m InlayProofModel) GetByID(id int) (*InlayProof, bool, error) {
@@ -395,7 +406,7 @@ func (m InlayProofModel) GetAll() ([]*InlayProof, error) {
 	return proofs, nil
 }
 
-func (m InlayProofModel) Update(proof *InlayProof) error {
+func (m InlayProofModel) updateProof(ctx context.Context, executor qrm.Queryable, proof *InlayProof) error {
 	genProof, err := inlayProofToGen(proof)
 	if err != nil {
 		return err
@@ -421,11 +432,8 @@ func (m InlayProofModel) Update(proof *InlayProof) error {
 		table.InlayProofs.Version,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
 	var dest model.InlayProofs
-	err = query.QueryContext(ctx, m.STDB, &dest)
+	err = query.QueryContext(ctx, executor, &dest)
 	if err != nil {
 		return err
 	}
@@ -434,6 +442,63 @@ func (m InlayProofModel) Update(proof *InlayProof) error {
 	proof.Version = int(dest.Version)
 
 	return nil
+}
+
+func (m InlayProofModel) Update(proof *InlayProof) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return m.updateProof(ctx, m.STDB, proof)
+}
+
+func (m InlayProofModel) TxUpdate(tx *sql.Tx, proof *InlayProof) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return m.updateProof(ctx, tx, proof)
+}
+
+func (m InlayProofModel) CountByInlayID(inlayID int) (int, error) {
+	query := postgres.SELECT(
+		postgres.COUNT(table.InlayProofs.ID),
+	).FROM(
+		table.InlayProofs,
+	).WHERE(
+		table.InlayProofs.InlayID.EQ(postgres.Int(int64(inlayID))),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest struct {
+		Count int64
+	}
+	err := query.QueryContext(ctx, m.STDB, &dest)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(dest.Count), nil
+}
+
+func (m InlayProofModel) TxSupersedePendingByInlayID(tx *sql.Tx, inlayID int, excludeProofID int) error {
+	query := table.InlayProofs.UPDATE(
+		table.InlayProofs.Status,
+	).SET(
+		postgres.String(string(ProofStatuses.Superseded)),
+	).WHERE(
+		postgres.AND(
+			table.InlayProofs.InlayID.EQ(postgres.Int(int64(inlayID))),
+			table.InlayProofs.Status.EQ(postgres.String(string(ProofStatuses.Pending))),
+			table.InlayProofs.ID.NOT_EQ(postgres.Int(int64(excludeProofID))),
+		),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	_, err := query.ExecContext(ctx, tx)
+	return err
 }
 
 func (m InlayProofModel) Delete(id int) error {

@@ -34,6 +34,7 @@ import { Route as AppAdminUsersInternalRouteImport } from './routes/_app/admin.u
 import { Route as AppAdminUsersDealershipRouteImport } from './routes/_app/admin.users.dealership'
 import { Route as AppAdminCatalogCreateRouteImport } from './routes/_app/admin.catalog_.create'
 import { Route as AppAdminCatalogUuidRouteImport } from './routes/_app/admin.catalog_.$uuid'
+import { Route as AppProjectsIdInlayInlayIdRouteImport } from './routes/_app/projects_.$id.inlay.$inlayId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -162,6 +163,12 @@ const AppAdminCatalogUuidRoute = AppAdminCatalogUuidRouteImport.update({
   path: '/catalog/$uuid',
   getParentRoute: () => AppAdminRoute,
 } as any)
+const AppProjectsIdInlayInlayIdRoute =
+  AppProjectsIdInlayInlayIdRouteImport.update({
+    id: '/projects_/$id/inlay/$inlayId',
+    path: '/projects/$id/inlay/$inlayId',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/projects/create-project/add-inlay': typeof AppProjectsCreateProjectAddInlayRoute
   '/projects/$id/': typeof AppProjectsIdIndexRoute
   '/projects/create-project/': typeof AppProjectsCreateProjectIndexRoute
+  '/projects/$id/inlay/$inlayId': typeof AppProjectsIdInlayInlayIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -213,6 +221,7 @@ export interface FileRoutesByTo {
   '/projects/create-project/add-inlay': typeof AppProjectsCreateProjectAddInlayRoute
   '/projects/$id': typeof AppProjectsIdIndexRoute
   '/projects/create-project': typeof AppProjectsCreateProjectIndexRoute
+  '/projects/$id/inlay/$inlayId': typeof AppProjectsIdInlayInlayIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -241,6 +250,7 @@ export interface FileRoutesById {
   '/_app/projects_/create-project/add-inlay': typeof AppProjectsCreateProjectAddInlayRoute
   '/_app/projects_/$id/': typeof AppProjectsIdIndexRoute
   '/_app/projects_/create-project/': typeof AppProjectsCreateProjectIndexRoute
+  '/_app/projects_/$id/inlay/$inlayId': typeof AppProjectsIdInlayInlayIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/projects/create-project/add-inlay'
     | '/projects/$id/'
     | '/projects/create-project/'
+    | '/projects/$id/inlay/$inlayId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/projects/create-project/add-inlay'
     | '/projects/$id'
     | '/projects/create-project'
+    | '/projects/$id/inlay/$inlayId'
   id:
     | '__root__'
     | '/'
@@ -321,6 +333,7 @@ export interface FileRouteTypes {
     | '/_app/projects_/create-project/add-inlay'
     | '/_app/projects_/$id/'
     | '/_app/projects_/create-project/'
+    | '/_app/projects_/$id/inlay/$inlayId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -506,6 +519,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AppAdminCatalogUuidRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/projects_/$id/inlay/$inlayId': {
+      id: '/_app/projects_/$id/inlay/$inlayId'
+      path: '/projects/$id/inlay/$inlayId'
+      fullPath: '/projects/$id/inlay/$inlayId'
+      preLoaderRoute: typeof AppProjectsIdInlayInlayIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -587,6 +607,7 @@ interface AppRouteChildren {
   AppCatalogIndexRoute: typeof AppCatalogIndexRoute
   AppProjectsIdAddInlayRoute: typeof AppProjectsIdAddInlayRoute
   AppProjectsIdIndexRoute: typeof AppProjectsIdIndexRoute
+  AppProjectsIdInlayInlayIdRoute: typeof AppProjectsIdInlayInlayIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -600,6 +621,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCatalogIndexRoute: AppCatalogIndexRoute,
   AppProjectsIdAddInlayRoute: AppProjectsIdAddInlayRoute,
   AppProjectsIdIndexRoute: AppProjectsIdIndexRoute,
+  AppProjectsIdInlayInlayIdRoute: AppProjectsIdInlayInlayIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

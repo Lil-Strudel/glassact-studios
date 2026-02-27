@@ -6,11 +6,12 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/auth"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/catalog"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/chat"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dealership"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay"
-	inlayChat "github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay-chat"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/pricegroup"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/project"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/proof"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/upload"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/user"
 	data "github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
@@ -43,6 +44,7 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("POST /api/dealership", protected.ThenFunc(dealershipModule.HandlePostDealership))
 
 	canCreateProject := alice.New(app.Authenticate, app.RequirePermission(data.ActionCreateProject))
+	canPlaceOrder := alice.New(app.Authenticate, app.RequirePermission(data.ActionPlaceOrder))
 
 	projectModule := project.NewProjectModule(app)
 	mux.Handle("GET /api/project", protected.ThenFunc(projectModule.HandleGetProjects))
@@ -51,6 +53,8 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/project/{uuid}", protected.ThenFunc(projectModule.HandleGetProjectByUUID))
 	mux.Handle("PATCH /api/project/{uuid}", protected.ThenFunc(projectModule.HandlePatchProject))
 	mux.Handle("DELETE /api/project/{uuid}", protected.ThenFunc(projectModule.HandleDeleteProject))
+	mux.Handle("POST /api/project/{uuid}/submit", canCreateProject.ThenFunc(projectModule.HandleSubmitProject))
+	mux.Handle("POST /api/project/{uuid}/place-order", canPlaceOrder.ThenFunc(projectModule.HandlePlaceOrder))
 
 	inlayModule := inlay.NewInlayModule(app)
 	mux.Handle("GET /api/project/{uuid}/inlays", protected.ThenFunc(inlayModule.HandleGetInlaysByProject))
@@ -59,12 +63,21 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/inlay/{uuid}", protected.ThenFunc(inlayModule.HandleGetInlayByUUID))
 	mux.Handle("PATCH /api/inlay/{uuid}", protected.ThenFunc(inlayModule.HandlePatchInlay))
 	mux.Handle("DELETE /api/inlay/{uuid}", protected.ThenFunc(inlayModule.HandleDeleteInlay))
+	mux.Handle("PATCH /api/inlay/{uuid}/exclude", canCreateProject.ThenFunc(inlayModule.HandleExcludeInlay))
 
-	inlayChatModule := inlayChat.NewInlayChatModule(app)
-	mux.Handle("GET /api/inlay-chat", protected.ThenFunc(inlayChatModule.HandleGetInlayChats))
-	mux.Handle("GET /api/inlay-chat/inlay/{uuid}", protected.ThenFunc(inlayChatModule.HandleGetInlayChatsByInlayUUID))
-	mux.Handle("GET /api/inlay-chat/{uuid}", protected.ThenFunc(inlayChatModule.HandleGetInlayChatByUUID))
-	mux.Handle("POST /api/inlay-chat", protected.ThenFunc(inlayChatModule.HandlePostInlayChat))
+	chatModule := chat.NewChatModule(app)
+	mux.Handle("GET /api/inlay/{uuid}/chats", protected.ThenFunc(chatModule.HandleGetInlayChats))
+	mux.Handle("POST /api/inlay/{uuid}/chats", protected.ThenFunc(chatModule.HandlePostInlayChat))
+
+	canCreateProof := alice.New(app.Authenticate, app.RequirePermission(data.ActionCreateProof))
+	canApproveProof := alice.New(app.Authenticate, app.RequirePermission(data.ActionApproveProof))
+
+	proofModule := proof.NewProofModule(app)
+	mux.Handle("GET /api/inlay/{uuid}/proofs", protected.ThenFunc(proofModule.HandleGetProofsByInlay))
+	mux.Handle("POST /api/inlay/{uuid}/proofs", canCreateProof.ThenFunc(proofModule.HandleCreateProof))
+	mux.Handle("GET /api/proof/{uuid}", protected.ThenFunc(proofModule.HandleGetProof))
+	mux.Handle("POST /api/proof/{uuid}/approve", canApproveProof.ThenFunc(proofModule.HandleApproveProof))
+	mux.Handle("POST /api/proof/{uuid}/decline", canApproveProof.ThenFunc(proofModule.HandleDeclineProof))
 
 	userModule := user.NewUserModule(app)
 	mux.Handle("GET /api/user/self", protected.ThenFunc(userModule.HandleGetUserSelf))
@@ -81,13 +94,10 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("POST /api/upload", protected.ThenFunc(uploadModule.HandlePostUpload))
 	mux.Handle("GET /file/{path...}", unprotected.ThenFunc(uploadModule.HandleGetFile))
 
-	// Catalog routes
 	canManageCatalog := alice.New(app.Authenticate, app.RequirePermission(data.ActionManageCatalog))
 	canManagePriceGroups := alice.New(app.Authenticate, app.RequirePermission(data.ActionManagePriceGroups))
 
 	catalogModule := catalog.NewCatalogModule(app)
-
-	// Catalog management routes - requires manage_catalog permission
 	mux.Handle("GET /api/catalog", canManageCatalog.ThenFunc(catalogModule.HandleGetCatalog))
 	mux.Handle("POST /api/catalog", canManageCatalog.ThenFunc(catalogModule.HandlePostCatalog))
 	mux.Handle("PATCH /api/catalog/{uuid}", canManageCatalog.ThenFunc(catalogModule.HandlePatchCatalog))
@@ -96,14 +106,12 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("POST /api/catalog/{uuid}/tags", canManageCatalog.ThenFunc(catalogModule.HandlePostTag))
 	mux.Handle("DELETE /api/catalog/{uuid}/tags/{tag}", canManageCatalog.ThenFunc(catalogModule.HandleDeleteTag))
 
-	// Public routes (authenticated users) - MUST come before wildcard {uuid} route
 	mux.Handle("GET /api/catalog/browse", protected.ThenFunc(catalogModule.HandleBrowseCatalog))
 	mux.Handle("GET /api/catalog/categories", protected.ThenFunc(catalogModule.HandleGetCategories))
 	mux.Handle("GET /api/catalog/tags", protected.ThenFunc(catalogModule.HandleGetAllTags))
 	mux.Handle("GET /api/catalog/{uuid}", protected.ThenFunc(catalogModule.HandleGetCatalogItem))
 	mux.Handle("GET /api/catalog/{uuid}/tags", protected.ThenFunc(catalogModule.HandleGetTags))
 
-	// Price Group routes - requires manage_price_groups permission
 	priceGroupModule := pricegroup.NewPriceGroupModule(app)
 	mux.Handle("GET /api/price-groups", canManagePriceGroups.ThenFunc(priceGroupModule.HandleGetPriceGroups))
 	mux.Handle("POST /api/price-groups", canManagePriceGroups.ThenFunc(priceGroupModule.HandlePostPriceGroup))
