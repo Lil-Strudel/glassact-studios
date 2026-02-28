@@ -72,7 +72,7 @@ export function FilterSidebar(props: FilterSidebarProps) {
             class="w-full mt-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <option value="">All categories</option>
-            <For each={categoriesQuery.data ?? []}>
+            <For each={categoriesQuery.isSuccess ? categoriesQuery.data : []}>
               {(category) => <option value={category}>{category}</option>}
             </For>
           </select>
