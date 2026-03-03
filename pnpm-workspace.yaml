@@ -10,6 +10,12 @@ catalog:
   typescript: ^5.9.3
 
 catalogs:
+  eslint:
+    '@eslint/js': ^10.0.1
+    eslint: ^10.0.2
+    eslint-plugin-solid: ^0.14.5
+    globals: ^17.3.0
+    typescript-eslint: ^8.56.1
   solid:
     solid-js: ^1.9.11
 

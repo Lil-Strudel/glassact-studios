@@ -3,6 +3,8 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "air -c .air.toml"
+    "dev": "air -c .air.toml",
+    "test": "go test -v ./modules/...",
+    "test:coverage": "go test -v -coverprofile=coverage.out ./modules/modules_test.go && go tool cover -html=coverage.out -o coverage.html"
   }
 }
