@@ -1,4 +1,4 @@
-import type { AnyFieldApi, AnyFormApi } from "@tanstack/solid-form";
+import type { AnyFieldApi } from "@tanstack/solid-form";
 import {
   TextFieldRoot,
   TextFieldLabel,
@@ -31,13 +31,14 @@ import {
 import { FileUpload } from "./file-upload";
 import { Checkbox, CheckboxControl, CheckboxLabel } from "./checkbox";
 
-function useValidationState(field: () => AnyFieldApi) {
+function useValidationState(getField: () => AnyFieldApi) {
   const [validationState, setValidationState] = createSignal<
     "valid" | "invalid"
   >("valid");
 
   createEffect(() => {
-    if (field().state.meta.errors.length > 0 && field().state.meta.isTouched) {
+    const field = getField();
+    if (field.state.meta.errors.length > 0 && field.state.meta.isTouched) {
       setValidationState("invalid");
     } else {
       setValidationState("valid");
@@ -56,27 +57,26 @@ interface FormTextFieldProps {
   fullWidth?: boolean;
 }
 function FormTextField(props: FormTextFieldProps) {
-  const { field, label, placeholder, description, fullWidth = true } = props;
-  const validationState = useValidationState(field);
+  const validationState = useValidationState(() => props.field());
 
   return (
     <TextFieldRoot
-      class={cn(fullWidth && "w-full", props.class)}
+      class={cn((props.fullWidth ?? true) && "w-full", props.class)}
       validationState={validationState()}
     >
-      {label && <TextFieldLabel>{label}</TextFieldLabel>}
+      {props.label && <TextFieldLabel>{props.label}</TextFieldLabel>}
       <TextField
-        placeholder={placeholder}
-        name={field().name}
-        value={field().state.value}
-        onBlur={field().handleBlur}
-        onChange={(e) => field().handleChange(e.target.value)}
+        placeholder={props.placeholder}
+        name={props.field().name}
+        value={props.field().state.value}
+        onBlur={() => props.field().handleBlur()}
+        onChange={(e) => props.field().handleChange(e.target.value)}
       />
-      {description && (
-        <TextFieldDescription>{description}</TextFieldDescription>
+      {props.description && (
+        <TextFieldDescription>{props.description}</TextFieldDescription>
       )}
       <TextFieldErrorMessage>
-        {field()
+        {props.field()
           .state.meta.errors.map((error) => error?.message)
           .join(", ")}
       </TextFieldErrorMessage>
@@ -93,27 +93,26 @@ interface FormTextAreaProps {
   fullWidth?: boolean;
 }
 function FormTextArea(props: FormTextAreaProps) {
-  const { field, label, placeholder, description, fullWidth = true } = props;
-  const validationState = useValidationState(field);
+  const validationState = useValidationState(() => props.field());
 
   return (
     <TextFieldRoot
-      class={cn(fullWidth && "w-full", props.class)}
+      class={cn((props.fullWidth ?? true) && "w-full", props.class)}
       validationState={validationState()}
     >
-      {label && <TextFieldLabel>{label}</TextFieldLabel>}
+      {props.label && <TextFieldLabel>{props.label}</TextFieldLabel>}
       <TextArea
-        placeholder={placeholder}
-        name={field().name}
-        value={field().state.value}
-        onBlur={field().handleBlur}
-        onChange={(e) => field().handleChange(e.target.value)}
+        placeholder={props.placeholder}
+        name={props.field().name}
+        value={props.field().state.value}
+        onBlur={() => props.field().handleBlur()}
+        onChange={(e) => props.field().handleChange(e.target.value)}
       />
-      {description && (
-        <TextFieldDescription>{description}</TextFieldDescription>
+      {props.description && (
+        <TextFieldDescription>{props.description}</TextFieldDescription>
       )}
       <TextFieldErrorMessage>
-        {field()
+        {props.field()
           .state.meta.errors.map((error) => error?.message)
           .join(", ")}
       </TextFieldErrorMessage>
@@ -132,48 +131,39 @@ interface FormNumberFieldProps {
   decimalPlaces?: number;
 }
 function FormNumberField(props: FormNumberFieldProps) {
-  const {
-    field,
-    label,
-    placeholder,
-    description,
-    fullWidth = true,
-    int,
-    decimalPlaces,
-  } = props;
-  const validationState = useValidationState(field);
+  const validationState = useValidationState(() => props.field());
 
   const handleChange = (value: string) => {
     if (value === "") {
-      field().handleChange("");
+      props.field().handleChange("");
     } else {
       const numValue = parseFloat(value);
       if (!isNaN(numValue)) {
-        field().handleChange(numValue);
+        props.field().handleChange(numValue);
       }
     }
   };
 
   return (
     <TextFieldRoot
-      class={cn(fullWidth && "w-full", props.class)}
+      class={cn((props.fullWidth ?? true) && "w-full", props.class)}
       validationState={validationState()}
     >
-      {label && <TextFieldLabel>{label}</TextFieldLabel>}
+      {props.label && <TextFieldLabel>{props.label}</TextFieldLabel>}
       <NumberField
-        placeholder={placeholder}
-        name={field().name}
-        value={field().state.value?.toString() || ""}
-        onBlur={field().handleBlur}
+        placeholder={props.placeholder}
+        name={props.field().name}
+        value={props.field().state.value?.toString() || ""}
+        onBlur={() => props.field().handleBlur()}
         onChange={handleChange}
-        int={int}
-        decimalPlaces={decimalPlaces}
+        int={props.int}
+        decimalPlaces={props.decimalPlaces}
       />
-      {description && (
-        <TextFieldDescription>{description}</TextFieldDescription>
+      {props.description && (
+        <TextFieldDescription>{props.description}</TextFieldDescription>
       )}
       <TextFieldErrorMessage>
-        {field()
+        {props.field()
           .state.meta.errors.map((error) => error?.message)
           .join(", ")}
       </TextFieldErrorMessage>
@@ -191,17 +181,9 @@ interface FormComboboxProps<T> {
   fullWidth?: boolean;
 }
 function FormCombobox<T>(props: FormComboboxProps<T>) {
-  const {
-    field,
-    label,
-    placeholder,
-    description,
-    fullWidth = true,
-    options,
-  } = props;
-  const validationState = useValidationState(field);
+  const validationState = useValidationState(() => props.field());
 
-  const optionLabels = () => options.map((o) => o.label);
+  const optionLabels = () => props.options.map((o) => o.label);
 
   createEffect(() => {
     const labels = optionLabels();
@@ -219,16 +201,16 @@ function FormCombobox<T>(props: FormComboboxProps<T>) {
   });
 
   const value = () =>
-    options.find((o) => o.value === field().state.value)?.label ?? undefined;
+    props.options.find((o) => o.value === props.field().state.value)?.label ?? undefined;
 
   const handleChange = (label: string | null) =>
-    field().handleChange(
-      options.find((o) => o.label === label)?.value ?? undefined,
+    props.field().handleChange(
+      props.options.find((o) => o.label === label)?.value ?? undefined,
     );
 
   const handleInputChange = (input: string) => {
     if (input === "") {
-      field().handleChange(undefined);
+      props.field().handleChange(undefined);
     }
   };
 
@@ -236,24 +218,24 @@ function FormCombobox<T>(props: FormComboboxProps<T>) {
     <Combobox
       options={optionLabels()}
       validationState={validationState()}
-      placeholder={placeholder}
-      name={field().name}
+      placeholder={props.placeholder}
+      name={props.field().name}
       value={value()}
-      onBlur={field().handleBlur}
+      onBlur={() => props.field().handleBlur()}
       onChange={handleChange}
       onInputChange={handleInputChange}
       itemComponent={(props) => (
         <ComboboxItem item={props.item}>{props.item.rawValue}</ComboboxItem>
       )}
     >
-      {label && <ComboboxLabel>{label}</ComboboxLabel>}
-      <ComboboxControl class={cn(fullWidth && "w-full", props.class)}>
+      {props.label && <ComboboxLabel>{props.label}</ComboboxLabel>}
+      <ComboboxControl class={cn((props.fullWidth ?? true) && "w-full", props.class)}>
         <ComboboxInput />
         <ComboboxTrigger />
       </ComboboxControl>
-      {description && <ComboboxDescription>{description}</ComboboxDescription>}
+      {props.description && <ComboboxDescription>{props.description}</ComboboxDescription>}
       <ComboboxErrorMessage>
-        {field()
+        {props.field()
           .state.meta.errors.map((error) => error?.message)
           .join(", ")}
       </ComboboxErrorMessage>
@@ -267,12 +249,10 @@ interface FormErrorLabelProps {
   class?: JSX.HTMLAttributes<"div">["class"];
 }
 function FormErrorLabel(props: FormErrorLabelProps) {
-  const { field } = props;
-
   return (
-    <Show when={field().state.meta.errors.length > 0}>
+    <Show when={props.field().state.meta.errors.length > 0}>
       <span class={cn(textfieldLabel({ error: true }), props.class)}>
-        {field()
+        {props.field()
           .state.meta.errors.map((error) => error?.message)
           .join(", ")}
       </span>
@@ -306,43 +286,31 @@ interface FormFileUploadProps {
 }
 
 function FormFileUpload(props: FormFileUploadProps) {
-  const {
-    field,
-    accept,
-    maxSizeBytes,
-    fileTypeLabel,
-    uploadPath,
-    multiple,
-    label,
-    placeholder,
-    description,
-    fullWidth = true,
-  } = props;
-  const validationState = useValidationState(field);
+  const validationState = useValidationState(() => props.field());
 
   return (
     <FileFieldRoot
-      class={cn(fullWidth && "w-full", props.class)}
+      class={cn((props.fullWidth ?? true) && "w-full", props.class)}
       data-invalid={validationState() === "invalid"}
     >
-      {label && <FileFieldLabel>{label}</FileFieldLabel>}
+      {props.label && <FileFieldLabel>{props.label}</FileFieldLabel>}
       <FileUpload
-        onUrlChange={(url) => field().handleChange(url)}
-        initialUrls={field().state.value}
-        accept={accept}
-        maxSizeBytes={maxSizeBytes}
-        fileTypeLabel={fileTypeLabel}
-        uploadPath={uploadPath}
-        multiple={multiple}
-        placeholder={placeholder}
-        description={description}
+        onUrlChange={(url) => props.field().handleChange(url)}
+        initialUrls={props.field().state.value}
+        accept={props.accept}
+        maxSizeBytes={props.maxSizeBytes}
+        fileTypeLabel={props.fileTypeLabel}
+        uploadPath={props.uploadPath}
+        multiple={props.multiple}
+        placeholder={props.placeholder}
+        description={props.description}
         uploadFn={props.uploadFn}
       />
-      {description && (
-        <FileFieldDescription>{description}</FileFieldDescription>
+      {props.description && (
+        <FileFieldDescription>{props.description}</FileFieldDescription>
       )}
       <FileFieldErrorMessage>
-        {field()
+        {props.field()
           .state.meta.errors.map((error) => error?.message)
           .join(", ")}
       </FileFieldErrorMessage>
@@ -361,43 +329,35 @@ interface FormSelectProps {
 }
 
 function FormSelect(props: FormSelectProps) {
-  const {
-    field,
-    label,
-    placeholder,
-    description,
-    options,
-    fullWidth = true,
-  } = props;
-  const validationState = useValidationState(field);
+  const validationState = useValidationState(() => props.field());
 
   return (
     <TextFieldRoot
-      class={cn(fullWidth && "w-full", props.class)}
+      class={cn((props.fullWidth ?? true) && "w-full", props.class)}
       validationState={validationState()}
     >
-      {label && <TextFieldLabel>{label}</TextFieldLabel>}
+      {props.label && <TextFieldLabel>{props.label}</TextFieldLabel>}
       <select
-        value={field().state.value || ""}
+        value={props.field().state.value || ""}
         onChange={(e) => {
           const val = e.currentTarget.value;
-          field().handleChange(
+          props.field().handleChange(
             val ? (isNaN(Number(val)) ? val : Number(val)) : undefined,
           );
         }}
-        onBlur={field().handleBlur}
+        onBlur={() => props.field().handleBlur()}
         class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <option value="">{placeholder ?? "Select..."}</option>
-        <For each={options}>
+        <option value="">{props.placeholder ?? "Select..."}</option>
+        <For each={props.options}>
           {(opt) => <option value={opt.value}>{opt.label}</option>}
         </For>
       </select>
-      {description && (
-        <TextFieldDescription>{description}</TextFieldDescription>
+      {props.description && (
+        <TextFieldDescription>{props.description}</TextFieldDescription>
       )}
       <TextFieldErrorMessage>
-        {field()
+        {props.field()
           .state.meta.errors.map((error) => error?.message)
           .join(", ")}
       </TextFieldErrorMessage>
@@ -413,30 +373,29 @@ interface FormCheckboxProps {
 }
 
 function FormCheckbox(props: FormCheckboxProps) {
-  const { field, label, description } = props;
-  const validationState = useValidationState(field);
+  const validationState = useValidationState(() => props.field());
 
   return (
     <div class={cn("flex flex-col gap-2", props.class)}>
       <Checkbox
-        checked={field().state.value}
-        onChange={(checked) => field().handleChange(checked)}
-        onBlur={field().handleBlur}
+        checked={props.field().state.value}
+        onChange={(checked) => props.field().handleChange(checked)}
+        onBlur={() => props.field().handleBlur()}
         validationState={validationState()}
       >
         <div class="flex items-center gap-2">
           <CheckboxControl />
-          {label && <CheckboxLabel>{label}</CheckboxLabel>}
+          {props.label && <CheckboxLabel>{props.label}</CheckboxLabel>}
         </div>
       </Checkbox>
-      {description && (
+      {props.description && (
         <p class={cn(textfieldLabel({ description: true, label: false }))}>
-          {description}
+          {props.description}
         </p>
       )}
-      <Show when={field().state.meta.errors.length > 0}>
+      <Show when={props.field().state.meta.errors.length > 0}>
         <span class={cn(textfieldLabel({ error: true }))}>
-          {field()
+          {props.field()
             .state.meta.errors.map((error) => error?.message)
             .join(", ")}
         </span>
