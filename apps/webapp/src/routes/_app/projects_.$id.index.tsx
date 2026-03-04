@@ -86,6 +86,8 @@ function RouteComponent() {
   const submitProject = useMutation(postSubmitProjectOpts);
   const excludeInlay = useMutation(patchExcludeInlayOpts);
 
+  const inlays = () => (inlaysQuery.isSuccess ? inlaysQuery.data : []);
+
   const canCancel = createMemo(() => {
     if (!projectQuery.isSuccess) return false;
     return PRE_ORDERED_STATUSES.includes(projectQuery.data.status);
@@ -102,8 +104,7 @@ function RouteComponent() {
   });
 
   const includedInlays = createMemo(() => {
-    const inlays = inlaysQuery.data ?? [];
-    return inlays.filter((inlay) => !inlay.excluded_from_order);
+    return inlays().filter((inlay) => !inlay.excluded_from_order);
   });
 
   const canSubmit = createMemo(() => {
@@ -159,7 +160,9 @@ function RouteComponent() {
           variant: "success",
         });
         queryClient.invalidateQueries({ queryKey: ["project"] });
-        queryClient.invalidateQueries({ queryKey: ["project", params().id, "inlays"] });
+        queryClient.invalidateQueries({
+          queryKey: ["project", params().id, "inlays"],
+        });
       },
       onError(error) {
         if (isApiError(error)) {
@@ -402,21 +405,16 @@ function RouteComponent() {
                     <div class="space-y-4">
                       <p class="text-sm text-gray-600">
                         You are about to place an order for{" "}
-                        <span class="font-semibold">{projectQuery.data!.name}</span>.
-                        This will lock pricing and begin manufacturing.
+                        <span class="font-semibold">
+                          {projectQuery.data!.name}
+                        </span>
+                        . This will lock pricing and begin manufacturing.
                       </p>
-                      <Show
-                        when={
-                          (inlaysQuery.data ?? []).length !==
-                          includedInlays().length
-                        }
-                      >
+                      <Show when={inlays().length !== includedInlays().length}>
                         <p class="text-sm text-gray-500">
                           Ordering {includedInlays().length} of{" "}
-                          {(inlaysQuery.data ?? []).length} inlays (
-                          {(inlaysQuery.data ?? []).length -
-                            includedInlays().length}{" "}
-                          excluded).
+                          {inlays().length} inlays (
+                          {inlays().length - includedInlays().length} excluded).
                         </p>
                       </Show>
                       <div class="border rounded-lg divide-y">
@@ -431,10 +429,15 @@ function RouteComponent() {
                                     class="w-8 h-8 object-contain rounded"
                                   />
                                 </Show>
-                                <span class="text-sm font-medium">{inlay.name}</span>
+                                <span class="text-sm font-medium">
+                                  {inlay.name}
+                                </span>
                               </div>
                               <Show when={inlay.approved_proof_id}>
-                                <Badge variant="outline" class="bg-green-50 text-green-700 border-green-200 text-xs">
+                                <Badge
+                                  variant="outline"
+                                  class="bg-green-50 text-green-700 border-green-200 text-xs"
+                                >
                                   Approved
                                 </Badge>
                               </Show>
@@ -444,14 +447,20 @@ function RouteComponent() {
                       </div>
                     </div>
                     <DialogFooter class="flex justify-end gap-3 mt-4">
-                      <DialogClose as={Button} variant="outline" disabled={placeOrder.isPending}>
+                      <DialogClose
+                        as={Button}
+                        variant="outline"
+                        disabled={placeOrder.isPending}
+                      >
                         Cancel
                       </DialogClose>
                       <Button
                         onClick={handlePlaceOrder}
                         disabled={placeOrder.isPending}
                       >
-                        {placeOrder.isPending ? "Placing Order..." : "Confirm Order"}
+                        {placeOrder.isPending
+                          ? "Placing Order..."
+                          : "Confirm Order"}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
@@ -613,7 +622,10 @@ function InlayCard(props: InlayCardProps) {
 
   const proofStatusBadge = () => {
     if (props.inlay.approved_proof_id) {
-      return { label: "Proof Approved", class: "bg-green-50 text-green-700 border-green-200" };
+      return {
+        label: "Proof Approved",
+        class: "bg-green-50 text-green-700 border-green-200",
+      };
     }
     return null;
   };

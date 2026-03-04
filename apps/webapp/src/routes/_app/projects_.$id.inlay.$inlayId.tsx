@@ -25,7 +25,7 @@ function InlayDetailPage() {
   const proofsQuery = useQuery(() => getProofsByInlayOpts(params().inlayId));
 
   const latestPendingProof = createMemo(() => {
-    const proofs = proofsQuery.data ?? [];
+    const proofs = proofsQuery.isSuccess ? proofsQuery.data : [];
     const pending = proofs.filter((p) => p.status === "pending");
     return pending.length > 0 ? pending[pending.length - 1] : null;
   });
@@ -35,24 +35,26 @@ function InlayDetailPage() {
     queryClient.invalidateQueries({ queryKey: ["project", params().id] });
   };
 
+  const inlay = () => inlayQuery.isSuccess && inlayQuery.data;
+
   return (
     <div class="space-y-6">
       <Breadcrumb
         crumbs={[
           { title: "Projects", to: "/projects" },
           {
-            title: projectQuery.data?.name ?? "Project",
+            title: projectQuery.isSuccess ? projectQuery.data.name : "Project",
             to: `/projects/${params().id}`,
           },
           {
-            title: inlayQuery.data?.name ?? "Inlay",
+            title: inlayQuery.isSuccess ? inlayQuery.data.name : "Inlay",
             to: `/projects/${params().id}/inlay/${params().inlayId}`,
           },
         ]}
       />
 
       <Show
-        when={inlayQuery.data}
+        when={inlay()}
         fallback={
           <div class="text-gray-500">
             {inlayQuery.isLoading ? "Loading..." : "Inlay not found"}
