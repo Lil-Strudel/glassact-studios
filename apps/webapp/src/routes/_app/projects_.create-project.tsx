@@ -21,6 +21,7 @@ const formOpts = formOptions({
   validators: {},
 });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const dummyFormJustForType = createForm(() => formOpts);
 export const ProjectFormContext = createContext<typeof dummyFormJustForType>();
 

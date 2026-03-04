@@ -8,17 +8,6 @@ interface ProofHistoryProps {
   inlayUuid: string;
 }
 
-function statusBadgeVariant(status: ProofStatus): "default" | "secondary" | "outline" {
-  switch (status) {
-    case "approved":
-      return "default";
-    case "declined":
-      return "secondary";
-    default:
-      return "outline";
-  }
-}
-
 function statusColor(status: ProofStatus): string {
   switch (status) {
     case "pending":
@@ -46,9 +35,7 @@ const ProofHistory: Component<ProofHistoryProps> = (props) => {
       >
         <Show
           when={(query.data ?? []).length > 0}
-          fallback={
-            <p class="text-sm text-gray-500">No proofs yet.</p>
-          }
+          fallback={<p class="text-sm text-gray-500">No proofs yet.</p>}
         >
           <div class="space-y-2">
             <For each={[...(query.data ?? [])].reverse()}>
@@ -77,10 +64,16 @@ const ProofHistory: Component<ProofHistoryProps> = (props) => {
                       </a>
                     </Show>
                     <Show when={proof.approved_at}>
-                      <p>Approved: {new Date(proof.approved_at!).toLocaleDateString()}</p>
+                      <p>
+                        Approved:{" "}
+                        {new Date(proof.approved_at!).toLocaleDateString()}
+                      </p>
                     </Show>
                     <Show when={proof.declined_at}>
-                      <p>Declined: {new Date(proof.declined_at!).toLocaleDateString()}</p>
+                      <p>
+                        Declined:{" "}
+                        {new Date(proof.declined_at!).toLocaleDateString()}
+                      </p>
                     </Show>
                     <Show when={proof.decline_reason}>
                       <p class="text-red-600">Reason: {proof.decline_reason}</p>

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/solid-router";
-import { For, Show, createSignal } from "solid-js";
+import { For, Show, createMemo, createSignal } from "solid-js";
 import {
   Dialog,
   DialogContent,
@@ -157,7 +157,7 @@ const defaultColumns: ColumnDef<GET<PriceGroup>>[] = [
           <Button
             variant="ghost"
             size="icon"
-            onClick={async () => {
+            onClick={() => {
               deleteMutation.mutate(undefined, {
                 onSuccess: () => {
                   queryClient.invalidateQueries({ queryKey: ["price-groups"] });
@@ -266,19 +266,21 @@ function RouteComponent() {
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = createSignal(false);
 
-  const table = createSolidTable({
-    get data() {
-      return query.data?.items ?? [];
-    },
-    columns: defaultColumns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    state: {
-      globalFilter: filterValue(),
-    },
-    onGlobalFilterChange: setFilterValue,
-  });
+  const table = createMemo(() =>
+    createSolidTable({
+      get data() {
+        return query.data?.items ?? [];
+      },
+      columns: defaultColumns,
+      getCoreRowModel: getCoreRowModel(),
+      getPaginationRowModel: getPaginationRowModel(),
+      getFilteredRowModel: getFilteredRowModel(),
+      state: {
+        globalFilter: filterValue(),
+      },
+      onGlobalFilterChange: setFilterValue,
+    }),
+  );
 
   const handleCreateSubmit = (data: FormSchema) => {
     postMutation.mutate(
@@ -326,7 +328,7 @@ function RouteComponent() {
       <div class="rounded-md border">
         <Table>
           <TableHeader>
-            <For each={table.getHeaderGroups()}>
+            <For each={table().getHeaderGroups()}>
               {(headerGroup) => (
                 <TableRow>
                   <For each={headerGroup.headers}>
@@ -349,7 +351,7 @@ function RouteComponent() {
           </TableHeader>
           <TableBody>
             <Show
-              when={table.getRowModel().rows?.length}
+              when={table().getRowModel().rows?.length}
               fallback={
                 <TableRow>
                   <TableCell
@@ -361,7 +363,7 @@ function RouteComponent() {
                 </TableRow>
               }
             >
-              <For each={table.getRowModel().rows}>
+              <For each={table().getRowModel().rows}>
                 {(row) => (
                   <TableRow data-state={row.getIsSelected() && "selected"}>
                     <For each={row.getVisibleCells()}>
@@ -385,16 +387,16 @@ function RouteComponent() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
+          onClick={() => table().previousPage()}
+          disabled={!table().getCanPreviousPage()}
         >
           Previous
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
+          onClick={() => table().nextPage()}
+          disabled={!table().getCanNextPage()}
         >
           Next
         </Button>

@@ -34,7 +34,8 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
     chat.dealership_user_id !== null;
 
   createEffect(() => {
-    const _ = messages().length;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _ = messages().length; // Needed for reactivity with scroll
     if (scrollRef) {
       scrollRef.scrollTop = scrollRef.scrollHeight;
     }
@@ -57,10 +58,7 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
           </div>
         }
       >
-        <div
-          ref={scrollRef}
-          class="flex-1 overflow-y-auto p-4 space-y-3"
-        >
+        <div ref={scrollRef} class="flex-1 overflow-y-auto p-4 space-y-3">
           <For each={messages()}>
             {(chat) => (
               <Show
@@ -82,7 +80,10 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
                     >
                       <Show when={chat.message_type === "proof_sent"}>
                         <div class="flex flex-col items-center gap-1">
-                          <Badge variant="outline" class="bg-blue-50 text-blue-700 border-blue-200">
+                          <Badge
+                            variant="outline"
+                            class="bg-blue-50 text-blue-700 border-blue-200"
+                          >
                             Proof Sent
                           </Badge>
                           <p>{chat.message}</p>
@@ -100,7 +101,10 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
                       </Show>
                       <Show when={chat.message_type === "proof_approved"}>
                         <div class="flex flex-col items-center gap-1">
-                          <Badge variant="outline" class="bg-green-50 text-green-700 border-green-200">
+                          <Badge
+                            variant="outline"
+                            class="bg-green-50 text-green-700 border-green-200"
+                          >
                             Proof Approved
                           </Badge>
                           <p>{chat.message}</p>
@@ -108,7 +112,10 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
                       </Show>
                       <Show when={chat.message_type === "proof_declined"}>
                         <div class="flex flex-col items-center gap-1">
-                          <Badge variant="outline" class="bg-red-50 text-red-700 border-red-200">
+                          <Badge
+                            variant="outline"
+                            class="bg-red-50 text-red-700 border-red-200"
+                          >
                             Proof Declined
                           </Badge>
                           <p>{chat.message}</p>
@@ -127,9 +134,7 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
                 <div
                   class={cn(
                     "flex",
-                    isDealershipMessage(chat)
-                      ? "justify-end"
-                      : "justify-start",
+                    isDealershipMessage(chat) ? "justify-end" : "justify-start",
                   )}
                 >
                   <div

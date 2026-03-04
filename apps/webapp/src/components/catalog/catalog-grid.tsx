@@ -1,5 +1,5 @@
 import { CatalogItem, GET } from "@glassact/data";
-import { Button, Badge } from "@glassact/ui";
+import { Button } from "@glassact/ui";
 import { For, Show } from "solid-js";
 import { ItemDetailModal } from "./item-detail-modal";
 

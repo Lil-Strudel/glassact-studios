@@ -1,4 +1,4 @@
-import { CatalogItem, GET, POST } from "@glassact/data";
+import { CatalogItem, POST } from "@glassact/data";
 import { Form, Button, Badge } from "@glassact/ui";
 import { createForm } from "@tanstack/solid-form";
 import { useQuery } from "@tanstack/solid-query";

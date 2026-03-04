@@ -1,12 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/solid-router";
+import { createFileRoute } from "@tanstack/solid-router";
 import { useQuery, useQueryClient } from "@tanstack/solid-query";
-import { Show, createMemo, type Component } from "solid-js";
-import { Badge, Button, Breadcrumb } from "@glassact/ui";
-import type { ProofStatus } from "@glassact/data";
+import { Show, createMemo } from "solid-js";
+import { Badge, Breadcrumb } from "@glassact/ui";
 import { getInlayOpts } from "../../queries/inlay";
 import { getProjectOpts } from "../../queries/project";
 import { getProofsByInlayOpts } from "../../queries/proof";
-import { useUserContext } from "../../providers/user";
 import { Can } from "../../components/Can";
 import ChatThread from "../../components/chat/chat-thread";
 import ChatInput from "../../components/chat/chat-input";
@@ -18,24 +16,8 @@ export const Route = createFileRoute("/_app/projects_/$id/inlay/$inlayId")({
   component: InlayDetailPage,
 });
 
-function proofStatusColor(status: ProofStatus): string {
-  switch (status) {
-    case "pending":
-      return "bg-yellow-50 text-yellow-700 border-yellow-200";
-    case "approved":
-      return "bg-green-50 text-green-700 border-green-200";
-    case "declined":
-      return "bg-red-50 text-red-700 border-red-200";
-    case "superseded":
-      return "bg-gray-50 text-gray-500 border-gray-200";
-    default:
-      return "";
-  }
-}
-
 function InlayDetailPage() {
   const params = Route.useParams();
-  const userContext = useUserContext();
   const queryClient = useQueryClient();
 
   const projectQuery = useQuery(() => getProjectOpts(params().id));

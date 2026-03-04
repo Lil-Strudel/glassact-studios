@@ -9,7 +9,6 @@ import {
   Breadcrumb,
   Form,
   textfieldLabel,
-  Badge,
 } from "@glassact/ui";
 import { IoClose } from "solid-icons/io";
 import { createForm } from "@tanstack/solid-form";

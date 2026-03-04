@@ -8,7 +8,7 @@ import {
   deleteCatalogTagOpts,
   deleteCatalogOpts,
 } from "../../queries/catalog";
-import { CatalogItem, PATCH, POST } from "@glassact/data";
+import { CatalogItem, POST } from "@glassact/data";
 import { CatalogForm } from "../../components/admin/catalog-form";
 import { Show } from "solid-js";
 import { Button } from "@glassact/ui";
@@ -36,12 +36,8 @@ function RouteComponent() {
       { uuid: params().uuid, body: data },
       {
         onSuccess: async () => {
-          const tagsToRemove = currentTags.filter(
-            (t: any) => !newTags.includes(t),
-          );
-          const tagsToAdd = newTags.filter(
-            (t: any) => !currentTags.includes(t),
-          );
+          const tagsToRemove = currentTags.filter((t) => !newTags.includes(t));
+          const tagsToAdd = newTags.filter((t) => !currentTags.includes(t));
 
           for (const tag of tagsToRemove) {
             try {

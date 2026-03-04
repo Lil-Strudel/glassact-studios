@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
-import type { InlayWithInfo, PATCH, Inlay } from "@glassact/data";
+import type { InlayWithInfo } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
 export async function getInlaysByProject(
