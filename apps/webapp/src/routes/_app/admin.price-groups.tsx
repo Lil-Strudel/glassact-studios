@@ -101,7 +101,7 @@ function PriceGroupForm(props: PriceGroupFormProps) {
       <form.Field
         name="base_price_cents"
         children={(field) => (
-          <Form.TextField field={field} label="Base Price (cnts)" />
+          <Form.TextField field={field} label="Base Price (cents)" />
         )}
       />
 
