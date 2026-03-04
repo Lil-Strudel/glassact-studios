@@ -86,6 +86,8 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("POST /api/dealership-user", protected.ThenFunc(userModule.HandleCreateDealershipUser))
 	mux.Handle("PATCH /api/dealership-user/{uuid}", protected.ThenFunc(userModule.HandleUpdateDealershipUser))
 	mux.Handle("DELETE /api/dealership-user/{uuid}", protected.ThenFunc(userModule.HandleDeleteDealershipUser))
+	mux.Handle("GET /api/internal-user", protected.ThenFunc(userModule.HandleGetInternalUsers))
+	mux.Handle("GET /api/internal-user/{uuid}", protected.ThenFunc(userModule.HandleGetInternalUserByUUID))
 	mux.Handle("POST /api/internal-user", protected.ThenFunc(userModule.HandleCreateInternalUser))
 	mux.Handle("PATCH /api/internal-user/{uuid}", protected.ThenFunc(userModule.HandleUpdateInternalUser))
 	mux.Handle("DELETE /api/internal-user/{uuid}", protected.ThenFunc(userModule.HandleDeleteInternalUser))
