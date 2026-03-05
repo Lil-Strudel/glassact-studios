@@ -1,8 +1,10 @@
-import { Badge, cn } from "@glassact/ui";
+import { cn } from "@glassact/ui";
 import type { GET, InlayChat, ChatMessageType } from "@glassact/data";
 import { useQuery } from "@tanstack/solid-query";
 import { createEffect, createMemo, For, Show, type Component } from "solid-js";
 import { getInlayChatsOpts } from "../../queries/chat";
+import { useUserContext } from "../../providers/user";
+import { ProofStatusBadge } from "../proof/proof-status-badge";
 
 interface ChatThreadProps {
   inlayUuid: string;
@@ -22,6 +24,7 @@ function formatTimestamp(dateStr: string): string {
 
 const ChatThread: Component<ChatThreadProps> = (props) => {
   let scrollRef: HTMLDivElement | undefined;
+  const { isInternal } = useUserContext();
 
   const query = useQuery(() => getInlayChatsOpts(props.inlayUuid));
 
@@ -30,8 +33,12 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
   const isSystemMessage = (chat: GET<InlayChat>) =>
     SYSTEM_TYPES.includes(chat.message_type);
 
-  const isDealershipMessage = (chat: GET<InlayChat>) =>
-    chat.dealership_user_id !== null;
+  const isMyMessage = (chat: GET<InlayChat>) => {
+    if (isInternal()) {
+      return chat.internal_user_id !== null;
+    }
+    return chat.dealership_user_id !== null;
+  };
 
   createEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -79,14 +86,9 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
                       )}
                     >
                       <Show when={chat.message_type === "proof_sent"}>
-                        <div class="flex flex-col items-center gap-1">
-                          <Badge
-                            variant="outline"
-                            class="bg-blue-50 text-blue-700 border-blue-200"
-                          >
-                            Proof Sent
-                          </Badge>
-                          <p>{chat.message}</p>
+                        <div class="flex flex-col items-center gap-2">
+                          <ProofStatusBadge status="pending" />
+                          <p class="not-italic">{chat.message}</p>
                           <Show when={chat.attachment_url}>
                             <a
                               href={chat.attachment_url!}
@@ -100,25 +102,15 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
                         </div>
                       </Show>
                       <Show when={chat.message_type === "proof_approved"}>
-                        <div class="flex flex-col items-center gap-1">
-                          <Badge
-                            variant="outline"
-                            class="bg-green-50 text-green-700 border-green-200"
-                          >
-                            Proof Approved
-                          </Badge>
-                          <p>{chat.message}</p>
+                        <div class="flex flex-col items-center gap-2">
+                          <ProofStatusBadge status="approved" />
+                          <p class="not-italic">{chat.message}</p>
                         </div>
                       </Show>
                       <Show when={chat.message_type === "proof_declined"}>
-                        <div class="flex flex-col items-center gap-1">
-                          <Badge
-                            variant="outline"
-                            class="bg-red-50 text-red-700 border-red-200"
-                          >
-                            Proof Declined
-                          </Badge>
-                          <p>{chat.message}</p>
+                        <div class="flex flex-col items-center gap-2">
+                          <ProofStatusBadge status="declined" />
+                          <p class="not-italic">{chat.message}</p>
                         </div>
                       </Show>
                       <Show when={chat.message_type === "system"}>
@@ -134,13 +126,13 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
                 <div
                   class={cn(
                     "flex",
-                    isDealershipMessage(chat) ? "justify-end" : "justify-start",
+                    isMyMessage(chat) ? "justify-end" : "justify-start",
                   )}
                 >
                   <div
                     class={cn(
                       "max-w-xs lg:max-w-md px-4 py-2 rounded-lg",
-                      isDealershipMessage(chat)
+                      isMyMessage(chat)
                         ? "bg-blue-500 text-white"
                         : "bg-gray-100 text-gray-900",
                     )}
@@ -149,9 +141,7 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
                     <p
                       class={cn(
                         "text-xs mt-1",
-                        isDealershipMessage(chat)
-                          ? "text-blue-200"
-                          : "text-gray-500",
+                        isMyMessage(chat) ? "text-blue-200" : "text-gray-500",
                       )}
                     >
                       {formatTimestamp(chat.created_at)}

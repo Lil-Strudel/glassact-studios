@@ -64,6 +64,15 @@ func (m InlayModule) validateInlayOwnership(w http.ResponseWriter, r *http.Reque
 	return project, true
 }
 
+type InlayWithProofStatus struct {
+	*data.Inlay
+	HasPendingProof             bool    `json:"has_pending_proof"`
+	LatestProofStatus           *string `json:"latest_proof_status"`
+	ApprovedProofPriceGroupID   *int    `json:"approved_proof_price_group_id"`
+	ApprovedProofPriceGroupName *string `json:"approved_proof_price_group_name"`
+	ApprovedProofPriceCents     *int    `json:"approved_proof_price_cents"`
+}
+
 func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Request) {
 	projectUUID := r.PathValue("uuid")
 
@@ -84,7 +93,53 @@ func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	m.WriteJSON(w, r, http.StatusOK, inlays)
+	result := make([]InlayWithProofStatus, len(inlays))
+	for i, inlay := range inlays {
+		result[i] = InlayWithProofStatus{
+			Inlay:             inlay,
+			HasPendingProof:   false,
+			LatestProofStatus: nil,
+		}
+
+		latestProof, found, err := m.Db.InlayProofs.GetLatestByInlayID(inlay.ID)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+
+		if found {
+			status := string(latestProof.Status)
+			result[i].LatestProofStatus = &status
+			result[i].HasPendingProof = latestProof.Status == data.ProofStatuses.Pending
+		}
+
+		if inlay.ApprovedProofID != nil {
+			approvedProof, found, err := m.Db.InlayProofs.GetByID(*inlay.ApprovedProofID)
+			if err != nil {
+				m.WriteError(w, r, m.Err.ServerError, err)
+				return
+			}
+
+			if found && approvedProof.PriceGroupID != nil {
+				result[i].ApprovedProofPriceGroupID = approvedProof.PriceGroupID
+				result[i].ApprovedProofPriceCents = approvedProof.PriceCents
+
+				priceGroup, found, err := m.Db.PriceGroups.GetByID(*approvedProof.PriceGroupID)
+				if err != nil {
+					m.WriteError(w, r, m.Err.ServerError, err)
+					return
+				}
+				if found {
+					result[i].ApprovedProofPriceGroupName = &priceGroup.Name
+					if result[i].ApprovedProofPriceCents == nil {
+						result[i].ApprovedProofPriceCents = &priceGroup.BasePriceCents
+					}
+				}
+			}
+		}
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, result)
 }
 
 func (m InlayModule) HandleGetInlayByUUID(w http.ResponseWriter, r *http.Request) {

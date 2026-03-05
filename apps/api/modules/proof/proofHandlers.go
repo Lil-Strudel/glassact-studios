@@ -233,6 +233,15 @@ func (m ProofModule) HandleCreateProof(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if project.Status == data.ProjectStatuses.Designing {
+		project.Status = data.ProjectStatuses.PendingApproval
+		err = m.Db.Projects.TxUpdate(tx, project)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to update project status: %w", err))
+			return
+		}
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
@@ -480,11 +489,35 @@ func (m ProofModule) HandleDeclineProof(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if project.Status == data.ProjectStatuses.PendingApproval || project.Status == data.ProjectStatuses.Approved {
-		project.Status = data.ProjectStatuses.Designing
-		err = m.Db.Projects.TxUpdate(tx, project)
+		allInlays, err := m.Db.Inlays.GetByProjectID(project.ID)
 		if err != nil {
-			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to update project status: %w", err))
+			m.WriteError(w, r, m.Err.ServerError, err)
 			return
+		}
+
+		hasPendingProofs := false
+		for _, projectInlay := range allInlays {
+			if projectInlay.ExcludedFromOrder {
+				continue
+			}
+			latestProof, found, err := m.Db.InlayProofs.GetLatestByInlayID(projectInlay.ID)
+			if err != nil {
+				m.WriteError(w, r, m.Err.ServerError, err)
+				return
+			}
+			if found && latestProof.Status == data.ProofStatuses.Pending {
+				hasPendingProofs = true
+				break
+			}
+		}
+
+		if !hasPendingProofs {
+			project.Status = data.ProjectStatuses.Designing
+			err = m.Db.Projects.TxUpdate(tx, project)
+			if err != nil {
+				m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to update project status: %w", err))
+				return
+			}
 		}
 	}
 

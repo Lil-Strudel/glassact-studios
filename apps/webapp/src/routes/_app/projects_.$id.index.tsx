@@ -15,8 +15,10 @@ import {
   DialogTrigger,
   DialogFooter,
   showToast,
+  Checkbox,
+  CheckboxControl,
 } from "@glassact/ui";
-import { createMemo, For, Match, Show, Switch } from "solid-js";
+import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import {
   getProjectOpts,
@@ -31,9 +33,11 @@ import {
 import { postPlaceOrderOpts } from "../../queries/order";
 import type { ProjectStatus, InlayWithInfo } from "@glassact/data";
 import { ProjectStatusBadge } from "../../components/project/status-badge";
+import { ProofStatusBadge } from "../../components/proof/proof-status-badge";
 import { Can } from "../../components/Can";
+import { useUserContext } from "../../providers/user";
 import { isApiError } from "../../utils/is-api-error";
-import { IoTrashOutline, IoAddCircleOutline } from "solid-icons/io";
+import { IoTrashOutline, IoAddCircleOutline, IoCheckmarkCircle } from "solid-icons/io";
 
 export const Route = createFileRoute("/_app/projects_/$id/")({
   component: RouteComponent,
@@ -82,7 +86,6 @@ function RouteComponent() {
   const inlaysQuery = useQuery(() => getInlaysByProjectOpts(params().id));
   const cancelProject = useMutation(deleteProjectOpts);
   const removeInlay = useMutation(deleteInlayOpts);
-  const placeOrder = useMutation(() => postPlaceOrderOpts());
   const submitProject = useMutation(postSubmitProjectOpts);
   const excludeInlay = useMutation(patchExcludeInlayOpts);
 
@@ -113,13 +116,7 @@ function RouteComponent() {
     return includedInlays().length > 0;
   });
 
-  const canPlaceOrder = createMemo(() => {
-    if (!projectQuery.isSuccess) return false;
-    if (projectQuery.data.status !== "approved") return false;
-    const included = includedInlays();
-    if (included.length === 0) return false;
-    return included.every((inlay) => inlay.approved_proof_id !== null);
-  });
+
 
   const currentStepIndex = createMemo(() => {
     if (!projectQuery.isSuccess) return -1;
@@ -150,31 +147,7 @@ function RouteComponent() {
     });
   }
 
-  function handlePlaceOrder() {
-    if (!projectQuery.isSuccess) return;
-    placeOrder.mutate(projectQuery.data.uuid, {
-      onSuccess() {
-        showToast({
-          title: "Order placed",
-          description: `Order for ${projectQuery.data!.name} has been placed successfully.`,
-          variant: "success",
-        });
-        queryClient.invalidateQueries({ queryKey: ["project"] });
-        queryClient.invalidateQueries({
-          queryKey: ["project", params().id, "inlays"],
-        });
-      },
-      onError(error) {
-        if (isApiError(error)) {
-          showToast({
-            title: "Failed to place order",
-            description: error?.data?.error ?? "Unknown error",
-            variant: "error",
-          });
-        }
-      },
-    });
-  }
+
 
   function handleDeleteInlay(inlay: InlayWithInfo) {
     removeInlay.mutate(inlay.uuid, {
@@ -394,77 +367,18 @@ function RouteComponent() {
                 </Show>
               </Can>
               <Can permission="place_order">
-                <Dialog>
-                  <DialogTrigger as={Button} disabled={!canPlaceOrder()}>
-                    Place Order
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Place Order</DialogTitle>
-                    </DialogHeader>
-                    <div class="space-y-4">
-                      <p class="text-sm text-gray-600">
-                        You are about to place an order for{" "}
-                        <span class="font-semibold">
-                          {projectQuery.data!.name}
-                        </span>
-                        . This will lock pricing and begin manufacturing.
-                      </p>
-                      <Show when={inlays().length !== includedInlays().length}>
-                        <p class="text-sm text-gray-500">
-                          Ordering {includedInlays().length} of{" "}
-                          {inlays().length} inlays (
-                          {inlays().length - includedInlays().length} excluded).
-                        </p>
-                      </Show>
-                      <div class="border rounded-lg divide-y">
-                        <For each={includedInlays()}>
-                          {(inlay) => (
-                            <div class="p-3 flex items-center justify-between">
-                              <div class="flex items-center gap-2">
-                                <Show when={inlay.preview_url}>
-                                  <img
-                                    src={inlay.preview_url}
-                                    alt={inlay.name}
-                                    class="w-8 h-8 object-contain rounded"
-                                  />
-                                </Show>
-                                <span class="text-sm font-medium">
-                                  {inlay.name}
-                                </span>
-                              </div>
-                              <Show when={inlay.approved_proof_id}>
-                                <Badge
-                                  variant="outline"
-                                  class="bg-green-50 text-green-700 border-green-200 text-xs"
-                                >
-                                  Approved
-                                </Badge>
-                              </Show>
-                            </div>
-                          )}
-                        </For>
-                      </div>
-                    </div>
-                    <DialogFooter class="flex justify-end gap-3 mt-4">
-                      <DialogClose
-                        as={Button}
-                        variant="outline"
-                        disabled={placeOrder.isPending}
-                      >
-                        Cancel
-                      </DialogClose>
-                      <Button
-                        onClick={handlePlaceOrder}
-                        disabled={placeOrder.isPending}
-                      >
-                        {placeOrder.isPending
-                          ? "Placing Order..."
-                          : "Confirm Order"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                <Show when={projectQuery.data!.status === "approved"}>
+                  <PlaceOrderDialog
+                    project={projectQuery.data!}
+                    inlays={inlays()}
+                    onSuccess={() => {
+                      queryClient.invalidateQueries({ queryKey: ["project"] });
+                      queryClient.invalidateQueries({
+                        queryKey: ["project", params().id, "inlays"],
+                      });
+                    }}
+                  />
+                </Show>
               </Can>
             </div>
           </div>
@@ -610,6 +524,8 @@ interface InlayCardProps {
 }
 
 function InlayCard(props: InlayCardProps) {
+  const { isDealership, isInternal } = useUserContext();
+
   const description = () => {
     if (props.inlay.type === "catalog" && props.inlay.catalog_info) {
       return props.inlay.catalog_info.customization_notes || null;
@@ -620,22 +536,36 @@ function InlayCard(props: InlayCardProps) {
     return null;
   };
 
-  const proofStatusBadge = () => {
-    if (props.inlay.approved_proof_id) {
-      return {
-        label: "Proof Approved",
-        class: "bg-green-50 text-green-700 border-green-200",
-      };
-    }
-    return null;
-  };
-
   const isExcluded = () => props.inlay.excluded_from_order;
+
+  const needsAction = createMemo(() => {
+    if (isExcluded()) return false;
+
+    if (isDealership()) {
+      return props.inlay.has_pending_proof === true;
+    }
+
+    if (isInternal()) {
+      return (
+        !props.inlay.approved_proof_id && !props.inlay.has_pending_proof
+      );
+    }
+
+    return false;
+  });
 
   return (
     <Card
-      class={`overflow-hidden transition-opacity ${isExcluded() ? "opacity-50" : ""}`}
+      class={`overflow-hidden transition-opacity relative ${isExcluded() ? "opacity-50" : ""}`}
     >
+      <Show when={needsAction()}>
+        <span
+          class="absolute top-2 right-2 z-10 w-3 h-3 bg-orange-500 rounded-full border-2 border-white shadow-sm"
+          title={
+            isDealership() ? "Proof awaiting approval" : "Needs proof"
+          }
+        />
+      </Show>
       <Link
         to="/projects/$id/inlay/$inlayId"
         params={{ id: props.projectId, inlayId: props.inlay.uuid }}
@@ -682,12 +612,15 @@ function InlayCard(props: InlayCardProps) {
               </CardDescription>
             )}
           </Show>
-          <Show when={proofStatusBadge()}>
-            {(badge) => (
-              <Badge variant="outline" class={`text-xs ${badge().class}`}>
-                {badge().label}
-              </Badge>
-            )}
+          <Show when={props.inlay.approved_proof_id}>
+            <ProofStatusBadge status="approved" class="text-xs" />
+          </Show>
+          <Show
+            when={
+              !props.inlay.approved_proof_id && props.inlay.has_pending_proof
+            }
+          >
+            <ProofStatusBadge status="pending" class="text-xs" />
           </Show>
         </CardHeader>
       </Link>
@@ -753,5 +686,220 @@ function InlayCard(props: InlayCardProps) {
         </div>
       </Show>
     </Card>
+  );
+}
+
+interface PlaceOrderDialogProps {
+  project: { uuid: string; name: string };
+  inlays: InlayWithInfo[];
+  onSuccess: () => void;
+}
+
+function PlaceOrderDialog(props: PlaceOrderDialogProps) {
+  const [selectedInlays, setSelectedInlays] = createSignal<Set<string>>(
+    new Set(),
+  );
+  const [orderSuccess, setOrderSuccess] = createSignal(false);
+  const placeOrder = useMutation(() => postPlaceOrderOpts());
+
+  const initializeSelection = () => {
+    const eligibleInlays = props.inlays
+      .filter((inlay) => inlay.approved_proof_id && !inlay.excluded_from_order)
+      .map((inlay) => inlay.uuid);
+    setSelectedInlays(new Set(eligibleInlays));
+  };
+
+  const toggleInlay = (uuid: string) => {
+    const inlay = props.inlays.find((i) => i.uuid === uuid);
+    if (!inlay?.approved_proof_id) return;
+
+    const current = selectedInlays();
+    const updated = new Set(current);
+    if (updated.has(uuid)) {
+      updated.delete(uuid);
+    } else {
+      updated.add(uuid);
+    }
+    setSelectedInlays(updated);
+  };
+
+  const selectedCount = () => selectedInlays().size;
+
+  const totalPriceCents = createMemo(() => {
+    return props.inlays
+      .filter((inlay) => selectedInlays().has(inlay.uuid))
+      .reduce((sum, inlay) => sum + (inlay.approved_proof_price_cents ?? 0), 0);
+  });
+
+  const formatPrice = (cents: number) => {
+    return `$${(cents / 100).toFixed(2)}`;
+  };
+
+  const canConfirmOrder = () => selectedCount() > 0;
+
+  const handlePlaceOrder = () => {
+    placeOrder.mutate(
+      {
+        projectUuid: props.project.uuid,
+        inlayUuids: Array.from(selectedInlays()),
+      },
+      {
+        onSuccess() {
+          setOrderSuccess(true);
+          props.onSuccess();
+        },
+        onError(error) {
+          if (isApiError(error)) {
+            showToast({
+              title: "Failed to place order",
+              description: error?.data?.error ?? "Unknown error",
+              variant: "error",
+            });
+          }
+        },
+      },
+    );
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      initializeSelection();
+      setOrderSuccess(false);
+    }
+  };
+
+  return (
+    <Dialog onOpenChange={handleOpenChange}>
+      <DialogTrigger as={Button}>Place Order</DialogTrigger>
+      <DialogContent class="max-w-lg">
+        <Show
+          when={!orderSuccess()}
+          fallback={
+            <div class="text-center py-8 space-y-4">
+              <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                <IoCheckmarkCircle class="w-10 h-10 text-green-600" />
+              </div>
+              <h3 class="text-xl font-semibold text-gray-900">
+                Order Placed Successfully!
+              </h3>
+              <p class="text-gray-600">
+                Your order for{" "}
+                <span class="font-medium">{props.project.name}</span> has been
+                submitted. Manufacturing will begin shortly.
+              </p>
+              <DialogClose as={Button} class="w-full">
+                Close
+              </DialogClose>
+            </div>
+          }
+        >
+          <DialogHeader>
+            <DialogTitle>Place Order</DialogTitle>
+          </DialogHeader>
+          <div class="space-y-4">
+            <p class="text-sm text-gray-600">
+              Select the inlays to include in this order. Only inlays with
+              approved proofs can be ordered.
+            </p>
+
+            <div class="border rounded-lg divide-y max-h-64 overflow-y-auto">
+              <For each={props.inlays}>
+                {(inlay) => {
+                  const isEligible = () => !!inlay.approved_proof_id;
+                  const isSelected = () => selectedInlays().has(inlay.uuid);
+
+                  return (
+                    <Checkbox
+                      checked={isSelected()}
+                      onChange={() => toggleInlay(inlay.uuid)}
+                      disabled={!isEligible()}
+                      class="w-full"
+                    >
+                      <label
+                        class={`p-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50 w-full ${
+                          !isEligible() ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        <CheckboxControl />
+                        <Show
+                          when={inlay.preview_url}
+                          fallback={
+                            <div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
+                              N/A
+                            </div>
+                          }
+                        >
+                          <img
+                            src={inlay.preview_url}
+                            alt={inlay.name}
+                            class="w-10 h-10 object-contain rounded"
+                          />
+                        </Show>
+                        <div class="flex-1 min-w-0">
+                          <p class="text-sm font-medium truncate">
+                            {inlay.name}
+                          </p>
+                          <Show when={inlay.approved_proof_price_group_name}>
+                            <p class="text-xs text-gray-500">
+                              {inlay.approved_proof_price_group_name}
+                            </p>
+                          </Show>
+                        </div>
+                        <Show
+                          when={isEligible()}
+                          fallback={
+                            <Badge variant="outline" class="text-xs shrink-0">
+                              No Proof
+                            </Badge>
+                          }
+                        >
+                          <div class="flex items-center gap-2 shrink-0">
+                            <Show when={inlay.approved_proof_price_cents}>
+                              <span class="text-sm font-medium">
+                                {formatPrice(
+                                  inlay.approved_proof_price_cents!,
+                                )}
+                              </span>
+                            </Show>
+                            <ProofStatusBadge status="approved" class="text-xs" />
+                          </div>
+                        </Show>
+                      </label>
+                    </Checkbox>
+                  );
+                }}
+              </For>
+            </div>
+
+            <div class="flex justify-between items-center pt-2 border-t">
+              <span class="text-sm text-gray-600">
+                {selectedCount()} inlay{selectedCount() !== 1 ? "s" : ""}{" "}
+                selected
+              </span>
+              <Show when={totalPriceCents() > 0}>
+                <span class="text-lg font-semibold">
+                  {formatPrice(totalPriceCents())}
+                </span>
+              </Show>
+            </div>
+          </div>
+          <DialogFooter class="flex justify-end gap-3 mt-4">
+            <DialogClose
+              as={Button}
+              variant="outline"
+              disabled={placeOrder.isPending}
+            >
+              Cancel
+            </DialogClose>
+            <Button
+              onClick={handlePlaceOrder}
+              disabled={placeOrder.isPending || !canConfirmOrder()}
+            >
+              {placeOrder.isPending ? "Placing Order..." : "Confirm Order"}
+            </Button>
+          </DialogFooter>
+        </Show>
+      </DialogContent>
+    </Dialog>
   );
 }

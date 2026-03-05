@@ -408,6 +408,16 @@ func (m ProjectModule) HandlePlaceOrder(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	var body struct {
+		InlayUUIDs []string `json:"inlay_uuids" validate:"required,min=1,dive,uuid4"`
+	}
+
+	err = m.ReadJSONBody(w, r, &body)
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
 	project, found, err := m.Db.Projects.GetByUUID(projectUUID)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
@@ -439,16 +449,20 @@ func (m ProjectModule) HandlePlaceOrder(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Filter to only included inlays
+	selectedUUIDs := make(map[string]bool)
+	for _, uuid := range body.InlayUUIDs {
+		selectedUUIDs[uuid] = true
+	}
+
 	var inlays []*data.Inlay
 	for _, inlayItem := range allInlays {
-		if !inlayItem.ExcludedFromOrder {
+		if selectedUUIDs[inlayItem.UUID] {
 			inlays = append(inlays, inlayItem)
 		}
 	}
 
 	if len(inlays) == 0 {
-		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("project has no included inlays"))
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("no valid inlays selected for order"))
 		return
 	}
 
@@ -465,6 +479,15 @@ func (m ProjectModule) HandlePlaceOrder(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	defer tx.Rollback()
+
+	for _, inlayItem := range allInlays {
+		inlayItem.ExcludedFromOrder = !selectedUUIDs[inlayItem.UUID]
+		inlayErr := m.Db.Inlays.TxUpdateFields(tx, inlayItem)
+		if inlayErr != nil {
+			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to update inlay exclusion: %w", inlayErr))
+			return
+		}
+	}
 
 	orderedStep := "ordered"
 	for _, inlayItem := range inlays {

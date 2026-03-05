@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { useQuery, useQueryClient } from "@tanstack/solid-query";
 import { Show, createMemo } from "solid-js";
-import { Badge, Breadcrumb } from "@glassact/ui";
+import { Badge, Breadcrumb, Button } from "@glassact/ui";
+import { IoDownloadOutline } from "solid-icons/io";
 import { getInlayOpts } from "../../queries/inlay";
 import { getProjectOpts } from "../../queries/project";
 import { getProofsByInlayOpts } from "../../queries/proof";
@@ -11,6 +12,7 @@ import ChatInput from "../../components/chat/chat-input";
 import ProofHistory from "../../components/proof/proof-history";
 import ProofActions from "../../components/proof/proof-actions";
 import CreateProofDialog from "../../components/proof/create-proof-dialog";
+import { ProofStatusBadge } from "../../components/proof/proof-status-badge";
 
 export const Route = createFileRoute("/_app/projects_/$id/inlay/$inlayId")({
   component: InlayDetailPage,
@@ -115,42 +117,52 @@ function InlayDetailPage() {
                 </Show>
 
                 <Show when={inlay().approved_proof_id}>
-                  <Badge
-                    variant="outline"
-                    class="bg-green-50 text-green-700 border-green-200"
-                  >
-                    Proof Approved
-                  </Badge>
+                  <ProofStatusBadge status="approved" />
                 </Show>
               </div>
 
               <Show when={latestPendingProof()}>
                 {(proof) => (
-                  <div class="border rounded-lg p-4 space-y-3">
-                    <h3 class="text-sm font-semibold">
-                      Pending Proof (v{proof().version_number})
-                    </h3>
-                    <div class="text-xs text-gray-500">
-                      <p>
+                  <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
+                    <Show when={proof().design_asset_url}>
+                      <div class="bg-gray-50 p-4 flex items-center justify-center border-b">
+                        <img
+                          src={proof().design_asset_url}
+                          alt={`Proof v${proof().version_number}`}
+                          class="max-w-full max-h-48 object-contain rounded"
+                        />
+                      </div>
+                    </Show>
+                    <div class="p-4 space-y-3">
+                      <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-gray-900">
+                          Pending Proof (v{proof().version_number})
+                        </h3>
+                        <ProofStatusBadge status="pending" />
+                      </div>
+                      <p class="text-sm text-gray-600">
                         {proof().width}" x {proof().height}"
                       </p>
                       <Show when={proof().design_asset_url}>
-                        <a
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          as="a"
                           href={proof().design_asset_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="text-blue-600 underline"
+                          download
+                          class="w-full"
                         >
-                          View Design
-                        </a>
+                          <IoDownloadOutline class="mr-2" size={16} />
+                          Download Design
+                        </Button>
                       </Show>
+                      <Can permission="approve_proof">
+                        <ProofActions
+                          proof={proof()}
+                          inlayUuid={params().inlayId}
+                        />
+                      </Can>
                     </div>
-                    <Can permission="approve_proof">
-                      <ProofActions
-                        proof={proof()}
-                        inlayUuid={params().inlayId}
-                      />
-                    </Can>
                   </div>
                 )}
               </Show>
