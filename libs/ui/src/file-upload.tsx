@@ -63,7 +63,7 @@ export interface FileUploadProps {
 
   disabled?: boolean;
 
-  uploadFn?: (file: File, uploadPath: string) => Promise<UploadResponse>;
+  uploadFn?: (params: { file: File; uploadPath: string }) => Promise<UploadResponse>;
 }
 
 function formatBytes(bytes: number): string {
@@ -134,9 +134,9 @@ function simulateFakeProgress(
 }
 
 async function uploadFileToS3(
-  file: File,
-  uploadPath: string,
+  params: { file: File; uploadPath: string }
 ): Promise<UploadResponse> {
+  const { file, uploadPath } = params;
   const formData = new FormData();
   formData.append("file", file);
   formData.append("uploadPath", uploadPath);
@@ -155,8 +155,8 @@ async function uploadFileToS3(
 }
 
 function getUploadFunction(
-  customUploadFn?: (file: File, uploadPath: string) => Promise<UploadResponse>,
-): (file: File, uploadPath: string) => Promise<UploadResponse> {
+  customUploadFn?: (params: { file: File; uploadPath: string }) => Promise<UploadResponse>,
+): (params: { file: File; uploadPath: string }) => Promise<UploadResponse> {
   return customUploadFn || uploadFileToS3;
 }
 
@@ -245,8 +245,8 @@ export const FileUpload = (props: FileUploadProps) => {
           });
         });
 
-        const uploadFn = getUploadFunction(props.uploadFn);
-        const result = await uploadFn(file, props.uploadPath);
+         const uploadFn = getUploadFunction(props.uploadFn);
+         const result = await uploadFn({ file, uploadPath: props.uploadPath });
 
         clearInterval(progressTimer);
 

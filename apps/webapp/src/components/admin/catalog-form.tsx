@@ -1,12 +1,12 @@
 import { CatalogItem, POST } from "@glassact/data";
 import { Form, Button, Badge } from "@glassact/ui";
 import { createForm } from "@tanstack/solid-form";
-import { useQuery } from "@tanstack/solid-query";
+import { useMutation, useQuery } from "@tanstack/solid-query";
 import { z } from "zod";
 import { For, Show, createSignal } from "solid-js";
 import { getCatalogAllTagsOpts } from "../../queries/catalog-browse";
-import api from "../../queries/api";
 import PriceGroupCombobox from "../price-group-combobox";
+import { postUploadOpts } from "../../queries/upload";
 
 interface CatalogFormProps {
   defaultValues?: POST<CatalogItem>;
@@ -33,17 +33,9 @@ export function CatalogForm(props: CatalogFormProps) {
   const [tags, setTags] = createSignal<string[]>([]);
   const [tagInput, setTagInput] = createSignal("");
   const [showTagSuggestions, setShowTagSuggestions] = createSignal(false);
+  const uploadMutation = useMutation(postUploadOpts);
 
   const tagsQuery = useQuery(() => getCatalogAllTagsOpts());
-
-  const handleFileUpload = async (file: File, uploadPath: string) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("uploadPath", uploadPath);
-
-    const response = await api.post("/upload", formData);
-    return response.data;
-  };
 
   const filteredSuggestions = () => {
     if (!tagInput() || !tagsQuery.data) return [];
@@ -202,7 +194,7 @@ export function CatalogForm(props: CatalogFormProps) {
             fileTypeLabel="SVG"
             description="Upload the SVG file for this catalog item"
             multiple={false}
-            uploadFn={handleFileUpload}
+            uploadFn={uploadMutation.mutateAsync}
           />
         )}
       />

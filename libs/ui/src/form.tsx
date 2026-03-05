@@ -28,7 +28,7 @@ import {
   FileFieldDescription,
   FileFieldErrorMessage,
 } from "./filefield";
-import { FileUpload } from "./file-upload";
+import { FileUpload, type UploadResponse } from "./file-upload";
 import { Checkbox, CheckboxControl, CheckboxLabel } from "./checkbox";
 
 function useValidationState(getField: () => AnyFieldApi) {
@@ -272,17 +272,7 @@ interface FormFileUploadProps {
   description?: string;
   class?: string;
   fullWidth?: boolean;
-  uploadFn?: (
-    file: File,
-    uploadPath: string,
-  ) => Promise<{
-    url: string;
-    filename: string;
-    size: number;
-    content_type: string;
-    key: string;
-    uploaded_at: string;
-  }>;
+  uploadFn?: (params: { file: File; uploadPath: string }) => Promise<UploadResponse>;
 }
 
 function FormFileUpload(props: FormFileUploadProps) {

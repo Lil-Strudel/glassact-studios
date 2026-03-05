@@ -1,4 +1,5 @@
 import api from "./api";
+import { mutationOptions } from "../utils/mutation-options";
 
 export interface UploadResponse {
   url: string;
@@ -20,4 +21,11 @@ export async function postUpload(
   const res = await api.post("/upload", formData);
 
   return res.data;
+}
+
+export function postUploadOpts() {
+  return mutationOptions({
+    mutationFn: (params: { file: File; uploadPath: string }) =>
+      postUpload(params.file, params.uploadPath),
+  });
 }
