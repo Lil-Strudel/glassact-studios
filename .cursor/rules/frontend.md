@@ -87,6 +87,122 @@ createEffect(() => {
 });
 ```
 
+### Prop Reactivity Patterns
+
+**Critical:** Props are reactive proxies in SolidJS. They must be accessed within reactive contexts (JSX, `createEffect`, `createMemo`, or event handlers) to track changes.
+
+**Pattern 1: Direct prop access in JSX (simplest)**
+
+Use this when props are accessed directly in the render:
+
+```tsx
+interface ButtonProps {
+  label: string;
+  disabled?: boolean;
+}
+
+function Button(props: ButtonProps) {
+  return (
+    <button disabled={props.disabled}>
+      {props.label}
+    </button>
+  );
+}
+```
+
+**Pattern 2: createMemo for derived values (most common)**
+
+Use this when you need to derive new values from props or when props are used outside JSX:
+
+```tsx
+interface FileUploadProps {
+  accept?: string;
+  maxSizeBytes?: number;
+  multiple?: boolean;
+}
+
+function FileUpload(props: FileUploadProps) {
+  // These are called outside JSX, so they MUST be createMemo
+  const acceptedExtensions = createMemo(() => 
+    parseAcceptString(props.accept)
+  );
+  
+  const maxSizeBytes = createMemo(() => 
+    props.maxSizeBytes ?? (50 * 1024 * 1024)
+  );
+  
+  const isMultiple = createMemo(() => 
+    props.multiple ?? false
+  );
+
+  // Use in functions
+  async function handleFileSelect(files: File[]) {
+    for (const file of files) {
+      validateFile(file, acceptedExtensions(), maxSizeBytes());
+    }
+  }
+
+  return (
+    <div>
+      {/* Can also be used in JSX */}
+      <input multiple={isMultiple()} />
+    </div>
+  );
+}
+```
+
+**Pattern 3: splitProps for composition (advanced)**
+
+Use this when passing props through to child components while keeping some local:
+
+```tsx
+interface CardProps {
+  title: string;
+  variant?: "primary" | "secondary";
+  class?: string;
+  // ... other HTML div props
+}
+
+function Card(props: CardProps) {
+  // Extract known props, pass the rest through
+  const [local, htmlProps] = splitProps(props, ["title", "variant"]);
+  
+  return (
+    <div {...htmlProps}>
+      <h3 class={local.variant}>{local.title}</h3>
+    </div>
+  );
+}
+```
+
+**Anti-pattern: Destructuring at function scope**
+
+```tsx
+// BAD: Props are destructured once, losing reactivity
+function FormField(props: FormFieldProps) {
+  const { label, value, onChange } = props;  // ❌ Breaks reactivity!
+  
+  return (
+    <label>{label}</label>  // Won't update if label prop changes
+  );
+}
+
+// GOOD: Access via props object
+function FormField(props: FormFieldProps) {
+  return (
+    <label>{props.label}</label>  // ✅ Reactive
+  );
+}
+```
+
+**Summary:**
+
+- Access props directly in JSX: `{props.label}`
+- For derived values: wrap in `createMemo`
+- For composition: use `splitProps`
+- Never destructure props at function scope
+- Always call createMemo/Signal results with `()`
+
 ## Type Safety
 
 ### Use Types from @glassact/data

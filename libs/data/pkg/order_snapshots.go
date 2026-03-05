@@ -76,7 +76,7 @@ func orderSnapshotToGen(os *OrderSnapshot) (*model.OrderSnapshots, error) {
 	return &genSnapshot, nil
 }
 
-func (m OrderSnapshotModel) Insert(orderSnapshot *OrderSnapshot) error {
+func (m OrderSnapshotModel) insertSnapshot(ctx context.Context, executor qrm.Queryable, orderSnapshot *OrderSnapshot) error {
 	genSnapshot, err := orderSnapshotToGen(orderSnapshot)
 	if err != nil {
 		return err
@@ -98,11 +98,8 @@ func (m OrderSnapshotModel) Insert(orderSnapshot *OrderSnapshot) error {
 		table.OrderSnapshots.CreatedAt,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
 	var dest model.OrderSnapshots
-	err = query.QueryContext(ctx, m.STDB, &dest)
+	err = query.QueryContext(ctx, executor, &dest)
 	if err != nil {
 		return err
 	}
@@ -112,6 +109,20 @@ func (m OrderSnapshotModel) Insert(orderSnapshot *OrderSnapshot) error {
 	orderSnapshot.CreatedAt = dest.CreatedAt
 
 	return nil
+}
+
+func (m OrderSnapshotModel) Insert(orderSnapshot *OrderSnapshot) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return m.insertSnapshot(ctx, m.STDB, orderSnapshot)
+}
+
+func (m OrderSnapshotModel) TxInsert(tx *sql.Tx, orderSnapshot *OrderSnapshot) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return m.insertSnapshot(ctx, tx, orderSnapshot)
 }
 
 func (m OrderSnapshotModel) GetByID(id int) (*OrderSnapshot, bool, error) {

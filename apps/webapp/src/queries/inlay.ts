@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
-import type { InlayWithInfo, PATCH, Inlay } from "@glassact/data";
+import type { InlayWithInfo } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
 export async function getInlaysByProject(
@@ -98,5 +98,21 @@ export async function deleteInlay(uuid: string): Promise<{ success: boolean }> {
 export function deleteInlayOpts() {
   return mutationOptions({
     mutationFn: deleteInlay,
+  });
+}
+
+export async function patchExcludeInlay(params: {
+  uuid: string;
+  excluded: boolean;
+}): Promise<InlayWithInfo> {
+  const res = await api.patch(`/inlay/${params.uuid}/exclude`, {
+    excluded: params.excluded,
+  });
+  return res.data;
+}
+
+export function patchExcludeInlayOpts() {
+  return mutationOptions({
+    mutationFn: patchExcludeInlay,
   });
 }

@@ -21,6 +21,7 @@ type Inlays struct {
 	PreviewURL        string
 	ApprovedProofID   *int32
 	ManufacturingStep *string
+	ExcludedFromOrder bool
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	Version           int32

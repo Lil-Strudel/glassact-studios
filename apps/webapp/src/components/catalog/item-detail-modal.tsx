@@ -7,14 +7,13 @@ import {
   DialogTrigger,
   Button,
 } from "@glassact/ui";
-import { Show } from "solid-js";
+import { ParentProps, Show } from "solid-js";
 
 interface ItemDetailModalProps {
   item: GET<CatalogItem>;
-  children?: any;
 }
 
-export function ItemDetailModal(props: ItemDetailModalProps) {
+export function ItemDetailModal(props: ParentProps<ItemDetailModalProps>) {
   return (
     <Dialog>
       <Show

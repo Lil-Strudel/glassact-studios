@@ -4,7 +4,7 @@ import {
   Link,
   redirect,
 } from "@tanstack/solid-router";
-import { createSignal, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import {
   Button,
   DropdownMenu,
@@ -71,19 +71,21 @@ function RouteComponent() {
                   />
                 </div>
                 <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
-                  {navigation.map((item) => (
-                    <Link
-                      to={item.to}
-                      class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium"
-                      activeProps={{ class: "border-primary" }}
-                      inactiveProps={{
-                        class:
-                          "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
-                      }}
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
+                  <For each={navigation}>
+                    {(item) => (
+                      <Link
+                        to={item.to}
+                        class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium"
+                        activeProps={{ class: "border-primary" }}
+                        inactiveProps={{
+                          class:
+                            "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
+                        }}
+                      >
+                        {item.name}
+                      </Link>
+                    )}
+                  </For>
                 </div>
               </div>
               <div class="hidden sm:ml-6 sm:flex sm:items-center">
@@ -102,11 +104,16 @@ function RouteComponent() {
                         />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        {userNavigation.map((item) => (
-                          <DropdownMenuItem as={item.component} {...item.props}>
-                            {item.name}
-                          </DropdownMenuItem>
-                        ))}
+                        <For each={userNavigation}>
+                          {(item) => (
+                            <DropdownMenuItem
+                              as={item.component}
+                              {...item.props}
+                            >
+                              {item.name}
+                            </DropdownMenuItem>
+                          )}
+                        </For>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
@@ -123,19 +130,21 @@ function RouteComponent() {
           {open() && (
             <div class="bg-white w-full drop-shadow absolute sm:hidden">
               <div class="space-y-1 pb-3 pt-2">
-                {navigation.map((item) => (
-                  <Link
-                    to={item.to}
-                    class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
-                    activeProps={{ class: "border-primary bg-red-50" }}
-                    inactiveProps={{
-                      class:
-                        "border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800",
-                    }}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+                <For each={navigation}>
+                  {(item) => (
+                    <Link
+                      to={item.to}
+                      class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
+                      activeProps={{ class: "border-primary bg-red-50" }}
+                      inactiveProps={{
+                        class:
+                          "border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800",
+                      }}
+                    >
+                      {item.name}
+                    </Link>
+                  )}
+                </For>
               </div>
               <div class="border-t border-gray-200 pb-3 pt-4">
                 <Show when={user()}>
@@ -162,30 +171,32 @@ function RouteComponent() {
                         </Button>
                       </div>
                       <div class="mt-3 space-y-1">
-                        {userNavigation.map((item) =>
-                          item.component === "a" ? (
-                            <a
-                              {...item.props}
-                              class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
-                            >
-                              {item.name}
-                            </a>
-                          ) : (
-                            <item.component
-                              {...item.props}
-                              class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
-                              activeProps={{
-                                class: "border-primary bg-red-50",
-                              }}
-                              inactiveProps={{
-                                class:
-                                  "border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800",
-                              }}
-                            >
-                              {item.name}
-                            </item.component>
-                          ),
-                        )}
+                        <For each={userNavigation}>
+                          {(item) =>
+                            item.component === "a" ? (
+                              <a
+                                {...item.props}
+                                class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
+                              >
+                                {item.name}
+                              </a>
+                            ) : (
+                              <item.component
+                                {...item.props}
+                                class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
+                                activeProps={{
+                                  class: "border-primary bg-red-50",
+                                }}
+                                inactiveProps={{
+                                  class:
+                                    "border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800",
+                                }}
+                              >
+                                {item.name}
+                              </item.component>
+                            )
+                          }
+                        </For>
                       </div>
                     </>
                   )}

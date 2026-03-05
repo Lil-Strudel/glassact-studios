@@ -1,5 +1,5 @@
 import { cn } from "./cn";
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
 import type { JSX } from "solid-js";
 
 const badgeVariants = cva(
@@ -25,7 +25,10 @@ export interface BadgeProps extends JSX.HTMLAttributes<HTMLDivElement> {
 
 export function Badge(props: BadgeProps) {
   return (
-    <div class={cn(badgeVariants({ variant: props.variant }), props.class)} {...props}>
+    <div
+      class={cn(badgeVariants({ variant: props.variant }), props.class)}
+      {...props}
+    >
       {props.children}
     </div>
   );

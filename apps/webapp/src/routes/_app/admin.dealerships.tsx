@@ -115,8 +115,8 @@ function RouteComponent() {
         state: "",
         postal_code: "",
         country: "",
-        latitude: undefined as unknown as Number,
-        longitude: undefined as unknown as Number,
+        latitude: "" as unknown as number,
+        longitude: "" as unknown as number,
       },
     },
     validators: {

@@ -19,7 +19,7 @@ import {
   IoAlertCircle,
   IoReload,
 } from "solid-icons/io";
-import { createSignal, Show, Switch, Match, createEffect } from "solid-js";
+import { createSignal, Show, Switch, Match, createEffect, createMemo } from "solid-js";
 
 export interface UploadResponse {
   url: string;
@@ -63,7 +63,7 @@ export interface FileUploadProps {
 
   disabled?: boolean;
 
-  uploadFn?: (file: File, uploadPath: string) => Promise<UploadResponse>;
+  uploadFn?: (params: { file: File; uploadPath: string }) => Promise<UploadResponse>;
 }
 
 function formatBytes(bytes: number): string {
@@ -134,9 +134,9 @@ function simulateFakeProgress(
 }
 
 async function uploadFileToS3(
-  file: File,
-  uploadPath: string,
+  params: { file: File; uploadPath: string }
 ): Promise<UploadResponse> {
+  const { file, uploadPath } = params;
   const formData = new FormData();
   formData.append("file", file);
   formData.append("uploadPath", uploadPath);
@@ -155,8 +155,8 @@ async function uploadFileToS3(
 }
 
 function getUploadFunction(
-  customUploadFn?: (file: File, uploadPath: string) => Promise<UploadResponse>,
-): (file: File, uploadPath: string) => Promise<UploadResponse> {
+  customUploadFn?: (params: { file: File; uploadPath: string }) => Promise<UploadResponse>,
+): (params: { file: File; uploadPath: string }) => Promise<UploadResponse> {
   return customUploadFn || uploadFileToS3;
 }
 
@@ -169,11 +169,12 @@ export const FileUpload = (props: FileUploadProps) => {
     null,
   );
 
-  const acceptedExtensions = parseAcceptString(props.accept);
-  const maxSizeBytes =
-    props.maxSizeBytes !== undefined ? props.maxSizeBytes : 50 * 1024 * 1024;
-  const fileTypeLabel = props.fileTypeLabel ?? "file";
-  const isMultiple = props.multiple ?? false;
+  const acceptedExtensions = createMemo(() => parseAcceptString(props.accept));
+  const maxSizeBytes = createMemo(() =>
+    props.maxSizeBytes !== undefined ? props.maxSizeBytes : 50 * 1024 * 1024,
+  );
+  const fileTypeLabel = createMemo(() => props.fileTypeLabel ?? "file");
+  const isMultiple = createMemo(() => props.multiple ?? false);
 
   createEffect(() => {
     if (props.initialUrls) {
@@ -205,16 +206,16 @@ export const FileUpload = (props: FileUploadProps) => {
   async function handleFileAccept(files: File[]) {
     setValidationError(null);
 
-    if (!isMultiple && fileStates().size > 0) {
+    if (!isMultiple() && fileStates().size > 0) {
       setFileStates(new Map());
     }
 
     for (const file of files) {
       const validation = validateFile(
         file,
-        acceptedExtensions,
-        maxSizeBytes,
-        fileTypeLabel,
+        acceptedExtensions(),
+        maxSizeBytes(),
+        fileTypeLabel(),
       );
 
       if (!validation.valid) {
@@ -244,8 +245,8 @@ export const FileUpload = (props: FileUploadProps) => {
           });
         });
 
-        const uploadFn = getUploadFunction(props.uploadFn);
-        const result = await uploadFn(file, props.uploadPath);
+         const uploadFn = getUploadFunction(props.uploadFn);
+         const result = await uploadFn({ file, uploadPath: props.uploadPath });
 
         clearInterval(progressTimer);
 
@@ -264,7 +265,7 @@ export const FileUpload = (props: FileUploadProps) => {
           .map((state) => state.url)
           .filter((url): url is string => !!url);
 
-        if (isMultiple) {
+        if (isMultiple()) {
           props.onUrlChange(allUrls);
         } else {
           props.onUrlChange(allUrls[0] ?? null);
@@ -316,7 +317,7 @@ export const FileUpload = (props: FileUploadProps) => {
           return `${rf.file.name} is too large`;
         }
         if (rf.errors.includes("FILE_INVALID_TYPE")) {
-          return `${rf.file.name} is not a valid ${fileTypeLabel}`;
+          return `${rf.file.name} is not a valid ${fileTypeLabel()}`;
         }
         return `${rf.file.name} was rejected`;
       });
@@ -340,7 +341,7 @@ export const FileUpload = (props: FileUploadProps) => {
       .map((state) => state.url)
       .filter((url): url is string => !!url);
 
-    if (isMultiple) {
+    if (isMultiple()) {
       props.onUrlChange(allUrls.length > 0 ? allUrls : []);
     } else {
       props.onUrlChange(allUrls[0] ?? null);
@@ -349,7 +350,7 @@ export const FileUpload = (props: FileUploadProps) => {
 
   return (
     <FileFieldRoot
-      multiple={isMultiple}
+      multiple={isMultiple()}
       onFileAccept={handleFileAccept}
       onFileChange={handleFileChange}
       disabled={props.disabled}

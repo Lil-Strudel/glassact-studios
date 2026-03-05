@@ -13,7 +13,7 @@ import {
 } from "@glassact/ui";
 import { IoClose } from "solid-icons/io";
 import { createForm } from "@tanstack/solid-form";
-import { createMemo, createSignal, For, Show, untrack } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import { z } from "zod";
 import { zodStringNumber } from "../../utils/zod-string-number";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
@@ -31,18 +31,11 @@ export const Route = createFileRoute("/_app/projects_/$id/add-inlay")({
 
 function RouteComponent() {
   const params = Route.useParams();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
   const projectQuery = useQuery(() => getProjectOpts(params().id));
 
-  const projectName = createMemo(() => {
-    if (projectQuery.isSuccess) {
-      return untrack(() => projectQuery.data.name);
-    }
-    return "asdfkj";
-  });
+  const navigate = useNavigate();
 
+  const queryClient = useQueryClient();
   function handleSuccess() {
     queryClient.invalidateQueries({
       queryKey: ["project", params().id, "inlays"],
@@ -55,7 +48,10 @@ function RouteComponent() {
       <Breadcrumb
         crumbs={[
           { title: "Projects", to: "/projects" },
-          { title: projectName(), to: `/projects/${params().id}` },
+          {
+            title: projectQuery.data?.name ?? "Project",
+            to: `/projects/${params().id}`,
+          },
           {
             title: "Add Inlay",
             to: `/projects/${params().id}/add-inlay`,

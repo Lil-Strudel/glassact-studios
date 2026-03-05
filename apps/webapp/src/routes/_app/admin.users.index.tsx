@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/solid-router";
 import { Link } from "@tanstack/solid-router";
 import { Button } from "@glassact/ui";
 
-export const Route = createFileRoute("/_app/admin/users")({
+export const Route = createFileRoute("/_app/admin/users/")({
   component: RouteComponent,
 });
 

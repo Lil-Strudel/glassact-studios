@@ -225,6 +225,7 @@ CREATE TABLE inlays (
     manufacturing_step VARCHAR(255) CHECK (manufacturing_step IS NULL OR manufacturing_step IN (
         'ordered', 'materials-prep', 'cutting', 'fire-polish', 'packaging', 'shipped', 'delivered'
     )),
+    excluded_from_order BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     version INTEGER NOT NULL DEFAULT 1

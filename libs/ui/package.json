@@ -22,7 +22,8 @@
     }
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "eslint \"./src/**/*.{ts,tsx}\""
   },
   "dependencies": {
     "@kobalte/core": "^0.13.11",
@@ -37,6 +38,11 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "typescript": "catalog:"
+    "@eslint/js": "catalog:eslint",
+    "eslint": "catalog:eslint",
+    "eslint-plugin-solid": "catalog:eslint",
+    "globals": "catalog:eslint",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:eslint"
   }
 }
