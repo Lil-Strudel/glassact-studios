@@ -206,6 +206,39 @@ func (m *UserModule) HandleDeleteDealershipUser(w http.ResponseWriter, r *http.R
 	m.WriteJSON(w, r, http.StatusOK, user)
 }
 
+func (m *UserModule) HandleGetInternalUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := m.Db.InternalUsers.GetAll()
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, users)
+}
+
+func (m *UserModule) HandleGetInternalUserByUUID(w http.ResponseWriter, r *http.Request) {
+	uuid := r.PathValue("uuid")
+
+	err := m.Validate.Var(uuid, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	user, found, err := m.Db.InternalUsers.GetByUUID(uuid)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, user)
+}
+
 func (m *UserModule) HandleCreateInternalUser(w http.ResponseWriter, r *http.Request) {
 	authUser := m.ContextGetUser(r)
 

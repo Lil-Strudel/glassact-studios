@@ -64,6 +64,15 @@ func (m InlayModule) validateInlayOwnership(w http.ResponseWriter, r *http.Reque
 	return project, true
 }
 
+type InlayWithProofStatus struct {
+	*data.Inlay
+	HasPendingProof             bool    `json:"has_pending_proof"`
+	LatestProofStatus           *string `json:"latest_proof_status"`
+	ApprovedProofPriceGroupID   *int    `json:"approved_proof_price_group_id"`
+	ApprovedProofPriceGroupName *string `json:"approved_proof_price_group_name"`
+	ApprovedProofPriceCents     *int    `json:"approved_proof_price_cents"`
+}
+
 func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Request) {
 	projectUUID := r.PathValue("uuid")
 
@@ -84,7 +93,53 @@ func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	m.WriteJSON(w, r, http.StatusOK, inlays)
+	result := make([]InlayWithProofStatus, len(inlays))
+	for i, inlay := range inlays {
+		result[i] = InlayWithProofStatus{
+			Inlay:             inlay,
+			HasPendingProof:   false,
+			LatestProofStatus: nil,
+		}
+
+		latestProof, found, err := m.Db.InlayProofs.GetLatestByInlayID(inlay.ID)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+
+		if found {
+			status := string(latestProof.Status)
+			result[i].LatestProofStatus = &status
+			result[i].HasPendingProof = latestProof.Status == data.ProofStatuses.Pending
+		}
+
+		if inlay.ApprovedProofID != nil {
+			approvedProof, found, err := m.Db.InlayProofs.GetByID(*inlay.ApprovedProofID)
+			if err != nil {
+				m.WriteError(w, r, m.Err.ServerError, err)
+				return
+			}
+
+			if found && approvedProof.PriceGroupID != nil {
+				result[i].ApprovedProofPriceGroupID = approvedProof.PriceGroupID
+				result[i].ApprovedProofPriceCents = approvedProof.PriceCents
+
+				priceGroup, found, err := m.Db.PriceGroups.GetByID(*approvedProof.PriceGroupID)
+				if err != nil {
+					m.WriteError(w, r, m.Err.ServerError, err)
+					return
+				}
+				if found {
+					result[i].ApprovedProofPriceGroupName = &priceGroup.Name
+					if result[i].ApprovedProofPriceCents == nil {
+						result[i].ApprovedProofPriceCents = &priceGroup.BasePriceCents
+					}
+				}
+			}
+		}
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, result)
 }
 
 func (m InlayModule) HandleGetInlayByUUID(w http.ResponseWriter, r *http.Request) {
@@ -315,4 +370,74 @@ func (m InlayModule) HandleDeleteInlay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	m.WriteJSON(w, r, http.StatusOK, map[string]bool{"success": true})
+}
+
+var preOrderStatuses = map[data.ProjectStatus]bool{
+	data.ProjectStatuses.Draft:           true,
+	data.ProjectStatuses.Designing:       true,
+	data.ProjectStatuses.PendingApproval: true,
+	data.ProjectStatuses.Approved:        true,
+}
+
+func (m InlayModule) HandleExcludeInlay(w http.ResponseWriter, r *http.Request) {
+	inlayUUID := r.PathValue("uuid")
+
+	err := m.Validate.Var(inlayUUID, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	var body struct {
+		Excluded bool `json:"excluded"`
+	}
+
+	err = m.ReadJSONBody(w, r, &body)
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	inlay, found, err := m.Db.Inlays.GetByUUID(inlayUUID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	project, ok := m.validateInlayOwnership(w, r, inlay)
+	if !ok {
+		return
+	}
+
+	if !preOrderStatuses[project.Status] {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("can only change inlay inclusion on projects before ordering"))
+		return
+	}
+
+	inlay.ExcludedFromOrder = body.Excluded
+
+	tx, err := m.Db.STDB.Begin()
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	err = m.Db.Inlays.TxUpdateFields(tx, inlay)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, inlay)
 }

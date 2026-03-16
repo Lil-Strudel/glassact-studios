@@ -2,8 +2,12 @@ import { createContext, useContext, ParentComponent } from "solid-js";
 import { SetStoreFunction, createStore } from "solid-js/store";
 import { deepCopy } from "../utils/deep-copy";
 
-export interface AppState {}
-export const initialAppState: AppState = {};
+export interface AppState {
+  placeholder: boolean;
+}
+export const initialAppState: AppState = {
+  placeholder: true,
+};
 
 export const AppStateContext =
   createContext<[AppState, SetStoreFunction<AppState>]>();

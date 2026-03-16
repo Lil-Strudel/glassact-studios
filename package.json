@@ -6,8 +6,8 @@
     "pnpm": "10"
   },
   "scripts": {
-    "api:test": "go test -v ./apps/api/modules/...",
-    "api:test:coverage": "go test -v -coverprofile=coverage.out ./apps/api/modules/modules_test.go && go tool cover -html=coverage.out -o coverage.html",
+    "api:test": "pnpm --filter @glassact/api test",
+    "api:test:coverage": "pnpm --filter @glassact/api test:coverage",
     "dev": "mprocs",
     "dev:api": "pnpm --filter @glassact/api dev",
     "dev:landing": "pnpm --filter @glassact/landing dev",
@@ -22,7 +22,10 @@
     "db:seed": "pnpm --filter @glassact/data seed",
     "db:test": "pnpm --filter @glassact/data test",
     "db:test:coverage": "pnpm --filter @glassact/data test:coverage",
-    "libs:build": "pnpm --filter './libs/**' build"
+    "libs:build": "pnpm --filter './libs/**' build",
+    "lint": "pnpm --filter '*' lint",
+    "lint:webapp": "pnpm --filter @glassact/webapp lint",
+    "lint:ui": "pnpm --filter @glassact/ui lint"
   },
   "devDependencies": {
     "mprocs": "^0.8.3"

@@ -25,7 +25,7 @@ This document outlines the complete implementation plan for the GlassAct Studios
 | **Phase 2: Auth & Permissions**   | ✅ COMPLETE | 100%     | Dual auth, unified OAuth, permissions, user management complete |
 | **Phase 3: Catalog System**       | ✅ COMPLETE | 100%     | Admin CRUD, browsing, filtering, SVG upload complete            |
 | **Phase 4: Project & Inlay Flow** | ✅ COMPLETE | 100%     | Project creation, inlay management, form UI complete |
-| **Phase 5: Chat & Proofs**        | ⏳ Pending  | 0%       | Ready to start                           |
+| **Phase 5: Chat & Proofs**        | ✅ COMPLETE | 100%     | Chat, proofs, approve/decline, order placement complete |
 | **Phase 6: Manufacturing**        | ⏳ Pending  | 0%       | Ready to start                           |
 | **Phase 7: Notifications**        | ⏳ Pending  | 0%       | Ready to start                           |
 | **Phase 8: Invoicing**            | ⏳ Pending  | 0%       | Ready to start                           |
@@ -1055,16 +1055,34 @@ All Phase 4 tasks completed:
 
 ### Phase 5: Chat & Proofs
 
+**Status: ✅ COMPLETE**
+
 **Goal:** Design discussion and approval workflow
 
-| Task                  | Dependencies |
-| --------------------- | ------------ |
-| Update chat API       | Phase 1      |
-| Proof API             | Phase 1      |
-| Approve/decline API   | Proof API    |
-| Chat UI refactor      | Chat API     |
-| Proof display in chat | Proof API    |
-| Proof version history | Proof API    |
+| Task                  | Dependencies | Status |
+| --------------------- | ------------ | ------ |
+| Update chat API       | Phase 1      | ✅     |
+| Proof API             | Phase 1      | ✅     |
+| Approve/decline API   | Proof API    | ✅     |
+| Chat UI refactor      | Chat API     | ✅     |
+| Proof display in chat | Proof API    | ✅     |
+| Proof version history | Proof API    | ✅     |
+| Order placement API   | Proof API    | ✅     |
+| Order placement UI    | Order API    | ✅     |
+| Inlay detail page     | Chat, Proofs | ✅     |
+
+**Completed items:**
+
+- ✅ Data layer: TxInsert/TxUpdate for inlay_chats, inlay_proofs, order_snapshots, projects; TxUpdateFields for inlays; TxSupersedePendingByInlayID, CountByInlayID for proofs
+- ✅ Chat API: GET/POST `/api/inlay/{uuid}/chats` with dealership access control
+- ✅ Proof API: GET `/api/inlay/{uuid}/proofs`, GET `/api/proof/{uuid}`, POST `/api/inlay/{uuid}/proofs` (atomic: chat message + proof + supersede old + update preview)
+- ✅ Approve/decline API: POST `/api/proof/{uuid}/approve` and `/api/proof/{uuid}/decline` (atomic: proof update + chat message + inlay/project status transitions)
+- ✅ Order placement API: POST `/api/project/{uuid}/place-order` (atomic: order snapshots + project status update)
+- ✅ Frontend queries: chat.ts, proof.ts, order.ts (with 15s polling for chat)
+- ✅ Frontend components: ChatThread, ChatInput, CreateProofDialog, ProofHistory, ProofActions
+- ✅ Inlay detail page: two-column layout (inlay details + proofs left, chat right)
+- ✅ Project detail page: clickable inlay cards, proof status badges, Place Order flow with confirmation dialog
+- ✅ Cleanup: removed old inlay-chat routes, queries, and WIP components
 
 ### Phase 6: Manufacturing
 

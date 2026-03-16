@@ -1,4 +1,4 @@
-function validator(num: any) {
+function validator(num: unknown) {
   return !isNaN(Number(num));
 }
 export const zodStringNumber = [

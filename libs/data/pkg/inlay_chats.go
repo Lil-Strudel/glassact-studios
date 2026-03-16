@@ -121,7 +121,7 @@ func inlayChatToGen(ic *InlayChat) (*model.InlayChats, error) {
 	return &genChat, nil
 }
 
-func (m InlayChatModel) Insert(chat *InlayChat) error {
+func (m InlayChatModel) insertChat(ctx context.Context, executor qrm.Queryable, chat *InlayChat) error {
 	genChat, err := inlayChatToGen(chat)
 	if err != nil {
 		return err
@@ -144,11 +144,8 @@ func (m InlayChatModel) Insert(chat *InlayChat) error {
 		table.InlayChats.Version,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
 	var dest model.InlayChats
-	err = query.QueryContext(ctx, m.STDB, &dest)
+	err = query.QueryContext(ctx, executor, &dest)
 	if err != nil {
 		return err
 	}
@@ -160,6 +157,20 @@ func (m InlayChatModel) Insert(chat *InlayChat) error {
 	chat.Version = int(dest.Version)
 
 	return nil
+}
+
+func (m InlayChatModel) Insert(chat *InlayChat) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return m.insertChat(ctx, m.STDB, chat)
+}
+
+func (m InlayChatModel) TxInsert(tx *sql.Tx, chat *InlayChat) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return m.insertChat(ctx, tx, chat)
 }
 
 func (m InlayChatModel) GetByID(id int) (*InlayChat, bool, error) {

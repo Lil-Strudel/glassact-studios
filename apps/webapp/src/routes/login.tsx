@@ -142,11 +142,11 @@ function RouteComponent() {
 
               <div>
                 <div class="mt-10 flex items-center gap-x-6">
-                  <div class="w-full flex-1 border-t border-gray-200"></div>
+                  <div class="w-full flex-1 border-t border-gray-200" />
                   <p class="text-nowrap text-sm/6 font-medium text-gray-900">
                     Or continue with
                   </p>
-                  <div class="w-full flex-1 border-t border-gray-200"></div>
+                  <div class="w-full flex-1 border-t border-gray-200" />
                 </div>
 
                 <div class="mt-6 grid grid-cols-2 gap-4">

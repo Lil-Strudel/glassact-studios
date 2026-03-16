@@ -3,7 +3,6 @@ import {
   Link,
   Outlet,
   redirect,
-  useParams,
 } from "@tanstack/solid-router";
 import { For } from "solid-js";
 import { IoPersonOutline, IoBusinessOutline } from "solid-icons/io";
