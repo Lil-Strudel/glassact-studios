@@ -17,19 +17,19 @@ This document outlines the complete implementation plan for the GlassAct Studios
 
 ## Project Status
 
-**Last Updated:** February 26, 2026
+**Last Updated:** March 16, 2026
 
 | Phase                             | Status      | Progress | Notes                                                           |
 | --------------------------------- | ----------- | -------- | --------------------------------------------------------------- |
 | **Phase 1: Foundation**           | ✅ COMPLETE | 100%     | Go models and TypeScript types complete.                        |
 | **Phase 2: Auth & Permissions**   | ✅ COMPLETE | 100%     | Dual auth, unified OAuth, permissions, user management complete |
 | **Phase 3: Catalog System**       | ✅ COMPLETE | 100%     | Admin CRUD, browsing, filtering, SVG upload complete            |
-| **Phase 4: Project & Inlay Flow** | ✅ COMPLETE | 100%     | Project creation, inlay management, form UI complete |
-| **Phase 5: Chat & Proofs**        | ✅ COMPLETE | 100%     | Chat, proofs, approve/decline, order placement complete |
-| **Phase 6: Manufacturing**        | ⏳ Pending  | 0%       | Ready to start                           |
-| **Phase 7: Notifications**        | ⏳ Pending  | 0%       | Ready to start                           |
-| **Phase 8: Invoicing**            | ⏳ Pending  | 0%       | Ready to start                           |
-| **Phase 9: Dashboards**           | ⏳ Pending  | 0%       | Ready to start                           |
+| **Phase 4: Project & Inlay Flow** | ✅ COMPLETE | 100%     | Project creation, inlay management, form UI complete            |
+| **Phase 5: Chat & Proofs**        | ✅ COMPLETE | 100%     | Chat, proofs, approve/decline, order placement complete         |
+| **Phase 6: Manufacturing**        | ✅ COMPLETE | 100%     | Kanban board, milestones, blockers, pizza tracker complete      |
+| **Phase 7: Notifications**        | ⏳ Pending  | 0%       | Ready to start                                                  |
+| **Phase 8: Invoicing**            | ⏳ Pending  | 0%       | Ready to start                                                  |
+| **Phase 9: Dashboards**           | ⏳ Pending  | 0%       | Ready to start                                                  |
 
 ---
 
@@ -566,6 +566,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 #### Completed Features
 
 **Backend Auth System:**
+
 - ✅ `AuthUser` interface implemented on both `DealershipUser` and `InternalUser`
 - ✅ Unified middleware using `GetAuthUserForToken()` for both user types
 - ✅ Generic `Can(action string)` permission system with 13 permission actions
@@ -573,18 +574,21 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - ✅ Permission utilities: `RequirePermission()` and `RequireRole()` middleware
 
 **Invite-Only Authentication:**
+
 - ✅ Unified OAuth callback checks both `dealership_users` and `internal_users` tables
 - ✅ Magic link flow supports both user types
 - ✅ Returns 401 if user not pre-registered in either table
 - ✅ Token refresh uses unified lookup with scope mapping
 
 **User Management APIs:**
+
 - ✅ POST/PATCH/DELETE `/api/dealership-user` (admin only)
 - ✅ POST/PATCH/DELETE `/api/internal-user` (admin only)
 - ✅ Dealership admins can only manage users in their dealership
 - ✅ Internal admins can manage all internal users
 
 **Frontend Auth System:**
+
 - ✅ Auth union type: `type User = DealershipUser | InternalUser`
 - ✅ Type guards: `isDealershipUser()`, `isInternalUser()`
 - ✅ Auth context with: `isDealership()`, `isInternal()`, `can(action)` helpers
@@ -592,6 +596,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - ✅ Permission constants export for consistency
 
 **OAuth Integration:**
+
 - ✅ Same OAuth flows (Google, Microsoft) for both user types
 - ✅ OAuth callback queries dealership first, then internal users
 - ✅ Automatic account linking for existing emails
@@ -600,6 +605,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 #### Permission Actions
 
 **Dealership:**
+
 - `create_project` - submitter, approver, admin
 - `approve_proof` - approver, admin
 - `place_order` - approver, admin
@@ -609,6 +615,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - `view_invoices` - all roles
 
 **Internal:**
+
 - `create_proof` - designer, admin
 - `manage_kanban` - production, admin
 - `create_blocker` - production, admin
@@ -619,6 +626,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 #### Files Created/Modified
 
 **Backend:**
+
 - `libs/data/pkg/auth.go` - AuthUser interface, scope constants
 - `libs/data/pkg/permissions.go` - Permission action constants
 - `libs/data/pkg/token_lookup.go` - Unified token lookup with scope mapping
@@ -633,12 +641,14 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - `apps/api/modules/modules.go` - Updated routes for new endpoints
 
 **Frontend:**
+
 - `libs/data/src/auth.ts` - Union type, type guards, permission constants
 - `libs/data/src/index.ts` - Export auth module
 - `apps/webapp/src/providers/user.tsx` - Updated with permission checking
 - `apps/webapp/src/components/Can.tsx` - Permission-based rendering component
 
 **Documentation:**
+
 - `.cursor/rules/backend.md` - Added auth usage examples
 
 ### Phase 3: Catalog System
@@ -650,6 +660,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 #### Completed Features
 
 **Backend API Endpoints:**
+
 - ✅ `GET /api/catalog` - List items with pagination, filtering (name, code, category, active status)
 - ✅ `POST /api/catalog` - Create new catalog item
 - ✅ `GET /api/catalog/:uuid` - Get single item details
@@ -664,6 +675,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 **Admin-Side Features:**
 
 **Admin Catalog List Page** (`admin.catalog.tsx`)
+
 - ✅ Full-featured data table with TanStack Solid Table
 - ✅ Sortable and filterable columns
 - ✅ Search by code and name
@@ -674,6 +686,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - ✅ Edit and delete actions per item
 
 **Admin Create Catalog Item Page** (`admin.catalog_.create.tsx`)
+
 - ✅ Dedicated creation route
 - ✅ Form validation and error handling
 - ✅ Success redirection
@@ -681,6 +694,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - ✅ Back navigation button
 
 **Admin Edit Catalog Item Page** (`admin.catalog_.$uuid.tsx`)
+
 - ✅ Dynamic routing by UUID
 - ✅ Load full item details
 - ✅ Update item properties
@@ -690,6 +704,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - ✅ Error state handling
 
 **Catalog Form Component** (`/apps/webapp/src/components/admin/catalog-form.tsx`)
+
 - ✅ Basic fields: catalog code, name, description, category, active status
 - ✅ Dimensions: default and minimum width/height with validation
 - ✅ Pricing: price group selection via combobox
@@ -702,6 +717,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 **Customer-Facing Features:**
 
 **Public Catalog Browse Page** (`/apps/webapp/src/routes/_app/catalog.index.tsx`)
+
 - ✅ Two-panel layout: filter sidebar + responsive grid
 - ✅ Responsive design (1 col mobile, 2 col tablet, 3 col desktop)
 - ✅ Infinite scroll with "Load More" button
@@ -709,6 +725,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - ✅ Loading skeletons and empty states
 
 **Filter Sidebar Component** (`/apps/webapp/src/components/catalog/filter-sidebar.tsx`)
+
 - ✅ Search input (searches name and code)
 - ✅ Category dropdown (populated from API)
 - ✅ Tag multi-select with autocomplete
@@ -716,6 +733,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - ✅ Dynamic filter suggestions
 
 **Catalog Grid Component** (`/apps/webapp/src/components/catalog/catalog-grid.tsx`)
+
 - ✅ Responsive grid layout with proper spacing
 - ✅ Item cards with SVG preview images
 - ✅ Catalog code badge (monospace)
@@ -723,6 +741,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - ✅ Loading and empty states
 
 **Item Detail Modal** (`/apps/webapp/src/components/catalog/item-detail-modal.tsx`)
+
 - ✅ Full-screen modal dialog
 - ✅ Large SVG preview
 - ✅ Complete item information display
@@ -730,6 +749,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - ✅ Scrollable for small screens
 
 **Data Layer & Models:**
+
 - ✅ `CatalogItem` and `CatalogItemTag` Go models with full CRUD
 - ✅ Comprehensive query methods: GetByCode, GetByTag, GetActive, etc.
 - ✅ Tag management in data layer
@@ -737,6 +757,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - ✅ TypeScript types aligned with Go models
 
 **Integration Points:**
+
 - ✅ Price group integration (select during item creation/editing)
 - ✅ SVG file upload via `/api/upload` endpoint
 - ✅ File storage with "catalog-items" path
@@ -758,6 +779,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 #### Completed Features
 
 **Working Features:**
+
 - ✅ Project creation (simple project and atomic multi-inlay creation)
 - ✅ Inlay management (add, edit, remove catalog and custom inlays)
 - ✅ Project lifecycle (Draft → Designing → PendingApproval → Approved → Cancelled)
@@ -765,14 +787,10 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - ✅ Status timeline visualization in UI
 - ✅ Multi-step form with catalog browsing (search, category, tag filtering)
 
-**Partial/Deferred (Phase 5):**
-- ⚠️ Order placement (button present but disabled until proofs accepted)
-- ⚠️ Manufacturing step tracking (infrastructure ready, not yet integrated)
-- ⚠️ Inlay chat system (models exist, not yet connected to project flow)
-
 #### Backend API Endpoints
 
 **Project Management:**
+
 - `GET /api/project` - List projects (dealership sees own, internal sees all)
 - `POST /api/project` - Create simple project with name only
 - `POST /api/project/with-inlays` - Create project with inlays in atomic transaction
@@ -781,6 +799,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - `DELETE /api/project/{uuid}` - Cancel project (status → cancelled)
 
 **Inlay Management:**
+
 - `GET /api/project/{uuid}/inlays` - List all inlays for a project
 - `POST /api/project/{uuid}/inlays/catalog` - Add catalog inlay with customization notes
 - `POST /api/project/{uuid}/inlays/custom` - Add custom inlay with dimensions
@@ -789,6 +808,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - `DELETE /api/inlay/{uuid}` - Remove inlay from project
 
 **Permission Control:**
+
 - All endpoints require authentication
 - Create operations require `create_project` permission
 - Dealership users can only access their own projects
@@ -799,14 +819,16 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 **File:** `libs/data/pkg/projects.go`
 
 **ProjectModel:**
+
 ```
 Type: Project
 Fields: id, uuid, dealership_id, name, status, ordered_at, ordered_by, version, created_at, updated_at
-Status Enum: draft, designing, pending-approval, approved, ordered, in-production, 
+Status Enum: draft, designing, pending-approval, approved, ordered, in-production,
              shipped, delivered, invoiced, completed, cancelled
 ```
 
 **CRUD Operations:**
+
 - `Insert(project *Project)` - Create new project, auto-generate UUID
 - `TxInsert(tx *sql.Tx, project *Project)` - Transactional insert
 - `GetByID(id int)` - Fetch by internal ID
@@ -819,9 +841,10 @@ Status Enum: draft, designing, pending-approval, approved, ordered, in-productio
 **File:** `libs/data/pkg/inlays.go`
 
 **InlayModel with Subtypes:**
+
 ```
 Type: Inlay
-Fields: id, uuid, project_id, name, type, preview_url, approved_proof_id, 
+Fields: id, uuid, project_id, name, type, preview_url, approved_proof_id,
         manufacturing_step, version, created_at, updated_at
 
 Type: InlayCatalogInfo
@@ -835,6 +858,7 @@ ManufacturingStep: ordered, materials-prep, cutting, fire-polish, packaging, shi
 ```
 
 **CRUD Operations:**
+
 - `Insert(inlay *Inlay)` - Create inlay + catalog/custom info in transaction
 - `TxInsert(tx *sql.Tx, inlay *Inlay)` - Transactional insert with subtypes
 - `GetByID(id int)` - Fetch with LEFT JOINs to catalog/custom info
@@ -847,58 +871,76 @@ ManufacturingStep: ordered, materials-prep, cutting, fire-polish, packaging, shi
 #### TypeScript Types
 
 **File:** `libs/data/src/projects.ts`
+
 ```typescript
-type ProjectStatus = "draft" | "designing" | "pending-approval" | "approved" | 
-                    "ordered" | "in-production" | "shipped" | "delivered" | 
-                    "invoiced" | "completed" | "cancelled"
+type ProjectStatus =
+  | "draft"
+  | "designing"
+  | "pending-approval"
+  | "approved"
+  | "ordered"
+  | "in-production"
+  | "shipped"
+  | "delivered"
+  | "invoiced"
+  | "completed"
+  | "cancelled";
 
 type Project = StandardTable<{
-  dealership_id: number
-  name: string
-  status: ProjectStatus
-  ordered_at: string | null
-  ordered_by: number | null
-}>
+  dealership_id: number;
+  name: string;
+  status: ProjectStatus;
+  ordered_at: string | null;
+  ordered_by: number | null;
+}>;
 ```
 
 **File:** `libs/data/src/inlays.ts`
-```typescript
-type InlayType = "catalog" | "custom"
 
-type ManufacturingStep = "ordered" | "materials-prep" | "cutting" | "fire-polish" | 
-                         "packaging" | "shipped" | "delivered"
+```typescript
+type InlayType = "catalog" | "custom";
+
+type ManufacturingStep =
+  | "ordered"
+  | "materials-prep"
+  | "cutting"
+  | "fire-polish"
+  | "packaging"
+  | "shipped"
+  | "delivered";
 
 type InlayCatalogInfo = StandardTable<{
-  inlay_id: number
-  catalog_item_id: number
-  customization_notes: string
-}>
+  inlay_id: number;
+  catalog_item_id: number;
+  customization_notes: string;
+}>;
 
 type InlayCustomInfo = StandardTable<{
-  inlay_id: number
-  description: string
-  requested_width: number
-  requested_height: number
-}>
+  inlay_id: number;
+  description: string;
+  requested_width: number;
+  requested_height: number;
+}>;
 
 type Inlay = StandardTable<{
-  project_id: number
-  name: string
-  type: InlayType
-  preview_url: string
-  approved_proof_id: number | null
-  manufacturing_step: ManufacturingStep | null
-}>
+  project_id: number;
+  name: string;
+  type: InlayType;
+  preview_url: string;
+  approved_proof_id: number | null;
+  manufacturing_step: ManufacturingStep | null;
+}>;
 
 type InlayWithInfo = GET<Inlay> & {
-  catalog_info?: GET<InlayCatalogInfo> | null
-  custom_info?: GET<InlayCustomInfo> | null
-}
+  catalog_info?: GET<InlayCatalogInfo> | null;
+  custom_info?: GET<InlayCustomInfo> | null;
+};
 ```
 
 #### Frontend Pages & Routes
 
 **`/projects`** - Project List Page
+
 - Lists all projects grouped by status categories (Draft, Designing, Ordered, etc.)
 - Different grouping for dealership vs internal users
 - Status badges with color coding
@@ -906,12 +948,14 @@ type InlayWithInfo = GET<Inlay> & {
 - "Create New Project" button
 
 **`/projects/create-project`** (Parent Route)
+
 - Multi-step form using TanStack Solid Form
 - Manages shared form state via ProjectFormContext
 - Submits to `POST /api/project/with-inlays`
 - Redirects to project detail on success
 
 **`/projects/create-project/`** - Project Name & Inlay Summary
+
 - Input field for customer/project name
 - List of added inlays with preview images
 - Inlay type badge (Catalog / Custom)
@@ -920,6 +964,7 @@ type InlayWithInfo = GET<Inlay> & {
 - "Create Project" submit button
 
 **`/projects/create-project/add-inlay`** - Add Inlay to New Project
+
 - Tabbed interface: Catalog / Custom
 - **Catalog Tab:**
   - Browse catalog with search, category, tag filters
@@ -933,6 +978,7 @@ type InlayWithInfo = GET<Inlay> & {
   - Form validation with Zod schema
 
 **`/projects/{id}`** - Project Detail Page
+
 - Project name and full details
 - Horizontal status timeline showing all lifecycle stages
 - List of inlays as cards with preview images
@@ -943,6 +989,7 @@ type InlayWithInfo = GET<Inlay> & {
 - Loading states and error handling
 
 **`/projects/{id}/add-inlay`** - Add Inlay to Existing Project
+
 - Same interface as create-project version
 - Posts to `/api/project/{uuid}/inlays/catalog` or `/api/project/{uuid}/inlays/custom`
 - Updates inlays query on success
@@ -951,11 +998,13 @@ type InlayWithInfo = GET<Inlay> & {
 #### Frontend Components
 
 **ProjectStatusBadge**
+
 - File: `apps/webapp/src/components/project/status-badge.tsx`
 - Displays project status with color coding
 - Color mapping: gray (draft), blue (designing), yellow (pending-approval), green (approved/completed), indigo (ordered), purple (in-production), cyan (shipped), teal (delivered), orange (invoiced), red (cancelled)
 
 **Query Hooks** (TanStack Solid Query)
+
 - File: `apps/webapp/src/queries/project.ts`
   - `getProjects()` / `getProjectsOpts()` - List all projects
   - `getProject(uuid)` / `getProjectOpts(uuid)` - Single project detail
@@ -975,36 +1024,43 @@ type InlayWithInfo = GET<Inlay> & {
 #### Key Implementation Details
 
 **Atomic Transactions:**
+
 - Creating a project with inlays happens in a single database transaction
 - If any inlay fails validation, entire operation rolls back
 - Ensures data consistency across project and inlay records
 
 **Access Control:**
+
 - Dealership users can only see and manage projects belonging to their dealership
 - Internal users can see all projects
 - All create/update/delete operations validate dealership ownership for dealership users
 
 **Status-Based Permissions:**
+
 - Inlays can only be added/edited/removed when project is in Draft or Designing status
 - Project can only be cancelled from Draft, Designing, PendingApproval, or Approved status
 - UI buttons conditionally render based on project status
 
 **Optimistic Locking:**
+
 - All models use version field for concurrent update protection
 - Update operations check version before applying changes
 - Prevents lost update anomalies in multi-user scenarios
 
 **Form State Management:**
+
 - ProjectFormContext manages multi-step form state across routes
 - Form context persists until successful submission
 - Supports back/forward navigation without data loss
 
 **Catalog Integration:**
+
 - When adding catalog inlay, preview_url is automatically fetched from catalog item
 - Customization notes stored separately from catalog item reference
 - Custom inlays allow free-form description and dimensions
 
 **API Design:**
+
 - RESTful endpoints follow standard CRUD patterns
 - Permission checking via middleware on all protected routes
 - JSON request/response bodies with Zod validation
@@ -1013,17 +1069,21 @@ type InlayWithInfo = GET<Inlay> & {
 #### Files Created/Modified
 
 **Backend - Handlers:**
+
 - `apps/api/modules/project/projectHandlers.go` - 6 handlers (Get, List, Create, CreateWithInlays, Update, Delete)
 - `apps/api/modules/inlay/inlayHandlers.go` - 6 handlers (Get, List, AddCatalog, AddCustom, Update, Delete)
 
 **Backend - Models:**
+
 - `libs/data/pkg/projects.go` - ProjectModel with full CRUD
 - `libs/data/pkg/inlays.go` - InlayModel with subtypes (InlayCatalogInfo, InlayCustomInfo)
 
 **Backend - Routes:**
+
 - `apps/api/modules/modules.go` - Registered 12 new endpoints
 
 **Frontend - Pages:**
+
 - `apps/webapp/src/routes/_app/projects.tsx` - Project list page
 - `apps/webapp/src/routes/_app/projects_.create-project.tsx` - Multi-step form parent
 - `apps/webapp/src/routes/_app/projects_.create-project.index.tsx` - Name & summary step
@@ -1032,19 +1092,23 @@ type InlayWithInfo = GET<Inlay> & {
 - `apps/webapp/src/routes/_app/projects_.$id.add-inlay.tsx` - Add inlay to existing project
 
 **Frontend - Components:**
+
 - `apps/webapp/src/components/project/status-badge.tsx` - Status display component
 
 **Frontend - Queries:**
+
 - `apps/webapp/src/queries/project.ts` - Project query hooks (6 operations)
 - `apps/webapp/src/queries/inlay.ts` - Inlay query hooks (6 operations)
 
 **Data Layer - Types:**
+
 - `libs/data/src/projects.ts` - ProjectStatus and Project types
 - `libs/data/src/inlays.ts` - Inlay, InlayType, ManufacturingStep, catalog/custom info types
 
 #### Phase 4 Dependencies Met
 
 All Phase 4 tasks completed:
+
 - ✅ Update project API - 6 endpoints fully implemented
 - ✅ Update inlay API - 6 endpoints fully implemented
 - ✅ Project creation UI - Multi-step form with full UX
@@ -1086,16 +1150,105 @@ All Phase 4 tasks completed:
 
 ### Phase 6: Manufacturing
 
-**Goal:** Kanban and blocker management
+**Status: ✅ COMPLETE** (March 16, 2026)
 
-| Task                     | Dependencies  |
-| ------------------------ | ------------- |
-| Kanban API               | Phase 1       |
-| Milestone API            | Phase 1       |
-| Blocker API              | Phase 1       |
-| Kanban board UI          | Kanban API    |
-| Blocker management UI    | Blocker API   |
-| Dealership progress view | Milestone API |
+**Goal:** Kanban board, milestone tracking, blocker management, and dealership progress view
+
+| Task                     | Dependencies  | Status |
+| ------------------------ | ------------- | ------ |
+| Kanban API               | Phase 1       | ✅     |
+| Milestone API            | Phase 1       | ✅     |
+| Blocker API              | Phase 1       | ✅     |
+| Kanban board UI          | Kanban API    | ✅     |
+| Blocker management UI    | Blocker API   | ✅     |
+| Dealership progress view | Milestone API | ✅     |
+
+#### Completed Features
+
+**Data Layer:**
+
+- ✅ `InlayMilestoneModel.TxInsert` — transactional milestone insertion for atomic step changes
+
+**Backend API Endpoints (5 new):**
+
+- ✅ `GET /api/inlays` — Kanban board data; returns all inlays with `manufacturing_step IS NOT NULL`, joined with project name and dealership name, with `has_hard_blocker` computed field. Permission: `manage_kanban`
+- ✅ `PATCH /api/inlay/{uuid}/step` — Move inlay to a new manufacturing step. Validates step, checks for unresolved hard blockers (rejects if any), inserts two milestone events atomically (`exited` for old step + `entered`/`reverted` for new step), updates `manufacturing_step` on inlay. Post-commit: auto-advances project status to `shipped`/`delivered` when all non-excluded inlays reach those steps. Permission: `manage_kanban`
+- ✅ `GET /api/inlay/{uuid}/blockers` — List all blockers (resolved + unresolved) for an inlay. Dealership users are scoped to their own inlays. Permission: authenticated
+- ✅ `POST /api/inlay/{uuid}/blockers` — Create a new blocker (`soft` or `hard`) with reason and step_blocked. Permission: `create_blocker`
+- ✅ `POST /api/blocker/{uuid}/resolve` — Resolve a blocker; sets `resolved_at`, `resolved_by`, and optional `resolution_notes`. Permission: `create_blocker`
+
+**Updated Endpoint:**
+
+- ✅ `GET /api/project/{uuid}/inlays` — Added `has_active_blocker` field (true if any unresolved blockers exist on the inlay)
+
+**Frontend Queries** (`apps/webapp/src/queries/manufacturing.ts`):
+
+- ✅ `getKanbanInlays()` / `getKanbanInlaysOpts()` — queryKey: `["kanban-inlays"]`
+- ✅ `patchInlayStep({uuid, step})` / `patchInlayStepOpts()`
+- ✅ `getBlockersByInlay(uuid)` / `getBlockersByInlayOpts(uuid)` — queryKey: `["inlay", uuid, "blockers"]`
+- ✅ `postBlocker({inlayUuid, body})` / `postBlockerOpts()`
+- ✅ `postResolveBlocker({blockerUuid, body})` / `postResolveBlockerOpts()`
+
+**Kanban Board** (`apps/webapp/src/routes/_app/inlays.tsx` — full refactor):
+
+- ✅ 7 columns with `ManufacturingStep` string IDs (replaced numeric dummy data)
+- ✅ Real data loaded via `getKanbanInlaysOpts()`, grouped by `manufacturing_step` with `createMemo`
+- ✅ `InlayCard` shows real preview image, inlay name, dealership — project name, warning icon
+- ✅ Warning icon (grey normally, red if `has_hard_blocker`) opens `BlockersDialog`
+- ✅ Drag-and-drop with hard blocker guard: if dragged inlay has hard blocker, shows a warning dialog instead of calling the API
+- ✅ Optimistic updates on drop: column state updates immediately, reverts on API error with toast
+- ✅ Invalidates `["kanban-inlays"]` on successful step change
+
+**Blockers Dialog** (`apps/webapp/src/components/manufacturing/blockers-dialog.tsx`):
+
+- ✅ Dialog-based panel showing active and resolved blockers for an inlay
+- ✅ Active blockers: red styling, type badge (hard shown with red badge), step blocked, reason, "Resolve" button
+- ✅ Resolved blockers: muted styling, resolution notes shown
+- ✅ Empty state when no blockers exist
+- ✅ `<Can permission="create_blocker">` gates the "Add Blocker" form
+- ✅ Add Blocker form: `blocker_type` select, `step_blocked` select, `reason` textarea (TanStack Form + Zod)
+- ✅ Invalidates `["inlay", uuid, "blockers"]` and `["kanban-inlays"]` on add/resolve
+
+**Manufacturing Tracker** (`apps/webapp/src/components/manufacturing/manufacturing-tracker.tsx`):
+
+- ✅ 7-dot horizontal "pizza tracker" component
+- ✅ Completed steps: filled primary circle; current step: filled with ring; future steps: grey empty circle
+- ✅ Connector lines between dots colored by completion state
+- ✅ Amber warning icon on current dot when `hasBlocker` is true
+
+**Project Detail Page** (`apps/webapp/src/routes/_app/projects_.$id.index.tsx`):
+
+- ✅ `ManufacturingTracker` added to `InlayCard` component
+- ✅ Tracker only shown for manufacturing-status projects (`ordered`, `in-production`, `shipped`, `delivered`) when the inlay has a `manufacturing_step`
+- ✅ `has_active_blocker` passed through to tracker's `hasBlocker` prop
+
+#### Key Design Decisions
+
+- **Milestone records per move:** Two — `exited` for the current step + `entered` (forward) or `reverted` (backward) for the destination step. The step ordering (`ordered → materials-prep → cutting → fire-polish → packaging → shipped → delivered`) determines direction.
+- **Hard blocker check:** Any unresolved hard blocker on the inlay blocks the move entirely, regardless of `step_blocked` field value.
+- **Project auto-advance:** After each step change, all non-excluded inlays in the project are checked. If all reach `shipped` → project advances to `shipped`; if all reach `delivered` → project advances to `delivered`.
+- **Blocker visibility:** Dealership users see all blockers (soft and hard) on their own inlays.
+- **Blockers UI:** Uses `Dialog` from `@glassact/ui` (no Sheet component available).
+
+#### Files Created
+
+| File | Purpose |
+| ---- | ------- |
+| `apps/api/modules/blocker/blockerHandlers.go` | `BlockerModule` with `HandleResolveBlocker` and `HandleGetBlocker` |
+| `apps/webapp/src/queries/manufacturing.ts` | 5 query/mutation hooks for manufacturing and blockers |
+| `apps/webapp/src/components/manufacturing/blockers-dialog.tsx` | Blocker list, add, and resolve UI |
+| `apps/webapp/src/components/manufacturing/manufacturing-tracker.tsx` | 7-dot pizza tracker component |
+
+#### Files Modified
+
+| File | Change |
+| ---- | ------ |
+| `libs/data/pkg/inlay_milestones.go` | Added `TxInsert` method |
+| `libs/data/src/inlays.ts` | Added `has_active_blocker?: boolean` to `InlayWithInfo` |
+| `apps/api/modules/inlay/inlayHandlers.go` | Added `KanbanInlay` struct + 4 new handlers + `HasActiveBlocker` field + project auto-advance logic |
+| `apps/api/modules/modules.go` | Registered 5 new routes with `canManageKanban` and `canCreateBlocker` middleware |
+| `apps/webapp/src/routes/_app/inlays.tsx` | Full refactor: real data, ManufacturingStep column IDs, optimistic DnD, hard blocker guard |
+| `apps/webapp/src/routes/_app/projects_.$id.index.tsx` | Added `ManufacturingTracker` to `InlayCard`; added `isManufacturingStatus` helper |
 
 ### Phase 7: Notifications
 
@@ -1325,9 +1478,9 @@ Models created/updated in `libs/data/pkg/` (Phase 1 Complete):
 
 ### Manufacturing
 
-- `GET /api/kanban` - Get kanban board
-- `POST /api/inlay/:uuid/step` - Move to step
-- `POST /api/inlay/:uuid/revert` - Revert step
+- `GET /api/inlays` - Get kanban board (inlays with manufacturing_step set)
+- `PATCH /api/inlay/:uuid/step` - Move inlay to a new step
+- `GET /api/inlay/:uuid/blockers` - List all blockers for an inlay
 - `POST /api/inlay/:uuid/blockers` - Create blocker
 - `POST /api/blocker/:uuid/resolve` - Resolve blocker
 

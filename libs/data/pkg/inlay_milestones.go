@@ -14,6 +14,46 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+func (m InlayMilestoneModel) TxInsert(tx *sql.Tx, milestone *InlayMilestone) error {
+	genMilestone, err := inlayMilestoneToGen(milestone)
+	if err != nil {
+		return err
+	}
+
+	query := table.InlayMilestones.INSERT(
+		table.InlayMilestones.InlayID,
+		table.InlayMilestones.Step,
+		table.InlayMilestones.EventType,
+		table.InlayMilestones.PerformedBy,
+		table.InlayMilestones.EventTime,
+	).MODEL(
+		genMilestone,
+	).RETURNING(
+		table.InlayMilestones.ID,
+		table.InlayMilestones.UUID,
+		table.InlayMilestones.UpdatedAt,
+		table.InlayMilestones.CreatedAt,
+		table.InlayMilestones.Version,
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest model.InlayMilestones
+	err = query.QueryContext(ctx, tx, &dest)
+	if err != nil {
+		return err
+	}
+
+	milestone.ID = int(dest.ID)
+	milestone.UUID = dest.UUID.String()
+	milestone.UpdatedAt = dest.UpdatedAt
+	milestone.CreatedAt = dest.CreatedAt
+	milestone.Version = int(dest.Version)
+
+	return nil
+}
+
 type ManufacturingStep string
 
 type manufacturingSteps struct {

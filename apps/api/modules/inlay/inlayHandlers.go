@@ -1,11 +1,16 @@
 package inlay
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 	data "github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/model"
+	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/table"
+	"github.com/go-jet/jet/v2/postgres"
 )
 
 type InlayModule struct {
@@ -71,6 +76,7 @@ type InlayWithProofStatus struct {
 	ApprovedProofPriceGroupID   *int    `json:"approved_proof_price_group_id"`
 	ApprovedProofPriceGroupName *string `json:"approved_proof_price_group_name"`
 	ApprovedProofPriceCents     *int    `json:"approved_proof_price_cents"`
+	HasActiveBlocker            bool    `json:"has_active_blocker"`
 }
 
 func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Request) {
@@ -137,6 +143,13 @@ func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Req
 				}
 			}
 		}
+
+		unresolvedBlockers, err := m.Db.InlayBlockers.GetUnresolved(inlay.ID)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+		result[i].HasActiveBlocker = len(unresolvedBlockers) > 0
 	}
 
 	m.WriteJSON(w, r, http.StatusOK, result)
@@ -377,6 +390,389 @@ var preOrderStatuses = map[data.ProjectStatus]bool{
 	data.ProjectStatuses.Designing:       true,
 	data.ProjectStatuses.PendingApproval: true,
 	data.ProjectStatuses.Approved:        true,
+}
+
+var manufacturingStepOrder = []data.ManufacturingStep{
+	data.ManufacturingSteps.Ordered,
+	data.ManufacturingSteps.MaterialsPrep,
+	data.ManufacturingSteps.Cutting,
+	data.ManufacturingSteps.FirePolish,
+	data.ManufacturingSteps.Packaging,
+	data.ManufacturingSteps.Shipped,
+	data.ManufacturingSteps.Delivered,
+}
+
+func manufacturingStepIndex(step data.ManufacturingStep) int {
+	for i, s := range manufacturingStepOrder {
+		if s == step {
+			return i
+		}
+	}
+	return -1
+}
+
+type KanbanInlay struct {
+	*data.Inlay
+	ProjectName    string `json:"project_name"`
+	DealershipName string `json:"dealership_name"`
+	HasHardBlocker bool   `json:"has_hard_blocker"`
+}
+
+func (m InlayModule) HandleGetKanbanInlays(w http.ResponseWriter, r *http.Request) {
+	query := postgres.SELECT(
+		table.Inlays.AllColumns,
+		table.Projects.Name.AS("project_name"),
+		table.Dealerships.Name.AS("dealership_name"),
+	).FROM(
+		table.Inlays.
+			INNER_JOIN(table.Projects, table.Projects.ID.EQ(table.Inlays.ProjectID)).
+			INNER_JOIN(table.Dealerships, table.Dealerships.ID.EQ(table.Projects.DealershipID)),
+	).WHERE(
+		table.Inlays.ManufacturingStep.IS_NOT_NULL(),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest []struct {
+		model.Inlays
+		ProjectName    string `alias:"project_name"`
+		DealershipName string `alias:"dealership_name"`
+	}
+	err := query.QueryContext(ctx, m.Db.STDB, &dest)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to query kanban inlays: %w", err))
+		return
+	}
+
+	result := make([]KanbanInlay, len(dest))
+	for i, d := range dest {
+		inlay := data.Inlay{
+			StandardTable: data.StandardTable{
+				ID:        int(d.Inlays.ID),
+				UUID:      d.Inlays.UUID.String(),
+				CreatedAt: d.Inlays.CreatedAt,
+				UpdatedAt: d.Inlays.UpdatedAt,
+				Version:   int(d.Inlays.Version),
+			},
+			ProjectID:         int(d.Inlays.ProjectID),
+			Name:              d.Inlays.Name,
+			Type:              data.InlayType(d.Inlays.Type),
+			PreviewURL:        d.Inlays.PreviewURL,
+			ExcludedFromOrder: d.Inlays.ExcludedFromOrder,
+			ManufacturingStep: d.Inlays.ManufacturingStep,
+		}
+
+		if d.Inlays.ApprovedProofID != nil {
+			id := int(*d.Inlays.ApprovedProofID)
+			inlay.ApprovedProofID = &id
+		}
+
+		hasHardBlocker := false
+		unresolvedBlockers, err := m.Db.InlayBlockers.GetUnresolved(inlay.ID)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to get blockers for inlay %d: %w", inlay.ID, err))
+			return
+		}
+		for _, b := range unresolvedBlockers {
+			if b.BlockerType == data.BlockerTypes.Hard {
+				hasHardBlocker = true
+				break
+			}
+		}
+
+		result[i] = KanbanInlay{
+			Inlay:          &inlay,
+			ProjectName:    d.ProjectName,
+			DealershipName: d.DealershipName,
+			HasHardBlocker: hasHardBlocker,
+		}
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, result)
+}
+
+func (m InlayModule) HandlePatchInlayStep(w http.ResponseWriter, r *http.Request) {
+	inlayUUID := r.PathValue("uuid")
+
+	err := m.Validate.Var(inlayUUID, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	var body struct {
+		Step data.ManufacturingStep `json:"step" validate:"required"`
+	}
+
+	err = m.ReadJSONBody(w, r, &body)
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	if manufacturingStepIndex(body.Step) == -1 {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("invalid manufacturing step: %s", body.Step))
+		return
+	}
+
+	inlay, found, err := m.Db.Inlays.GetByUUID(inlayUUID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	unresolvedBlockers, err := m.Db.InlayBlockers.GetUnresolved(inlay.ID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to check blockers: %w", err))
+		return
+	}
+	for _, b := range unresolvedBlockers {
+		if b.BlockerType == data.BlockerTypes.Hard {
+			m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("inlay has unresolved hard blockers that must be resolved before moving to the next step"))
+			return
+		}
+	}
+
+	user := m.ContextGetUser(r)
+	userID := user.GetID()
+	now := time.Now()
+
+	var currentStepIdx int
+	var currentStep data.ManufacturingStep
+	if inlay.ManufacturingStep != nil {
+		currentStep = data.ManufacturingStep(*inlay.ManufacturingStep)
+		currentStepIdx = manufacturingStepIndex(currentStep)
+	} else {
+		currentStepIdx = -1
+	}
+
+	destStepIdx := manufacturingStepIndex(body.Step)
+
+	var newEventType data.MilestoneEventType
+	if destStepIdx >= currentStepIdx {
+		newEventType = data.MilestoneEventTypes.Entered
+	} else {
+		newEventType = data.MilestoneEventTypes.Reverted
+	}
+
+	tx, err := m.Db.STDB.Begin()
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
+	// Insert exited milestone for current step (if one exists)
+	if inlay.ManufacturingStep != nil {
+		exitedMilestone := data.InlayMilestone{
+			InlayID:     inlay.ID,
+			Step:        currentStep,
+			EventType:   data.MilestoneEventTypes.Exited,
+			PerformedBy: userID,
+			EventTime:   now,
+		}
+		if err := m.Db.InlayMilestones.TxInsert(tx, &exitedMilestone); err != nil {
+			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to insert exited milestone: %w", err))
+			return
+		}
+	}
+
+	// Insert entered/reverted milestone for destination step
+	enteredMilestone := data.InlayMilestone{
+		InlayID:     inlay.ID,
+		Step:        body.Step,
+		EventType:   newEventType,
+		PerformedBy: userID,
+		EventTime:   now,
+	}
+	if err := m.Db.InlayMilestones.TxInsert(tx, &enteredMilestone); err != nil {
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to insert entered milestone: %w", err))
+		return
+	}
+
+	newStep := string(body.Step)
+	inlay.ManufacturingStep = &newStep
+	if err := m.Db.Inlays.TxUpdateFields(tx, inlay); err != nil {
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to update inlay manufacturing step: %w", err))
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	// After commit: check if all non-excluded inlays in the project have reached shipped or delivered
+	// to auto-advance the project status.
+	m.tryAdvanceProjectStatus(w, r, inlay.ProjectID)
+
+	m.WriteJSON(w, r, http.StatusOK, inlay)
+}
+
+// tryAdvanceProjectStatus checks if all non-excluded inlays in the project are at
+// shipped or delivered, and advances the project status accordingly.
+// Errors are logged but do not affect the response already sent.
+func (m InlayModule) tryAdvanceProjectStatus(w http.ResponseWriter, r *http.Request, projectID int) {
+	project, found, err := m.Db.Projects.GetByID(projectID)
+	if err != nil || !found {
+		return
+	}
+
+	// Only auto-advance projects that are in-production, shipped, or ordered
+	advanceable := map[data.ProjectStatus]bool{
+		data.ProjectStatuses.Ordered:      true,
+		data.ProjectStatuses.InProduction: true,
+		data.ProjectStatuses.Shipped:      true,
+	}
+	if !advanceable[project.Status] {
+		return
+	}
+
+	projectInlays, err := m.Db.Inlays.GetByProjectID(projectID)
+	if err != nil {
+		return
+	}
+
+	var activeInlays []*data.Inlay
+	for _, inlay := range projectInlays {
+		if !inlay.ExcludedFromOrder {
+			activeInlays = append(activeInlays, inlay)
+		}
+	}
+
+	if len(activeInlays) == 0 {
+		return
+	}
+
+	allDelivered := true
+	allShipped := true
+	for _, inlay := range activeInlays {
+		if inlay.ManufacturingStep == nil {
+			allDelivered = false
+			allShipped = false
+			break
+		}
+		step := data.ManufacturingStep(*inlay.ManufacturingStep)
+		if step != data.ManufacturingSteps.Delivered {
+			allDelivered = false
+		}
+		if step != data.ManufacturingSteps.Delivered && step != data.ManufacturingSteps.Shipped {
+			allShipped = false
+		}
+	}
+
+	var newStatus data.ProjectStatus
+	if allDelivered {
+		newStatus = data.ProjectStatuses.Delivered
+	} else if allShipped {
+		newStatus = data.ProjectStatuses.Shipped
+	} else {
+		return
+	}
+
+	if project.Status == newStatus {
+		return
+	}
+
+	project.Status = newStatus
+	_ = m.Db.Projects.Update(project)
+}
+
+func (m InlayModule) HandleGetBlockersByInlay(w http.ResponseWriter, r *http.Request) {
+	inlayUUID := r.PathValue("uuid")
+
+	err := m.Validate.Var(inlayUUID, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	inlay, found, err := m.Db.Inlays.GetByUUID(inlayUUID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	// Dealership users can only see blockers for their own inlays
+	user := m.ContextGetUser(r)
+	if user.IsDealership() {
+		if _, ok := m.validateInlayOwnership(w, r, inlay); !ok {
+			return
+		}
+	}
+
+	blockers, err := m.Db.InlayBlockers.GetByInlayID(inlay.ID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, blockers)
+}
+
+func (m InlayModule) HandlePostBlocker(w http.ResponseWriter, r *http.Request) {
+	inlayUUID := r.PathValue("uuid")
+
+	err := m.Validate.Var(inlayUUID, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	var body struct {
+		BlockerType data.BlockerType `json:"blocker_type" validate:"required"`
+		Reason      string           `json:"reason" validate:"required"`
+		StepBlocked string           `json:"step_blocked" validate:"required"`
+	}
+
+	err = m.ReadJSONBody(w, r, &body)
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	if body.BlockerType != data.BlockerTypes.Soft && body.BlockerType != data.BlockerTypes.Hard {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("invalid blocker_type: must be 'soft' or 'hard'"))
+		return
+	}
+
+	inlay, found, err := m.Db.Inlays.GetByUUID(inlayUUID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	user := m.ContextGetUser(r)
+	userID := user.GetID()
+
+	blocker := data.InlayBlocker{
+		InlayID:     inlay.ID,
+		BlockerType: body.BlockerType,
+		Reason:      body.Reason,
+		StepBlocked: body.StepBlocked,
+		CreatedBy:   &userID,
+	}
+
+	err = m.Db.InlayBlockers.Insert(&blocker)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to insert blocker: %w", err))
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusCreated, blocker)
 }
 
 func (m InlayModule) HandleExcludeInlay(w http.ResponseWriter, r *http.Request) {
