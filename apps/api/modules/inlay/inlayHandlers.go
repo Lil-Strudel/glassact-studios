@@ -567,7 +567,6 @@ func (m InlayModule) HandlePatchInlayStep(w http.ResponseWriter, r *http.Request
 	}
 	defer tx.Rollback()
 
-	// Insert exited milestone for current step (if one exists)
 	if inlay.ManufacturingStep != nil {
 		exitedMilestone := data.InlayMilestone{
 			InlayID:     inlay.ID,
@@ -582,7 +581,6 @@ func (m InlayModule) HandlePatchInlayStep(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	// Insert entered/reverted milestone for destination step
 	enteredMilestone := data.InlayMilestone{
 		InlayID:     inlay.ID,
 		Step:        body.Step,
@@ -615,23 +613,17 @@ func (m InlayModule) HandlePatchInlayStep(w http.ResponseWriter, r *http.Request
 		&inlay.ID,
 	)
 
-	// After commit: check if all non-excluded inlays in the project have reached shipped or delivered
-	// to auto-advance the project status.
 	m.tryAdvanceProjectStatus(w, r, inlay.ProjectID)
 
 	m.WriteJSON(w, r, http.StatusOK, inlay)
 }
 
-// tryAdvanceProjectStatus checks if all non-excluded inlays in the project are at
-// shipped or delivered, and advances the project status accordingly.
-// Errors are logged but do not affect the response already sent.
 func (m InlayModule) tryAdvanceProjectStatus(w http.ResponseWriter, r *http.Request, projectID int) {
 	project, found, err := m.Db.Projects.GetByID(projectID)
 	if err != nil || !found {
 		return
 	}
 
-	// Only auto-advance projects that are in-production, shipped, or ordered
 	advanceable := map[data.ProjectStatus]bool{
 		data.ProjectStatuses.Ordered:      true,
 		data.ProjectStatuses.InProduction: true,
@@ -736,7 +728,6 @@ func (m InlayModule) HandleGetBlockersByInlay(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Dealership users can only see blockers for their own inlays
 	user := m.ContextGetUser(r)
 	if user.IsDealership() {
 		if _, ok := m.validateInlayOwnership(w, r, inlay); !ok {

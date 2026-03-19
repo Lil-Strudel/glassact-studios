@@ -16,7 +16,6 @@ func NewNotificationModule(app *app.Application) *NotificationModule {
 	return &NotificationModule{app}
 }
 
-// dealershipEventTypes lists the notification event types relevant to dealership users.
 var dealershipEventTypes = []data.NotificationEventType{
 	data.NotificationEventTypes.ProofReady,
 	data.NotificationEventTypes.ProofApproved,
@@ -31,7 +30,6 @@ var dealershipEventTypes = []data.NotificationEventType{
 	data.NotificationEventTypes.ChatMessage,
 }
 
-// internalEventTypes lists the notification event types relevant to internal users.
 var internalEventTypes = []data.NotificationEventType{
 	data.NotificationEventTypes.ProjectSubmitted,
 	data.NotificationEventTypes.OrderPlaced,
@@ -213,7 +211,6 @@ func (m *NotificationModule) HandlePatchNotificationPreference(w http.ResponseWr
 
 	user := m.ContextGetUser(r)
 
-	// Validate the event type is relevant for this user type
 	var relevantTypes []data.NotificationEventType
 	if user.IsDealership() {
 		relevantTypes = dealershipEventTypes

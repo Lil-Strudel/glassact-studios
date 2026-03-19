@@ -11,7 +11,10 @@ import {
   INTERNAL_NOTIFICATION_EVENT_TYPES,
   NOTIFICATION_EVENT_LABELS,
 } from "@glassact/data";
-import type { NotificationEventType, NotificationPreference } from "@glassact/data";
+import type {
+  NotificationEventType,
+  NotificationPreference,
+} from "@glassact/data";
 
 export const Route = createFileRoute("/_app/settings")({
   component: RouteComponent,
@@ -23,8 +26,6 @@ function RouteComponent() {
   const prefsQuery = useQuery(() => getNotificationPreferencesOpts());
   const patchPref = useMutation(() => patchNotificationPreferenceOpts());
 
-  // Determine which event types to show based on user type.
-  // Internal users do not have a dealership_id field.
   const eventTypes = () => {
     const u = userQuery.data;
     if (!u) return [];
@@ -39,7 +40,6 @@ function RouteComponent() {
     return prefsQuery.data?.find((p) => p.event_type === eventType);
   }
 
-  // Default is email_enabled: true when no preference row exists.
   function isEmailEnabled(eventType: NotificationEventType): boolean {
     const pref = getPref(eventType);
     return pref ? pref.email_enabled : true;
@@ -72,9 +72,7 @@ function RouteComponent() {
 
         <Show
           when={!userQuery.isLoading && !prefsQuery.isLoading}
-          fallback={
-            <p class="text-sm text-gray-400">Loading preferences...</p>
-          }
+          fallback={<p class="text-sm text-gray-400">Loading preferences...</p>}
         >
           <div class="border rounded-lg overflow-hidden">
             <table class="w-full text-sm">
@@ -102,10 +100,7 @@ function RouteComponent() {
                           checked={isEmailEnabled(eventType)}
                           disabled={patchPref.isPending}
                           onChange={(e) =>
-                            handleToggle(
-                              eventType,
-                              e.currentTarget.checked,
-                            )
+                            handleToggle(eventType, e.currentTarget.checked)
                           }
                         />
                       </td>

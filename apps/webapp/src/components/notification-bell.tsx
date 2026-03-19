@@ -15,7 +15,6 @@ import {
   markAllNotificationsReadOpts,
 } from "../queries/notifications";
 
-// Returns a human-readable relative time string from an ISO date string.
 function formatRelativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const seconds = Math.floor(diff / 1000);

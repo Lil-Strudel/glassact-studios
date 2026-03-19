@@ -124,8 +124,6 @@ func (m NotificationPreferencesModel) UpsertForInternalUser(userID int, eventTyp
 	return err
 }
 
-// IsEmailEnabledForDealershipUser returns true if no preference row exists (default opted in)
-// or if the stored preference has email enabled.
 func (m NotificationPreferencesModel) IsEmailEnabledForDealershipUser(userID int, eventType NotificationEventType) (bool, error) {
 	query := postgres.SELECT(
 		table.DealershipUserNotificationPrefs.AllColumns,
@@ -145,7 +143,6 @@ func (m NotificationPreferencesModel) IsEmailEnabledForDealershipUser(userID int
 	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		if errors.Is(err, qrm.ErrNoRows) || errors.Is(err, sql.ErrNoRows) {
-			// No preference row means opted in by default
 			return true, nil
 		}
 		return false, err
@@ -154,8 +151,6 @@ func (m NotificationPreferencesModel) IsEmailEnabledForDealershipUser(userID int
 	return dest.EmailEnabled, nil
 }
 
-// IsEmailEnabledForInternalUser returns true if no preference row exists (default opted in)
-// or if the stored preference has email enabled.
 func (m NotificationPreferencesModel) IsEmailEnabledForInternalUser(userID int, eventType NotificationEventType) (bool, error) {
 	query := postgres.SELECT(
 		table.InternalUserNotificationPrefs.AllColumns,
@@ -175,7 +170,6 @@ func (m NotificationPreferencesModel) IsEmailEnabledForInternalUser(userID int, 
 	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		if errors.Is(err, qrm.ErrNoRows) || errors.Is(err, sql.ErrNoRows) {
-			// No preference row means opted in by default
 			return true, nil
 		}
 		return false, err

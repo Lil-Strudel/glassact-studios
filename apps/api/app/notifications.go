@@ -6,8 +6,6 @@ import (
 	data "github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
 )
 
-// SendNotificationToUser creates an in-app notification and, if the user has email enabled
-// for this event type, sends an email in a background goroutine.
 func (app *Application) SendNotificationToUser(
 	userID int,
 	userType string,
@@ -70,7 +68,6 @@ func (app *Application) SendNotificationToUser(
 	}()
 }
 
-// SendNotificationToAllInternalUsers fans out notifications to every active internal user.
 func (app *Application) SendNotificationToAllInternalUsers(
 	eventType data.NotificationEventType,
 	title, body string,
@@ -90,8 +87,6 @@ func (app *Application) SendNotificationToAllInternalUsers(
 	}
 }
 
-// SendNotificationToAllDealershipUsersForProject fans out notifications to all dealership
-// users associated with the project's dealership.
 func (app *Application) SendNotificationToAllDealershipUsersForProject(
 	projectID int,
 	eventType data.NotificationEventType,
