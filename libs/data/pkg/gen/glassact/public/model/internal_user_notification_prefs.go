@@ -10,6 +10,6 @@ package model
 type InternalUserNotificationPrefs struct {
 	ID             int32 `sql:"primary_key"`
 	InternalUserID int32
-	EventType      NotificationEventType
+	EventType      string
 	EmailEnabled   bool
 }

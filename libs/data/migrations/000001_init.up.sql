@@ -9,26 +9,6 @@ CREATE EXTENSION IF NOT EXISTS citext;
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 --------------------------------------------------------------------------------
--- ENUMS
---------------------------------------------------------------------------------
-
-CREATE TYPE notification_event_type AS ENUM (
-    'proof_ready',
-    'proof_approved',
-    'proof_declined',
-    'project_submitted',
-    'order_placed',
-    'inlay_step_changed',
-    'inlay_blocked',
-    'inlay_unblocked',
-    'project_shipped',
-    'project_delivered',
-    'invoice_sent',
-    'payment_received',
-    'chat_message'
-);
-
---------------------------------------------------------------------------------
 -- REFERENCE TABLES
 --------------------------------------------------------------------------------
 
@@ -471,7 +451,7 @@ CREATE TABLE notifications (
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     dealership_user_id INTEGER REFERENCES dealership_users ON DELETE CASCADE,
     internal_user_id INTEGER REFERENCES internal_users ON DELETE CASCADE,
-    event_type notification_event_type NOT NULL,
+    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'project_submitted', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'payment_received', 'chat_message')),
     title TEXT NOT NULL,
     body TEXT NOT NULL,
     project_id INTEGER REFERENCES projects ON DELETE SET NULL,
@@ -497,7 +477,7 @@ CREATE INDEX idx_notifications_unread_internal ON notifications(internal_user_id
 CREATE TABLE dealership_user_notification_prefs (
     id SERIAL PRIMARY KEY,
     dealership_user_id INTEGER NOT NULL REFERENCES dealership_users ON DELETE CASCADE,
-    event_type notification_event_type NOT NULL,
+    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'project_submitted', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'payment_received', 'chat_message')),
     email_enabled BOOLEAN NOT NULL DEFAULT true,
     UNIQUE(dealership_user_id, event_type)
 );
@@ -505,7 +485,7 @@ CREATE TABLE dealership_user_notification_prefs (
 CREATE TABLE internal_user_notification_prefs (
     id SERIAL PRIMARY KEY,
     internal_user_id INTEGER NOT NULL REFERENCES internal_users ON DELETE CASCADE,
-    event_type notification_event_type NOT NULL,
+    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'project_submitted', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'payment_received', 'chat_message')),
     email_enabled BOOLEAN NOT NULL DEFAULT true,
     UNIQUE(internal_user_id, event_type)
 );

@@ -43,7 +43,5 @@ DROP TABLE IF EXISTS dealerships;
 
 DROP TABLE IF EXISTS price_groups;
 
-DROP TYPE IF EXISTS notification_event_type;
-
 DROP EXTENSION IF EXISTS postgis CASCADE;
 DROP EXTENSION IF EXISTS citext;
