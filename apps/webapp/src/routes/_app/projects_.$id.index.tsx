@@ -31,6 +31,12 @@ import {
   patchExcludeInlayOpts,
 } from "../../queries/inlay";
 import { postPlaceOrderOpts } from "../../queries/order";
+import {
+  getProjectInvoiceOpts,
+  postProjectInvoiceOpts,
+  postMarkInvoicePaidOpts,
+  postVoidInvoiceOpts,
+} from "../../queries/invoice";
 import type { ManufacturingStep, ProjectStatus, InlayWithInfo } from "@glassact/data";
 import { ProjectStatusBadge } from "../../components/project/status-badge";
 import { ProofStatusBadge } from "../../components/proof/proof-status-badge";
@@ -100,6 +106,20 @@ function RouteComponent() {
   const removeInlay = useMutation(deleteInlayOpts);
   const submitProject = useMutation(postSubmitProjectOpts);
   const excludeInlay = useMutation(patchExcludeInlayOpts);
+
+  const INVOICE_STATUSES: ProjectStatus[] = [
+    "delivered",
+    "invoiced",
+    "completed",
+  ];
+  const showInvoiceSection = createMemo(() => {
+    if (!projectQuery.isSuccess) return false;
+    return INVOICE_STATUSES.includes(projectQuery.data.status);
+  });
+  const invoiceQuery = useQuery(() => ({
+    ...getProjectInvoiceOpts(params().id),
+    enabled: showInvoiceSection(),
+  }));
 
   const inlays = () => (inlaysQuery.isSuccess ? inlaysQuery.data : []);
 
@@ -519,6 +539,24 @@ function RouteComponent() {
               </Match>
             </Switch>
           </div>
+
+          <Show when={showInvoiceSection()}>
+            <div class="mt-8">
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Invoice</h2>
+              <InvoiceSection
+                projectUuid={params().id}
+                projectStatus={projectQuery.data!.status}
+                invoice={invoiceQuery.data ?? null}
+                isLoading={invoiceQuery.isLoading}
+                onInvoiceChange={() => {
+                  queryClient.invalidateQueries({
+                    queryKey: ["project", params().id, "invoice"],
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["project"] });
+                }}
+              />
+            </div>
+          </Show>
         </div>
       </Match>
     </Switch>
@@ -719,6 +757,224 @@ interface PlaceOrderDialogProps {
   project: { uuid: string; name: string };
   inlays: InlayWithInfo[];
   onSuccess: () => void;
+}
+
+interface InvoiceSectionProps {
+  projectUuid: string;
+  projectStatus: ProjectStatus;
+  invoice: import("@glassact/data").GET<import("@glassact/data").Invoice> | null;
+  isLoading: boolean;
+  onInvoiceChange: () => void;
+}
+
+function InvoiceSection(props: InvoiceSectionProps) {
+  const { isInternal } = useUserContext();
+  const queryClient = useQueryClient();
+  const attachInvoice = useMutation(() => postProjectInvoiceOpts());
+  const markPaid = useMutation(() => postMarkInvoicePaidOpts());
+  const voidInvoice = useMutation(() => postVoidInvoiceOpts());
+
+  const [invoiceUrl, setInvoiceUrl] = createSignal("");
+
+  const handleAttach = () => {
+    attachInvoice.mutate(
+      { projectUuid: props.projectUuid, invoiceUrl: invoiceUrl() },
+      {
+        onSuccess() {
+          setInvoiceUrl("");
+          showToast({ title: "Invoice attached", variant: "success" });
+          props.onInvoiceChange();
+        },
+        onError(error) {
+          if (isApiError(error)) {
+            showToast({
+              title: "Failed to attach invoice",
+              description: error?.data?.error ?? "Unknown error",
+              variant: "error",
+            });
+          }
+        },
+      },
+    );
+  };
+
+  const handleMarkPaid = () => {
+    if (!props.invoice) return;
+    markPaid.mutate(props.invoice.uuid, {
+      onSuccess() {
+        showToast({ title: "Invoice marked as paid", variant: "success" });
+        props.onInvoiceChange();
+      },
+      onError(error) {
+        if (isApiError(error)) {
+          showToast({
+            title: "Failed to mark invoice paid",
+            description: error?.data?.error ?? "Unknown error",
+            variant: "error",
+          });
+        }
+      },
+    });
+  };
+
+  const handleVoid = () => {
+    if (!props.invoice) return;
+    voidInvoice.mutate(props.invoice.uuid, {
+      onSuccess() {
+        showToast({ title: "Invoice voided", variant: "success" });
+        queryClient.invalidateQueries({
+          queryKey: ["project", props.projectUuid, "invoice"],
+        });
+        props.onInvoiceChange();
+      },
+      onError(error) {
+        if (isApiError(error)) {
+          showToast({
+            title: "Failed to void invoice",
+            description: error?.data?.error ?? "Unknown error",
+            variant: "error",
+          });
+        }
+      },
+    });
+  };
+
+  const hasActiveInvoice = () =>
+    props.invoice !== null && props.invoice.status !== "void";
+
+  return (
+    <div class="border rounded-lg p-6 space-y-4">
+      <Switch>
+        <Match when={props.isLoading}>
+          <div class="h-16 bg-gray-100 rounded animate-pulse" />
+        </Match>
+
+        <Match when={!hasActiveInvoice() && isInternal()}>
+          <div class="space-y-3">
+            <p class="text-sm text-gray-600">
+              Paste the invoice link from your billing platform to attach it to
+              this project.
+            </p>
+            <div class="flex gap-2">
+              <input
+                type="url"
+                placeholder="https://..."
+                value={invoiceUrl()}
+                onInput={(e) => setInvoiceUrl(e.currentTarget.value)}
+                class="flex-1 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <Button
+                onClick={handleAttach}
+                disabled={
+                  attachInvoice.isPending || invoiceUrl().trim() === ""
+                }
+              >
+                {attachInvoice.isPending ? "Attaching..." : "Attach Invoice"}
+              </Button>
+            </div>
+          </div>
+        </Match>
+
+        <Match when={!hasActiveInvoice() && !isInternal()}>
+          <div class="text-center py-4">
+            <p class="text-gray-500 text-sm">
+              Invoice not yet available. Check back soon.
+            </p>
+          </div>
+        </Match>
+
+        <Match when={hasActiveInvoice()}>
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-gray-700">
+                  Invoice Status:
+                </span>
+                <Badge
+                  variant={
+                    props.invoice!.status === "paid"
+                      ? "default"
+                      : props.invoice!.status === "sent"
+                        ? "secondary"
+                        : "outline"
+                  }
+                  class="text-xs capitalize"
+                >
+                  {props.invoice!.status}
+                </Badge>
+              </div>
+              <Show when={props.invoice!.paid_at}>
+                <p class="text-xs text-gray-500">
+                  Paid on{" "}
+                  {new Date(props.invoice!.paid_at!).toLocaleDateString()}
+                </p>
+              </Show>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <Button
+                as="a"
+                href={props.invoice!.invoice_url!}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="outline"
+              >
+                View Invoice
+              </Button>
+              <Show
+                when={
+                  isInternal() && props.invoice!.status === "sent"
+                }
+              >
+                <Button
+                  onClick={handleMarkPaid}
+                  disabled={markPaid.isPending}
+                >
+                  {markPaid.isPending ? "Saving..." : "Mark as Paid"}
+                </Button>
+              </Show>
+              <Show
+                when={
+                  isInternal() && props.invoice!.status !== "paid"
+                }
+              >
+                <Dialog>
+                  <DialogTrigger as={Button} variant="outline">
+                    Void Invoice
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Void Invoice</DialogTitle>
+                    </DialogHeader>
+                    <p class="text-sm text-gray-600">
+                      Are you sure you want to void this invoice? The project
+                      status will remain unchanged. You can attach a new invoice
+                      afterwards.
+                    </p>
+                    <div class="flex justify-end gap-3 mt-4">
+                      <DialogClose
+                        as={Button}
+                        variant="outline"
+                        disabled={voidInvoice.isPending}
+                      >
+                        Cancel
+                      </DialogClose>
+                      <Button
+                        variant="destructive"
+                        onClick={handleVoid}
+                        disabled={voidInvoice.isPending}
+                      >
+                        {voidInvoice.isPending ? "Voiding..." : "Void Invoice"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </Show>
+            </div>
+          </div>
+        </Match>
+      </Switch>
+    </div>
+  );
 }
 
 function PlaceOrderDialog(props: PlaceOrderDialogProps) {

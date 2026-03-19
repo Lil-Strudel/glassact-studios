@@ -10,6 +10,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/chat"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dealership"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/invoice"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/notification"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/pricegroup"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/project"
@@ -132,6 +133,15 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/price-groups/{uuid}", canManagePriceGroups.ThenFunc(priceGroupModule.HandleGetPriceGroup))
 	mux.Handle("PATCH /api/price-groups/{uuid}", canManagePriceGroups.ThenFunc(priceGroupModule.HandlePatchPriceGroup))
 	mux.Handle("DELETE /api/price-groups/{uuid}", canManagePriceGroups.ThenFunc(priceGroupModule.HandleDeletePriceGroup))
+
+	canCreateInvoice := alice.New(app.Authenticate, app.RequirePermission(data.ActionCreateInvoice))
+
+	invoiceModule := invoice.NewInvoiceModule(app)
+	mux.Handle("POST /api/project/{uuid}/invoice", canCreateInvoice.ThenFunc(invoiceModule.HandlePostProjectInvoice))
+	mux.Handle("GET /api/project/{uuid}/invoice", protected.ThenFunc(invoiceModule.HandleGetProjectInvoice))
+	mux.Handle("GET /api/invoice/{uuid}", protected.ThenFunc(invoiceModule.HandleGetInvoice))
+	mux.Handle("POST /api/invoice/{uuid}/mark-paid", canCreateInvoice.ThenFunc(invoiceModule.HandleMarkInvoicePaid))
+	mux.Handle("POST /api/invoice/{uuid}/void", canCreateInvoice.ThenFunc(invoiceModule.HandleVoidInvoice))
 
 	notificationModule := notification.NewNotificationModule(app)
 	mux.Handle("GET /api/notifications", protected.ThenFunc(notificationModule.HandleGetNotifications))

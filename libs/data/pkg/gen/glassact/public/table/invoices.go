@@ -17,21 +17,15 @@ type invoicesTable struct {
 	postgres.Table
 
 	// Columns
-	ID            postgres.ColumnInteger
-	UUID          postgres.ColumnString
-	ProjectID     postgres.ColumnInteger
-	InvoiceNumber postgres.ColumnString
-	SubtotalCents postgres.ColumnInteger
-	TaxCents      postgres.ColumnInteger
-	TotalCents    postgres.ColumnInteger
-	Status        postgres.ColumnString
-	SentAt        postgres.ColumnTimestampz
-	SentToEmail   postgres.ColumnString
-	PaidAt        postgres.ColumnTimestampz
-	Notes         postgres.ColumnString
-	CreatedAt     postgres.ColumnTimestampz
-	UpdatedAt     postgres.ColumnTimestampz
-	Version       postgres.ColumnInteger
+	ID         postgres.ColumnInteger
+	UUID       postgres.ColumnString
+	ProjectID  postgres.ColumnInteger
+	InvoiceURL postgres.ColumnString
+	Status     postgres.ColumnString
+	PaidAt     postgres.ColumnTimestampz
+	CreatedAt  postgres.ColumnTimestampz
+	UpdatedAt  postgres.ColumnTimestampz
+	Version    postgres.ColumnInteger
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -73,45 +67,33 @@ func newInvoicesTable(schemaName, tableName, alias string) *InvoicesTable {
 
 func newInvoicesTableImpl(schemaName, tableName, alias string) invoicesTable {
 	var (
-		IDColumn            = postgres.IntegerColumn("id")
-		UUIDColumn          = postgres.StringColumn("uuid")
-		ProjectIDColumn     = postgres.IntegerColumn("project_id")
-		InvoiceNumberColumn = postgres.StringColumn("invoice_number")
-		SubtotalCentsColumn = postgres.IntegerColumn("subtotal_cents")
-		TaxCentsColumn      = postgres.IntegerColumn("tax_cents")
-		TotalCentsColumn    = postgres.IntegerColumn("total_cents")
-		StatusColumn        = postgres.StringColumn("status")
-		SentAtColumn        = postgres.TimestampzColumn("sent_at")
-		SentToEmailColumn   = postgres.StringColumn("sent_to_email")
-		PaidAtColumn        = postgres.TimestampzColumn("paid_at")
-		NotesColumn         = postgres.StringColumn("notes")
-		CreatedAtColumn     = postgres.TimestampzColumn("created_at")
-		UpdatedAtColumn     = postgres.TimestampzColumn("updated_at")
-		VersionColumn       = postgres.IntegerColumn("version")
-		allColumns          = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, InvoiceNumberColumn, SubtotalCentsColumn, TaxCentsColumn, TotalCentsColumn, StatusColumn, SentAtColumn, SentToEmailColumn, PaidAtColumn, NotesColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns      = postgres.ColumnList{UUIDColumn, ProjectIDColumn, InvoiceNumberColumn, SubtotalCentsColumn, TaxCentsColumn, TotalCentsColumn, StatusColumn, SentAtColumn, SentToEmailColumn, PaidAtColumn, NotesColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		defaultColumns      = postgres.ColumnList{IDColumn, UUIDColumn, TaxCentsColumn, StatusColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		IDColumn         = postgres.IntegerColumn("id")
+		UUIDColumn       = postgres.StringColumn("uuid")
+		ProjectIDColumn  = postgres.IntegerColumn("project_id")
+		InvoiceURLColumn = postgres.StringColumn("invoice_url")
+		StatusColumn     = postgres.StringColumn("status")
+		PaidAtColumn     = postgres.TimestampzColumn("paid_at")
+		CreatedAtColumn  = postgres.TimestampzColumn("created_at")
+		UpdatedAtColumn  = postgres.TimestampzColumn("updated_at")
+		VersionColumn    = postgres.IntegerColumn("version")
+		allColumns       = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, InvoiceURLColumn, StatusColumn, PaidAtColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns   = postgres.ColumnList{UUIDColumn, ProjectIDColumn, InvoiceURLColumn, StatusColumn, PaidAtColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		defaultColumns   = postgres.ColumnList{IDColumn, UUIDColumn, StatusColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
 	return invoicesTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:            IDColumn,
-		UUID:          UUIDColumn,
-		ProjectID:     ProjectIDColumn,
-		InvoiceNumber: InvoiceNumberColumn,
-		SubtotalCents: SubtotalCentsColumn,
-		TaxCents:      TaxCentsColumn,
-		TotalCents:    TotalCentsColumn,
-		Status:        StatusColumn,
-		SentAt:        SentAtColumn,
-		SentToEmail:   SentToEmailColumn,
-		PaidAt:        PaidAtColumn,
-		Notes:         NotesColumn,
-		CreatedAt:     CreatedAtColumn,
-		UpdatedAt:     UpdatedAtColumn,
-		Version:       VersionColumn,
+		ID:         IDColumn,
+		UUID:       UUIDColumn,
+		ProjectID:  ProjectIDColumn,
+		InvoiceURL: InvoiceURLColumn,
+		Status:     StatusColumn,
+		PaidAt:     PaidAtColumn,
+		CreatedAt:  CreatedAtColumn,
+		UpdatedAt:  UpdatedAtColumn,
+		Version:    VersionColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
