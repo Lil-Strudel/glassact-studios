@@ -33,13 +33,12 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { CleanupFn } from "@atlaskit/pragmatic-drag-and-drop/dist/types/internal-types";
 import { z } from "zod";
-import { produce } from "immer";
 import { IoWarningOutline } from "solid-icons/io";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import type { ManufacturingStep } from "@glassact/data";
 import {
   getKanbanInlaysOpts,
-  patchInlayStepOpts,
+  patchInlayStep,
   type KanbanInlay,
 } from "../../queries/manufacturing";
 import { BlockersDialog } from "../../components/manufacturing/blockers-dialog";
@@ -192,7 +191,54 @@ function RouteComponent() {
   let ref!: HTMLDivElement;
   const queryClient = useQueryClient();
   const kanbanQuery = useQuery(() => getKanbanInlaysOpts());
-  const patchStep = useMutation(() => patchInlayStepOpts());
+  const patchStep = useMutation(() => ({
+    mutationFn: patchInlayStep,
+    onMutate: async ({
+      uuid,
+      step,
+    }: {
+      uuid: string;
+      step: ManufacturingStep;
+    }) => {
+      await queryClient.cancelQueries({ queryKey: ["kanban-inlays"] });
+      const previousInlays = queryClient.getQueryData<KanbanInlay[]>([
+        "kanban-inlays",
+      ]);
+      queryClient.setQueryData<KanbanInlay[]>(
+        ["kanban-inlays"],
+        (old) =>
+          old?.map((inlay) =>
+            inlay.uuid === uuid
+              ? { ...inlay, manufacturing_step: step }
+              : inlay,
+          ) ?? [],
+      );
+      return { previousInlays };
+    },
+    onError: (
+      error: Error,
+      _variables: { uuid: string; step: ManufacturingStep },
+      context: { previousInlays: KanbanInlay[] | undefined } | undefined,
+    ) => {
+      queryClient.setQueryData(["kanban-inlays"], context?.previousInlays);
+      if (isApiError(error)) {
+        showToast({
+          title: "Failed to move inlay",
+          description: error?.data?.error ?? "Unknown error",
+          variant: "error",
+        });
+      }
+    },
+    onSuccess: () => {
+      showToast({
+        title: "Inlay Status Updated",
+        description: "The inlay status has been updated successfully.",
+        variant: "success",
+      });
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: ["kanban-inlays"] }),
+  }));
 
   const [blockersDialogUuid, setBlockersDialogUuid] = createSignal<
     string | null
@@ -201,7 +247,6 @@ function RouteComponent() {
     string | null
   >(null);
 
-  // Group inlays by manufacturing_step
   const columnData = createMemo(() => {
     const inlays = kanbanQuery.isSuccess ? kanbanQuery.data : [];
     const map = new Map<ManufacturingStep, KanbanInlay[]>();
@@ -217,34 +262,6 @@ function RouteComponent() {
     }
     return map;
   });
-
-  // Optimistic local override while a mutation is in flight
-  const [optimisticOverrides, setOptimisticOverrides] = createSignal<
-    Map<string, ManufacturingStep>
-  >(new Map());
-
-  const getInlaysForColumn = (step: ManufacturingStep) => {
-    const base = columnData().get(step) ?? [];
-    const overrides = optimisticOverrides();
-    if (overrides.size === 0) return base;
-
-    const result: KanbanInlay[] = [];
-    for (const [, columnInlays] of columnData()) {
-      for (const inlay of columnInlays) {
-        const override = overrides.get(inlay.uuid);
-        if (override === step) {
-          result.push(inlay);
-        }
-      }
-    }
-    // Add non-overridden inlays that belong here
-    for (const inlay of base) {
-      if (!overrides.has(inlay.uuid)) {
-        result.push(inlay);
-      }
-    }
-    return result;
-  };
 
   let cleanup: CleanupFn;
   onMount(() => {
@@ -275,41 +292,7 @@ function RouteComponent() {
           return;
         }
 
-        // Optimistic update
-        setOptimisticOverrides(
-          produce((map) => {
-            map.set(cardUuid, destStep);
-          }),
-        );
-
-        patchStep.mutate(
-          { uuid: cardUuid, step: destStep },
-          {
-            onSuccess() {
-              setOptimisticOverrides(
-                produce((map) => {
-                  map.delete(cardUuid);
-                }),
-              );
-              queryClient.invalidateQueries({ queryKey: ["kanban-inlays"] });
-            },
-            onError(error) {
-              // Revert optimistic update
-              setOptimisticOverrides(
-                produce((map) => {
-                  map.delete(cardUuid);
-                }),
-              );
-              if (isApiError(error)) {
-                showToast({
-                  title: "Failed to move inlay",
-                  description: error?.data?.error ?? "Unknown error",
-                  variant: "error",
-                });
-              }
-            },
-          },
-        );
+        patchStep.mutate({ uuid: cardUuid, step: destStep });
       },
     });
 
@@ -357,26 +340,24 @@ function RouteComponent() {
             </Button>
           </div>
         </Match>
-
-        <Match when={kanbanQuery.isSuccess}>
-          <div ref={ref} class="flex gap-4 overflow-x-auto">
-            <For each={STEP_COLUMNS}>
-              {(col) => (
-                <StepColumn column={col}>
-                  <For each={getInlaysForColumn(col.id)}>
-                    {(inlay) => (
-                      <InlayCard
-                        inlay={inlay}
-                        onOpenBlockers={setBlockersDialogUuid}
-                      />
-                    )}
-                  </For>
-                </StepColumn>
-              )}
-            </For>
-          </div>
-        </Match>
       </Switch>
+
+      <div ref={ref} class="flex gap-4 overflow-x-auto">
+        <For each={STEP_COLUMNS}>
+          {(col) => (
+            <StepColumn column={col}>
+              <For each={columnData().get(col.id) ?? []}>
+                {(inlay) => (
+                  <InlayCard
+                    inlay={inlay}
+                    onOpenBlockers={setBlockersDialogUuid}
+                  />
+                )}
+              </For>
+            </StepColumn>
+          )}
+        </For>
+      </div>
 
       {/* Blockers dialog */}
       <Show when={blockersDialogUuid()}>
