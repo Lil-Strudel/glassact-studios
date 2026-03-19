@@ -10,6 +10,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/chat"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dealership"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/notification"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/pricegroup"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/project"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/proof"
@@ -131,6 +132,14 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/price-groups/{uuid}", canManagePriceGroups.ThenFunc(priceGroupModule.HandleGetPriceGroup))
 	mux.Handle("PATCH /api/price-groups/{uuid}", canManagePriceGroups.ThenFunc(priceGroupModule.HandlePatchPriceGroup))
 	mux.Handle("DELETE /api/price-groups/{uuid}", canManagePriceGroups.ThenFunc(priceGroupModule.HandleDeletePriceGroup))
+
+	notificationModule := notification.NewNotificationModule(app)
+	mux.Handle("GET /api/notifications", protected.ThenFunc(notificationModule.HandleGetNotifications))
+	mux.Handle("GET /api/notifications/unread-count", protected.ThenFunc(notificationModule.HandleGetUnreadCount))
+	mux.Handle("PATCH /api/notification/{uuid}/read", protected.ThenFunc(notificationModule.HandleMarkNotificationRead))
+	mux.Handle("POST /api/notifications/read-all", protected.ThenFunc(notificationModule.HandleMarkAllNotificationsRead))
+	mux.Handle("GET /api/notification-preferences", protected.ThenFunc(notificationModule.HandleGetNotificationPreferences))
+	mux.Handle("PATCH /api/notification-preferences/{event_type}", protected.ThenFunc(notificationModule.HandlePatchNotificationPreference))
 
 	mux.Handle("/", unprotected.ThenFunc(app.HandleNotFound))
 	return standard.Then(mux)

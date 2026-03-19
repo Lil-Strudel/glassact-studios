@@ -17,7 +17,7 @@ This document outlines the complete implementation plan for the GlassAct Studios
 
 ## Project Status
 
-**Last Updated:** March 16, 2026
+**Last Updated:** March 19, 2026
 
 | Phase                             | Status      | Progress | Notes                                                           |
 | --------------------------------- | ----------- | -------- | --------------------------------------------------------------- |
@@ -27,7 +27,7 @@ This document outlines the complete implementation plan for the GlassAct Studios
 | **Phase 4: Project & Inlay Flow** | ✅ COMPLETE | 100%     | Project creation, inlay management, form UI complete            |
 | **Phase 5: Chat & Proofs**        | ✅ COMPLETE | 100%     | Chat, proofs, approve/decline, order placement complete         |
 | **Phase 6: Manufacturing**        | ✅ COMPLETE | 100%     | Kanban board, milestones, blockers, pizza tracker complete      |
-| **Phase 7: Notifications**        | ⏳ Pending  | 0%       | Ready to start                                                  |
+| **Phase 7: Notifications**        | ✅ COMPLETE | 100%     | Email + in-app notifications, preferences, Mailpit dev setup   |
 | **Phase 8: Invoicing**            | ⏳ Pending  | 0%       | Ready to start                                                  |
 | **Phase 9: Dashboards**           | ⏳ Pending  | 0%       | Ready to start                                                  |
 
@@ -53,7 +53,8 @@ GlassAct Studios is a B2B ecommerce platform for custom stained glass inlays in 
 | Manufacturing | Event-based milestones                  | Supports non-linear progression               |
 | Proofs        | Versioned, in-chat                      | Natural conversation flow                     |
 | Pricing       | Locked at order                         | Immutable snapshots for billing accuracy      |
-| Notifications | Email only, polling                     | Simpler MVP, websockets later                 |
+| Notifications | In-app always + email via SMTP polling  | No WebSocket complexity; email via background goroutines |
+| Email         | SMTP (Mailpit dev, SES prod)            | Provider-agnostic; `Mailer` abstraction on `Application` |
 
 ---
 
@@ -1252,16 +1253,119 @@ All Phase 4 tasks completed:
 
 ### Phase 7: Notifications
 
-**Goal:** Email notifications and in-app viewing
+**Status: ✅ COMPLETE** (March 19, 2026)
 
-| Task                          | Dependencies         |
-| ----------------------------- | -------------------- |
-| Notification service          | Phase 1              |
-| Email integration (SES)       | Notification service |
-| Event-to-notification mapping | All previous phases  |
-| Notification API              | Notification service |
-| Preferences API               | Phase 1              |
-| In-app notification UI        | Notification API     |
+**Goal:** Email + in-app notifications for both dealership and internal users, per-event-type preferences, and a Mailpit dev environment for testing email delivery.
+
+| Task                              | Dependencies        | Status |
+| --------------------------------- | ------------------- | ------ |
+| DB migration: `project_submitted` | Phase 1             | ✅     |
+| Jet code regeneration             | Migration           | ✅     |
+| TS type update + libs:build       | Jet regen           | ✅     |
+| `notification_preferences.go`     | Phase 1             | ✅     |
+| `app/email.go` — Mailer service   | Phase 1             | ✅     |
+| Auth email refactor               | Mailer service      | ✅     |
+| `app/notifications.go`            | Mailer + data layer | ✅     |
+| Notification API module           | notifications.go    | ✅     |
+| Event wiring (all modules)        | All previous phases | ✅     |
+| Frontend query layer              | Notification API    | ✅     |
+| Notification bell + dropdown      | Query layer         | ✅     |
+| Settings — preferences page       | Query layer         | ✅     |
+| Mailpit dev setup                 | —                   | ✅     |
+
+#### Design Decisions
+
+- **In-app always, email conditionally:** Every notification event always creates an in-app notification row. Email is sent only if the user's preference for that event type is enabled (absent row = opted in by default — sparse preference model).
+- **Non-blocking email:** Email delivery runs in background goroutines via `app.Wg`. HTTP responses are never blocked by email delivery. `email_sent_at` is stamped on the notification row after successful send.
+- **`project_submitted` event type added:** The existing enum lacked a "submitted for design" event (distinct from `order_placed`). Added to the DB migration, Jet code, Go types, and TS types.
+- **Mailer abstraction:** `buildMessage`/`randString` extracted from `authServices.go` into `app/email.go`. The `Mailer` struct on `Application` is the single place all email is sent from. Local dev uses Mailpit (SMTP on port 1025, web UI on port 8025); production uses any SMTP relay (e.g. AWS SES).
+- **Sparse preferences:** No preference rows are seeded on user creation. Absence of a row means opted in. `IsEmailEnabled*` returns `true` when no row found.
+- **Fan-out helpers:** Three helpers on `Application` handle the common patterns — `SendNotificationToUser`, `SendNotificationToAllInternalUsers`, `SendNotificationToAllDealershipUsersForProject`. All errors are logged, never returned, since they're called post-commit.
+
+#### New Event Type
+
+| Event Type          | Recipients          | Trigger                              |
+| ------------------- | ------------------- | ------------------------------------ |
+| `project_submitted` | All internal users  | Project transitions `draft → designing` |
+
+#### Full Event Mapping
+
+| Event                | Recipients                          | Trigger                                    |
+| -------------------- | ----------------------------------- | ------------------------------------------ |
+| `project_submitted`  | All internal users                  | `HandleSubmitProject`                      |
+| `order_placed`       | All internal users                  | `HandlePlaceOrder`                         |
+| `proof_ready`        | All dealership users on project     | `HandleCreateProof`                        |
+| `proof_approved`     | All internal users                  | `HandleApproveProof`                       |
+| `proof_declined`     | All internal users                  | `HandleDeclineProof`                       |
+| `inlay_step_changed` | All dealership users on project     | `HandlePatchInlayStep`                     |
+| `inlay_blocked`      | All dealership users on project     | `HandlePostBlocker`                        |
+| `inlay_unblocked`    | All dealership users on project     | `HandleResolveBlocker`                     |
+| `project_shipped`    | All dealership users on project     | `tryAdvanceProjectStatus` → shipped        |
+| `project_delivered`  | All dealership users + all internal | `tryAdvanceProjectStatus` → delivered      |
+| `chat_message`       | Other party (fan-out by sender type) | `HandlePostInlayChat`                     |
+
+#### Backend API Endpoints (6 new)
+
+- `GET /api/notifications` — All notifications for the current user (dealership or internal), ordered newest first
+- `GET /api/notifications/unread-count` — Returns `{ "count": N }` for badge display
+- `PATCH /api/notification/{uuid}/read` — Mark a single notification read; verifies ownership
+- `POST /api/notifications/read-all` — Mark all of the current user's notifications read
+- `GET /api/notification-preferences` — Returns full preference list with defaults filled in (all relevant event types, `email_enabled: true` for any missing rows)
+- `PATCH /api/notification-preferences/{event_type}` — Upsert a preference; body `{ "email_enabled": bool }`
+
+All routes use the `protected` middleware chain (authenticated users only).
+
+#### Notification Preference Event Types by User Type
+
+**Dealership users see:** `proof_ready`, `proof_approved`, `proof_declined`, `inlay_step_changed`, `inlay_blocked`, `inlay_unblocked`, `project_shipped`, `project_delivered`, `invoice_sent`, `payment_received`, `chat_message`
+
+**Internal users see:** `project_submitted`, `order_placed`, `proof_ready`, `proof_approved`, `proof_declined`, `project_delivered`, `chat_message`
+
+#### Files Created
+
+| File | Purpose |
+| ---- | ------- |
+| `libs/data/pkg/notification_preferences.go` | `NotificationPreferencesModel` — Get, Upsert, IsEmailEnabled for both user types |
+| `apps/api/app/email.go` | `Mailer` struct with `Send()`; `buildMessage`/`randString` extracted from auth |
+| `apps/api/app/notifications.go` | `SendNotificationToUser`, `SendNotificationToAllInternalUsers`, `SendNotificationToAllDealershipUsersForProject` |
+| `apps/api/modules/notification/notificationHandlers.go` | `NotificationModule` with 6 handlers |
+| `apps/webapp/src/queries/notifications.ts` | Fetch functions, `queryOptions` (15s/30s polling), `mutationOptions` |
+| `apps/webapp/src/components/notification-bell.tsx` | Bell icon with unread badge, dropdown (last 10 notifications), mark read, mark all read |
+
+#### Files Modified
+
+| File | Change |
+| ---- | ------ |
+| `libs/data/migrations/000001_init.up.sql` | Added `project_submitted` to `notification_event_type` enum |
+| `libs/data/src/notifications.ts` | Added `"project_submitted"`; added `NOTIFICATION_EVENT_TYPES`, `DEALERSHIP_NOTIFICATION_EVENT_TYPES`, `INTERNAL_NOTIFICATION_EVENT_TYPES`, `NOTIFICATION_EVENT_LABELS` constants |
+| `libs/data/pkg/notifications.go` | Added `ProjectSubmitted` to `notificationEventTypes` struct and var |
+| `libs/data/pkg/dealership_users.go` | Added `GetByDealershipID` method |
+| `libs/data/pkg/models.go` | Registered `NotificationPreferences NotificationPreferencesModel` |
+| `apps/api/app/app.go` | Added `Mailer *Mailer` field to `Application` struct |
+| `apps/api/cmd/api/main.go` | Wired `Mailer` from config via `app.NewMailer(...)` |
+| `apps/api/modules/auth/authServices.go` | `emailMagicLink` now calls `m.Mailer.Send()`; removed inline smtp/buildMessage/randString |
+| `apps/api/modules/modules.go` | Imported notification module; registered 6 routes |
+| `apps/api/modules/project/projectHandlers.go` | `project_submitted` after `HandleSubmitProject`; `order_placed` after `HandlePlaceOrder` |
+| `apps/api/modules/proof/proofHandlers.go` | `proof_ready` after `HandleCreateProof`; `proof_approved`/`proof_declined` after approve/decline |
+| `apps/api/modules/inlay/inlayHandlers.go` | `inlay_step_changed` after step patch; `project_shipped`/`project_delivered` in `tryAdvanceProjectStatus`; `inlay_blocked` after `HandlePostBlocker` |
+| `apps/api/modules/blocker/blockerHandlers.go` | `inlay_unblocked` after `HandleResolveBlocker` |
+| `apps/api/modules/chat/chatHandlers.go` | `chat_message` fan-out after `HandlePostInlayChat` (internal→dealership, dealership→internal) |
+| `mprocs.yaml` | Added `mailpit` process (`axllent/mailpit`, ports 1025/8025) |
+| `apps/webapp/src/routes/_app.tsx` | `NotificationBell` component wired into both desktop and mobile nav |
+| `apps/webapp/src/routes/_app/settings.tsx` | Replaced stub with full notification preferences page (per-event email toggles, user-type-aware) |
+
+#### Dev Environment
+
+Mailpit is added to `mprocs.yaml` and starts automatically with `pnpm dev`. Configure `apps/api/.env`:
+
+```
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_USERNAME=test
+SMTP_PASSWORD=test
+```
+
+View sent emails at `http://localhost:8025`.
 
 ### Phase 8: Invoicing
 
@@ -1369,7 +1473,7 @@ Types to create/update in `libs/data/src/`:
 | `project-chats.ts`    | `ProjectChat`                                                                    | New     |
 | `order-snapshots.ts`  | `OrderSnapshot`                                                                  | New     |
 | `invoices.ts`         | `InvoiceStatus`, `Invoice`, `InvoiceLineItem`                                    | New     |
-| `notifications.ts`    | `NotificationEventType`, `Notification`, `NotificationPreference`                | New     |
+| `notifications.ts`    | `NotificationEventType`, `Notification`, `NotificationPreference`, `NOTIFICATION_EVENT_TYPES`, `DEALERSHIP_NOTIFICATION_EVENT_TYPES`, `INTERNAL_NOTIFICATION_EVENT_TYPES`, `NOTIFICATION_EVENT_LABELS` | New + Updated (Mar 19) |
 
 ---
 
@@ -1396,7 +1500,8 @@ Models created/updated in `libs/data/pkg/` (Phase 1 Complete):
 | `project_chats.go`       | `ProjectChatModel`       | ✅ Complete (new)                            | Feb 4, 2026 |
 | `order_snapshots.go`     | `OrderSnapshotModel`     | ✅ Complete (new)                            | Feb 4, 2026 |
 | `invoices.go`            | `InvoiceModel`           | ✅ Complete (new, with line items)           | Feb 4, 2026 |
-| `notifications.go`       | `NotificationModel`      | ✅ Complete (new, with unread tracking)      | Feb 4, 2026 |
+| `notifications.go`              | `NotificationModel`              | ✅ Complete (new, with unread tracking)                | Feb 4, 2026  |
+| `notification_preferences.go`   | `NotificationPreferencesModel`   | ✅ Complete (new, sparse prefs with upsert + defaults) | Mar 19, 2026 |
 
 **Note:** All files use underscore naming convention (Go convention). Old hyphenated files have been removed.
 
@@ -1498,9 +1603,9 @@ Models created/updated in `libs/data/pkg/` (Phase 1 Complete):
 
 ### Notifications
 
-- `GET /api/notifications` - List notifications
-- `GET /api/notifications/unread-count` - Get count
-- `POST /api/notifications/:uuid/read` - Mark read
-- `POST /api/notifications/read-all` - Mark all read
-- `GET /api/notification-preferences` - Get preferences
-- `PATCH /api/notification-preferences` - Update preferences
+- `GET /api/notifications` - List all notifications for current user
+- `GET /api/notifications/unread-count` - Get unread count `{ "count": N }`
+- `PATCH /api/notification/{uuid}/read` - Mark single notification read
+- `POST /api/notifications/read-all` - Mark all notifications read
+- `GET /api/notification-preferences` - Get preferences (with defaults for missing rows)
+- `PATCH /api/notification-preferences/{event_type}` - Upsert a preference

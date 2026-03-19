@@ -11,8 +11,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/mail"
-	"net/smtp"
 	"net/url"
 	"path"
 	"strconv"
@@ -262,64 +260,8 @@ func (m *AuthModule) emailMagicLink(email, token string) error {
 	q.Set("token", token)
 	u.RawQuery = q.Encode()
 
-	from := mail.Address{Name: "GlassAct Studios", Address: "no-reply@glassactstudios.com"}
-	to := mail.Address{Address: email}
-
-	subject := "Sign in to Glassact Studios"
-
 	plain, html := generateMagicLinkEmail(u.String())
-	message := buildMessage(from, to, subject, plain, html)
-
-	auth := smtp.PlainAuth("", m.Cfg.Smtp.Username, m.Cfg.Smtp.Password, m.Cfg.Smtp.Host)
-
-	err = smtp.SendMail(m.Cfg.Smtp.Host+":"+strconv.Itoa(m.Cfg.Smtp.Port), auth, from.Address, []string{to.Address}, message)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func randString(n int) string {
-	b := make([]byte, n)
-	if _, err := rand.Read(b); err != nil {
-		return fmt.Sprintf("%d", time.Now().UnixNano())
-	}
-	return hex.EncodeToString(b)
-}
-
-func buildMessage(from, to mail.Address, subject, textBody, htmlBody string) []byte {
-	msgID := fmt.Sprintf("<%s@glassactstudios.com>", randString(12))
-	date := time.Now().Format(time.RFC1123Z)
-	boundary := "alt-" + randString(12)
-
-	headers := ""
-	headers += fmt.Sprintf("From: %s\r\n", from.String())
-	headers += fmt.Sprintf("To: %s\r\n", to.String())
-	headers += fmt.Sprintf("Subject: %s\r\n", subject)
-	headers += "MIME-Version: 1.0\r\n"
-	headers += fmt.Sprintf("Content-Type: multipart/alternative; boundary=\"%s\"\r\n", boundary)
-	headers += fmt.Sprintf("Date: %s\r\n", date)
-	headers += fmt.Sprintf("Message-ID: %s\r\n", msgID)
-
-	body := ""
-	body += fmt.Sprintf("--%s\r\n", boundary)
-	body += "Content-Type: text/plain; charset=\"UTF-8\"\r\n"
-	body += "Content-Transfer-Encoding: 7bit\r\n"
-	body += "\r\n"
-	body += textBody + "\r\n"
-
-	if htmlBody != "" {
-		body += fmt.Sprintf("--%s\r\n", boundary)
-		body += "Content-Type: text/html; charset=\"UTF-8\"\r\n"
-		body += "Content-Transfer-Encoding: 7bit\r\n"
-		body += "\r\n"
-		body += htmlBody + "\r\n"
-	}
-
-	body += fmt.Sprintf("--%s--\r\n", boundary)
-
-	return []byte(headers + "\r\n" + body)
+	return m.Mailer.Send(email, "Sign in to Glassact Studios", html, plain)
 }
 
 func generateMagicLinkEmail(magicLink string) (string, string) {

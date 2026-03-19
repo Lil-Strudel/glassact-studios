@@ -20,6 +20,7 @@ type notificationEventTypes struct {
 	ProofReady       NotificationEventType
 	ProofApproved    NotificationEventType
 	ProofDeclined    NotificationEventType
+	ProjectSubmitted NotificationEventType
 	OrderPlaced      NotificationEventType
 	InlayStepChanged NotificationEventType
 	InlayBlocked     NotificationEventType
@@ -35,6 +36,7 @@ var NotificationEventTypes = notificationEventTypes{
 	ProofReady:       NotificationEventType("proof_ready"),
 	ProofApproved:    NotificationEventType("proof_approved"),
 	ProofDeclined:    NotificationEventType("proof_declined"),
+	ProjectSubmitted: NotificationEventType("project_submitted"),
 	OrderPlaced:      NotificationEventType("order_placed"),
 	InlayStepChanged: NotificationEventType("inlay_step_changed"),
 	InlayBlocked:     NotificationEventType("inlay_blocked"),

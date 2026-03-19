@@ -12,8 +12,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@glassact/ui";
-import { IoClose, IoMenu, IoNotificationsOutline } from "solid-icons/io";
+import { IoClose, IoMenu } from "solid-icons/io";
 import { useUserContext } from "../providers/user";
+import { NotificationBell } from "../components/notification-bell";
 
 export const Route = createFileRoute("/_app")({
   component: RouteComponent,
@@ -89,9 +90,7 @@ function RouteComponent() {
                 </div>
               </div>
               <div class="hidden sm:ml-6 sm:flex sm:items-center">
-                <Button size="icon" variant="ghost">
-                  <IoNotificationsOutline size={24} />
-                </Button>
+                <NotificationBell />
 
                 <Show when={user()}>
                   {(currentUser) => (
@@ -166,9 +165,9 @@ function RouteComponent() {
                             {currentUser().email}
                           </div>
                         </div>
-                        <Button size="icon" variant="ghost" class="ml-auto">
-                          <IoNotificationsOutline size={24} />
-                        </Button>
+                        <div class="ml-auto">
+                          <NotificationBell />
+                        </div>
                       </div>
                       <div class="mt-3 space-y-1">
                         <For each={userNavigation}>

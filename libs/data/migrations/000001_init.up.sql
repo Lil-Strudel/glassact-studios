@@ -16,6 +16,7 @@ CREATE TYPE notification_event_type AS ENUM (
     'proof_ready',
     'proof_approved',
     'proof_declined',
+    'project_submitted',
     'order_placed',
     'inlay_step_changed',
     'inlay_blocked',

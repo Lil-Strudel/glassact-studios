@@ -248,6 +248,14 @@ func (m ProofModule) HandleCreateProof(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	m.SendNotificationToAllDealershipUsersForProject(
+		project.ID,
+		data.NotificationEventTypes.ProofReady,
+		fmt.Sprintf("Proof ready for review: %s", inlay.Name),
+		fmt.Sprintf("A new proof (v%d) is ready for review on inlay %q.", versionNumber, inlay.Name),
+		&inlay.ID,
+	)
+
 	m.WriteJSON(w, r, http.StatusCreated, proof)
 }
 
@@ -384,6 +392,13 @@ func (m ProofModule) HandleApproveProof(w http.ResponseWriter, r *http.Request) 
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
+
+	m.SendNotificationToAllInternalUsers(
+		data.NotificationEventTypes.ProofApproved,
+		fmt.Sprintf("Proof approved: %s", inlay.Name),
+		fmt.Sprintf("Proof v%d for inlay %q has been approved.", proof.VersionNumber, inlay.Name),
+		&project.ID, &inlay.ID,
+	)
 
 	m.WriteJSON(w, r, http.StatusOK, proof)
 }
@@ -526,6 +541,13 @@ func (m ProofModule) HandleDeclineProof(w http.ResponseWriter, r *http.Request) 
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
+
+	m.SendNotificationToAllInternalUsers(
+		data.NotificationEventTypes.ProofDeclined,
+		fmt.Sprintf("Proof declined: %s", inlay.Name),
+		fmt.Sprintf("Proof v%d for inlay %q has been declined: %s", proof.VersionNumber, inlay.Name, body.DeclineReason),
+		&project.ID, &inlay.ID,
+	)
 
 	m.WriteJSON(w, r, http.StatusOK, proof)
 }

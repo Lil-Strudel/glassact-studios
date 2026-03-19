@@ -15,6 +15,7 @@ const (
 	NotificationEventType_ProofReady       NotificationEventType = "proof_ready"
 	NotificationEventType_ProofApproved    NotificationEventType = "proof_approved"
 	NotificationEventType_ProofDeclined    NotificationEventType = "proof_declined"
+	NotificationEventType_ProjectSubmitted NotificationEventType = "project_submitted"
 	NotificationEventType_OrderPlaced      NotificationEventType = "order_placed"
 	NotificationEventType_InlayStepChanged NotificationEventType = "inlay_step_changed"
 	NotificationEventType_InlayBlocked     NotificationEventType = "inlay_blocked"
@@ -30,6 +31,7 @@ var NotificationEventTypeAllValues = []NotificationEventType{
 	NotificationEventType_ProofReady,
 	NotificationEventType_ProofApproved,
 	NotificationEventType_ProofDeclined,
+	NotificationEventType_ProjectSubmitted,
 	NotificationEventType_OrderPlaced,
 	NotificationEventType_InlayStepChanged,
 	NotificationEventType_InlayBlocked,
@@ -59,6 +61,8 @@ func (e *NotificationEventType) Scan(value interface{}) error {
 		*e = NotificationEventType_ProofApproved
 	case "proof_declined":
 		*e = NotificationEventType_ProofDeclined
+	case "project_submitted":
+		*e = NotificationEventType_ProjectSubmitted
 	case "order_placed":
 		*e = NotificationEventType_OrderPlaced
 	case "inlay_step_changed":

@@ -13,6 +13,7 @@ var NotificationEventType = &struct {
 	ProofReady       postgres.StringExpression
 	ProofApproved    postgres.StringExpression
 	ProofDeclined    postgres.StringExpression
+	ProjectSubmitted postgres.StringExpression
 	OrderPlaced      postgres.StringExpression
 	InlayStepChanged postgres.StringExpression
 	InlayBlocked     postgres.StringExpression
@@ -26,6 +27,7 @@ var NotificationEventType = &struct {
 	ProofReady:       postgres.NewEnumValue("proof_ready"),
 	ProofApproved:    postgres.NewEnumValue("proof_approved"),
 	ProofDeclined:    postgres.NewEnumValue("proof_declined"),
+	ProjectSubmitted: postgres.NewEnumValue("project_submitted"),
 	OrderPlaced:      postgres.NewEnumValue("order_placed"),
 	InlayStepChanged: postgres.NewEnumValue("inlay_step_changed"),
 	InlayBlocked:     postgres.NewEnumValue("inlay_blocked"),

@@ -53,6 +53,7 @@ func main() {
 		Validate: validator.New(validator.WithRequiredStructEnabled()),
 		Wg:       sync.WaitGroup{},
 		S3:       s3Client,
+		Mailer:   app.NewMailer(cfg.Smtp.Host, cfg.Smtp.Port, cfg.Smtp.Username, cfg.Smtp.Password),
 	}
 
 	err = app.Serve(modules.GetRoutes(app))

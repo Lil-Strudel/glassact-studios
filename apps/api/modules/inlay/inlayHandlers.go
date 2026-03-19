@@ -607,6 +607,14 @@ func (m InlayModule) HandlePatchInlayStep(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	m.SendNotificationToAllDealershipUsersForProject(
+		inlay.ProjectID,
+		data.NotificationEventTypes.InlayStepChanged,
+		fmt.Sprintf("Inlay moved to %s: %s", body.Step, inlay.Name),
+		fmt.Sprintf("Inlay %q has moved to the %s step.", inlay.Name, body.Step),
+		&inlay.ID,
+	)
+
 	// After commit: check if all non-excluded inlays in the project have reached shipped or delivered
 	// to auto-advance the project status.
 	m.tryAdvanceProjectStatus(w, r, inlay.ProjectID)
@@ -680,7 +688,33 @@ func (m InlayModule) tryAdvanceProjectStatus(w http.ResponseWriter, r *http.Requ
 	}
 
 	project.Status = newStatus
-	_ = m.Db.Projects.Update(project)
+	if err := m.Db.Projects.Update(project); err != nil {
+		return
+	}
+
+	if newStatus == data.ProjectStatuses.Shipped {
+		m.SendNotificationToAllDealershipUsersForProject(
+			projectID,
+			data.NotificationEventTypes.ProjectShipped,
+			fmt.Sprintf("Project shipped: %s", project.Name),
+			fmt.Sprintf("Your project %q has been shipped.", project.Name),
+			nil,
+		)
+	} else if newStatus == data.ProjectStatuses.Delivered {
+		m.SendNotificationToAllDealershipUsersForProject(
+			projectID,
+			data.NotificationEventTypes.ProjectDelivered,
+			fmt.Sprintf("Project delivered: %s", project.Name),
+			fmt.Sprintf("Your project %q has been delivered.", project.Name),
+			nil,
+		)
+		m.SendNotificationToAllInternalUsers(
+			data.NotificationEventTypes.ProjectDelivered,
+			fmt.Sprintf("Project delivered: %s", project.Name),
+			fmt.Sprintf("Project %q has been delivered and is ready for invoicing.", project.Name),
+			&projectID, nil,
+		)
+	}
 }
 
 func (m InlayModule) HandleGetBlockersByInlay(w http.ResponseWriter, r *http.Request) {
@@ -771,6 +805,14 @@ func (m InlayModule) HandlePostBlocker(w http.ResponseWriter, r *http.Request) {
 		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to insert blocker: %w", err))
 		return
 	}
+
+	m.SendNotificationToAllDealershipUsersForProject(
+		inlay.ProjectID,
+		data.NotificationEventTypes.InlayBlocked,
+		fmt.Sprintf("Issue with inlay: %s", inlay.Name),
+		fmt.Sprintf("Inlay %q has been blocked: %s", inlay.Name, body.Reason),
+		&inlay.ID,
+	)
 
 	m.WriteJSON(w, r, http.StatusCreated, blocker)
 }
