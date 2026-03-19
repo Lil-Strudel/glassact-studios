@@ -33,7 +33,6 @@ export function ManufacturingTracker(props: ManufacturingTrackerProps) {
 
           return (
             <div class="flex items-center flex-1 min-w-0">
-              {/* Connector line (not before first step) */}
               {index() > 0 && (
                 <div
                   class={cn(
@@ -43,20 +42,17 @@ export function ManufacturingTracker(props: ManufacturingTrackerProps) {
                 />
               )}
 
-              {/* Step dot */}
               <div class="relative flex-shrink-0">
                 <div
                   class={cn(
                     "w-3 h-3 rounded-full border-2",
-                    isComplete() &&
-                      "bg-primary border-primary",
+                    isComplete() && "bg-primary border-primary",
                     isCurrent() &&
                       "bg-primary border-primary ring-2 ring-primary/30 ring-offset-1",
                     isFuture() && "bg-white border-gray-300",
                   )}
                   title={step.label}
                 />
-                {/* Blocker warning icon on current step */}
                 {isCurrent() && props.hasBlocker && (
                   <span class="absolute -top-2.5 -right-2.5 text-amber-500">
                     <IoWarningOutline size={12} />

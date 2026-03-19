@@ -359,7 +359,6 @@ function RouteComponent() {
         </For>
       </div>
 
-      {/* Blockers dialog */}
       <Show when={blockersDialogUuid()}>
         {(uuid) => (
           <BlockersDialog
@@ -372,7 +371,6 @@ function RouteComponent() {
         )}
       </Show>
 
-      {/* Hard blocker warning dialog */}
       <Dialog
         open={hardBlockerWarningUuid() !== null}
         onOpenChange={(open) => {

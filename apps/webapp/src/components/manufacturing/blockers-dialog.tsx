@@ -59,9 +59,7 @@ export function BlockersDialog(props: BlockersDialogProps) {
   const queryClient = useQueryClient();
   const [showAddForm, setShowAddForm] = createSignal(false);
 
-  const blockersQuery = useQuery(() =>
-    getBlockersByInlayOpts(props.inlayUuid),
-  );
+  const blockersQuery = useQuery(() => getBlockersByInlayOpts(props.inlayUuid));
   const addBlocker = useMutation(() => postBlockerOpts());
   const resolveBlocker = useMutation(() => postResolveBlockerOpts());
 
@@ -156,9 +154,7 @@ export function BlockersDialog(props: BlockersDialogProps) {
           <Match when={blockersQuery.isLoading}>
             <div class="space-y-2">
               <For each={[1, 2]}>
-                {() => (
-                  <div class="h-16 bg-gray-100 rounded animate-pulse" />
-                )}
+                {() => <div class="h-16 bg-gray-100 rounded animate-pulse" />}
               </For>
             </div>
           </Match>
@@ -169,7 +165,6 @@ export function BlockersDialog(props: BlockersDialogProps) {
 
           <Match when={blockersQuery.isSuccess}>
             <div class="space-y-4">
-              {/* Unresolved blockers */}
               <Show when={unresolvedBlockers().length > 0}>
                 <div class="space-y-2">
                   <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -216,7 +211,6 @@ export function BlockersDialog(props: BlockersDialogProps) {
                 </div>
               </Show>
 
-              {/* Resolved blockers */}
               <Show when={resolvedBlockers().length > 0}>
                 <div class="space-y-2">
                   <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -260,7 +254,6 @@ export function BlockersDialog(props: BlockersDialogProps) {
                 </p>
               </Show>
 
-              {/* Add blocker form */}
               <Can permission="create_blocker">
                 <Show
                   when={showAddForm()}
@@ -291,7 +284,10 @@ export function BlockersDialog(props: BlockersDialogProps) {
                             label="Type"
                             options={[
                               { value: "soft", label: "Soft (Informational)" },
-                              { value: "hard", label: "Hard (Blocks Progress)" },
+                              {
+                                value: "hard",
+                                label: "Hard (Blocks Progress)",
+                              },
                             ]}
                             placeholder="Select type"
                           />
