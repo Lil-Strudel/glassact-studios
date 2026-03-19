@@ -17,7 +17,7 @@ type Notifications struct {
 	UUID             uuid.UUID
 	DealershipUserID *int32
 	InternalUserID   *int32
-	EventType        NotificationEventType
+	EventType        string
 	Title            string
 	Body             string
 	ProjectID        *int32

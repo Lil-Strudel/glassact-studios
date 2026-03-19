@@ -10,6 +10,6 @@ package model
 type DealershipUserNotificationPrefs struct {
 	ID               int32 `sql:"primary_key"`
 	DealershipUserID int32
-	EventType        NotificationEventType
+	EventType        string
 	EmailEnabled     bool
 }

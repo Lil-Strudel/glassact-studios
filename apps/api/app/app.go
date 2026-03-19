@@ -26,6 +26,7 @@ type Application struct {
 	Validate *validator.Validate
 	Wg       sync.WaitGroup
 	S3       *s3.Client
+	Mailer   *Mailer
 }
 
 func (app *Application) Serve(routes http.Handler) error {

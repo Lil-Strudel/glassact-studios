@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
+	data "github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
 )
 
 type BlockerModule struct {
@@ -67,6 +68,17 @@ func (m BlockerModule) HandleResolveBlocker(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to resolve blocker: %w", err))
 		return
+	}
+
+	inlay, found, inlayErr := m.Db.Inlays.GetByID(blocker.InlayID)
+	if inlayErr == nil && found {
+		m.SendNotificationToAllDealershipUsersForProject(
+			inlay.ProjectID,
+			data.NotificationEventTypes.InlayUnblocked,
+			fmt.Sprintf("Issue resolved: %s", inlay.Name),
+			fmt.Sprintf("A blocker on inlay %q has been resolved.", inlay.Name),
+			&inlay.ID,
+		)
 	}
 
 	m.WriteJSON(w, r, http.StatusOK, blocker)

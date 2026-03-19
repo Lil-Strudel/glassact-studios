@@ -20,6 +20,7 @@ type notificationEventTypes struct {
 	ProofReady       NotificationEventType
 	ProofApproved    NotificationEventType
 	ProofDeclined    NotificationEventType
+	ProjectSubmitted NotificationEventType
 	OrderPlaced      NotificationEventType
 	InlayStepChanged NotificationEventType
 	InlayBlocked     NotificationEventType
@@ -35,6 +36,7 @@ var NotificationEventTypes = notificationEventTypes{
 	ProofReady:       NotificationEventType("proof_ready"),
 	ProofApproved:    NotificationEventType("proof_approved"),
 	ProofDeclined:    NotificationEventType("proof_declined"),
+	ProjectSubmitted: NotificationEventType("project_submitted"),
 	OrderPlaced:      NotificationEventType("order_placed"),
 	InlayStepChanged: NotificationEventType("inlay_step_changed"),
 	InlayBlocked:     NotificationEventType("inlay_blocked"),
@@ -96,7 +98,7 @@ func notificationFromGen(genNotif model.Notifications) *Notification {
 		UUID:             genNotif.UUID.String(),
 		DealershipUserID: dealershipUserID,
 		InternalUserID:   internalUserID,
-		EventType:        NotificationEventType(genNotif.EventType),
+		EventType:        NotificationEventType(string(genNotif.EventType)),
 		Title:            genNotif.Title,
 		Body:             genNotif.Body,
 		ProjectID:        projectID,
@@ -149,7 +151,7 @@ func notificationToGen(n *Notification) (*model.Notifications, error) {
 		UUID:             notifUUID,
 		DealershipUserID: dealershipUserID,
 		InternalUserID:   internalUserID,
-		EventType:        model.NotificationEventType(n.EventType),
+		EventType:        string(n.EventType),
 		Title:            n.Title,
 		Body:             n.Body,
 		ProjectID:        projectID,

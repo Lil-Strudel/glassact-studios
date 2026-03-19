@@ -396,6 +396,13 @@ func (m ProjectModule) HandleSubmitProject(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	m.SendNotificationToAllInternalUsers(
+		data.NotificationEventTypes.ProjectSubmitted,
+		fmt.Sprintf("Project submitted for design: %s", project.Name),
+		fmt.Sprintf("Project %q has been submitted for design review.", project.Name),
+		&project.ID, nil,
+	)
+
 	m.WriteJSON(w, r, http.StatusOK, project)
 }
 
@@ -553,6 +560,13 @@ func (m ProjectModule) HandlePlaceOrder(w http.ResponseWriter, r *http.Request) 
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
+
+	m.SendNotificationToAllInternalUsers(
+		data.NotificationEventTypes.OrderPlaced,
+		fmt.Sprintf("Order placed: %s", project.Name),
+		fmt.Sprintf("A new order has been placed for project %q.", project.Name),
+		&project.ID, nil,
+	)
 
 	m.WriteJSON(w, r, http.StatusOK, project)
 }

@@ -119,5 +119,22 @@ func (m ChatModule) HandlePostInlayChat(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if user.IsInternal() {
+		m.SendNotificationToAllDealershipUsersForProject(
+			inlay.ProjectID,
+			data.NotificationEventTypes.ChatMessage,
+			fmt.Sprintf("New message on inlay: %s", inlay.Name),
+			body.Message,
+			&inlay.ID,
+		)
+	} else {
+		m.SendNotificationToAllInternalUsers(
+			data.NotificationEventTypes.ChatMessage,
+			fmt.Sprintf("New message on inlay: %s", inlay.Name),
+			body.Message,
+			nil, &inlay.ID,
+		)
+	}
+
 	m.WriteJSON(w, r, http.StatusCreated, chat)
 }

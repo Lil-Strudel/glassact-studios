@@ -567,7 +567,6 @@ func (m InlayModule) HandlePatchInlayStep(w http.ResponseWriter, r *http.Request
 	}
 	defer tx.Rollback()
 
-	// Insert exited milestone for current step (if one exists)
 	if inlay.ManufacturingStep != nil {
 		exitedMilestone := data.InlayMilestone{
 			InlayID:     inlay.ID,
@@ -582,7 +581,6 @@ func (m InlayModule) HandlePatchInlayStep(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	// Insert entered/reverted milestone for destination step
 	enteredMilestone := data.InlayMilestone{
 		InlayID:     inlay.ID,
 		Step:        body.Step,
@@ -607,23 +605,25 @@ func (m InlayModule) HandlePatchInlayStep(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// After commit: check if all non-excluded inlays in the project have reached shipped or delivered
-	// to auto-advance the project status.
+	m.SendNotificationToAllDealershipUsersForProject(
+		inlay.ProjectID,
+		data.NotificationEventTypes.InlayStepChanged,
+		fmt.Sprintf("Inlay moved to %s: %s", body.Step, inlay.Name),
+		fmt.Sprintf("Inlay %q has moved to the %s step.", inlay.Name, body.Step),
+		&inlay.ID,
+	)
+
 	m.tryAdvanceProjectStatus(w, r, inlay.ProjectID)
 
 	m.WriteJSON(w, r, http.StatusOK, inlay)
 }
 
-// tryAdvanceProjectStatus checks if all non-excluded inlays in the project are at
-// shipped or delivered, and advances the project status accordingly.
-// Errors are logged but do not affect the response already sent.
 func (m InlayModule) tryAdvanceProjectStatus(w http.ResponseWriter, r *http.Request, projectID int) {
 	project, found, err := m.Db.Projects.GetByID(projectID)
 	if err != nil || !found {
 		return
 	}
 
-	// Only auto-advance projects that are in-production, shipped, or ordered
 	advanceable := map[data.ProjectStatus]bool{
 		data.ProjectStatuses.Ordered:      true,
 		data.ProjectStatuses.InProduction: true,
@@ -680,7 +680,33 @@ func (m InlayModule) tryAdvanceProjectStatus(w http.ResponseWriter, r *http.Requ
 	}
 
 	project.Status = newStatus
-	_ = m.Db.Projects.Update(project)
+	if err := m.Db.Projects.Update(project); err != nil {
+		return
+	}
+
+	if newStatus == data.ProjectStatuses.Shipped {
+		m.SendNotificationToAllDealershipUsersForProject(
+			projectID,
+			data.NotificationEventTypes.ProjectShipped,
+			fmt.Sprintf("Project shipped: %s", project.Name),
+			fmt.Sprintf("Your project %q has been shipped.", project.Name),
+			nil,
+		)
+	} else if newStatus == data.ProjectStatuses.Delivered {
+		m.SendNotificationToAllDealershipUsersForProject(
+			projectID,
+			data.NotificationEventTypes.ProjectDelivered,
+			fmt.Sprintf("Project delivered: %s", project.Name),
+			fmt.Sprintf("Your project %q has been delivered.", project.Name),
+			nil,
+		)
+		m.SendNotificationToAllInternalUsers(
+			data.NotificationEventTypes.ProjectDelivered,
+			fmt.Sprintf("Project delivered: %s", project.Name),
+			fmt.Sprintf("Project %q has been delivered and is ready for invoicing.", project.Name),
+			&projectID, nil,
+		)
+	}
 }
 
 func (m InlayModule) HandleGetBlockersByInlay(w http.ResponseWriter, r *http.Request) {
@@ -702,7 +728,6 @@ func (m InlayModule) HandleGetBlockersByInlay(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Dealership users can only see blockers for their own inlays
 	user := m.ContextGetUser(r)
 	if user.IsDealership() {
 		if _, ok := m.validateInlayOwnership(w, r, inlay); !ok {
@@ -771,6 +796,14 @@ func (m InlayModule) HandlePostBlocker(w http.ResponseWriter, r *http.Request) {
 		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to insert blocker: %w", err))
 		return
 	}
+
+	m.SendNotificationToAllDealershipUsersForProject(
+		inlay.ProjectID,
+		data.NotificationEventTypes.InlayBlocked,
+		fmt.Sprintf("Issue with inlay: %s", inlay.Name),
+		fmt.Sprintf("Inlay %q has been blocked: %s", inlay.Name, body.Reason),
+		&inlay.ID,
+	)
 
 	m.WriteJSON(w, r, http.StatusCreated, blocker)
 }

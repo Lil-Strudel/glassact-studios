@@ -250,6 +250,32 @@ func (m DealershipUserModel) GetForToken(tokenScope, tokenPlaintext string) (*De
 	return dealershipUserFromGen(dest), true, nil
 }
 
+func (m DealershipUserModel) GetByDealershipID(dealershipID int) ([]*DealershipUser, error) {
+	query := postgres.SELECT(
+		table.DealershipUsers.AllColumns,
+	).FROM(
+		table.DealershipUsers,
+	).WHERE(
+		table.DealershipUsers.DealershipID.EQ(postgres.Int(int64(dealershipID))),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest []model.DealershipUsers
+	err := query.QueryContext(ctx, m.STDB, &dest)
+	if err != nil {
+		return nil, err
+	}
+
+	users := make([]*DealershipUser, len(dest))
+	for i, d := range dest {
+		users[i] = dealershipUserFromGen(d)
+	}
+
+	return users, nil
+}
+
 func (m DealershipUserModel) GetAll() ([]*DealershipUser, error) {
 	query := postgres.SELECT(
 		table.DealershipUsers.AllColumns,
