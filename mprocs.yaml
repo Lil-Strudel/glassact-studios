@@ -8,7 +8,7 @@ procs:
   database:
     shell: "docker run --rm --name glassact-postgres -e POSTGRES_USER=dev -e POSTGRES_PASSWORD=1234 -e POSTGRES_DB=glassact -v postgres_data:/var/lib/postgresql -p 5432:5432 postgis/postgis:18-3.6"
   mailpit:
-    shell: "docker run --rm --name glassact-mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit"
+    shell: "docker run --rm --name glassact-mailpit -e MP_SMTP_AUTH_ACCEPT_ANY=true -e MP_SMTP_AUTH_ALLOW_INSECURE=true -p 1025:1025 -p 8025:8025 axllent/mailpit"
   landing:
     shell: "pnpm dev:landing"
     autostart: false
