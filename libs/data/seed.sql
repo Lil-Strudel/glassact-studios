@@ -1,6 +1,6 @@
 INSERT INTO dealerships (name, street, street_ext, city, state, postal_code, country, location)
 VALUES (
-    'GlassAct Studios',
+    'Fake Dealership',
     '540 S Commerce Rd',
     '',
     'Orem',

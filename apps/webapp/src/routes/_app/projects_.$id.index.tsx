@@ -31,13 +31,14 @@ import {
   patchExcludeInlayOpts,
 } from "../../queries/inlay";
 import { postPlaceOrderOpts } from "../../queries/order";
-import type { ProjectStatus, InlayWithInfo } from "@glassact/data";
+import type { ManufacturingStep, ProjectStatus, InlayWithInfo } from "@glassact/data";
 import { ProjectStatusBadge } from "../../components/project/status-badge";
 import { ProofStatusBadge } from "../../components/proof/proof-status-badge";
 import { Can } from "../../components/Can";
 import { useUserContext } from "../../providers/user";
 import { isApiError } from "../../utils/is-api-error";
 import { IoTrashOutline, IoAddCircleOutline, IoCheckmarkCircle } from "solid-icons/io";
+import { ManufacturingTracker } from "../../components/manufacturing/manufacturing-tracker";
 
 export const Route = createFileRoute("/_app/projects_/$id/")({
   component: RouteComponent,
@@ -75,6 +76,17 @@ const PRE_ORDERED_STATUSES: ProjectStatus[] = [
   "pending-approval",
   "approved",
 ];
+
+const MANUFACTURING_STATUSES: ProjectStatus[] = [
+  "ordered",
+  "in-production",
+  "shipped",
+  "delivered",
+];
+
+function isManufacturingStatus(status: ProjectStatus): boolean {
+  return MANUFACTURING_STATUSES.includes(status);
+}
 
 const EDITABLE_STATUSES: ProjectStatus[] = ["draft", "designing"];
 
@@ -491,6 +503,7 @@ function RouteComponent() {
                       <InlayCard
                         inlay={inlay}
                         projectId={params().id}
+                        projectStatus={projectQuery.data!.status}
                         canDelete={canEditInlays()}
                         onDelete={() => handleDeleteInlay(inlay)}
                         isDeleting={removeInlay.isPending}
@@ -515,6 +528,7 @@ function RouteComponent() {
 interface InlayCardProps {
   inlay: InlayWithInfo;
   projectId: string;
+  projectStatus: ProjectStatus;
   canDelete: boolean;
   onDelete: () => void;
   isDeleting: boolean;
@@ -525,6 +539,10 @@ interface InlayCardProps {
 
 function InlayCard(props: InlayCardProps) {
   const { isDealership, isInternal } = useUserContext();
+
+  const showManufacturingTracker = () =>
+    isManufacturingStatus(props.projectStatus) &&
+    props.inlay.manufacturing_step != null;
 
   const description = () => {
     if (props.inlay.type === "catalog" && props.inlay.catalog_info) {
@@ -621,6 +639,14 @@ function InlayCard(props: InlayCardProps) {
             }
           >
             <ProofStatusBadge status="pending" class="text-xs" />
+          </Show>
+          <Show when={showManufacturingTracker()}>
+            <div class="pt-1">
+              <ManufacturingTracker
+                currentStep={props.inlay.manufacturing_step as ManufacturingStep}
+                hasBlocker={props.inlay.has_active_blocker}
+              />
+            </div>
           </Show>
         </CardHeader>
       </Link>

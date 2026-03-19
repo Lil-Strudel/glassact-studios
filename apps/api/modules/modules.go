@@ -5,6 +5,7 @@ import (
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/auth"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/blocker"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/catalog"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/chat"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dealership"
@@ -56,14 +57,24 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("POST /api/project/{uuid}/submit", canCreateProject.ThenFunc(projectModule.HandleSubmitProject))
 	mux.Handle("POST /api/project/{uuid}/place-order", canPlaceOrder.ThenFunc(projectModule.HandlePlaceOrder))
 
+	canManageKanban := alice.New(app.Authenticate, app.RequirePermission(data.ActionManageKanban))
+	canCreateBlocker := alice.New(app.Authenticate, app.RequirePermission(data.ActionCreateBlocker))
+
 	inlayModule := inlay.NewInlayModule(app)
+	mux.Handle("GET /api/inlays", canManageKanban.ThenFunc(inlayModule.HandleGetKanbanInlays))
 	mux.Handle("GET /api/project/{uuid}/inlays", protected.ThenFunc(inlayModule.HandleGetInlaysByProject))
 	mux.Handle("POST /api/project/{uuid}/inlays/catalog", canCreateProject.ThenFunc(inlayModule.HandlePostCatalogInlay))
 	mux.Handle("POST /api/project/{uuid}/inlays/custom", canCreateProject.ThenFunc(inlayModule.HandlePostCustomInlay))
 	mux.Handle("GET /api/inlay/{uuid}", protected.ThenFunc(inlayModule.HandleGetInlayByUUID))
 	mux.Handle("PATCH /api/inlay/{uuid}", protected.ThenFunc(inlayModule.HandlePatchInlay))
+	mux.Handle("PATCH /api/inlay/{uuid}/step", canManageKanban.ThenFunc(inlayModule.HandlePatchInlayStep))
 	mux.Handle("DELETE /api/inlay/{uuid}", protected.ThenFunc(inlayModule.HandleDeleteInlay))
 	mux.Handle("PATCH /api/inlay/{uuid}/exclude", canCreateProject.ThenFunc(inlayModule.HandleExcludeInlay))
+	mux.Handle("GET /api/inlay/{uuid}/blockers", protected.ThenFunc(inlayModule.HandleGetBlockersByInlay))
+	mux.Handle("POST /api/inlay/{uuid}/blockers", canCreateBlocker.ThenFunc(inlayModule.HandlePostBlocker))
+
+	blockerModule := blocker.NewBlockerModule(app)
+	mux.Handle("POST /api/blocker/{uuid}/resolve", canCreateBlocker.ThenFunc(blockerModule.HandleResolveBlocker))
 
 	chatModule := chat.NewChatModule(app)
 	mux.Handle("GET /api/inlay/{uuid}/chats", protected.ThenFunc(chatModule.HandleGetInlayChats))

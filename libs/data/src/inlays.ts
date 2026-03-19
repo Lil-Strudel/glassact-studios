@@ -43,4 +43,5 @@ export type InlayWithInfo = GET<Inlay> & {
   approved_proof_price_group_id?: number | null;
   approved_proof_price_group_name?: string | null;
   approved_proof_price_cents?: number | null;
+  has_active_blocker?: boolean;
 };
