@@ -92,7 +92,7 @@ func TestInvoice_GetByUUID(t *testing.T) {
 	}
 }
 
-func TestInvoice_GetByProjectID(t *testing.T) {
+func TestInvoice_GetActiveByProjectID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
@@ -109,7 +109,7 @@ func TestInvoice_GetByProjectID(t *testing.T) {
 		t.Fatalf("Failed to insert: %v", err)
 	}
 
-	retrieved, found, err := models.Invoices.GetByProjectID(project.ID)
+	retrieved, found, err := models.Invoices.GetActiveByProjectID(project.ID)
 	if err != nil {
 		t.Fatalf("Failed to get by project ID: %v", err)
 	}

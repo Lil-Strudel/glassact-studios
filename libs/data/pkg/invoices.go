@@ -177,13 +177,16 @@ func (m InvoiceModel) GetByUUID(uuidStr string) (*Invoice, bool, error) {
 	return invoiceFromGen(dest), true, nil
 }
 
-func (m InvoiceModel) GetByProjectID(projectID int) (*Invoice, bool, error) {
+func (m InvoiceModel) GetActiveByProjectID(projectID int) (*Invoice, bool, error) {
 	query := postgres.SELECT(
 		table.Invoices.AllColumns,
 	).FROM(
 		table.Invoices,
 	).WHERE(
-		table.Invoices.ProjectID.EQ(postgres.Int(int64(projectID))),
+		postgres.AND(
+			table.Invoices.ProjectID.EQ(postgres.Int(int64(projectID))),
+			table.Invoices.Status.NOT_EQ(postgres.String("void")),
+		),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

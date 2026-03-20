@@ -37,13 +37,21 @@ import {
   postMarkInvoicePaidOpts,
   postVoidInvoiceOpts,
 } from "../../queries/invoice";
-import type { ManufacturingStep, ProjectStatus, InlayWithInfo } from "@glassact/data";
+import type {
+  ManufacturingStep,
+  ProjectStatus,
+  InlayWithInfo,
+} from "@glassact/data";
 import { ProjectStatusBadge } from "../../components/project/status-badge";
 import { ProofStatusBadge } from "../../components/proof/proof-status-badge";
 import { Can } from "../../components/Can";
 import { useUserContext } from "../../providers/user";
 import { isApiError } from "../../utils/is-api-error";
-import { IoTrashOutline, IoAddCircleOutline, IoCheckmarkCircle } from "solid-icons/io";
+import {
+  IoTrashOutline,
+  IoAddCircleOutline,
+  IoCheckmarkCircle,
+} from "solid-icons/io";
 import { ManufacturingTracker } from "../../components/manufacturing/manufacturing-tracker";
 
 export const Route = createFileRoute("/_app/projects_/$id/")({
@@ -118,6 +126,7 @@ function RouteComponent() {
   });
   const invoiceQuery = useQuery(() => ({
     ...getProjectInvoiceOpts(params().id),
+    retry: false,
     enabled: showInvoiceSection(),
   }));
 
@@ -148,8 +157,6 @@ function RouteComponent() {
     return includedInlays().length > 0;
   });
 
-
-
   const currentStepIndex = createMemo(() => {
     if (!projectQuery.isSuccess) return -1;
     if (projectQuery.data.status === "cancelled") return -1;
@@ -178,8 +185,6 @@ function RouteComponent() {
       },
     });
   }
-
-
 
   function handleDeleteInlay(inlay: InlayWithInfo) {
     removeInlay.mutate(inlay.uuid, {
@@ -543,18 +548,18 @@ function RouteComponent() {
           <Show when={showInvoiceSection()}>
             <div class="mt-8">
               <h2 class="text-lg font-semibold text-gray-900 mb-4">Invoice</h2>
-              <InvoiceSection
-                projectUuid={params().id}
-                projectStatus={projectQuery.data!.status}
-                invoice={invoiceQuery.data ?? null}
-                isLoading={invoiceQuery.isLoading}
-                onInvoiceChange={() => {
-                  queryClient.invalidateQueries({
-                    queryKey: ["project", params().id, "invoice"],
-                  });
-                  queryClient.invalidateQueries({ queryKey: ["project"] });
-                }}
-              />
+               <InvoiceSection
+                 projectUuid={params().id}
+                 projectStatus={projectQuery.data!.status}
+                 invoice={invoiceQuery.data ?? null}
+                 isLoading={invoiceQuery.isLoading}
+                 onInvoiceChange={() => {
+                   queryClient.invalidateQueries({
+                     queryKey: ["project", params().id, "invoice"],
+                   });
+                   queryClient.invalidateQueries({ queryKey: ["project"] });
+                 }}
+               />
             </div>
           </Show>
         </div>
@@ -602,9 +607,7 @@ function InlayCard(props: InlayCardProps) {
     }
 
     if (isInternal()) {
-      return (
-        !props.inlay.approved_proof_id && !props.inlay.has_pending_proof
-      );
+      return !props.inlay.approved_proof_id && !props.inlay.has_pending_proof;
     }
 
     return false;
@@ -617,9 +620,7 @@ function InlayCard(props: InlayCardProps) {
       <Show when={needsAction()}>
         <span
           class="absolute top-2 right-2 z-10 w-3 h-3 bg-orange-500 rounded-full border-2 border-white shadow-sm"
-          title={
-            isDealership() ? "Proof awaiting approval" : "Needs proof"
-          }
+          title={isDealership() ? "Proof awaiting approval" : "Needs proof"}
         />
       </Show>
       <Link
@@ -681,7 +682,9 @@ function InlayCard(props: InlayCardProps) {
           <Show when={showManufacturingTracker()}>
             <div class="pt-1">
               <ManufacturingTracker
-                currentStep={props.inlay.manufacturing_step as ManufacturingStep}
+                currentStep={
+                  props.inlay.manufacturing_step as ManufacturingStep
+                }
                 hasBlocker={props.inlay.has_active_blocker}
               />
             </div>
@@ -762,7 +765,9 @@ interface PlaceOrderDialogProps {
 interface InvoiceSectionProps {
   projectUuid: string;
   projectStatus: ProjectStatus;
-  invoice: import("@glassact/data").GET<import("@glassact/data").Invoice> | null;
+  invoice:
+    | import("@glassact/data").GET<import("@glassact/data").Invoice>
+    | null;
   isLoading: boolean;
   onInvoiceChange: () => void;
 }
@@ -775,6 +780,7 @@ function InvoiceSection(props: InvoiceSectionProps) {
   const voidInvoice = useMutation(() => postVoidInvoiceOpts());
 
   const [invoiceUrl, setInvoiceUrl] = createSignal("");
+  const [isVoidDialogOpen, setIsVoidDialogOpen] = createSignal(false);
 
   const handleAttach = () => {
     attachInvoice.mutate(
@@ -820,12 +826,14 @@ function InvoiceSection(props: InvoiceSectionProps) {
   const handleVoid = () => {
     if (!props.invoice) return;
     voidInvoice.mutate(props.invoice.uuid, {
-      onSuccess() {
+      onSuccess(data) {
         showToast({ title: "Invoice voided", variant: "success" });
-        queryClient.invalidateQueries({
-          queryKey: ["project", props.projectUuid, "invoice"],
-        });
+        queryClient.setQueryData(
+          ["project", props.projectUuid, "invoice"],
+          data,
+        );
         props.onInvoiceChange();
+        setIsVoidDialogOpen(false);
       },
       onError(error) {
         if (isApiError(error)) {
@@ -865,9 +873,7 @@ function InvoiceSection(props: InvoiceSectionProps) {
               />
               <Button
                 onClick={handleAttach}
-                disabled={
-                  attachInvoice.isPending || invoiceUrl().trim() === ""
-                }
+                disabled={attachInvoice.isPending || invoiceUrl().trim() === ""}
               >
                 {attachInvoice.isPending ? "Attaching..." : "Attach Invoice"}
               </Button>
@@ -920,27 +926,16 @@ function InvoiceSection(props: InvoiceSectionProps) {
               >
                 View Invoice
               </Button>
-              <Show
-                when={
-                  isInternal() && props.invoice!.status === "sent"
-                }
-              >
-                <Button
-                  onClick={handleMarkPaid}
-                  disabled={markPaid.isPending}
-                >
+              <Show when={isInternal() && props.invoice!.status === "sent"}>
+                <Button onClick={handleMarkPaid} disabled={markPaid.isPending}>
                   {markPaid.isPending ? "Saving..." : "Mark as Paid"}
                 </Button>
               </Show>
-              <Show
-                when={
-                  isInternal() && props.invoice!.status !== "paid"
-                }
-              >
-                <Dialog>
-                  <DialogTrigger as={Button} variant="outline">
-                    Void Invoice
-                  </DialogTrigger>
+               <Show when={isInternal() && props.invoice!.status !== "paid"}>
+                 <Dialog open={isVoidDialogOpen()} onOpenChange={setIsVoidDialogOpen}>
+                   <DialogTrigger as={Button} variant="outline">
+                     Void Invoice
+                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Void Invoice</DialogTitle>
@@ -1138,12 +1133,13 @@ function PlaceOrderDialog(props: PlaceOrderDialogProps) {
                           <div class="flex items-center gap-2 shrink-0">
                             <Show when={inlay.approved_proof_price_cents}>
                               <span class="text-sm font-medium">
-                                {formatPrice(
-                                  inlay.approved_proof_price_cents!,
-                                )}
+                                {formatPrice(inlay.approved_proof_price_cents!)}
                               </span>
                             </Show>
-                            <ProofStatusBadge status="approved" class="text-xs" />
+                            <ProofStatusBadge
+                              status="approved"
+                              class="text-xs"
+                            />
                           </div>
                         </Show>
                       </label>

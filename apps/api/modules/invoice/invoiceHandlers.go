@@ -17,8 +17,6 @@ func NewInvoiceModule(app *app.Application) *InvoiceModule {
 	return &InvoiceModule{app}
 }
 
-// HandlePostProjectInvoice creates a new invoice for a delivered project and immediately
-// marks it as sent by attaching the provided external invoice URL.
 func (m *InvoiceModule) HandlePostProjectInvoice(w http.ResponseWriter, r *http.Request) {
 	projectUUID := r.PathValue("uuid")
 
@@ -48,12 +46,7 @@ func (m *InvoiceModule) HandlePostProjectInvoice(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if project.Status != data.ProjectStatuses.Delivered {
-		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("invoice can only be attached to a delivered project"))
-		return
-	}
-
-	existing, found, err := m.Db.Invoices.GetByProjectID(project.ID)
+	existing, found, err := m.Db.Invoices.GetActiveByProjectID(project.ID)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -94,7 +87,6 @@ func (m *InvoiceModule) HandlePostProjectInvoice(w http.ResponseWriter, r *http.
 	m.WriteJSON(w, r, http.StatusCreated, invoice)
 }
 
-// HandleGetProjectInvoice returns the invoice for a given project.
 func (m *InvoiceModule) HandleGetProjectInvoice(w http.ResponseWriter, r *http.Request) {
 	projectUUID := r.PathValue("uuid")
 
@@ -123,7 +115,7 @@ func (m *InvoiceModule) HandleGetProjectInvoice(w http.ResponseWriter, r *http.R
 		}
 	}
 
-	invoice, found, err := m.Db.Invoices.GetByProjectID(project.ID)
+	invoice, found, err := m.Db.Invoices.GetActiveByProjectID(project.ID)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -136,7 +128,6 @@ func (m *InvoiceModule) HandleGetProjectInvoice(w http.ResponseWriter, r *http.R
 	m.WriteJSON(w, r, http.StatusOK, invoice)
 }
 
-// HandleGetInvoice returns a single invoice by UUID.
 func (m *InvoiceModule) HandleGetInvoice(w http.ResponseWriter, r *http.Request) {
 	invoiceUUID := r.PathValue("uuid")
 
@@ -173,7 +164,6 @@ func (m *InvoiceModule) HandleGetInvoice(w http.ResponseWriter, r *http.Request)
 	m.WriteJSON(w, r, http.StatusOK, invoice)
 }
 
-// HandleMarkInvoicePaid marks an invoice as paid and advances the project to completed.
 func (m *InvoiceModule) HandleMarkInvoicePaid(w http.ResponseWriter, r *http.Request) {
 	invoiceUUID := r.PathValue("uuid")
 
@@ -231,7 +221,6 @@ func (m *InvoiceModule) HandleMarkInvoicePaid(w http.ResponseWriter, r *http.Req
 	m.WriteJSON(w, r, http.StatusOK, invoice)
 }
 
-// HandleVoidInvoice voids an invoice.
 func (m *InvoiceModule) HandleVoidInvoice(w http.ResponseWriter, r *http.Request) {
 	invoiceUUID := r.PathValue("uuid")
 
@@ -262,6 +251,28 @@ func (m *InvoiceModule) HandleVoidInvoice(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to void invoice: %w", err))
 		return
+	}
+
+	project, found, err := m.Db.Projects.GetByID(invoice.ProjectID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if found {
+		project.Status = data.ProjectStatuses.Delivered
+		if updateErr := m.Db.Projects.Update(project); updateErr != nil {
+			m.Log.Error("failed to revert project to delivered after voiding invoice", "error", updateErr, "project_id", project.ID)
+			m.WriteError(w, r, m.Err.ServerError, updateErr)
+			return
+		}
+
+		go m.SendNotificationToAllDealershipUsersForProject(
+			project.ID,
+			data.NotificationEventTypes.InvoiceVoided,
+			fmt.Sprintf("Invoice voided: %s", project.Name),
+			fmt.Sprintf("The invoice for project %q has been voided. The project has been returned to delivered status.", project.Name),
+			nil,
+		)
 	}
 
 	m.WriteJSON(w, r, http.StatusOK, invoice)
