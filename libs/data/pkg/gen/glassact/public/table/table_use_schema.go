@@ -29,7 +29,6 @@ func UseSchema(schema string) {
 	InternalTokens = InternalTokens.FromSchema(schema)
 	InternalUserNotificationPrefs = InternalUserNotificationPrefs.FromSchema(schema)
 	InternalUsers = InternalUsers.FromSchema(schema)
-	InvoiceLineItems = InvoiceLineItems.FromSchema(schema)
 	Invoices = Invoices.FromSchema(schema)
 	Notifications = Notifications.FromSchema(schema)
 	OrderSnapshots = OrderSnapshots.FromSchema(schema)

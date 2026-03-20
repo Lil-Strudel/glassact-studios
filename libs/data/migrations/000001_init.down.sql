@@ -5,7 +5,6 @@ DROP TABLE IF EXISTS internal_user_notification_prefs;
 DROP TABLE IF EXISTS dealership_user_notification_prefs;
 DROP TABLE IF EXISTS notifications;
 
-DROP TABLE IF EXISTS invoice_line_items;
 DROP TABLE IF EXISTS invoices;
 
 DROP TABLE IF EXISTS order_snapshots;

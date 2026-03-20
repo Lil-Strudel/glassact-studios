@@ -13,19 +13,13 @@ import (
 )
 
 type Invoices struct {
-	ID            int32 `sql:"primary_key"`
-	UUID          uuid.UUID
-	ProjectID     int32
-	InvoiceNumber string
-	SubtotalCents int32
-	TaxCents      int32
-	TotalCents    int32
-	Status        string
-	SentAt        *time.Time
-	SentToEmail   *string
-	PaidAt        *time.Time
-	Notes         *string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	Version       int32
+	ID         int32 `sql:"primary_key"`
+	UUID       uuid.UUID
+	ProjectID  int32
+	InvoiceURL *string
+	Status     string
+	PaidAt     *time.Time
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Version    int32
 }

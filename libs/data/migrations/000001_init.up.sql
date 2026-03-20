@@ -408,39 +408,17 @@ CREATE INDEX idx_order_snapshots_project ON order_snapshots(project_id);
 CREATE TABLE invoices (
     id SERIAL PRIMARY KEY,
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
-    project_id INTEGER NOT NULL UNIQUE REFERENCES projects ON DELETE RESTRICT,
-    invoice_number VARCHAR(255) UNIQUE NOT NULL,
-    subtotal_cents INTEGER NOT NULL,
-    tax_cents INTEGER NOT NULL DEFAULT 0,
-    total_cents INTEGER NOT NULL,
+    project_id INTEGER NOT NULL REFERENCES projects ON DELETE RESTRICT,
+    invoice_url TEXT,
     status VARCHAR(255) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'paid', 'void')),
-    sent_at TIMESTAMPTZ,
-    sent_to_email TEXT,
     paid_at TIMESTAMPTZ,
-    notes TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     version INTEGER NOT NULL DEFAULT 1
 );
 
+CREATE UNIQUE INDEX idx_invoices_project_non_void ON invoices(project_id) WHERE status != 'void';
 CREATE INDEX idx_invoices_status ON invoices(status);
-
-CREATE TABLE invoice_line_items (
-    id SERIAL PRIMARY KEY,
-    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
-    invoice_id INTEGER NOT NULL REFERENCES invoices ON DELETE CASCADE,
-    inlay_id INTEGER REFERENCES inlays,
-    description TEXT NOT NULL,
-    quantity INTEGER NOT NULL DEFAULT 1,
-    unit_price_cents INTEGER NOT NULL,
-    total_cents INTEGER NOT NULL,
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    version INTEGER NOT NULL DEFAULT 1
-);
-
-CREATE INDEX idx_invoice_line_items_invoice ON invoice_line_items(invoice_id);
 
 --------------------------------------------------------------------------------
 -- NOTIFICATIONS
@@ -451,7 +429,7 @@ CREATE TABLE notifications (
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     dealership_user_id INTEGER REFERENCES dealership_users ON DELETE CASCADE,
     internal_user_id INTEGER REFERENCES internal_users ON DELETE CASCADE,
-    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'project_submitted', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'payment_received', 'chat_message')),
+    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'project_submitted', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'invoice_voided', 'payment_received', 'chat_message')),
     title TEXT NOT NULL,
     body TEXT NOT NULL,
     project_id INTEGER REFERENCES projects ON DELETE SET NULL,
