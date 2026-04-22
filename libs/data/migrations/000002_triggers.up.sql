@@ -225,14 +225,3 @@ CREATE TRIGGER increment_invoices_version
     BEFORE UPDATE ON invoices 
     FOR EACH ROW EXECUTE FUNCTION increment_version_column();
 
---------------------------------------------------------------------------------
--- INVOICE LINE ITEMS
---------------------------------------------------------------------------------
-
-CREATE TRIGGER update_invoice_line_items_updated_at 
-    BEFORE UPDATE ON invoice_line_items 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER increment_invoice_line_items_version 
-    BEFORE UPDATE ON invoice_line_items 
-    FOR EACH ROW EXECUTE FUNCTION increment_version_column();

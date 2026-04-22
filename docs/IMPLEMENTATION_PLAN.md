@@ -28,7 +28,7 @@ This document outlines the complete implementation plan for the GlassAct Studios
 | **Phase 5: Chat & Proofs**        | ✅ COMPLETE | 100%     | Chat, proofs, approve/decline, order placement complete         |
 | **Phase 6: Manufacturing**        | ✅ COMPLETE | 100%     | Kanban board, milestones, blockers, pizza tracker complete      |
 | **Phase 7: Notifications**        | ✅ COMPLETE | 100%     | Email + in-app notifications, preferences, Mailpit dev setup   |
-| **Phase 8: Invoicing**            | ⏳ Pending  | 0%       | Ready to start                                                  |
+| **Phase 8: Invoicing**            | ✅ COMPLETE | 100%     | Simplified: external invoice URL, attach/view/mark-paid flow   |
 | **Phase 9: Dashboards**           | ⏳ Pending  | 0%       | Ready to start                                                  |
 
 ---
@@ -309,18 +309,16 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 
 #### Invoices
 
-| Field          | Type        | Description             |
-| -------------- | ----------- | ----------------------- |
-| id             | serial      | Internal PK             |
-| uuid           | uuid        | External identifier     |
-| project_id     | int         | FK to projects (1:1)    |
-| invoice_number | text        | Human-readable number   |
-| subtotal_cents | int         | Sum of line items       |
-| tax_cents      | int         | Tax amount              |
-| total_cents    | int         | Final total             |
-| status         | enum        | draft, sent, paid, void |
-| sent_at        | timestamptz | When emailed            |
-| paid_at        | timestamptz | When payment received   |
+| Field       | Type        | Description                              |
+| ----------- | ----------- | ---------------------------------------- |
+| id          | serial      | Internal PK                              |
+| uuid        | uuid        | External identifier                      |
+| project_id  | int         | FK to projects (1:1)                     |
+| invoice_url | text        | Link to invoice in external platform     |
+| status      | enum        | draft, sent, paid, void                  |
+| paid_at     | timestamptz | When payment confirmed                   |
+
+Invoice line items are managed entirely in the external billing platform. The app stores only the URL.
 
 #### Order Snapshots
 
@@ -459,17 +457,18 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 
 ### F7: Invoicing
 
-#### F7.1 Invoice Management (Internal)
+#### F7.1 Invoice Attachment (Internal)
 
-- Create from project
-- Edit line items
-- Send to dealership
-- Mark as paid
+- Paste external invoice URL (from third-party billing platform) to attach to a delivered project
+- Attaching the URL immediately marks the invoice as `sent` and advances the project to `invoiced`
+- Fires `invoice_sent` notification to all dealership users on the project
+- Mark invoice as paid → advances project to `completed`, fires `payment_received` notification
+- Void invoice → clears the invoice so a new one can be attached
 
 #### F7.2 Invoice View (Dealership)
 
-- View invoice details
-- Download PDF
+- "View Invoice" button opens the external invoice URL in a new tab
+- Paid badge shown when invoice status is `paid`
 
 ### F8: Dashboards
 
@@ -1369,15 +1368,78 @@ View sent emails at `http://localhost:8025`.
 
 ### Phase 8: Invoicing
 
-**Goal:** Invoice creation and management
+**Status: ✅ COMPLETE** (March 19, 2026)
 
-| Task                      | Dependencies |
-| ------------------------- | ------------ |
-| Invoice API               | Phase 1      |
-| Invoice number generation | Invoice API  |
-| Internal invoice UI       | Invoice API  |
-| Dealership invoice view   | Invoice API  |
-| PDF generation            | Invoice API  |
+**Goal:** Attach an external invoice link to a delivered project. Invoices are created and managed in a third-party billing platform; this app stores the URL and provides a link to the dealership.
+
+| Task                                     | Dependencies | Status |
+| ---------------------------------------- | ------------ | ------ |
+| Update migration: rewrite invoices table | Phase 1      | ✅     |
+| Drop invoice_line_items table            | Migration    | ✅     |
+| Rewrite Go invoice model                 | Migration    | ✅     |
+| Update TypeScript invoice types          | Migration    | ✅     |
+| Invoice API module                       | Go model     | ✅     |
+| Register invoice routes                  | API module   | ✅     |
+| Frontend invoice queries                 | API routes   | ✅     |
+| Invoice section on project detail page   | Queries      | ✅     |
+
+#### Design Decisions
+
+- **No line items, no PDF, no invoice numbers:** Everything financial lives in the external billing platform. The app is purely a link bridge.
+- **Single-step attach:** Internal user pastes the URL → invoice is created with `status = sent` immediately. No draft state exposed in the UI.
+- **Status lifecycle:** `draft` (internal only, not used from UI) → `sent` (URL attached) → `paid` (internal marks paid) or `void` (invalidated, allows re-attach).
+- **Project auto-advance:** Attaching URL → project `invoiced`. Marking paid → project `completed`.
+- **Notifications:** `invoice_sent` fires to all dealership users on attach. `payment_received` fires on mark-paid. Both use existing notification infrastructure.
+- **Access control:** Only internal users can attach/mark-paid/void. Dealership users can only view (GET endpoints, scoped to their own projects).
+
+#### Schema Changes
+
+Replaced the original `invoices` table (which had `invoice_number`, `subtotal_cents`, `tax_cents`, `total_cents`, `sent_at`, `sent_to_email`, `notes`) with a simplified version:
+
+```sql
+CREATE TABLE invoices (
+    id SERIAL PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    project_id INTEGER NOT NULL UNIQUE REFERENCES projects ON DELETE RESTRICT,
+    invoice_url TEXT,
+    status VARCHAR(255) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'paid', 'void')),
+    paid_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    version INTEGER NOT NULL DEFAULT 1
+);
+```
+
+Dropped `invoice_line_items` table entirely.
+
+#### Backend API Endpoints (5 new)
+
+- `POST /api/project/{uuid}/invoice` — Attach invoice URL; creates invoice with `status=sent`, advances project to `invoiced`. Permission: `create_invoice`
+- `GET /api/project/{uuid}/invoice` — Get invoice for project. Dealership scoped to own projects. Permission: authenticated
+- `GET /api/invoice/{uuid}` — Get invoice by UUID. Dealership scoped. Permission: authenticated
+- `POST /api/invoice/{uuid}/mark-paid` — Mark paid, advance project to `completed`, fire `payment_received` notification. Permission: `create_invoice`
+- `POST /api/invoice/{uuid}/void` — Void the invoice (cannot void a paid invoice). Permission: `create_invoice`
+
+#### Files Created
+
+| File | Purpose |
+| ---- | ------- |
+| `apps/api/modules/invoice/invoiceHandlers.go` | `InvoiceModule` with 5 handlers |
+| `apps/webapp/src/queries/invoice.ts` | 6 query/mutation hooks for invoice operations |
+
+#### Files Modified
+
+| File | Change |
+| ---- | ------ |
+| `libs/data/migrations/000001_init.up.sql` | Rewrote `invoices` table; dropped `invoice_line_items` |
+| `libs/data/migrations/000001_init.down.sql` | Removed `invoice_line_items` drop |
+| `libs/data/migrations/000002_triggers.up.sql` | Removed `invoice_line_items` triggers |
+| `libs/data/migrations/000002_triggers.down.sql` | Removed `invoice_line_items` trigger drops |
+| `libs/data/pkg/invoices.go` | Rewritten to new schema; removed all line item code |
+| `libs/data/pkg/invoices_test.go` | Rewritten to match new schema |
+| `libs/data/src/invoices.ts` | Updated types; removed `InvoiceLineItem` |
+| `apps/api/modules/modules.go` | Registered 5 invoice routes |
+| `apps/webapp/src/routes/_app/projects_.$id.index.tsx` | Added `InvoiceSection` component and invoice query |
 
 ### Phase 9: Dashboards
 
@@ -1472,7 +1534,7 @@ Types to create/update in `libs/data/src/`:
 | `inlay-blockers.ts`   | `BlockerType`, `InlayBlocker`                                                    | New     |
 | `project-chats.ts`    | `ProjectChat`                                                                    | New     |
 | `order-snapshots.ts`  | `OrderSnapshot`                                                                  | New     |
-| `invoices.ts`         | `InvoiceStatus`, `Invoice`, `InvoiceLineItem`                                    | New     |
+| `invoices.ts`         | `InvoiceStatus`, `Invoice`                                                       | Updated (Mar 19) |
 | `notifications.ts`    | `NotificationEventType`, `Notification`, `NotificationPreference`, `NOTIFICATION_EVENT_TYPES`, `DEALERSHIP_NOTIFICATION_EVENT_TYPES`, `INTERNAL_NOTIFICATION_EVENT_TYPES`, `NOTIFICATION_EVENT_LABELS` | New + Updated (Mar 19) |
 
 ---
@@ -1591,15 +1653,11 @@ Models created/updated in `libs/data/pkg/` (Phase 1 Complete):
 
 ### Invoices
 
-- `GET /api/invoice` - List invoices
-- `GET /api/invoice/:uuid` - Get invoice
-- `POST /api/project/:uuid/invoice` - Create invoice
-- `PATCH /api/invoice/:uuid` - Update invoice
-- `POST /api/invoice/:uuid/line-items` - Add line item
-- `PATCH /api/invoice/:uuid/line-items/:lineUuid` - Update line item
-- `DELETE /api/invoice/:uuid/line-items/:lineUuid` - Remove line item
-- `POST /api/invoice/:uuid/send` - Send invoice
+- `POST /api/project/:uuid/invoice` - Attach invoice URL (creates + sends in one step)
+- `GET /api/project/:uuid/invoice` - Get invoice for project
+- `GET /api/invoice/:uuid` - Get invoice by UUID
 - `POST /api/invoice/:uuid/mark-paid` - Mark paid
+- `POST /api/invoice/:uuid/void` - Void invoice
 
 ### Notifications
 

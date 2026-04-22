@@ -28,6 +28,7 @@ type notificationEventTypes struct {
 	ProjectShipped   NotificationEventType
 	ProjectDelivered NotificationEventType
 	InvoiceSent      NotificationEventType
+	InvoiceVoided    NotificationEventType
 	PaymentReceived  NotificationEventType
 	ChatMessage      NotificationEventType
 }
@@ -44,6 +45,7 @@ var NotificationEventTypes = notificationEventTypes{
 	ProjectShipped:   NotificationEventType("project_shipped"),
 	ProjectDelivered: NotificationEventType("project_delivered"),
 	InvoiceSent:      NotificationEventType("invoice_sent"),
+	InvoiceVoided:    NotificationEventType("invoice_voided"),
 	PaymentReceived:  NotificationEventType("payment_received"),
 	ChatMessage:      NotificationEventType("chat_message"),
 }

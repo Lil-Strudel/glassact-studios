@@ -1120,6 +1120,179 @@ func TestAPIEndpoints(t *testing.T) {
 		})
 	})
 
+	t.Run("Invoice Module", func(t *testing.T) {
+		// Setup: Create a project and advance it to delivered status
+		// First, create inlays and get project to delivered
+		catalogItem := seedCatalogItem(t, testCtx, seedPriceGroup(t, testCtx, "Invoice Test Group").ID, "TEST-INVOICE-INLAY")
+
+		projectResp := testCtx.request(testRequest{
+			method: "POST",
+			path:   "/api/project/with-inlays",
+			body: map[string]interface{}{
+				"name": "Invoice Test Project",
+				"inlays": []map[string]interface{}{
+					{
+						"name":        "Test Inlay",
+						"type":        "catalog",
+						"preview_url": "https://example.com/preview.png",
+						"catalog_info": map[string]interface{}{
+							"catalog_item_id":     catalogItem.ID,
+							"customization_notes": "",
+						},
+					},
+				},
+			},
+			token: dealershipToken,
+		})
+
+		var projectData map[string]interface{}
+		_ = json.Unmarshal(projectResp.body, &projectData)
+		projectUUID := projectData["uuid"].(string)
+
+		// Get the project and advance it through the workflow manually
+		projects, found, _ := testCtx.db.Projects.GetByUUID(projectUUID)
+		require.True(t, found)
+		require.NotNil(t, projects)
+
+		// Update project to delivered status directly for testing
+		projects.Status = data.ProjectStatuses.Delivered
+		testCtx.db.Projects.Update(projects)
+
+		t.Run("POST /api/project/{uuid}/invoice (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/project/%s/invoice", projectUUID),
+				body: map[string]interface{}{
+					"invoice_url": "https://invoice.example.com/inv-001.pdf",
+				},
+				token: dealershipToken,
+			})
+
+			assert.Equal(t, http.StatusCreated, resp.statusCode)
+			t.Logf("✓ POST /api/project/{uuid}/invoice (happy path) (%d)", resp.statusCode)
+
+			var invoice map[string]interface{}
+			_ = json.Unmarshal(resp.body, &invoice)
+			assert.Equal(t, "sent", invoice["status"])
+			assert.NotNil(t, invoice["uuid"])
+
+			// Verify project status changed to invoiced
+			updatedProject, found, _ := testCtx.db.Projects.GetByUUID(projectUUID)
+			require.True(t, found)
+			assert.Equal(t, data.ProjectStatuses.Invoiced, updatedProject.Status)
+		})
+
+		t.Run("POST /api/project/{uuid}/invoice (already has active invoice)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/project/%s/invoice", projectUUID),
+				body: map[string]interface{}{
+					"invoice_url": "https://invoice.example.com/inv-002.pdf",
+				},
+				token: dealershipToken,
+			})
+
+			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
+			t.Logf("✓ POST /api/project/{uuid}/invoice (already has active invoice) (%d)", resp.statusCode)
+		})
+
+		// Get the invoice UUID for further tests
+		invoices, found, _ := testCtx.db.Invoices.GetActiveByProjectID(projects.ID)
+		require.True(t, found)
+		require.NotNil(t, invoices)
+		invoiceUUID := invoices.UUID
+
+		t.Run("GET /api/invoice/{uuid} (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   fmt.Sprintf("/api/invoice/%s", invoiceUUID),
+				token:  dealershipToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ GET /api/invoice/{uuid} (happy path) (%d)", resp.statusCode)
+
+			var invoice map[string]interface{}
+			_ = json.Unmarshal(resp.body, &invoice)
+			assert.Equal(t, "sent", invoice["status"])
+		})
+
+		t.Run("POST /api/invoice/{uuid}/void (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/invoice/%s/void", invoiceUUID),
+				token:  dealershipToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ POST /api/invoice/{uuid}/void (happy path) (%d)", resp.statusCode)
+
+			var invoice map[string]interface{}
+			_ = json.Unmarshal(resp.body, &invoice)
+			assert.Equal(t, "void", invoice["status"])
+
+			// Verify project status reverted to delivered
+			updatedProject, found, _ := testCtx.db.Projects.GetByUUID(projectUUID)
+			require.True(t, found)
+			assert.Equal(t, data.ProjectStatuses.Delivered, updatedProject.Status)
+		})
+
+		t.Run("POST /api/project/{uuid}/invoice (after voiding, can create new invoice)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/project/%s/invoice", projectUUID),
+				body: map[string]interface{}{
+					"invoice_url": "https://invoice.example.com/inv-corrected.pdf",
+				},
+				token: dealershipToken,
+			})
+
+			assert.Equal(t, http.StatusCreated, resp.statusCode)
+			t.Logf("✓ POST /api/project/{uuid}/invoice (after voiding, can create new invoice) (%d)", resp.statusCode)
+
+			// Verify project status changed back to invoiced
+			updatedProject, found, _ := testCtx.db.Projects.GetByUUID(projectUUID)
+			require.True(t, found)
+			assert.Equal(t, data.ProjectStatuses.Invoiced, updatedProject.Status)
+		})
+
+		// Test marking invoice as paid
+		invoices2, found, _ := testCtx.db.Invoices.GetActiveByProjectID(projects.ID)
+		require.True(t, found)
+		invoiceUUID2 := invoices2.UUID
+
+		t.Run("POST /api/invoice/{uuid}/mark-paid (happy path)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/invoice/%s/mark-paid", invoiceUUID2),
+				token:  dealershipToken,
+			})
+
+			assert.Equal(t, http.StatusOK, resp.statusCode)
+			t.Logf("✓ POST /api/invoice/{uuid}/mark-paid (happy path) (%d)", resp.statusCode)
+
+			var invoice map[string]interface{}
+			_ = json.Unmarshal(resp.body, &invoice)
+			assert.Equal(t, "paid", invoice["status"])
+
+			// Verify project status changed to completed
+			updatedProject, found, _ := testCtx.db.Projects.GetByUUID(projectUUID)
+			require.True(t, found)
+			assert.Equal(t, data.ProjectStatuses.Completed, updatedProject.Status)
+		})
+
+		t.Run("POST /api/invoice/{uuid}/void (cannot void paid invoice)", func(t *testing.T) {
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/invoice/%s/void", invoiceUUID2),
+				token:  dealershipToken,
+			})
+
+			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
+			t.Logf("✓ POST /api/invoice/{uuid}/void (cannot void paid invoice) (%d)", resp.statusCode)
+		})
+	})
+
 	t.Run("Error Handling", func(t *testing.T) {
 		t.Run("Protected endpoint without token", func(t *testing.T) {
 			resp := testCtx.request(testRequest{

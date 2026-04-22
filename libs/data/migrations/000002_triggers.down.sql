@@ -1,9 +1,5 @@
 -- GlassAct Studios - Drop Triggers
 
--- Invoice Line Items
-DROP TRIGGER IF EXISTS update_invoice_line_items_updated_at ON invoice_line_items;
-DROP TRIGGER IF EXISTS increment_invoice_line_items_version ON invoice_line_items;
-
 -- Invoices
 DROP TRIGGER IF EXISTS update_invoices_updated_at ON invoices;
 DROP TRIGGER IF EXISTS increment_invoices_version ON invoices;
