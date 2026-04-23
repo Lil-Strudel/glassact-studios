@@ -5,6 +5,7 @@ import {
   redirect,
 } from "@tanstack/solid-router";
 import { createSignal, For, Show } from "solid-js";
+import logoEmblem from "../assets/images/logo-emblem.png";
 import {
   Button,
   DropdownMenu,
@@ -67,7 +68,7 @@ function RouteComponent() {
                 <div class="flex shrink-0 items-center">
                   <img
                     class="block h-12 w-auto"
-                    src="/src/assets/images/logo-emblem.png"
+                    src={logoEmblem}
                     alt="GlassAct Studios"
                   />
                 </div>

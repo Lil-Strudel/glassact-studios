@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/solid-router";
+import logoEmblem from "../assets/images/logo-emblem.png";
 import { createSignal } from "solid-js";
 import { Button, Form, showToast } from "@glassact/ui";
 import { createForm } from "@tanstack/solid-form";
@@ -54,7 +55,7 @@ function RouteComponent() {
     <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div class="sm:mx-auto sm:w-full sm:max-w-md">
         <img
-          src="/src/assets/images/logo-emblem.png"
+          src={logoEmblem}
           alt="GlassAct Studios"
           class="mx-auto h-14 w-auto"
         />

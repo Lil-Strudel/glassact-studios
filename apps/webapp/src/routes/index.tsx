@@ -1,5 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/solid-router";
 import { Button } from "@glassact/ui";
+import logoEmblem from "../assets/images/logo-emblem.png";
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
@@ -26,7 +27,7 @@ function RouteComponent() {
                 <div class="flex shrink-0 items-center">
                   <img
                     class="block h-12 w-auto"
-                    src="/src/assets/images/logo-emblem.png"
+                    src={logoEmblem}
                     alt="GlassAct Studios"
                   />
                 </div>

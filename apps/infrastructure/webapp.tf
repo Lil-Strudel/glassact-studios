@@ -84,8 +84,9 @@ resource "aws_cloudfront_response_headers_policy" "no_cache" {
 }
 
 resource "aws_cloudfront_distribution" "webapp" {
-  enabled = true
-  aliases = [var.webapp_domain]
+  enabled             = true
+  aliases             = [var.webapp_domain]
+  default_root_object = "index.html"
 
   origin {
     domain_name              = aws_s3_bucket.webapp.bucket_regional_domain_name
