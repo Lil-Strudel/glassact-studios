@@ -36,16 +36,13 @@ type Config struct {
 	S3 struct {
 		Bucket          string `validate:"required"`
 		Region          string `validate:"required"`
-		AccessKeyID     string `validate:"required"`
-		SecretAccessKey string `validate:"required"`
+		AccessKeyID     string
+		SecretAccessKey string
 	}
 }
 
 func GetConfig() (*Config, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, err
-	}
+	_ = godotenv.Load()
 
 	var cfg Config
 

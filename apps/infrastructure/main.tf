@@ -11,6 +11,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "6.27.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -55,4 +59,17 @@ resource "aws_iam_user_policy" "t8_dev_s3" {
   name   = "dev-s3"
   user   = aws_iam_user.t8_dev.name
   policy = data.aws_iam_policy_document.dev_s3.json
+}
+
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
+resource "random_id" "landing_bucket_suffix" {
+  byte_length = 3
+}
+
+resource "random_id" "webapp_bucket_suffix" {
+  byte_length = 3
 }

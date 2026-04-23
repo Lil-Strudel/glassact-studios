@@ -31,14 +31,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	awsCfg, err := awsconfig.LoadDefaultConfig(context.Background(),
+	awsOpts := []func(*awsconfig.LoadOptions) error{
 		awsconfig.WithRegion(cfg.S3.Region),
-		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-			cfg.S3.AccessKeyID,
-			cfg.S3.SecretAccessKey,
-			"",
-		)),
-	)
+	}
+	if cfg.S3.AccessKeyID != "" && cfg.S3.SecretAccessKey != "" {
+		awsOpts = append(awsOpts, awsconfig.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(cfg.S3.AccessKeyID, cfg.S3.SecretAccessKey, ""),
+		))
+	}
+	awsCfg, err := awsconfig.LoadDefaultConfig(context.Background(), awsOpts...)
 	if err != nil {
 		logger.Error("failed to load AWS config", "error", err.Error())
 		os.Exit(1)
