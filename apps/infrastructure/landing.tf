@@ -38,6 +38,23 @@ resource "aws_s3_bucket_policy" "landing" {
   })
 }
 
+resource "aws_cloudfront_function" "landing_rewrite" {
+  name    = "glassact-landing-rewrite"
+  runtime = "cloudfront-js-2.0"
+  publish = true
+  code    = <<-EOF
+    function handler(event) {
+      var uri = event.request.uri;
+      if (uri.endsWith("/")) {
+        event.request.uri = uri + "index.html";
+      } else if (!uri.includes(".")) {
+        event.request.uri = uri + "/index.html";
+      }
+      return event.request;
+    }
+  EOF
+}
+
 resource "aws_cloudfront_distribution" "landing" {
   enabled             = true
   default_root_object = "index.html"
@@ -63,6 +80,11 @@ resource "aws_cloudfront_distribution" "landing" {
       cookies {
         forward = "none"
       }
+    }
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.landing_rewrite.arn
     }
   }
 
