@@ -11,7 +11,7 @@ export default function NavBar(props: ParentProps) {
     { title: "Our Product", path: "/product" },
     { title: "Catalog", path: "/catalog" },
     { title: "FAQs", path: "/faqs" },
-    { title: "Customer Portal", path: "/login" },
+    { title: "Customer Portal", path: "https://app.glassactstudios.com" },
   ];
 
   function toggleMenu() {

@@ -183,9 +183,10 @@ resource "aws_cloudfront_distribution" "webapp" {
 }
 
 resource "aws_lambda_permission" "cloudfront" {
-  statement_id  = "AllowCloudFrontInvoke"
-  action        = "lambda:InvokeFunctionUrl"
-  function_name = aws_lambda_function.api.function_name
-  principal     = "cloudfront.amazonaws.com"
-  source_arn    = aws_cloudfront_distribution.webapp.arn
+  statement_id       = "AllowCloudFrontInvoke"
+  action             = "lambda:InvokeFunctionUrl"
+  function_name      = aws_lambda_function.api.function_name
+  principal          = "cloudfront.amazonaws.com"
+  source_arn         = aws_cloudfront_distribution.webapp.arn
+  function_url_auth_type = "AWS_IAM"
 }
