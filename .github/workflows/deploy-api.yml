@@ -6,6 +6,7 @@
 name: Deploy API
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -19,6 +20,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - uses: actions/checkout@v6.0.2

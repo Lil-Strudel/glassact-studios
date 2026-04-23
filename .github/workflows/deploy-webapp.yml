@@ -7,6 +7,7 @@
 name: Deploy Webapp
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -20,6 +21,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -30,11 +32,14 @@ jobs:
 
       - uses: actions/setup-node@v6.4.0
         with:
-          node-version: '22.17'
-          cache: 'pnpm'
+          node-version: "22.17"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build libraries
+        run: pnpm --filter './libs/**' build
 
       - name: Build
         run: pnpm --filter @glassact/webapp build
