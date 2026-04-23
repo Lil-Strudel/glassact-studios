@@ -59,16 +59,55 @@ resource "aws_lambda_function" "api" {
   }
 }
 
-resource "aws_lambda_function_url" "api" {
-  function_name      = aws_lambda_function.api.function_name
-  authorization_type = "AWS_IAM"
+resource "aws_apigatewayv2_api" "api" {
+  name          = "glassact-api"
+  protocol_type = "HTTP"
 }
 
-resource "aws_cloudfront_origin_access_control" "lambda" {
-  name                              = "glassact-lambda-oac"
-  origin_access_control_origin_type = "lambda"
-  signing_behavior                  = "always"
-  signing_protocol                  = "sigv4"
+resource "aws_apigatewayv2_integration" "api" {
+  api_id                 = aws_apigatewayv2_api.api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.api.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "api" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "$default"
+  target    = "integrations/${aws_apigatewayv2_integration.api.id}"
+}
+
+resource "aws_apigatewayv2_stage" "api" {
+  api_id      = aws_apigatewayv2_api.api.id
+  name        = "$default"
+  auto_deploy = true
+}
+
+resource "aws_lambda_permission" "api_gateway" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.api.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.api.execution_arn}/*/*"
+}
+
+resource "aws_cloudfront_origin_request_policy" "api" {
+  name = "glassact-api-passthrough"
+
+  headers_config {
+    header_behavior = "allExcept"
+    headers {
+      items = ["host"]
+    }
+  }
+
+  cookies_config {
+    cookie_behavior = "all"
+  }
+
+  query_strings_config {
+    query_string_behavior = "all"
+  }
 }
 
 resource "aws_cloudfront_response_headers_policy" "no_cache" {
@@ -95,9 +134,8 @@ resource "aws_cloudfront_distribution" "webapp" {
   }
 
   origin {
-    domain_name              = replace(replace(aws_lambda_function_url.api.function_url, "https://", ""), "/", "")
-    origin_id                = "api-lambda"
-    origin_access_control_id = aws_cloudfront_origin_access_control.lambda.id
+    domain_name = "${aws_apigatewayv2_api.api.id}.execute-api.us-west-2.amazonaws.com"
+    origin_id   = "api-gateway"
 
     custom_origin_config {
       http_port              = 80
@@ -147,26 +185,26 @@ resource "aws_cloudfront_distribution" "webapp" {
 
   ordered_cache_behavior {
     path_pattern           = "/api/*"
-    target_origin_id       = "api-lambda"
+    target_origin_id       = "api-gateway"
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
 
     cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
-    origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.api.id
   }
 
   ordered_cache_behavior {
     path_pattern           = "/file/*"
-    target_origin_id       = "api-lambda"
+    target_origin_id       = "api-gateway"
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
 
     cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
-    origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.api.id
   }
 
   restrictions {
@@ -180,13 +218,4 @@ resource "aws_cloudfront_distribution" "webapp" {
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.2_2021"
   }
-}
-
-resource "aws_lambda_permission" "cloudfront" {
-  statement_id       = "AllowCloudFrontInvoke"
-  action             = "lambda:InvokeFunctionUrl"
-  function_name      = aws_lambda_function.api.function_name
-  principal          = "cloudfront.amazonaws.com"
-  source_arn         = aws_cloudfront_distribution.webapp.arn
-  function_url_auth_type = "AWS_IAM"
 }
