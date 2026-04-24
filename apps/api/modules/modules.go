@@ -8,6 +8,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/blocker"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/catalog"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/chat"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dashboard"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dealership"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/invoice"
@@ -150,6 +151,10 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("POST /api/notifications/read-all", protected.ThenFunc(notificationModule.HandleMarkAllNotificationsRead))
 	mux.Handle("GET /api/notification-preferences", protected.ThenFunc(notificationModule.HandleGetNotificationPreferences))
 	mux.Handle("PATCH /api/notification-preferences/{event_type}", protected.ThenFunc(notificationModule.HandlePatchNotificationPreference))
+
+	dashboardModule := dashboard.NewDashboardModule(app)
+	mux.Handle("GET /api/dashboard/dealership", protected.ThenFunc(dashboardModule.HandleGetDealershipDashboard))
+	mux.Handle("GET /api/dashboard/internal", protected.ThenFunc(dashboardModule.HandleGetInternalDashboard))
 
 	mux.Handle("/", unprotected.ThenFunc(app.HandleNotFound))
 	return standard.Then(mux)

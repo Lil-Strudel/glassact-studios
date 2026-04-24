@@ -1,5 +1,6 @@
 export * from "./auth";
 export * from "./catalog-item";
+export * from "./dashboard";
 export * from "./dealership-accounts";
 export * from "./dealership-users";
 export * from "./dealerships";
