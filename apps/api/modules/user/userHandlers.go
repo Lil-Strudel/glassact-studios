@@ -248,10 +248,11 @@ func (m *UserModule) HandleCreateInternalUser(w http.ResponseWriter, r *http.Req
 	}
 
 	var body struct {
-		Name   string                `json:"name" validate:"required"`
-		Email  string                `json:"email" validate:"required,email"`
-		Avatar string                `json:"avatar" validate:"required,url"`
-		Role   data.InternalUserRole `json:"role" validate:"required"`
+		Name     string                `json:"name" validate:"required"`
+		Email    string                `json:"email" validate:"required,email"`
+		Avatar   string                `json:"avatar" validate:"required,url"`
+		Role     data.InternalUserRole `json:"role" validate:"required"`
+		IsActive bool                  `json:"is_active"`
 	}
 
 	err := m.ReadJSONBody(w, r, &body)
@@ -265,7 +266,7 @@ func (m *UserModule) HandleCreateInternalUser(w http.ResponseWriter, r *http.Req
 		Email:    body.Email,
 		Avatar:   body.Avatar,
 		Role:     body.Role,
-		IsActive: true,
+		IsActive: body.IsActive,
 	}
 
 	err = m.Db.InternalUsers.Insert(&user)
