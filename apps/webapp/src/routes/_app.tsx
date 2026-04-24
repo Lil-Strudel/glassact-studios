@@ -37,6 +37,7 @@ export const Route = createFileRoute("/_app")({
 const navigation = [
   { name: "Dashboard", to: "/dashboard" },
   { name: "Projects", to: "/projects" },
+  { name: "Catalog", to: "/catalog" },
   { name: "Inlays", to: "/inlays" },
   { name: "Admin", to: "/admin" },
 ];
