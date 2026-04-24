@@ -92,6 +92,7 @@ func setupTestApp(t *testing.T) (*testContext, func()) {
 		Validate: validator.New(validator.WithRequiredStructEnabled()),
 		Wg:       sync.WaitGroup{},
 		S3:       nil,
+		Mailer:   app.NewMailer("localhost", 1025, "", ""),
 	}
 
 	cleanup := func() {
@@ -563,8 +564,8 @@ func TestAPIEndpoints(t *testing.T) {
 		})
 
 		internalUsers, _ := testCtx.db.InternalUsers.GetAll()
-		if len(internalUsers) > 0 {
-			targetUser := internalUsers[0]
+		if len(internalUsers) > 1 {
+			targetUser := internalUsers[1]
 			t.Run("PATCH /api/internal-user/{uuid}", func(t *testing.T) {
 				resp := testCtx.request(testRequest{
 					method: "PATCH",
@@ -1165,7 +1166,7 @@ func TestAPIEndpoints(t *testing.T) {
 				body: map[string]interface{}{
 					"invoice_url": "https://invoice.example.com/inv-001.pdf",
 				},
-				token: dealershipToken,
+				token: internalAdminToken,
 			})
 
 			assert.Equal(t, http.StatusCreated, resp.statusCode)
@@ -1189,7 +1190,7 @@ func TestAPIEndpoints(t *testing.T) {
 				body: map[string]interface{}{
 					"invoice_url": "https://invoice.example.com/inv-002.pdf",
 				},
-				token: dealershipToken,
+				token: internalAdminToken,
 			})
 
 			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
@@ -1221,7 +1222,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "POST",
 				path:   fmt.Sprintf("/api/invoice/%s/void", invoiceUUID),
-				token:  dealershipToken,
+				token:  internalAdminToken,
 			})
 
 			assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -1244,7 +1245,7 @@ func TestAPIEndpoints(t *testing.T) {
 				body: map[string]interface{}{
 					"invoice_url": "https://invoice.example.com/inv-corrected.pdf",
 				},
-				token: dealershipToken,
+				token: internalAdminToken,
 			})
 
 			assert.Equal(t, http.StatusCreated, resp.statusCode)
@@ -1265,7 +1266,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "POST",
 				path:   fmt.Sprintf("/api/invoice/%s/mark-paid", invoiceUUID2),
-				token:  dealershipToken,
+				token:  internalAdminToken,
 			})
 
 			assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -1285,7 +1286,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "POST",
 				path:   fmt.Sprintf("/api/invoice/%s/void", invoiceUUID2),
-				token:  dealershipToken,
+				token:  internalAdminToken,
 			})
 
 			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
