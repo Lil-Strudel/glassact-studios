@@ -8,6 +8,7 @@ import (
 
 type Models struct {
 	CatalogItems            CatalogItemModel
+	Dashboard               DashboardModel
 	DealershipAccounts      DealershipAccountModel
 	DealershipTokens        DealershipTokenModel
 	DealershipUsers         DealershipUserModel
@@ -34,6 +35,7 @@ type Models struct {
 func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 	return Models{
 		CatalogItems:            CatalogItemModel{DB: db, STDB: stdb},
+		Dashboard:               DashboardModel{DB: db, STDB: stdb},
 		DealershipAccounts:      DealershipAccountModel{DB: db, STDB: stdb},
 		DealershipTokens:        DealershipTokenModel{DB: db, STDB: stdb},
 		DealershipUsers:         DealershipUserModel{DB: db, STDB: stdb},

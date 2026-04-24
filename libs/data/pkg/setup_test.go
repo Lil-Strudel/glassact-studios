@@ -148,7 +148,6 @@ func cleanupTables(t *testing.T) {
 		inlay_catalog_infos,
 		inlays,
 		order_snapshots,
-		invoice_line_items,
 		invoices,
 		project_chats,
 		projects,
