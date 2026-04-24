@@ -1,6 +1,6 @@
-# GlassAct Studios - Frontend Rules
+# CLAUDE.md — Frontend (SolidJS)
 
-These rules apply to all frontend code in `apps/webapp/` and `libs/ui/`.
+This file provides guidance to Claude Code when working in `apps/webapp/`. The same conventions apply to SolidJS code in `libs/ui/`. See the root `CLAUDE.md` for repo-wide context.
 
 ## Tech Stack
 

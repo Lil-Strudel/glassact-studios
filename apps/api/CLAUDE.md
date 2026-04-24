@@ -1,6 +1,6 @@
-# GlassAct Studios - Backend Rules
+# CLAUDE.md — Backend (Go API)
 
-These rules apply to all Go code in `apps/api/` and `libs/data/pkg/`.
+This file provides guidance to Claude Code when working in `apps/api/`. The same conventions apply to Go code in `libs/data/pkg/`. See the root `CLAUDE.md` for repo-wide context and `libs/data/CLAUDE.md` for data-layer specifics.
 
 ## Tech Stack
 

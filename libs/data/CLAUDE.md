@@ -1,6 +1,6 @@
-# GlassAct Studios - Data Layer Rules
+# CLAUDE.md — Shared Data Layer
 
-These rules apply to the shared data layer in `libs/data/`.
+This file provides guidance to Claude Code when working in `libs/data/`. See the root `CLAUDE.md` for repo-wide context and `apps/api/CLAUDE.md` for backend handler conventions.
 
 ## Overview
 
