@@ -368,7 +368,7 @@ func TestAPIEndpoints(t *testing.T) {
 						"longitude":   -75.0,
 					},
 				},
-				token: dealershipToken,
+				token: internalAdminToken,
 			})
 
 			assert.Equal(t, http.StatusCreated, resp.statusCode)

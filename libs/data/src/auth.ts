@@ -1,5 +1,7 @@
 export const PERMISSION_ACTIONS = {
   CREATE_PROJECT: "create_project",
+  MANAGE_PROJECT: "manage_project",
+  SEND_CHAT: "send_chat",
   APPROVE_PROOF: "approve_proof",
   PLACE_ORDER: "place_order",
   PAY_INVOICE: "pay_invoice",
@@ -11,5 +13,7 @@ export const PERMISSION_ACTIONS = {
   CREATE_BLOCKER: "create_blocker",
   CREATE_INVOICE: "create_invoice",
   MANAGE_INTERNAL_USERS: "manage_internal_users",
+  MANAGE_DEALERSHIPS: "manage_dealerships",
+  ACCESS_ADMIN: "access_admin",
   VIEW_ALL: "view_all",
 } as const;

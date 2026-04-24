@@ -57,13 +57,6 @@ func (m *UserModule) HandleGetUserByUUID(w http.ResponseWriter, r *http.Request)
 }
 
 func (m *UserModule) HandleCreateDealershipUser(w http.ResponseWriter, r *http.Request) {
-	authUser := m.ContextGetUser(r)
-
-	if !authUser.Can(data.ActionManageDealershipUsers) {
-		m.WriteError(w, r, m.Err.Forbidden, nil)
-		return
-	}
-
 	var body struct {
 		Name   string                  `json:"name" validate:"required"`
 		Email  string                  `json:"email" validate:"required,email"`
@@ -98,13 +91,6 @@ func (m *UserModule) HandleCreateDealershipUser(w http.ResponseWriter, r *http.R
 }
 
 func (m *UserModule) HandleUpdateDealershipUser(w http.ResponseWriter, r *http.Request) {
-	authUser := m.ContextGetUser(r)
-
-	if !authUser.Can(data.ActionManageDealershipUsers) {
-		m.WriteError(w, r, m.Err.Forbidden, nil)
-		return
-	}
-
 	uuid := r.PathValue("uuid")
 	err := m.Validate.Var(uuid, "required,uuid4")
 	if err != nil {
@@ -165,13 +151,6 @@ func (m *UserModule) HandleUpdateDealershipUser(w http.ResponseWriter, r *http.R
 }
 
 func (m *UserModule) HandleDeleteDealershipUser(w http.ResponseWriter, r *http.Request) {
-	authUser := m.ContextGetUser(r)
-
-	if !authUser.Can(data.ActionManageDealershipUsers) {
-		m.WriteError(w, r, m.Err.Forbidden, nil)
-		return
-	}
-
 	uuid := r.PathValue("uuid")
 	err := m.Validate.Var(uuid, "required,uuid4")
 	if err != nil {
@@ -240,13 +219,6 @@ func (m *UserModule) HandleGetInternalUserByUUID(w http.ResponseWriter, r *http.
 }
 
 func (m *UserModule) HandleCreateInternalUser(w http.ResponseWriter, r *http.Request) {
-	authUser := m.ContextGetUser(r)
-
-	if !authUser.Can(data.ActionManageInternalUsers) {
-		m.WriteError(w, r, m.Err.Forbidden, nil)
-		return
-	}
-
 	var body struct {
 		Name     string                `json:"name" validate:"required"`
 		Email    string                `json:"email" validate:"required,email"`
@@ -279,13 +251,6 @@ func (m *UserModule) HandleCreateInternalUser(w http.ResponseWriter, r *http.Req
 }
 
 func (m *UserModule) HandleUpdateInternalUser(w http.ResponseWriter, r *http.Request) {
-	authUser := m.ContextGetUser(r)
-
-	if !authUser.Can(data.ActionManageInternalUsers) {
-		m.WriteError(w, r, m.Err.Forbidden, nil)
-		return
-	}
-
 	uuid := r.PathValue("uuid")
 	err := m.Validate.Var(uuid, "required,uuid4")
 	if err != nil {
@@ -340,13 +305,6 @@ func (m *UserModule) HandleUpdateInternalUser(w http.ResponseWriter, r *http.Req
 }
 
 func (m *UserModule) HandleDeleteInternalUser(w http.ResponseWriter, r *http.Request) {
-	authUser := m.ContextGetUser(r)
-
-	if !authUser.Can(data.ActionManageInternalUsers) {
-		m.WriteError(w, r, m.Err.Forbidden, nil)
-		return
-	}
-
 	uuid := r.PathValue("uuid")
 	err := m.Validate.Var(uuid, "required,uuid4")
 	if err != nil {

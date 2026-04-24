@@ -390,6 +390,14 @@ func (u *InternalUser) Can(action string) bool {
 	case ActionManagePriceGroups:
 		return u.Role == InternalUserRoles.Billing ||
 			u.Role == InternalUserRoles.Admin
+	case ActionManageDealerships:
+		return u.Role == InternalUserRoles.Admin
+	case ActionAccessAdmin:
+		return true
+	case ActionManageProject:
+		return true
+	case ActionSendChat:
+		return true
 	default:
 		return false
 	}

@@ -4,7 +4,7 @@ import {
   Link,
   redirect,
 } from "@tanstack/solid-router";
-import { createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, Show } from "solid-js";
 import logoEmblem from "../assets/images/logo-emblem.png";
 import {
   Button,
@@ -16,6 +16,7 @@ import {
 import { IoClose, IoMenu } from "solid-icons/io";
 import { useUserContext } from "../providers/user";
 import { NotificationBell } from "../components/notification-bell";
+import { PERMISSION_ACTIONS } from "@glassact/data";
 
 export const Route = createFileRoute("/_app")({
   component: RouteComponent,
@@ -39,7 +40,7 @@ const navigation = [
   { name: "Projects", to: "/projects" },
   { name: "Catalog", to: "/catalog" },
   { name: "Inlays", to: "/inlays" },
-  { name: "Admin", to: "/admin" },
+  { name: "Admin", to: "/admin", permission: PERMISSION_ACTIONS.ACCESS_ADMIN },
 ];
 const userNavigation = [
   { component: Link, name: "Settings", props: { to: "/settings" } },
@@ -51,9 +52,12 @@ const userNavigation = [
 ];
 
 function RouteComponent() {
-  const { user } = useUserContext();
-
+  const { user, can } = useUserContext();
   const [open, setOpen] = createSignal(false);
+
+  const filteredNavigation = createMemo(() =>
+    navigation.filter((item) => !item.permission || can(item.permission)),
+  );
 
   function toggleOpen() {
     setOpen((open) => !open);
@@ -74,7 +78,7 @@ function RouteComponent() {
                   />
                 </div>
                 <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
-                  <For each={navigation}>
+                  <For each={filteredNavigation()}>
                     {(item) => (
                       <Link
                         to={item.to}
@@ -131,7 +135,7 @@ function RouteComponent() {
           {open() && (
             <div class="bg-white w-full drop-shadow absolute sm:hidden">
               <div class="space-y-1 pb-3 pt-2">
-                <For each={navigation}>
+                <For each={filteredNavigation()}>
                   {(item) => (
                     <Link
                       to={item.to}

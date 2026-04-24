@@ -42,6 +42,7 @@ import type {
   ProjectStatus,
   InlayWithInfo,
 } from "@glassact/data";
+import { PERMISSION_ACTIONS } from "@glassact/data";
 import { ProjectStatusBadge } from "../../components/project/status-badge";
 import { ProofStatusBadge } from "../../components/proof/proof-status-badge";
 import { Can } from "../../components/Can";
@@ -773,7 +774,7 @@ interface InvoiceSectionProps {
 }
 
 function InvoiceSection(props: InvoiceSectionProps) {
-  const { isInternal } = useUserContext();
+  const { can } = useUserContext();
   const queryClient = useQueryClient();
   const attachInvoice = useMutation(() => postProjectInvoiceOpts());
   const markPaid = useMutation(() => postMarkInvoicePaidOpts());
@@ -857,7 +858,7 @@ function InvoiceSection(props: InvoiceSectionProps) {
           <div class="h-16 bg-gray-100 rounded animate-pulse" />
         </Match>
 
-        <Match when={!hasActiveInvoice() && isInternal()}>
+        <Match when={!hasActiveInvoice() && can(PERMISSION_ACTIONS.CREATE_INVOICE)}>
           <div class="space-y-3">
             <p class="text-sm text-gray-600">
               Paste the invoice link from your billing platform to attach it to
@@ -881,7 +882,7 @@ function InvoiceSection(props: InvoiceSectionProps) {
           </div>
         </Match>
 
-        <Match when={!hasActiveInvoice() && !isInternal()}>
+        <Match when={!hasActiveInvoice() && !can(PERMISSION_ACTIONS.CREATE_INVOICE)}>
           <div class="text-center py-4">
             <p class="text-gray-500 text-sm">
               Invoice not yet available. Check back soon.
@@ -926,12 +927,12 @@ function InvoiceSection(props: InvoiceSectionProps) {
               >
                 View Invoice
               </Button>
-              <Show when={isInternal() && props.invoice!.status === "sent"}>
+              <Show when={can(PERMISSION_ACTIONS.CREATE_INVOICE) && props.invoice!.status === "sent"}>
                 <Button onClick={handleMarkPaid} disabled={markPaid.isPending}>
                   {markPaid.isPending ? "Saving..." : "Mark as Paid"}
                 </Button>
               </Show>
-               <Show when={isInternal() && props.invoice!.status !== "paid"}>
+               <Show when={can(PERMISSION_ACTIONS.CREATE_INVOICE) && props.invoice!.status !== "paid"}>
                  <Dialog open={isVoidDialogOpen()} onOpenChange={setIsVoidDialogOpen}>
                    <DialogTrigger as={Button} variant="outline">
                      Void Invoice

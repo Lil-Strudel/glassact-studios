@@ -11,12 +11,19 @@ import {
   IoShapesOutline,
   IoPricetagOutline,
 } from "solid-icons/io";
+import { getUserSelfOpts } from "../../queries/user";
 
 export const Route = createFileRoute("/_app/admin")({
   component: RouteComponent,
-  beforeLoad({ location }) {
+  beforeLoad: async ({ context, location }) => {
     if (location.pathname.split("/").length < 3) {
       throw redirect({ to: "/admin/dealerships", replace: true });
+    }
+
+    const user = await context.queryClient.ensureQueryData(getUserSelfOpts());
+
+    if ("dealership_id" in user) {
+      throw redirect({ to: "/", replace: true });
     }
   },
 });
@@ -43,6 +50,7 @@ const navigationItems = [
     path: "/admin/price-groups",
   },
 ];
+
 function RouteComponent() {
   return (
     <div>

@@ -8,6 +8,8 @@ const (
 	ActionManageDealershipUsers = "manage_dealership_users"
 	ActionViewProjects          = "view_projects"
 	ActionViewInvoices          = "view_invoices"
+	ActionManageProject         = "manage_project"
+	ActionSendChat              = "send_chat"
 
 	ActionCreateProof         = "create_proof"
 	ActionManageKanban        = "manage_kanban"
@@ -17,4 +19,6 @@ const (
 	ActionViewAll             = "view_all"
 	ActionManageCatalog       = "manage_catalog"
 	ActionManagePriceGroups   = "manage_price_groups"
+	ActionManageDealerships   = "manage_dealerships"
+	ActionAccessAdmin         = "access_admin"
 )

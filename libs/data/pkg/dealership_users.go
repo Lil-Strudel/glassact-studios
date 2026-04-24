@@ -402,6 +402,14 @@ func (u *DealershipUser) Can(action string) bool {
 		return u.Role == DealershipUserRoles.Submitter ||
 			u.Role == DealershipUserRoles.Approver ||
 			u.Role == DealershipUserRoles.Admin
+	case ActionManageProject:
+		return u.Role == DealershipUserRoles.Submitter ||
+			u.Role == DealershipUserRoles.Approver ||
+			u.Role == DealershipUserRoles.Admin
+	case ActionSendChat:
+		return u.Role == DealershipUserRoles.Submitter ||
+			u.Role == DealershipUserRoles.Approver ||
+			u.Role == DealershipUserRoles.Admin
 	case ActionApproveProof:
 		return u.Role == DealershipUserRoles.Approver ||
 			u.Role == DealershipUserRoles.Admin
@@ -416,6 +424,10 @@ func (u *DealershipUser) Can(action string) bool {
 		return true
 	case ActionViewInvoices:
 		return true
+	case ActionAccessAdmin:
+		return false
+	case ActionManageDealerships:
+		return false
 	default:
 		return false
 	}

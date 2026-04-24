@@ -84,6 +84,14 @@ export const UserProvider: ParentComponent = (props) => {
           return (
             role === "submitter" || role === "approver" || role === "admin"
           );
+        case PERMISSION_ACTIONS.MANAGE_PROJECT:
+          return (
+            role === "submitter" || role === "approver" || role === "admin"
+          );
+        case PERMISSION_ACTIONS.SEND_CHAT:
+          return (
+            role === "submitter" || role === "approver" || role === "admin"
+          );
         case PERMISSION_ACTIONS.APPROVE_PROOF:
           return role === "approver" || role === "admin";
         case PERMISSION_ACTIONS.PLACE_ORDER:
@@ -96,6 +104,10 @@ export const UserProvider: ParentComponent = (props) => {
           return true;
         case PERMISSION_ACTIONS.VIEW_INVOICES:
           return true;
+        case PERMISSION_ACTIONS.ACCESS_ADMIN:
+          return false;
+        case PERMISSION_ACTIONS.MANAGE_DEALERSHIPS:
+          return false;
         default:
           return false;
       }
@@ -112,8 +124,16 @@ export const UserProvider: ParentComponent = (props) => {
           return role === "billing" || role === "admin";
         case PERMISSION_ACTIONS.MANAGE_INTERNAL_USERS:
           return role === "admin";
+        case PERMISSION_ACTIONS.MANAGE_DEALERSHIPS:
+          return role === "admin";
         case PERMISSION_ACTIONS.VIEW_ALL:
           return role === "admin";
+        case PERMISSION_ACTIONS.ACCESS_ADMIN:
+          return true;
+        case PERMISSION_ACTIONS.MANAGE_PROJECT:
+          return true;
+        case PERMISSION_ACTIONS.SEND_CHAT:
+          return true;
         default:
           return false;
       }
