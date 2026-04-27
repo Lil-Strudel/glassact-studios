@@ -223,3 +223,4 @@ terraform.rc
 
 .tanstack
 **/tmp/**
+tools/svg-to-catalog/input/*
