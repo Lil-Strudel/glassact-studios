@@ -58,7 +58,7 @@ resource "aws_cloudfront_function" "landing_rewrite" {
 resource "aws_cloudfront_distribution" "landing" {
   enabled             = true
   default_root_object = "index.html"
-  aliases             = [var.landing_domain]
+  aliases             = [var.landing_domain, "www.${var.landing_domain}"]
 
   origin {
     domain_name              = aws_s3_bucket.landing.bucket_regional_domain_name
