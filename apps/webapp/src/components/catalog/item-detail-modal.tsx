@@ -16,16 +16,11 @@ interface ItemDetailModalProps {
 export function ItemDetailModal(props: ParentProps<ItemDetailModalProps>) {
   return (
     <Dialog>
-      <Show
-        when={props.children}
-        fallback={
-          <DialogTrigger as={Button} variant="outline">
-            View Details
-          </DialogTrigger>
-        }
-      >
-        {props.children}
-      </Show>
+      <DialogTrigger as="div" class="contents">
+        {props.children ?? (
+          <Button variant="outline">View Details</Button>
+        )}
+      </DialogTrigger>
       <DialogContent class="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{props.item.name}</DialogTitle>

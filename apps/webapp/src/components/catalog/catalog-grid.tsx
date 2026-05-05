@@ -1,15 +1,22 @@
 import { CatalogItem, GET } from "@glassact/data";
-import { Button } from "@glassact/ui";
+import {
+  Button,
+  Pagination,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationItems,
+  PaginationNext,
+  PaginationPrevious,
+} from "@glassact/ui";
 import { For, Show } from "solid-js";
 import { ItemDetailModal } from "./item-detail-modal";
 
 interface CatalogGridProps {
   items: GET<CatalogItem>[];
   isLoading: boolean;
-  total: number;
-  currentOffset: number;
-  limit: number;
-  onLoadMore: () => void;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 export function CatalogGrid(props: CatalogGridProps) {
@@ -82,17 +89,21 @@ export function CatalogGrid(props: CatalogGridProps) {
         </div>
       </Show>
 
-      <Show
-        when={
-          !props.isLoading &&
-          props.items.length > 0 &&
-          props.currentOffset + props.limit < props.total
-        }
-      >
+      <Show when={!props.isLoading && props.totalPages > 1}>
         <div class="flex justify-center">
-          <Button onClick={props.onLoadMore} variant="outline">
-            Load More
-          </Button>
+          <Pagination
+            count={props.totalPages}
+            page={props.page}
+            onPageChange={props.onPageChange}
+            itemComponent={(p) => (
+              <PaginationItem page={p.page}>{p.page}</PaginationItem>
+            )}
+            ellipsisComponent={() => <PaginationEllipsis />}
+          >
+            <PaginationPrevious />
+            <PaginationItems />
+            <PaginationNext />
+          </Pagination>
         </div>
       </Show>
     </div>

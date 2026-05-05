@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/solid-router";
-import { createSignal } from "solid-js";
+import { createMemo, createSignal } from "solid-js";
 import { useQuery } from "@tanstack/solid-query";
 import { browseCatalogOpts } from "../../queries/catalog-browse";
 import { FilterSidebar } from "../../components/catalog/filter-sidebar";
@@ -13,7 +13,7 @@ function RouteComponent() {
   const [search, setSearch] = createSignal("");
   const [category, setCategory] = createSignal("");
   const [tags, setTags] = createSignal<string[]>([]);
-  const [offset, setOffset] = createSignal(0);
+  const [page, setPage] = createSignal(1);
 
   const limit = 50;
 
@@ -23,27 +23,27 @@ function RouteComponent() {
       category: category(),
       tags: tags(),
       limit,
-      offset: offset(),
+      offset: (page() - 1) * limit,
     }),
   );
 
-  const handleLoadMore = () => {
-    setOffset(offset() + limit);
-  };
+  const totalPages = createMemo(() =>
+    Math.ceil((query.data?.total ?? 0) / limit),
+  );
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    setOffset(0);
+    setPage(1);
   };
 
   const handleCategoryChange = (value: string) => {
     setCategory(value);
-    setOffset(0);
+    setPage(1);
   };
 
   const handleTagsChange = (newTags: string[]) => {
     setTags(newTags);
-    setOffset(0);
+    setPage(1);
   };
 
   return (
@@ -60,10 +60,9 @@ function RouteComponent() {
       <CatalogGrid
         items={query.data?.items ?? []}
         isLoading={query.isLoading}
-        total={query.data?.total ?? 0}
-        currentOffset={offset()}
-        limit={limit}
-        onLoadMore={handleLoadMore}
+        page={page()}
+        totalPages={totalPages()}
+        onPageChange={setPage}
       />
     </div>
   );

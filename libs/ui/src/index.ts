@@ -25,6 +25,8 @@ export * from "./file-upload";
 
 export * from "./form";
 
+export * from "./pagination";
+
 export * from "./select";
 
 export * from "./table";
