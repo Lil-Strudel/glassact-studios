@@ -39,7 +39,11 @@ const navigation = [
   { name: "Dashboard", to: "/dashboard" },
   { name: "Projects", to: "/projects" },
   { name: "Catalog", to: "/catalog" },
-  { name: "Inlays", to: "/inlays" },
+  {
+    name: "Inlays",
+    to: "/inlays",
+    permission: PERMISSION_ACTIONS.MANAGE_KANBAN,
+  },
   { name: "Admin", to: "/admin", permission: PERMISSION_ACTIONS.ACCESS_ADMIN },
 ];
 const userNavigation = [
