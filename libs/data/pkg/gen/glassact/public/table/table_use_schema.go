@@ -17,6 +17,8 @@ func UseSchema(schema string) {
 	DealershipUserNotificationPrefs = DealershipUserNotificationPrefs.FromSchema(schema)
 	DealershipUsers = DealershipUsers.FromSchema(schema)
 	Dealerships = Dealerships.FromSchema(schema)
+	GlassColors = GlassColors.FromSchema(schema)
+	Grouts = Grouts.FromSchema(schema)
 	InlayBlockers = InlayBlockers.FromSchema(schema)
 	InlayCatalogInfos = InlayCatalogInfos.FromSchema(schema)
 	InlayChats = InlayChats.FromSchema(schema)

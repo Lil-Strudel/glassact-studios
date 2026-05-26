@@ -74,102 +74,58 @@ VALUES (
     true
 ) ON CONFLICT DO NOTHING;
 
-INSERT INTO catalog_items (id, uuid, catalog_code, name, description, category, default_width, default_height, min_width, min_height, default_price_group_id, svg_url, is_active)
-VALUES (
-    1,
-    'aecf206b-d2c0-46ea-9c24-33a94c197ad1',
-    'A-TUR-0001',
-    'Turtle',
-    'Hawaiian style turtle',
-    'Animal',
-    2,
-    2,
-    1,
-    1,
-    2,
-    '/file/catalog-items/18aac212-af87-4fbc-93e6-17c27bd7f4f4.svg',
-    true
-) ON CONFLICT DO NOTHING;
+-- Glass colors GlassAct offers (extracted from the master swatch chart).
+INSERT INTO glass_colors (name, hex, family, sort_order) VALUES
+  ('Charcoal', '#4e4a42', 'neutral', 10),
+  ('Pale Grey', '#7b8074', 'neutral', 20),
+  ('Black', '#010101', 'neutral', 30),
+  ('Cloud', '#c1cdca', 'neutral', 40),
+  ('Almond', '#fbf8df', 'neutral', 50),
+  ('Ivory', '#ebebdb', 'neutral', 60),
+  ('White', '#ffffff', 'neutral', 70),
+  ('Steel Blue', '#003f5a', 'blue', 80),
+  ('Medium Blue', '#415ba8', 'blue', 90),
+  ('Mariner', '#2a5b8f', 'blue', 100),
+  ('Cobalt Blue', '#2b3278', 'blue', 110),
+  ('Dark Blue', '#03569c', 'blue', 120),
+  ('Alpine Blue', '#3f8b9d', 'blue', 130),
+  ('Riviera Blue', '#4d90cd', 'blue', 140),
+  ('Turquoise Blue', '#0d9bc7', 'blue', 150),
+  ('Moss Green', '#23772d', 'green', 160),
+  ('Celadon', '#9ea879', 'green', 170),
+  ('Amazon Green', '#a1bd3a', 'green', 180),
+  ('Pastel Green', '#9fd5b9', 'green', 190),
+  ('Olive', '#0c2b2e', 'green', 200),
+  ('Dark Green', '#154c3e', 'green', 210),
+  ('Turquoise Green', '#15b9b0', 'green', 220),
+  ('Peacock Green', '#027d71', 'green', 230),
+  ('Lilac', '#7b6269', 'purple', 240),
+  ('Mauve', '#ddc3cb', 'purple', 250),
+  ('Violet', '#2a1423', 'purple', 260),
+  ('Plum', '#46222f', 'purple', 270),
+  ('Pale Purple', '#c68c85', 'purple', 280),
+  ('Antique Bronze', '#543a23', 'brown', 290),
+  ('Chestnut', '#7d4e2f', 'brown', 300),
+  ('Terra Cotta', '#ae6219', 'brown', 310),
+  ('Bronze', '#633d2a', 'brown', 320),
+  ('Champagne', '#f9c996', 'amber', 330),
+  ('Dark Champagne', '#fbd0a0', 'amber', 340),
+  ('Marigold', '#faab54', 'amber', 350),
+  ('Sunflower', '#eeb211', 'amber', 360),
+  ('Orange', '#f15f25', 'red', 370),
+  ('Persimmon', '#f37f43', 'red', 380),
+  ('Red', '#910028', 'red', 390),
+  ('Pink', '#e09090', 'red', 400)
+ON CONFLICT (hex) DO NOTHING;
 
-INSERT INTO catalog_items (id, uuid, catalog_code, name, description, category, default_width, default_height, min_width, min_height, default_price_group_id, svg_url, is_active)
-VALUES (
-    2,
-    'ffab07c0-3cb1-4e8a-a55a-d612a709ad04',
-    'A-LZD-0001',
-    'Lizard',
-    '',
-    'Animal',
-    2,
-    2,
-    1,
-    1,
-    1,
-    '/file/catalog-items/5cae9a3a-9fef-477a-a3cf-3cfbbf05e0b1.svg',
-    true
-) ON CONFLICT DO NOTHING;
-
-INSERT INTO catalog_items (id, uuid, catalog_code, name, description, category, default_width, default_height, min_width, min_height, default_price_group_id, svg_url, is_active)
-VALUES (
-    3,
-    'b88cfb41-c4a1-4b07-b8da-bc290191b734',
-    'A-HRS-0003',
-    'Horse in Horseshoe',
-    '',
-    'Animal',
-    2,
-    2,
-    1,
-    1,
-    3,
-    '/file/catalog-items/848b2456-faa5-4291-9d6e-2e25ef1dde2c.svg',
-    true
-) ON CONFLICT DO NOTHING;
-
-INSERT INTO catalog_items (id, uuid, catalog_code, name, description, category, default_width, default_height, min_width, min_height, default_price_group_id, svg_url, is_active)
-VALUES (
-    4,
-    '448a7113-b371-4f6a-956f-6e63738d9a03',
-    'A-HRS-0002',
-    'White Horse',
-    'White horse',
-    'Animal',
-    3,
-    3,
-    1,
-    1,
-    1,
-    '/file/catalog-items/3669cf1c-a366-4892-90c9-579ecdb63819.svg',
-    true
-) ON CONFLICT DO NOTHING;
-
-INSERT INTO catalog_items (id, uuid, catalog_code, name, description, category, default_width, default_height, min_width, min_height, default_price_group_id, svg_url, is_active)
-VALUES (
-    5,
-    '94bd4617-b515-4530-83bc-e259e15d1cb1',
-    'A-HRS-0001',
-    'Brown Horse',
-    'Brown Horse',
-    'Animal',
-    3,
-    3,
-    1,
-    1,
-    3,
-    '/file/catalog-items/7b20a091-ee77-4822-a2b1-4791879aa9cb.svg',
-    true
-) ON CONFLICT DO NOTHING;
-
-INSERT INTO catalog_item_tags (catalog_item_id, tag)
-VALUES (1, 'Turtle') ON CONFLICT DO NOTHING;
-
-INSERT INTO catalog_item_tags (catalog_item_id, tag)
-VALUES (2, 'Lizard') ON CONFLICT DO NOTHING;
-
-INSERT INTO catalog_item_tags (catalog_item_id, tag)
-VALUES (3, 'Horse') ON CONFLICT DO NOTHING;
-
-INSERT INTO catalog_item_tags (catalog_item_id, tag)
-VALUES (4, 'Horse') ON CONFLICT DO NOTHING;
-
-INSERT INTO catalog_item_tags (catalog_item_id, tag)
-VALUES (5, 'Horse') ON CONFLICT DO NOTHING;
+-- Initial grout (background) set — placeholder granite tones, refine later.
+INSERT INTO grouts (name, hex, sort_order) VALUES
+  ('Black Granite', '#1c1c1c', 10),
+  ('Dark Grey Granite', '#3b3e40', 20),
+  ('Grey Granite', '#8a8d8f', 30),
+  ('Light Grey Granite', '#c7c9c8', 40),
+  ('Mahogany Granite', '#4a1f1a', 50),
+  ('Rose Granite', '#b58a86', 60),
+  ('Tan Granite', '#c9b79c', 70),
+  ('Green Granite', '#2d3b33', 80)
+ON CONFLICT (hex) DO NOTHING;

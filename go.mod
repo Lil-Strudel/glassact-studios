@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.95.0
 	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2
+	github.com/beevik/etree v1.6.0
 	github.com/go-jet/jet/v2 v2.14.1
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/golang-migrate/migrate/v4 v4.19.1

@@ -1,12 +1,19 @@
 package catalog
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/upload"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/svg"
 	data "github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
 )
 
@@ -105,6 +112,11 @@ func (m *CatalogModule) HandlePostCatalog(w http.ResponseWriter, r *http.Request
 		IsActive:            body.IsActive,
 	}
 
+	if err := m.ingestCatalogSVG(r.Context(), catalogItem); err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
 	err = m.Db.CatalogItems.Insert(catalogItem)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
@@ -112,6 +124,107 @@ func (m *CatalogModule) HandlePostCatalog(w http.ResponseWriter, r *http.Request
 	}
 
 	m.WriteJSON(w, r, http.StatusCreated, catalogItem)
+}
+
+// ingestCatalogSVG fetches the uploaded source SVG, parses it into a stable-id
+// canonical SVG + region manifest, re-uploads the canonical, and mutates the
+// item in place. Unparseable or unsupported SVGs are flagged quarantined (the
+// item is still created), so a single bad file never fails a seeding run.
+func (m *CatalogModule) ingestCatalogSVG(ctx context.Context, item *data.CatalogItem) error {
+	// Without S3 configured (e.g. tests) there is nothing to fetch/parse; skip
+	// ingest and leave the item without a manifest rather than failing creation.
+	if m.S3 == nil {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	key := strings.TrimPrefix(item.SvgURL, "/")
+	raw, err := upload.GetFileFromS3(ctx, m.S3, m.Cfg, key)
+	if err != nil {
+		return fmt.Errorf("failed to fetch source svg for ingest: %w", err)
+	}
+
+	canonical, manifest, quarantine, err := svg.Ingest(raw)
+	if err != nil {
+		reason := fmt.Sprintf("svg parse error: %v", err)
+		item.IsQuarantined = true
+		item.QuarantineReason = &reason
+		return nil
+	}
+	if quarantine != nil {
+		item.IsQuarantined = true
+		reason := quarantine.Reason
+		item.QuarantineReason = &reason
+		return nil
+	}
+
+	result, err := upload.UploadFileToS3(
+		ctx, m.S3, m.Cfg,
+		bytes.NewReader(canonical),
+		item.CatalogCode+".svg",
+		int64(len(canonical)),
+		"image/svg+xml",
+		"catalog-items",
+	)
+	if err != nil {
+		return fmt.Errorf("failed to upload canonical svg: %w", err)
+	}
+
+	manifestMap, err := toMap(manifest)
+	if err != nil {
+		return fmt.Errorf("failed to encode manifest: %w", err)
+	}
+
+	item.SvgURL = result.URL
+	item.Manifest = manifestMap
+	item.IsQuarantined = false
+	item.QuarantineReason = nil
+	return nil
+}
+
+func toMap(v any) (map[string]interface{}, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	var out map[string]interface{}
+	if err := json.Unmarshal(b, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// HandleGetCatalogSVG streams a catalog item's canonical SVG bytes same-origin,
+// so the customizer can fetch it as text without S3 CORS issues.
+func (m *CatalogModule) HandleGetCatalogSVG(w http.ResponseWriter, r *http.Request) {
+	uuid := r.PathValue("uuid")
+
+	item, found, err := m.Db.CatalogItems.GetByUUID(uuid)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+	defer cancel()
+
+	key := strings.TrimPrefix(item.SvgURL, "/")
+	data, err := upload.GetFileFromS3(ctx, m.S3, m.Cfg, key)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(data)
 }
 
 func (m *CatalogModule) HandleGetCatalogItem(w http.ResponseWriter, r *http.Request) {

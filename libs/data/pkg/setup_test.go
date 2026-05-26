@@ -154,6 +154,8 @@ func cleanupTables(t *testing.T) {
 		catalog_item_tags,
 		catalog_items,
 		price_groups,
+		glass_colors,
+		grouts,
 		dealership_tokens,
 		dealership_accounts,
 		internal_tokens,

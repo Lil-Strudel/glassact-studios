@@ -40,6 +40,9 @@ DROP TABLE IF EXISTS dealership_accounts;
 DROP TABLE IF EXISTS dealership_users;
 DROP TABLE IF EXISTS dealerships;
 
+DROP TABLE IF EXISTS grouts;
+DROP TABLE IF EXISTS glass_colors;
+
 DROP TABLE IF EXISTS price_groups;
 
 DROP EXTENSION IF EXISTS postgis CASCADE;

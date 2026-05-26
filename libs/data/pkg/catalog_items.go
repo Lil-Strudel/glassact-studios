@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -16,18 +17,21 @@ import (
 
 type CatalogItem struct {
 	StandardTable
-	CatalogCode         string   `json:"catalog_code"`
-	Name                string   `json:"name"`
-	Description         *string  `json:"description"`
-	Category            string   `json:"category"`
-	DefaultWidth        float64  `json:"default_width"`
-	DefaultHeight       float64  `json:"default_height"`
-	MinWidth            float64  `json:"min_width"`
-	MinHeight           float64  `json:"min_height"`
-	DefaultPriceGroupID int      `json:"default_price_group_id"`
-	SvgURL              string   `json:"svg_url"`
-	IsActive            bool     `json:"is_active"`
-	Tags                []string `json:"tags,omitempty"`
+	CatalogCode         string                 `json:"catalog_code"`
+	Name                string                 `json:"name"`
+	Description         *string                `json:"description"`
+	Category            string                 `json:"category"`
+	DefaultWidth        float64                `json:"default_width"`
+	DefaultHeight       float64                `json:"default_height"`
+	MinWidth            float64                `json:"min_width"`
+	MinHeight           float64                `json:"min_height"`
+	DefaultPriceGroupID int                    `json:"default_price_group_id"`
+	SvgURL              string                 `json:"svg_url"`
+	Manifest            map[string]interface{} `json:"manifest"`
+	IsQuarantined       bool                   `json:"is_quarantined"`
+	QuarantineReason    *string                `json:"quarantine_reason"`
+	IsActive            bool                   `json:"is_active"`
+	Tags                []string               `json:"tags,omitempty"`
 }
 
 type CatalogItemTag struct {
@@ -43,6 +47,11 @@ type CatalogItemModel struct {
 }
 
 func catalogItemFromGen(genCatalogItem model.CatalogItems) *CatalogItem {
+	var manifest map[string]interface{}
+	if genCatalogItem.Manifest != "" {
+		_ = json.Unmarshal([]byte(genCatalogItem.Manifest), &manifest)
+	}
+
 	catalogItem := CatalogItem{
 		StandardTable: StandardTable{
 			ID:        int(genCatalogItem.ID),
@@ -61,6 +70,9 @@ func catalogItemFromGen(genCatalogItem model.CatalogItems) *CatalogItem {
 		MinHeight:           genCatalogItem.MinHeight,
 		DefaultPriceGroupID: int(genCatalogItem.DefaultPriceGroupID),
 		SvgURL:              genCatalogItem.SvgURL,
+		Manifest:            manifest,
+		IsQuarantined:       genCatalogItem.IsQuarantined,
+		QuarantineReason:    genCatalogItem.QuarantineReason,
 		IsActive:            genCatalogItem.IsActive,
 	}
 
@@ -78,6 +90,15 @@ func catalogItemToGen(ci *CatalogItem) (*model.CatalogItems, error) {
 		}
 	}
 
+	manifestStr := "{}"
+	if ci.Manifest != nil {
+		manifestBytes, err := json.Marshal(ci.Manifest)
+		if err != nil {
+			return nil, err
+		}
+		manifestStr = string(manifestBytes)
+	}
+
 	genCatalogItem := model.CatalogItems{
 		ID:                  int32(ci.ID),
 		UUID:                catalogItemUUID,
@@ -91,6 +112,9 @@ func catalogItemToGen(ci *CatalogItem) (*model.CatalogItems, error) {
 		MinHeight:           ci.MinHeight,
 		DefaultPriceGroupID: int32(ci.DefaultPriceGroupID),
 		SvgURL:              ci.SvgURL,
+		Manifest:            manifestStr,
+		IsQuarantined:       ci.IsQuarantined,
+		QuarantineReason:    ci.QuarantineReason,
 		IsActive:            ci.IsActive,
 		UpdatedAt:           ci.UpdatedAt,
 		CreatedAt:           ci.CreatedAt,
@@ -126,6 +150,9 @@ func (m CatalogItemModel) Insert(catalogItem *CatalogItem) error {
 		table.CatalogItems.MinHeight,
 		table.CatalogItems.DefaultPriceGroupID,
 		table.CatalogItems.SvgURL,
+		table.CatalogItems.Manifest,
+		table.CatalogItems.IsQuarantined,
+		table.CatalogItems.QuarantineReason,
 		table.CatalogItems.IsActive,
 	).MODEL(
 		genCatalogItem,
@@ -311,6 +338,9 @@ func (m CatalogItemModel) Update(catalogItem *CatalogItem) error {
 		table.CatalogItems.MinHeight,
 		table.CatalogItems.DefaultPriceGroupID,
 		table.CatalogItems.SvgURL,
+		table.CatalogItems.Manifest,
+		table.CatalogItems.IsQuarantined,
+		table.CatalogItems.QuarantineReason,
 		table.CatalogItems.IsActive,
 		table.CatalogItems.Version,
 	).MODEL(

@@ -29,6 +29,9 @@ type catalogItemsTable struct {
 	MinHeight           postgres.ColumnFloat
 	DefaultPriceGroupID postgres.ColumnInteger
 	SvgURL              postgres.ColumnString
+	Manifest            postgres.ColumnString
+	IsQuarantined       postgres.ColumnBool
+	QuarantineReason    postgres.ColumnString
 	IsActive            postgres.ColumnBool
 	CreatedAt           postgres.ColumnTimestampz
 	UpdatedAt           postgres.ColumnTimestampz
@@ -86,13 +89,16 @@ func newCatalogItemsTableImpl(schemaName, tableName, alias string) catalogItemsT
 		MinHeightColumn           = postgres.FloatColumn("min_height")
 		DefaultPriceGroupIDColumn = postgres.IntegerColumn("default_price_group_id")
 		SvgURLColumn              = postgres.StringColumn("svg_url")
+		ManifestColumn            = postgres.StringColumn("manifest")
+		IsQuarantinedColumn       = postgres.BoolColumn("is_quarantined")
+		QuarantineReasonColumn    = postgres.StringColumn("quarantine_reason")
 		IsActiveColumn            = postgres.BoolColumn("is_active")
 		CreatedAtColumn           = postgres.TimestampzColumn("created_at")
 		UpdatedAtColumn           = postgres.TimestampzColumn("updated_at")
 		VersionColumn             = postgres.IntegerColumn("version")
-		allColumns                = postgres.ColumnList{IDColumn, UUIDColumn, CatalogCodeColumn, NameColumn, DescriptionColumn, CategoryColumn, DefaultWidthColumn, DefaultHeightColumn, MinWidthColumn, MinHeightColumn, DefaultPriceGroupIDColumn, SvgURLColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns            = postgres.ColumnList{UUIDColumn, CatalogCodeColumn, NameColumn, DescriptionColumn, CategoryColumn, DefaultWidthColumn, DefaultHeightColumn, MinWidthColumn, MinHeightColumn, DefaultPriceGroupIDColumn, SvgURLColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		defaultColumns            = postgres.ColumnList{IDColumn, UUIDColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		allColumns                = postgres.ColumnList{IDColumn, UUIDColumn, CatalogCodeColumn, NameColumn, DescriptionColumn, CategoryColumn, DefaultWidthColumn, DefaultHeightColumn, MinWidthColumn, MinHeightColumn, DefaultPriceGroupIDColumn, SvgURLColumn, ManifestColumn, IsQuarantinedColumn, QuarantineReasonColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns            = postgres.ColumnList{UUIDColumn, CatalogCodeColumn, NameColumn, DescriptionColumn, CategoryColumn, DefaultWidthColumn, DefaultHeightColumn, MinWidthColumn, MinHeightColumn, DefaultPriceGroupIDColumn, SvgURLColumn, ManifestColumn, IsQuarantinedColumn, QuarantineReasonColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		defaultColumns            = postgres.ColumnList{IDColumn, UUIDColumn, ManifestColumn, IsQuarantinedColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
 	return catalogItemsTable{
@@ -111,6 +117,9 @@ func newCatalogItemsTableImpl(schemaName, tableName, alias string) catalogItemsT
 		MinHeight:           MinHeightColumn,
 		DefaultPriceGroupID: DefaultPriceGroupIDColumn,
 		SvgURL:              SvgURLColumn,
+		Manifest:            ManifestColumn,
+		IsQuarantined:       IsQuarantinedColumn,
+		QuarantineReason:    QuarantineReasonColumn,
 		IsActive:            IsActiveColumn,
 		CreatedAt:           CreatedAtColumn,
 		UpdatedAt:           UpdatedAtColumn,

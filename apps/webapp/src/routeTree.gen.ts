@@ -30,6 +30,7 @@ import { Route as AppProjectsCreateProjectAddInlayRouteImport } from './routes/_
 import { Route as AppProjectsIdAddInlayRouteImport } from './routes/_app/projects_.$id.add-inlay'
 import { Route as AppDealershipIdUsersRouteImport } from './routes/_app/dealership.$id.users'
 import { Route as AppDealershipIdSettingsRouteImport } from './routes/_app/dealership.$id.settings'
+import { Route as AppCatalogUuidCustomizeRouteImport } from './routes/_app/catalog_.$uuid.customize'
 import { Route as AppAdminUsersInternalRouteImport } from './routes/_app/admin.users.internal'
 import { Route as AppAdminUsersDealershipRouteImport } from './routes/_app/admin.users.dealership'
 import { Route as AppAdminCatalogCreateRouteImport } from './routes/_app/admin.catalog_.create'
@@ -143,6 +144,11 @@ const AppDealershipIdSettingsRoute = AppDealershipIdSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppDealershipIdRoute,
 } as any)
+const AppCatalogUuidCustomizeRoute = AppCatalogUuidCustomizeRouteImport.update({
+  id: '/catalog_/$uuid/customize',
+  path: '/catalog/$uuid/customize',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminUsersInternalRoute = AppAdminUsersInternalRouteImport.update({
   id: '/users/internal',
   path: '/users/internal',
@@ -188,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/admin/catalog/create': typeof AppAdminCatalogCreateRoute
   '/admin/users/dealership': typeof AppAdminUsersDealershipRoute
   '/admin/users/internal': typeof AppAdminUsersInternalRoute
+  '/catalog/$uuid/customize': typeof AppCatalogUuidCustomizeRoute
   '/dealership/$id/settings': typeof AppDealershipIdSettingsRoute
   '/dealership/$id/users': typeof AppDealershipIdUsersRoute
   '/projects/$id/add-inlay': typeof AppProjectsIdAddInlayRoute
@@ -214,6 +221,7 @@ export interface FileRoutesByTo {
   '/admin/catalog/create': typeof AppAdminCatalogCreateRoute
   '/admin/users/dealership': typeof AppAdminUsersDealershipRoute
   '/admin/users/internal': typeof AppAdminUsersInternalRoute
+  '/catalog/$uuid/customize': typeof AppCatalogUuidCustomizeRoute
   '/dealership/$id/settings': typeof AppDealershipIdSettingsRoute
   '/dealership/$id/users': typeof AppDealershipIdUsersRoute
   '/projects/$id/add-inlay': typeof AppProjectsIdAddInlayRoute
@@ -243,6 +251,7 @@ export interface FileRoutesById {
   '/_app/admin/catalog_/create': typeof AppAdminCatalogCreateRoute
   '/_app/admin/users/dealership': typeof AppAdminUsersDealershipRoute
   '/_app/admin/users/internal': typeof AppAdminUsersInternalRoute
+  '/_app/catalog_/$uuid/customize': typeof AppCatalogUuidCustomizeRoute
   '/_app/dealership/$id/settings': typeof AppDealershipIdSettingsRoute
   '/_app/dealership/$id/users': typeof AppDealershipIdUsersRoute
   '/_app/projects_/$id/add-inlay': typeof AppProjectsIdAddInlayRoute
@@ -272,6 +281,7 @@ export interface FileRouteTypes {
     | '/admin/catalog/create'
     | '/admin/users/dealership'
     | '/admin/users/internal'
+    | '/catalog/$uuid/customize'
     | '/dealership/$id/settings'
     | '/dealership/$id/users'
     | '/projects/$id/add-inlay'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/admin/catalog/create'
     | '/admin/users/dealership'
     | '/admin/users/internal'
+    | '/catalog/$uuid/customize'
     | '/dealership/$id/settings'
     | '/dealership/$id/users'
     | '/projects/$id/add-inlay'
@@ -326,6 +337,7 @@ export interface FileRouteTypes {
     | '/_app/admin/catalog_/create'
     | '/_app/admin/users/dealership'
     | '/_app/admin/users/internal'
+    | '/_app/catalog_/$uuid/customize'
     | '/_app/dealership/$id/settings'
     | '/_app/dealership/$id/users'
     | '/_app/projects_/$id/add-inlay'
@@ -491,6 +503,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AppDealershipIdSettingsRouteImport
       parentRoute: typeof AppDealershipIdRoute
     }
+    '/_app/catalog_/$uuid/customize': {
+      id: '/_app/catalog_/$uuid/customize'
+      path: '/catalog/$uuid/customize'
+      fullPath: '/catalog/$uuid/customize'
+      preLoaderRoute: typeof AppCatalogUuidCustomizeRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/admin/users/internal': {
       id: '/_app/admin/users/internal'
       path: '/users/internal'
@@ -595,6 +614,7 @@ interface AppRouteChildren {
   AppDealershipIdRoute: typeof AppDealershipIdRouteWithChildren
   AppProjectsCreateProjectRoute: typeof AppProjectsCreateProjectRouteWithChildren
   AppCatalogIndexRoute: typeof AppCatalogIndexRoute
+  AppCatalogUuidCustomizeRoute: typeof AppCatalogUuidCustomizeRoute
   AppProjectsIdAddInlayRoute: typeof AppProjectsIdAddInlayRoute
   AppProjectsIdIndexRoute: typeof AppProjectsIdIndexRoute
   AppProjectsIdInlayInlayIdRoute: typeof AppProjectsIdInlayInlayIdRoute
@@ -609,6 +629,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDealershipIdRoute: AppDealershipIdRouteWithChildren,
   AppProjectsCreateProjectRoute: AppProjectsCreateProjectRouteWithChildren,
   AppCatalogIndexRoute: AppCatalogIndexRoute,
+  AppCatalogUuidCustomizeRoute: AppCatalogUuidCustomizeRoute,
   AppProjectsIdAddInlayRoute: AppProjectsIdAddInlayRoute,
   AppProjectsIdIndexRoute: AppProjectsIdIndexRoute,
   AppProjectsIdInlayInlayIdRoute: AppProjectsIdInlayInlayIdRoute,

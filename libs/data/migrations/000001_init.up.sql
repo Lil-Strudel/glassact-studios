@@ -24,6 +24,35 @@ CREATE TABLE price_groups (
     version INTEGER NOT NULL DEFAULT 1
 );
 
+-- Glass colors GlassAct offers. The customizer maps a design's source colors to
+-- these; inlay_proofs.color_overrides references glass_colors.id (never raw hex).
+CREATE TABLE glass_colors (
+    id SERIAL PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    hex VARCHAR(7) NOT NULL UNIQUE,
+    family VARCHAR(255),
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    version INTEGER NOT NULL DEFAULT 1
+);
+
+-- Grout (background) colors, a separate product from glass. The customizer's
+-- background picker reads these; color_overrides.background references grouts.id.
+CREATE TABLE grouts (
+    id SERIAL PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    hex VARCHAR(7) NOT NULL UNIQUE,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    version INTEGER NOT NULL DEFAULT 1
+);
+
 --------------------------------------------------------------------------------
 -- DEALERSHIPS & DEALERSHIP USERS
 --------------------------------------------------------------------------------
@@ -140,6 +169,9 @@ CREATE TABLE catalog_items (
     min_height DOUBLE PRECISION NOT NULL,
     default_price_group_id INTEGER NOT NULL REFERENCES price_groups ON DELETE RESTRICT,
     svg_url TEXT NOT NULL,
+    manifest JSONB NOT NULL DEFAULT '{}',
+    is_quarantined BOOLEAN NOT NULL DEFAULT false,
+    quarantine_reason TEXT,
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),

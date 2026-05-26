@@ -13,6 +13,8 @@ type Models struct {
 	DealershipTokens        DealershipTokenModel
 	DealershipUsers         DealershipUserModel
 	Dealerships             DealershipModel
+	GlassColors             GlassColorModel
+	Grouts                  GroutModel
 	InlayBlockers           InlayBlockerModel
 	InlayChats              InlayChatModel
 	InlayMilestones         InlayMilestoneModel
@@ -40,6 +42,8 @@ func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 		DealershipTokens:        DealershipTokenModel{DB: db, STDB: stdb},
 		DealershipUsers:         DealershipUserModel{DB: db, STDB: stdb},
 		Dealerships:             DealershipModel{DB: db, STDB: stdb},
+		GlassColors:             GlassColorModel{DB: db, STDB: stdb},
+		Grouts:                  GroutModel{DB: db, STDB: stdb},
 		InlayBlockers:           InlayBlockerModel{DB: db, STDB: stdb},
 		InlayChats:              InlayChatModel{DB: db, STDB: stdb},
 		InlayMilestones:         InlayMilestoneModel{DB: db, STDB: stdb},
