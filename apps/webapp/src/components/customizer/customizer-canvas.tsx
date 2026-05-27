@@ -17,8 +17,8 @@ interface CustomizerCanvasProps {
 
 const HIGHLIGHT_CSS = `
 .gac-canvas [id^="p"]:not([data-grout]) { cursor: pointer; }
-.gac-canvas .gac-hover { outline: 2px solid #60a5fa; outline-offset: 1px; }
-.gac-canvas .gac-selected { outline: 2.5px solid #2563eb; outline-offset: 1px; }
+.gac-canvas .gac-hover { stroke: white; stroke-width: 4px; paint-order: stroke fill; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 2px #60a5fa); }
+.gac-canvas .gac-selected { stroke: white; stroke-width: 5px; paint-order: stroke fill; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px #2563eb); }
 `;
 
 export function CustomizerCanvas(props: CustomizerCanvasProps) {
