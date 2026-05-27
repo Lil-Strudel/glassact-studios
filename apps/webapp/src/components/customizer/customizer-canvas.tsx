@@ -31,6 +31,7 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
   const [tx, setTx] = createSignal(0);
   const [ty, setTy] = createSignal(0);
 
+  let viewport!: HTMLDivElement;
   let dragging = false;
   let moved = false;
   let startX = 0;
@@ -140,7 +141,15 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
   function onWheel(e: WheelEvent) {
     e.preventDefault();
     const factor = e.deltaY < 0 ? 1.12 : 0.89;
-    setScale(Math.min(8, Math.max(0.4, scale() * factor)));
+    const s = scale();
+    const newScale = Math.min(8, Math.max(0.4, s * factor));
+    const rect = viewport.getBoundingClientRect();
+    // Cursor position relative to the transform-origin (center of the viewport).
+    const mx = e.clientX - rect.left - rect.width / 2;
+    const my = e.clientY - rect.top - rect.height / 2;
+    setTx(mx - (mx - tx()) * (newScale / s));
+    setTy(my - (my - ty()) * (newScale / s));
+    setScale(newScale);
   }
 
   function reset() {
@@ -155,6 +164,7 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
     <div class="relative flex h-full w-full flex-col">
       <style>{HIGHLIGHT_CSS}</style>
       <div
+        ref={viewport}
         class="gac-canvas relative flex-1 overflow-hidden rounded-lg border border-gray-200"
         style={{ "background-color": "#f3f4f6" }}
         onPointerDown={onPointerDown}
