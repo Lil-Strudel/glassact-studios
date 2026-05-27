@@ -7,16 +7,45 @@ export type Selection =
 
 export type GlassById = Map<number, GET<GlassColor>>;
 
-// pieceId -> original source hex, flattened from the manifest's regions.
-export function buildPieceSourceMap(manifest: Manifest | undefined): Map<string, string> {
-  const map = new Map<string, string>();
+const DEFAULT_FILL = "#000000";
+
+// Returns the set of source hexes that identify grout regions:
+//   1. The region containing "p0" (first/back-most shape in document order).
+//   2. The "#000000" region (classless implicit-black shapes like grout lines/eyes).
+// Both may be the same region or different ones.
+export function getGroutSourceHexes(manifest: Manifest | undefined): Set<string> {
+  const groutHexes = new Set<string>();
   const regions = manifest?.regions ?? {};
   for (const [hex, region] of Object.entries(regions)) {
+    if (hex === DEFAULT_FILL || region.piece_ids.includes("p0")) {
+      groutHexes.add(hex);
+    }
+  }
+  return groutHexes;
+}
+
+// pieceId -> original source hex, flattened from the manifest's regions.
+// All grout regions are excluded — they are not interactive glass.
+export function buildPieceSourceMap(manifest: Manifest | undefined): Map<string, string> {
+  const groutHexes = getGroutSourceHexes(manifest);
+  const map = new Map<string, string>();
+  for (const [hex, region] of Object.entries(manifest?.regions ?? {})) {
+    if (groutHexes.has(hex)) continue;
     for (const id of region.piece_ids) {
       map.set(id, hex);
     }
   }
   return map;
+}
+
+// Returns all piece IDs that belong to any grout region.
+export function buildGroutPieceIds(manifest: Manifest | undefined): string[] {
+  const groutHexes = getGroutSourceHexes(manifest);
+  const ids: string[] = [];
+  for (const [hex, region] of Object.entries(manifest?.regions ?? {})) {
+    if (groutHexes.has(hex)) ids.push(...region.piece_ids);
+  }
+  return ids;
 }
 
 // Resolution order: piece override -> region mapping -> original source hex.

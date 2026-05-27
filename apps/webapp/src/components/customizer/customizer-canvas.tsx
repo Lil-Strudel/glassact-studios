@@ -4,6 +4,7 @@ import { Button } from "@glassact/ui";
 interface CustomizerCanvasProps {
   svgText: string;
   pieceSource: Map<string, string>;
+  groutPieceIds: string[];
   // Resolves the current fill for a piece. Reads reactive state, so calling it
   // inside an effect re-applies fills whenever overrides/hover-preview change.
   resolveHex: (pieceId: string, sourceHex: string) => string;
@@ -15,7 +16,7 @@ interface CustomizerCanvasProps {
 }
 
 const HIGHLIGHT_CSS = `
-.gac-canvas [id^="p"] { cursor: pointer; }
+.gac-canvas [id^="p"]:not([data-grout]) { cursor: pointer; }
 .gac-canvas .gac-hover { outline: 2px solid #60a5fa; outline-offset: 1px; }
 .gac-canvas .gac-selected { outline: 2.5px solid #2563eb; outline-offset: 1px; }
 `;
@@ -24,6 +25,7 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
   let host!: HTMLDivElement;
   const [ready, setReady] = createSignal(false);
   const pieceEls = new Map<string, SVGElement>();
+  const groutEls = new Map<string, SVGElement>();
 
   const [scale, setScale] = createSignal(1);
   const [tx, setTx] = createSignal(0);
@@ -48,6 +50,14 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
       const el = host.querySelector<SVGElement>(`#${CSS.escape(id)}`);
       if (el) pieceEls.set(id, el);
     }
+    groutEls.clear();
+    for (const id of props.groutPieceIds) {
+      const el = host.querySelector<SVGElement>(`#${CSS.escape(id)}`);
+      if (el) {
+        el.setAttribute("data-grout", "");
+        groutEls.set(id, el);
+      }
+    }
     setReady(true);
   });
 
@@ -57,6 +67,15 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
     for (const [id, sourceHex] of props.pieceSource.entries()) {
       const el = pieceEls.get(id);
       if (el) el.style.fill = props.resolveHex(id, sourceHex);
+    }
+  });
+
+  // Apply grout color to grout shapes (the black back-shapes in the SVG).
+  createEffect(() => {
+    if (!ready()) return;
+    const hex = props.groutHex ?? "#000000";
+    for (const el of groutEls.values()) {
+      el.style.fill = hex;
     }
   });
 
@@ -130,14 +149,14 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
     setTy(0);
   }
 
-  onCleanup(() => pieceEls.clear());
+  onCleanup(() => { pieceEls.clear(); groutEls.clear(); });
 
   return (
     <div class="relative flex h-full w-full flex-col">
       <style>{HIGHLIGHT_CSS}</style>
       <div
         class="gac-canvas relative flex-1 overflow-hidden rounded-lg border border-gray-200"
-        style={{ "background-color": props.groutHex ?? "#f3f4f6" }}
+        style={{ "background-color": "#f3f4f6" }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

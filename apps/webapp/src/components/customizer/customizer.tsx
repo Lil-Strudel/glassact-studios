@@ -19,6 +19,7 @@ import { CustomizerCanvas } from "./customizer-canvas";
 import { ControlPanel } from "./control-panel";
 import { PricingWarningDialog } from "./pricing-warning-dialog";
 import {
+  buildGroutPieceIds,
   buildPieceSourceMap,
   resolvePieceHex,
   totalCustomPieces,
@@ -81,6 +82,7 @@ export function Customizer(props: CustomizerProps) {
     () => new Map(props.glassColors.map((g) => [g.id, g])),
   );
   const pieceSource = createMemo(() => buildPieceSourceMap(manifest()));
+  const groutPieceIds = createMemo(() => buildGroutPieceIds(manifest()));
 
   const groutHex = createMemo(() => {
     const id = overrides().background?.grout_id;
@@ -333,6 +335,7 @@ export function Customizer(props: CustomizerProps) {
           <CustomizerCanvas
             svgText={props.svgText}
             pieceSource={pieceSource()}
+            groutPieceIds={groutPieceIds()}
             resolveHex={resolveHex}
             groutHex={groutHex()}
             selectedPieceId={

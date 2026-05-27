@@ -120,6 +120,12 @@ func Bake(
 		if !ok {
 			return nil, fmt.Errorf("unknown grout_id %d", overrides.Background.GroutID)
 		}
+		// Color all grout shapes (back-most region + implicit-black pieces) with the grout hex.
+		for _, pieceID := range groutPieceIDs(manifest) {
+			if el := byID[pieceID]; el != nil {
+				setInlineFill(el, hex)
+			}
+		}
 		if rect := groutRect(manifest.ViewBox, hex, overrides.Background.GroutID); rect != nil {
 			root.InsertChildAt(0, rect)
 		}
@@ -129,6 +135,28 @@ func Bake(
 	addCutListMetadata(root, cl)
 
 	return doc.WriteToBytes()
+}
+
+// groutPieceIDs returns all piece IDs belonging to grout regions:
+//  1. The region containing "p0" (first/back-most shape in document order).
+//  2. The defaultFill ("#000000") region (classless implicit-black shapes like eyes).
+func groutPieceIDs(manifest Manifest) []string {
+	groutHexes := map[string]bool{defaultFill: true}
+	for hex, region := range manifest.Regions {
+		for _, id := range region.PieceIDs {
+			if id == "p0" {
+				groutHexes[hex] = true
+				break
+			}
+		}
+	}
+	var ids []string
+	for hex, region := range manifest.Regions {
+		if groutHexes[hex] {
+			ids = append(ids, region.PieceIDs...)
+		}
+	}
+	return ids
 }
 
 func indexByID(root *etree.Element) map[string]*etree.Element {

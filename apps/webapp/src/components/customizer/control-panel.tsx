@@ -13,6 +13,7 @@ import {
 } from "@glassact/ui";
 import { SwatchPicker, type Swatch } from "./glass-palette";
 import {
+  getGroutSourceHexes,
   type GlassById,
   type Selection,
   customPieceCount,
@@ -57,8 +58,11 @@ export function ControlPanel(props: ControlPanelProps) {
     props.grouts.map((g) => ({ id: g.id, name: g.name, hex: g.hex })),
   );
 
+  const groutHexes = createMemo(() => getGroutSourceHexes(props.manifest));
   const regionEntries = createMemo(() =>
-    Object.entries(props.manifest.regions ?? {}),
+    Object.entries(props.manifest.regions ?? {}).filter(
+      ([hex]) => !groutHexes().has(hex),
+    ),
   );
 
   const selectionLabel = createMemo(() => {
@@ -192,7 +196,7 @@ export function ControlPanel(props: ControlPanelProps) {
 
       <div>
         <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-500">
-          Background (grout)
+          Grout
         </p>
         <SwatchPicker
           swatches={groutSwatches()}
