@@ -1,5 +1,16 @@
 import { createMemo, For, Show } from "solid-js";
 import type { Manifest, ColorOverrides, GlassColor, Grout, GET } from "@glassact/data";
+import {
+  Badge,
+  Button,
+  NumberFieldRoot,
+  NumberField,
+  NumberFieldLabel,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsIndicator,
+} from "@glassact/ui";
 import { SwatchPicker, type Swatch } from "./glass-palette";
 import {
   type GlassById,
@@ -67,20 +78,16 @@ export function ControlPanel(props: ControlPanelProps) {
         <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-500">
           Edit mode
         </p>
-        <div class="inline-flex rounded-md border border-gray-300 p-0.5">
-          <ModeButton
-            active={props.mode === "group"}
-            onClick={() => props.onRequestMode("group")}
-          >
-            Color groups
-          </ModeButton>
-          <ModeButton
-            active={props.mode === "piece"}
-            onClick={() => props.onRequestMode("piece")}
-          >
-            Individual pieces
-          </ModeButton>
-        </div>
+        <Tabs
+          value={props.mode}
+          onChange={(v) => props.onRequestMode(v as "group" | "piece")}
+        >
+          <TabsList>
+            <TabsTrigger value="group" class="data-[selected]:text-primary-foreground">Color groups</TabsTrigger>
+            <TabsTrigger value="piece" class="data-[selected]:text-primary-foreground">Individual pieces</TabsTrigger>
+            <TabsIndicator class="bg-primary" />
+          </TabsList>
+        </Tabs>
         <p class="mt-1.5 text-xs text-gray-500">
           {props.mode === "group"
             ? "Click a piece or a group below to recolor the whole color."
@@ -94,16 +101,17 @@ export function ControlPanel(props: ControlPanelProps) {
             {selectionLabel() ?? "Choose glass color"}
           </p>
           <Show when={props.selection?.type === "piece"}>
-            <button
-              type="button"
-              class="text-xs text-blue-600 hover:underline"
+            <Button
+              variant="link"
+              size="sm"
+              class="h-auto p-0 text-xs"
               onClick={() => {
                 const sel = props.selection;
                 if (sel?.type === "piece") props.onResetPiece(sel.pieceId);
               }}
             >
               Reset to group
-            </button>
+            </Button>
           </Show>
         </div>
 
@@ -171,9 +179,9 @@ export function ControlPanel(props: ControlPanelProps) {
                     </span>
                   </span>
                   <Show when={custom() > 0}>
-                    <span class="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                    <Badge variant="warning" class="shrink-0 rounded-full px-1.5 py-0.5 text-[10px]">
                       {custom()} custom
-                    </span>
+                    </Badge>
                   </Show>
                 </button>
               );
@@ -199,19 +207,15 @@ export function ControlPanel(props: ControlPanelProps) {
           Size
         </p>
         <div class="flex items-end gap-3">
-          <label class="flex flex-col gap-1 text-xs text-gray-600">
-            Width (in)
-            <input
-              type="number"
-              min={props.minWidth}
-              step="0.5"
-              value={props.width}
-              onChange={(e) =>
-                props.onWidthChange(Number(e.currentTarget.value))
-              }
-              class="w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+          <NumberFieldRoot class="flex flex-col gap-1 text-xs text-gray-600">
+            <NumberFieldLabel>Width (in)</NumberFieldLabel>
+            <NumberField
+              decimalPlaces={1}
+              class="w-24"
+              value={String(props.width)}
+              onChange={(v) => props.onWidthChange(Number(v))}
             />
-          </label>
+          </NumberFieldRoot>
           <span class="pb-1.5 text-gray-400">×</span>
           <div class="flex flex-col gap-1 text-xs text-gray-600">
             Height (in)
@@ -225,25 +229,5 @@ export function ControlPanel(props: ControlPanelProps) {
         </p>
       </div>
     </div>
-  );
-}
-
-function ModeButton(props: {
-  active: boolean;
-  onClick: () => void;
-  children: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => props.onClick()}
-      class="rounded px-3 py-1 text-sm transition"
-      classList={{
-        "bg-blue-600 text-white": props.active,
-        "text-gray-600 hover:bg-gray-100": !props.active,
-      }}
-    >
-      {props.children}
-    </button>
   );
 }

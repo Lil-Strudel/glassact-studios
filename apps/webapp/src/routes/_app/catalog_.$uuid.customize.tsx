@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { useQuery } from "@tanstack/solid-query";
 import { Show, Switch, Match, createMemo } from "solid-js";
+import { Card, CardContent } from "@glassact/ui";
 import { getCatalogItemOpts } from "../../queries/catalog";
 import { getCatalogSvgTextOpts } from "../../queries/customize";
 import { getGlassColorsOpts } from "../../queries/glass-colors";
@@ -79,9 +80,11 @@ function RouteComponent() {
 
 function Notice(props: { title: string; body: string }) {
   return (
-    <div class="mx-auto mt-12 max-w-md rounded-lg border border-gray-200 bg-white p-6 text-center">
-      <h2 class="text-lg font-semibold text-gray-900">{props.title}</h2>
-      <p class="mt-2 text-sm text-gray-600">{props.body}</p>
-    </div>
+    <Card class="mx-auto mt-12 max-w-md text-center">
+      <CardContent class="pt-6">
+        <h2 class="text-lg font-semibold text-gray-900">{props.title}</h2>
+        <p class="mt-2 text-sm text-gray-600">{props.body}</p>
+      </CardContent>
+    </Card>
   );
 }

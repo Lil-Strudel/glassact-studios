@@ -13,7 +13,7 @@ import type {
   Grout,
   GET,
 } from "@glassact/data";
-import { Button } from "@glassact/ui";
+import { Alert, AlertDescription, Badge, Button } from "@glassact/ui";
 import { postBakeOpts } from "../../queries/customize";
 import { CustomizerCanvas } from "./customizer-canvas";
 import { ControlPanel } from "./control-panel";
@@ -261,10 +261,10 @@ export function Customizer(props: CustomizerProps) {
 
         <div class="flex items-center gap-2">
           <Show when={customPieces() > 0}>
-            <span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
+            <Badge variant="warning" class="rounded-full">
               {customPieces()} custom piece{customPieces() === 1 ? "" : "s"} · may
               affect price
-            </span>
+            </Badge>
           </Show>
           <Button
             variant="outline"
@@ -298,28 +298,34 @@ export function Customizer(props: CustomizerProps) {
 
       <Show when={bake.isSuccess && bake.data}>
         {(result) => (
-          <div class="flex items-center justify-between rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm">
-            <span class="text-green-800">Design saved.</span>
-            <a
-              href={result().design_asset_url}
-              target="_blank"
-              rel="noreferrer"
-              class="font-medium text-green-700 underline"
-            >
-              View baked SVG
-            </a>
-          </div>
+          <Alert variant="success">
+            <AlertDescription class="flex items-center justify-between">
+              <span>Design saved.</span>
+              <Button
+                as="a"
+                variant="link"
+                size="sm"
+                href={result().design_asset_url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View baked SVG
+              </Button>
+            </AlertDescription>
+          </Alert>
         )}
       </Show>
       <Show when={bake.isError}>
-        <div class="flex items-center justify-between rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm">
-          <span class="text-red-700">
-            {bake.error instanceof Error ? bake.error.message : "Failed to save."}
-          </span>
-          <Button size="sm" variant="outline" onClick={onSave}>
-            Retry
-          </Button>
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription class="flex items-center justify-between">
+            <span>
+              {bake.error instanceof Error ? bake.error.message : "Failed to save."}
+            </span>
+            <Button size="sm" variant="outline" onClick={onSave}>
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
       </Show>
 
       <div class="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">

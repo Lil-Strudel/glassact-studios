@@ -1,4 +1,5 @@
 import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import { Button } from "@glassact/ui";
 
 interface CustomizerCanvasProps {
   svgText: string;
@@ -152,32 +153,35 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
       </div>
 
       <div class="pointer-events-none absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-gray-200 bg-white/90 px-2 py-1 shadow-sm">
-        <button
-          type="button"
-          class="pointer-events-auto h-7 w-7 rounded-full text-lg leading-none text-gray-600 hover:bg-gray-100"
+        <Button
+          variant="ghost"
+          size="icon"
+          class="pointer-events-auto h-7 w-7 rounded-full text-lg leading-none"
           onClick={() => setScale(Math.max(0.4, scale() * 0.89))}
           aria-label="Zoom out"
         >
           −
-        </button>
+        </Button>
         <span class="w-12 text-center text-xs tabular-nums text-gray-500">
           {Math.round(scale() * 100)}%
         </span>
-        <button
-          type="button"
-          class="pointer-events-auto h-7 w-7 rounded-full text-lg leading-none text-gray-600 hover:bg-gray-100"
+        <Button
+          variant="ghost"
+          size="icon"
+          class="pointer-events-auto h-7 w-7 rounded-full text-lg leading-none"
           onClick={() => setScale(Math.min(8, scale() * 1.12))}
           aria-label="Zoom in"
         >
           +
-        </button>
-        <button
-          type="button"
-          class="pointer-events-auto ml-1 rounded-full px-2 py-0.5 text-xs text-gray-600 hover:bg-gray-100"
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          class="pointer-events-auto ml-1 rounded-full px-2 py-0.5 text-xs"
           onClick={reset}
         >
           Reset
-        </button>
+        </Button>
       </div>
     </div>
   );

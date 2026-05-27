@@ -6,6 +6,9 @@ import {
   DialogDescription,
   DialogFooter,
   Button,
+  Checkbox,
+  CheckboxControl,
+  CheckboxLabel,
 } from "@glassact/ui";
 import { createSignal } from "solid-js";
 
@@ -42,15 +45,16 @@ export function PricingWarningDialog(props: PricingWarningDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <label class="flex items-center gap-2 text-sm text-gray-600">
-          <input
-            type="checkbox"
-            checked={dontRemind()}
-            onChange={(e) => setDontRemind(e.currentTarget.checked)}
-            class="h-4 w-4 rounded border-gray-300"
-          />
-          Don't remind me again this session
-        </label>
+        <Checkbox
+          checked={dontRemind()}
+          onChange={setDontRemind}
+          class="flex items-center gap-2"
+        >
+          <CheckboxControl />
+          <CheckboxLabel class="text-sm text-gray-600">
+            Don't remind me again this session
+          </CheckboxLabel>
+        </Checkbox>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => props.onCancel()}>

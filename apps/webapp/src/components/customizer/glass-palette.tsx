@@ -1,4 +1,5 @@
 import { createMemo, createSignal, For, Show } from "solid-js";
+import { TextFieldRoot, TextField } from "@glassact/ui";
 
 export interface Swatch {
   id: number;
@@ -62,13 +63,14 @@ export function SwatchPicker(props: SwatchPickerProps) {
 
   return (
     <div class="flex flex-col gap-3">
-      <input
-        type="search"
-        value={search()}
-        onInput={(e) => setSearch(e.currentTarget.value)}
-        placeholder={props.searchPlaceholder ?? "Search colors..."}
-        class="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-      />
+      <TextFieldRoot class="w-full">
+        <TextField
+          type="search"
+          value={search()}
+          onInput={(e) => setSearch(e.currentTarget.value)}
+          placeholder={props.searchPlaceholder ?? "Search colors..."}
+        />
+      </TextFieldRoot>
 
       <Show when={usedSwatches().length > 0 && !search()}>
         <div class="flex flex-col gap-1.5">
