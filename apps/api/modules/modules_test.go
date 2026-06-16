@@ -626,6 +626,24 @@ func TestAPIEndpoints(t *testing.T) {
 					"default_price_group_id": priceGroup.ID,
 					"svg_url":                "https://example.com/new.svg",
 					"is_active":              true,
+					"content_bbox": map[string]interface{}{
+						"x": 0, "y": 0, "width": 100, "height": 100,
+					},
+					"manifest": map[string]interface{}{
+						"view_box": "0 0 100 100",
+						"grout_region": map[string]interface{}{
+							"grout_id":  1,
+							"piece_ids": []string{"p0"},
+							"count":     1,
+						},
+						"glass_regions": map[string]interface{}{
+							"group-0": map[string]interface{}{
+								"glass_color_id": 1,
+								"piece_ids":      []string{"p1"},
+								"count":          1,
+							},
+						},
+					},
 				},
 				token: internalAdminToken,
 			})

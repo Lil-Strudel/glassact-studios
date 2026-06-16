@@ -24,20 +24,31 @@ var fillableTags = map[string]bool{
 // real recolorable region.
 const defaultFill = "#000000"
 
-// Region is one recolorable color group of a design, keyed in the manifest by
-// the design's original source hex. Class is the source CSS class that produced
-// the color (nil for implicit-black, classless shapes).
-type Region struct {
-	Class    *string  `json:"class"`
+// GroutRegion is the single collapsed grout region: the back-most group plus
+// classless implicit-black pieces. GroutID is nil until assigned in the editor.
+type GroutRegion struct {
+	GroutID  *int     `json:"grout_id"`
 	PieceIDs []string `json:"piece_ids"`
 	Count    int      `json:"count"`
 }
 
+// GlassRegion is one recolorable glass color group, keyed in the manifest by a
+// stable group key (e.g. "group-0"). SourceClass/SourceHex are provenance from
+// the source SVG (display + best-guess matching only).
+type GlassRegion struct {
+	GlassColorID *int     `json:"glass_color_id"`
+	PieceIDs     []string `json:"piece_ids"`
+	Count        int      `json:"count"`
+	SourceClass  *string  `json:"source_class,omitempty"`
+	SourceHex    *string  `json:"source_hex,omitempty"`
+}
+
 // Manifest is emitted by Ingest and stored on catalog_items.manifest. The
-// customizer renders its UI from it.
+// customizer renders its UI from it. GlassRegions are keyed by stable group key.
 type Manifest struct {
-	ViewBox string            `json:"view_box"`
-	Regions map[string]Region `json:"regions"`
+	ViewBox      string                 `json:"view_box"`
+	GroutRegion  GroutRegion            `json:"grout_region"`
+	GlassRegions map[string]GlassRegion `json:"glass_regions"`
 }
 
 type GlassColorRef struct {
@@ -49,17 +60,21 @@ type GroutRef struct {
 }
 
 // ColorOverrides is the durable changelist. Resolution order at bake is
-// piece override -> region mapping -> original source hex.
+// piece override -> group override -> manifest group default. Groups is keyed by
+// the stable group key; Pieces is keyed by stable piece id (p0, p1, ...).
 type ColorOverrides struct {
-	Regions    map[string]GlassColorRef `json:"regions,omitempty"`
+	Groups     map[string]GlassColorRef `json:"groups,omitempty"`
 	Pieces     map[string]GlassColorRef `json:"pieces,omitempty"`
 	Background *GroutRef                `json:"background,omitempty"`
 }
 
-// Quarantine signals a source SVG the customizer can't handle. Ingest returns
-// one instead of a manifest; the catalog item is flagged, not rejected.
-type Quarantine struct {
-	Reason string `json:"reason"`
+// ContentBBox is the browser-measured content bounding box of the structure SVG,
+// used to recompute the viewBox (300 units/inch) and fit+center artwork at bake.
+type ContentBBox struct {
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
+	Width  float64 `json:"width"`
+	Height float64 `json:"height"`
 }
 
 var (

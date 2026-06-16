@@ -126,7 +126,9 @@ func GetRoutes(app *app.Application) http.Handler {
 
 	catalogModule := catalog.NewCatalogModule(app)
 	mux.Handle("GET /api/catalog", canManageCatalog.ThenFunc(catalogModule.HandleGetCatalog))
+	mux.Handle("POST /api/catalog/analyze", canManageCatalog.ThenFunc(catalogModule.HandleAnalyze))
 	mux.Handle("POST /api/catalog", canManageCatalog.ThenFunc(catalogModule.HandlePostCatalog))
+	mux.Handle("PUT /api/catalog/{uuid}", canManageCatalog.ThenFunc(catalogModule.HandlePutCatalog))
 	mux.Handle("PATCH /api/catalog/{uuid}", canManageCatalog.ThenFunc(catalogModule.HandlePatchCatalog))
 	mux.Handle("DELETE /api/catalog/{uuid}", canManageCatalog.ThenFunc(catalogModule.HandleDeleteCatalog))
 

@@ -10,11 +10,10 @@ import (
 	"github.com/beevik/etree"
 )
 
-// cutListEntry records, per source region, the chosen group-level glass color
-// (nil when the region was left at its original color). Individual piece
-// overrides are listed separately so production can see divergence.
-type cutListEntry struct {
-	SourceHex    string `json:"source_hex"`
+// cutListGlassGroup records the chosen group-level glass color for a manifest
+// glass group (nil when left at the manifest default with no override).
+type cutListGlassGroup struct {
+	GroupKey     string `json:"group_key"`
 	GlassColorID *int   `json:"glass_color_id,omitempty"`
 	Count        int    `json:"count"`
 }
@@ -25,64 +24,134 @@ type pieceCut struct {
 }
 
 type cutList struct {
-	Regions []cutListEntry `json:"regions"`
-	Pieces  []pieceCut     `json:"pieces,omitempty"`
-	GroutID *int           `json:"grout_id,omitempty"`
+	GlassGroups []cutListGlassGroup `json:"glass_groups"`
+	Pieces      []pieceCut          `json:"pieces,omitempty"`
+	GroutID     *int                `json:"grout_id,omitempty"`
 }
 
-// Bake produces a flat, self-contained SVG from a canonical SVG + manifest +
-// overrides. Colors are resolved piece override -> region mapping -> source.
+// Bake produces a flat, fit, self-contained SVG from a structure SVG + manifest +
+// content bbox + target dimensions + overrides. The artwork is fit and centered
+// into a (width*300) x (height*300) viewBox. Colors resolve piece override ->
+// group override -> manifest group default.
 //
-// Recolored shapes get an inline `style="fill:#hex"`. Inline style is used
-// (not a `fill` attribute) deliberately: a CSS rule from the `<style>` block
-// outranks a presentation attribute, but an inline style outranks the class
-// rule — so this is what actually overrides the original color.
+// The result stays re-editable: every piece keeps its id="pN" and group class,
+// all <style> blocks are stripped, and only our ids/classes, the grout rect, the
+// gac-fit wrapper, and the cutlist metadata remain.
 func Bake(
-	canonical []byte,
+	structureSVG []byte,
+	manifest Manifest,
+	bbox ContentBBox,
+	width, height float64,
+	overrides ColorOverrides,
+	glassHexByID map[int]string,
+	groutHexByID map[int]string,
+) ([]byte, error) {
+	doc, root, err := parseRoot(structureSVG)
+	if err != nil {
+		return nil, err
+	}
+
+	cl, err := recolor(root, manifest, overrides, glassHexByID, groutHexByID)
+	if err != nil {
+		return nil, err
+	}
+
+	stripStyles(root)
+	applyFit(root, bbox, width, height)
+
+	// Size the grout rect to the fit viewBox so it covers the whole canvas.
+	if err := insertGrout(root, manifest, overrides, groutHexByID); err != nil {
+		return nil, err
+	}
+
+	addCutListMetadata(root, cl)
+	return doc.WriteToBytes()
+}
+
+// BakeConsumer renders a flat SVG for the consumer customizer. The stored
+// structure SVG is already fit, so this path keeps the manifest viewBox and only
+// applies scale_factor to the root width/height for display sizing — it never
+// recomputes fit.
+func BakeConsumer(
+	structureSVG []byte,
 	manifest Manifest,
 	scaleFactor float64,
 	overrides ColorOverrides,
 	glassHexByID map[int]string,
 	groutHexByID map[int]string,
 ) ([]byte, error) {
+	doc, root, err := parseRoot(structureSVG)
+	if err != nil {
+		return nil, err
+	}
+
+	cl, err := recolor(root, manifest, overrides, glassHexByID, groutHexByID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := insertGrout(root, manifest, overrides, groutHexByID); err != nil {
+		return nil, err
+	}
+	applyScale(root, manifest.ViewBox, scaleFactor)
+	addCutListMetadata(root, cl)
+	return doc.WriteToBytes()
+}
+
+func parseRoot(in []byte) (*etree.Document, *etree.Element, error) {
 	doc := etree.NewDocument()
-	if err := doc.ReadFromBytes(canonical); err != nil {
-		return nil, fmt.Errorf("parse canonical svg: %w", err)
+	if err := doc.ReadFromBytes(in); err != nil {
+		return nil, nil, fmt.Errorf("parse structure svg: %w", err)
 	}
 	root := doc.SelectElement("svg")
 	if root == nil {
 		root = doc.Root()
 	}
 	if root == nil {
-		return nil, fmt.Errorf("canonical svg has no root element")
+		return nil, nil, fmt.Errorf("structure svg has no root element")
 	}
+	return doc, root, nil
+}
 
+// recolor applies glass colors to pieces and returns the cutlist. Resolution
+// order per piece is piece override -> group override -> manifest group default.
+func recolor(
+	root *etree.Element,
+	manifest Manifest,
+	overrides ColorOverrides,
+	glassHexByID map[int]string,
+	groutHexByID map[int]string,
+) (cutList, error) {
 	byID := indexByID(root)
-
 	cl := cutList{}
+
+	// Resolve the grout id (override wins over manifest default) for the cutlist.
+	groutID := manifest.GroutRegion.GroutID
 	if overrides.Background != nil {
 		id := overrides.Background.GroutID
-		cl.GroutID = &id
+		groutID = &id
 	}
+	cl.GroutID = groutID
 
-	// Stable iteration for deterministic output.
-	sourceHexes := make([]string, 0, len(manifest.Regions))
-	for hex := range manifest.Regions {
-		sourceHexes = append(sourceHexes, hex)
+	// Stable iteration over glass groups for deterministic output.
+	groupKeys := make([]string, 0, len(manifest.GlassRegions))
+	for key := range manifest.GlassRegions {
+		groupKeys = append(groupKeys, key)
 	}
-	sort.Strings(sourceHexes)
+	sort.Strings(groupKeys)
 
-	for _, sourceHex := range sourceHexes {
-		region := manifest.Regions[sourceHex]
+	for _, key := range groupKeys {
+		region := manifest.GlassRegions[key]
 
-		var regionGlassID *int
-		if ro, ok := overrides.Regions[sourceHex]; ok {
-			id := ro.GlassColorID
-			regionGlassID = &id
+		// Group default: manifest value, overridden by an explicit group override.
+		groupGlassID := region.GlassColorID
+		if go_, ok := overrides.Groups[key]; ok {
+			id := go_.GlassColorID
+			groupGlassID = &id
 		}
-		cl.Regions = append(cl.Regions, cutListEntry{
-			SourceHex:    sourceHex,
-			GlassColorID: regionGlassID,
+		cl.GlassGroups = append(cl.GlassGroups, cutListGlassGroup{
+			GroupKey:     key,
+			GlassColorID: groupGlassID,
 			Count:        region.Count,
 		})
 
@@ -93,15 +162,15 @@ func Bake(
 				id := po.GlassColorID
 				glassID = &id
 				isPieceOverride = true
-			} else if regionGlassID != nil {
-				glassID = regionGlassID
+			} else if groupGlassID != nil {
+				glassID = groupGlassID
 			}
 			if glassID == nil {
-				continue // unchanged — keep the original source color
+				continue // no color assigned — keep the original source color
 			}
 			hex, ok := glassHexByID[*glassID]
 			if !ok {
-				return nil, fmt.Errorf("unknown glass_color_id %d", *glassID)
+				return cutList{}, fmt.Errorf("unknown glass_color_id %d", *glassID)
 			}
 			el := byID[pieceID]
 			if el == nil {
@@ -115,48 +184,64 @@ func Bake(
 		}
 	}
 
-	if overrides.Background != nil {
-		hex, ok := groutHexByID[overrides.Background.GroutID]
-		if !ok {
-			return nil, fmt.Errorf("unknown grout_id %d", overrides.Background.GroutID)
-		}
-		// Color all grout shapes (back-most region + implicit-black pieces) with the grout hex.
-		for _, pieceID := range groutPieceIDs(manifest) {
-			if el := byID[pieceID]; el != nil {
-				setInlineFill(el, hex)
-			}
-		}
-		if rect := groutRect(manifest.ViewBox, hex, overrides.Background.GroutID); rect != nil {
-			root.InsertChildAt(0, rect)
-		}
-	}
-
-	applyScale(root, manifest.ViewBox, scaleFactor)
-	addCutListMetadata(root, cl)
-
-	return doc.WriteToBytes()
+	return cl, nil
 }
 
-// groutPieceIDs returns all piece IDs belonging to grout regions:
-//  1. The region containing "p0" (first/back-most shape in document order).
-//  2. The defaultFill ("#000000") region (classless implicit-black shapes like eyes).
+// insertGrout colors the grout pieces when a grout id is resolved
+// (override wins over manifest default).
+func insertGrout(
+	root *etree.Element,
+	manifest Manifest,
+	overrides ColorOverrides,
+	groutHexByID map[int]string,
+) error {
+	groutID := manifest.GroutRegion.GroutID
+	if overrides.Background != nil {
+		id := overrides.Background.GroutID
+		groutID = &id
+	}
+	if groutID == nil {
+		return nil
+	}
+
+	hex, ok := groutHexByID[*groutID]
+	if !ok {
+		return fmt.Errorf("unknown grout_id %d", *groutID)
+	}
+
+	byID := indexByID(root)
+	for _, pieceID := range groutPieceIDs(manifest) {
+		if el := byID[pieceID]; el != nil {
+			setInlineFill(el, hex)
+			el.CreateAttr("data-grout-id", strconv.Itoa(*groutID))
+		}
+	}
+
+	return nil
+}
+
+// groutPieceIDs returns all piece IDs in the manifest's single grout region.
 func groutPieceIDs(manifest Manifest) []string {
-	groutHexes := map[string]bool{defaultFill: true}
-	for hex, region := range manifest.Regions {
-		for _, id := range region.PieceIDs {
-			if id == "p0" {
-				groutHexes[hex] = true
-				break
+	return manifest.GroutRegion.PieceIDs
+}
+
+// stripStyles removes all <style> elements so the baked SVG's color comes only
+// from inline fills, keeping it self-contained.
+func stripStyles(root *etree.Element) {
+	doc := root
+	for _, style := range doc.FindElements("//style") {
+		if parent := style.Parent(); parent != nil {
+			parent.RemoveChild(style)
+		}
+	}
+	// Remove now-empty <defs> wrappers left behind.
+	for _, defs := range doc.FindElements("//defs") {
+		if len(defs.ChildElements()) == 0 {
+			if parent := defs.Parent(); parent != nil {
+				parent.RemoveChild(defs)
 			}
 		}
 	}
-	var ids []string
-	for hex, region := range manifest.Regions {
-		if groutHexes[hex] {
-			ids = append(ids, region.PieceIDs...)
-		}
-	}
-	return ids
 }
 
 func indexByID(root *etree.Element) map[string]*etree.Element {
@@ -185,22 +270,6 @@ func setInlineFill(el *etree.Element, hex string) {
 	}
 	style += "fill:" + hex
 	el.CreateAttr("style", style)
-}
-
-func groutRect(viewBox, hex string, groutID int) *etree.Element {
-	x, y, w, h, ok := parseViewBox(viewBox)
-	if !ok {
-		return nil
-	}
-	rect := etree.NewElement("rect")
-	rect.CreateAttr("id", "glassact-grout")
-	rect.CreateAttr("data-grout-id", strconv.Itoa(groutID))
-	rect.CreateAttr("x", formatNum(x))
-	rect.CreateAttr("y", formatNum(y))
-	rect.CreateAttr("width", formatNum(w))
-	rect.CreateAttr("height", formatNum(h))
-	rect.CreateAttr("style", "fill:"+hex)
-	return rect
 }
 
 func applyScale(root *etree.Element, viewBox string, scaleFactor float64) {

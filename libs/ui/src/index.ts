@@ -17,6 +17,8 @@ export * from "./checkbox";
 
 export * from "./combobox";
 
+export * from "./combobox-free";
+
 export * from "./dialog";
 
 export * from "./dropdown-menu";

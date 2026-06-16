@@ -170,8 +170,6 @@ CREATE TABLE catalog_items (
     default_price_group_id INTEGER NOT NULL REFERENCES price_groups ON DELETE RESTRICT,
     svg_url TEXT NOT NULL,
     manifest JSONB NOT NULL DEFAULT '{}',
-    is_quarantined BOOLEAN NOT NULL DEFAULT false,
-    quarantine_reason TEXT,
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),

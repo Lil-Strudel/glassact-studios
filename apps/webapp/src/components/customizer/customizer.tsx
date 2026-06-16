@@ -15,17 +15,18 @@ import type {
 } from "@glassact/data";
 import { Alert, AlertDescription, Badge, Button } from "@glassact/ui";
 import { postBakeOpts } from "../../queries/customize";
-import { CustomizerCanvas } from "./customizer-canvas";
 import { ControlPanel } from "./control-panel";
 import { PricingWarningDialog } from "./pricing-warning-dialog";
 import {
+  CustomizerCanvas,
   buildGroutPieceIds,
   buildPieceSourceMap,
+  groupGlassId,
   resolvePieceHex,
   totalCustomPieces,
   type GlassById,
   type Selection,
-} from "./resolution";
+} from "./shared";
 
 interface CustomizerProps {
   item: GET<CatalogItem>;
@@ -76,7 +77,12 @@ export function Customizer(props: CustomizerProps) {
   const height = createMemo(() => width() * aspect);
 
   const manifest = createMemo(
-    () => props.item.manifest ?? { view_box: "0 0 0 0", regions: {} },
+    () =>
+      props.item.manifest ?? {
+        view_box: "0 0 0 0",
+        grout_region: { grout_id: null, piece_ids: [], count: 0 },
+        glass_regions: {},
+      },
   );
   const glassById = createMemo<GlassById>(
     () => new Map(props.glassColors.map((g) => [g.id, g])),
@@ -93,7 +99,7 @@ export function Customizer(props: CustomizerProps) {
   const usedGlassIds = createMemo(() => {
     const o = overrides();
     const ids = new Set<number>();
-    for (const r of Object.values(o.regions ?? {})) ids.add(r.glass_color_id);
+    for (const g of Object.values(o.groups ?? {})) ids.add(g.glass_color_id);
     for (const p of Object.values(o.pieces ?? {})) ids.add(p.glass_color_id);
     return [...ids];
   });
@@ -102,12 +108,15 @@ export function Customizer(props: CustomizerProps) {
     const sel = selection();
     if (!sel) return null;
     const o = overrides();
-    if (sel.type === "region") return o.regions?.[sel.sourceHex]?.glass_color_id ?? null;
-    return o.pieces?.[sel.pieceId]?.glass_color_id ?? null;
+    if (sel.type === "group") return groupGlassId(sel.groupKey, o, manifest());
+    return (
+      o.pieces?.[sel.pieceId]?.glass_color_id ??
+      groupGlassId(sel.groupKey, o, manifest())
+    );
   });
 
   // Resolution with live hover-preview layered on top of committed overrides.
-  function resolveHex(pieceId: string, sourceHex: string): string {
+  function resolveHex(pieceId: string, groupKey: string): string {
     const hov = hoverGlassId();
     const sel = selection();
     const o = overrides();
@@ -116,15 +125,15 @@ export function Customizer(props: CustomizerProps) {
       if (previewHex) {
         if (sel.type === "piece" && sel.pieceId === pieceId) return previewHex;
         if (
-          sel.type === "region" &&
-          sel.sourceHex === sourceHex &&
+          sel.type === "group" &&
+          sel.groupKey === groupKey &&
           !o.pieces?.[pieceId]
         ) {
           return previewHex;
         }
       }
     }
-    return resolvePieceHex(pieceId, sourceHex, o, glassById());
+    return resolvePieceHex(pieceId, groupKey, o, manifest(), glassById());
   }
 
   function commit(next: ColorOverrides) {
@@ -157,15 +166,15 @@ export function Customizer(props: CustomizerProps) {
     setMode(next);
   }
 
-  function selectRegion(sourceHex: string) {
-    setSelection({ type: "region", sourceHex });
+  function selectGroup(groupKey: string) {
+    setSelection({ type: "group", groupKey });
   }
 
-  function onPieceClick(pieceId: string, sourceHex: string) {
+  function onPieceClick(pieceId: string, groupKey: string) {
     if (mode() === "piece") {
-      setSelection({ type: "piece", pieceId, sourceHex });
+      setSelection({ type: "piece", pieceId, groupKey });
     } else {
-      setSelection({ type: "region", sourceHex });
+      setSelection({ type: "group", groupKey });
     }
   }
 
@@ -173,10 +182,10 @@ export function Customizer(props: CustomizerProps) {
     const sel = selection();
     if (!sel) return;
     const o = overrides();
-    if (sel.type === "region") {
+    if (sel.type === "group") {
       commit({
         ...o,
-        regions: { ...(o.regions ?? {}), [sel.sourceHex]: { glass_color_id: glassId } },
+        groups: { ...(o.groups ?? {}), [sel.groupKey]: { glass_color_id: glassId } },
       });
     } else {
       commit({
@@ -345,7 +354,7 @@ export function Customizer(props: CustomizerProps) {
             }
             highlightedRegion={hoveredRegion()}
             onPieceClick={onPieceClick}
-            onPieceHover={(_, src) => setHoveredRegion(src)}
+            onPieceHover={(_, groupKey) => setHoveredRegion(groupKey)}
           />
         </div>
 
@@ -361,12 +370,11 @@ export function Customizer(props: CustomizerProps) {
             selection={selection()}
             selectedGlassId={selectedGlassId()}
             usedGlassIds={usedGlassIds()}
-            backgroundGroutId={overrides().background?.grout_id ?? null}
             width={width()}
             height={height()}
             minWidth={minWidth}
             minHeight={props.item.min_height}
-            onSelectRegion={selectRegion}
+            onSelectGroup={selectGroup}
             onRegionHover={setHoveredRegion}
             onAssignGlass={assignGlass}
             onHoverGlass={setHoverGlassId}

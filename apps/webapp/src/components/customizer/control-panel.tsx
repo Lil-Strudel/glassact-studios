@@ -11,14 +11,14 @@ import {
   TabsTrigger,
   TabsIndicator,
 } from "@glassact/ui";
-import { SwatchPicker, type Swatch } from "./glass-palette";
 import {
-  getGroutSourceHexes,
+  SwatchPicker,
+  type Swatch,
   type GlassById,
   type Selection,
   customPieceCount,
-  regionGlassId,
-} from "./resolution";
+  groupGlassId,
+} from "./shared";
 
 interface ControlPanelProps {
   mode: "group" | "piece";
@@ -31,13 +31,12 @@ interface ControlPanelProps {
   selection: Selection | null;
   selectedGlassId: number | null;
   usedGlassIds: number[];
-  backgroundGroutId: number | null;
   width: number;
   height: number;
   minWidth: number;
   minHeight: number;
-  onSelectRegion: (sourceHex: string) => void;
-  onRegionHover: (sourceHex: string | null) => void;
+  onSelectGroup: (groupKey: string) => void;
+  onRegionHover: (groupKey: string | null) => void;
   onAssignGlass: (glassId: number) => void;
   onHoverGlass: (glassId: number | null) => void;
   onResetPiece: (pieceId: string) => void;
@@ -58,19 +57,15 @@ export function ControlPanel(props: ControlPanelProps) {
     props.grouts.map((g) => ({ id: g.id, name: g.name, hex: g.hex })),
   );
 
-  const groutHexes = createMemo(() => getGroutSourceHexes(props.manifest));
-  const regionEntries = createMemo(() =>
-    Object.entries(props.manifest.regions ?? {}).filter(
-      ([hex]) => !groutHexes().has(hex),
-    ),
+  const groupEntries = createMemo(() =>
+    Object.entries(props.manifest.glass_regions ?? {}),
   );
 
   const selectionLabel = createMemo(() => {
     const sel = props.selection;
     if (!sel) return null;
-    if (sel.type === "region") {
-      const region = props.manifest.regions?.[sel.sourceHex];
-      const count = region?.piece_ids.length ?? 0;
+    if (sel.type === "group") {
+      const count = props.manifest.glass_regions?.[sel.groupKey]?.count ?? 0;
       return `Color group · ${count} piece${count === 1 ? "" : "s"}`;
     }
     return "Single piece";
@@ -143,9 +138,10 @@ export function ControlPanel(props: ControlPanelProps) {
           Color groups
         </p>
         <div class="flex flex-col gap-1">
-          <For each={regionEntries()}>
-            {([sourceHex, region]) => {
-              const glassId = () => regionGlassId(sourceHex, props.overrides);
+          <For each={groupEntries()}>
+            {([groupKey, region]) => {
+              const glassId = () =>
+                groupGlassId(groupKey, props.overrides, props.manifest);
               const glass = () => {
                 const id = glassId();
                 return id != null ? props.glassById.get(id) : undefined;
@@ -153,13 +149,13 @@ export function ControlPanel(props: ControlPanelProps) {
               const custom = () =>
                 customPieceCount(region.piece_ids, props.overrides);
               const isSelected = () =>
-                props.selection?.type === "region" &&
-                props.selection.sourceHex === sourceHex;
+                props.selection?.type === "group" &&
+                props.selection.groupKey === groupKey;
               return (
                 <button
                   type="button"
-                  onClick={() => props.onSelectRegion(sourceHex)}
-                  onMouseEnter={() => props.onRegionHover(sourceHex)}
+                  onClick={() => props.onSelectGroup(groupKey)}
+                  onMouseEnter={() => props.onRegionHover(groupKey)}
                   onMouseLeave={() => props.onRegionHover(null)}
                   class="flex items-center gap-2 rounded-md border p-1.5 text-left transition"
                   classList={{
@@ -170,7 +166,10 @@ export function ControlPanel(props: ControlPanelProps) {
                   <span class="flex shrink-0 items-center">
                     <span
                       class="h-6 w-6 rounded border border-black/10"
-                      style={{ "background-color": glass()?.hex ?? sourceHex }}
+                      style={{
+                        "background-color":
+                          glass()?.hex ?? region.source_hex ?? "#cccccc",
+                      }}
                     />
                   </span>
                   <span class="min-w-0 flex-1">
@@ -178,8 +177,8 @@ export function ControlPanel(props: ControlPanelProps) {
                       {glass()?.name ?? "Original color"}
                     </span>
                     <span class="block text-[11px] text-gray-500">
-                      {region.piece_ids.length} piece
-                      {region.piece_ids.length === 1 ? "" : "s"}
+                      {region.count} piece
+                      {region.count === 1 ? "" : "s"}
                     </span>
                   </span>
                   <Show when={custom() > 0}>
@@ -200,7 +199,10 @@ export function ControlPanel(props: ControlPanelProps) {
         </p>
         <SwatchPicker
           swatches={groutSwatches()}
-          selectedId={props.backgroundGroutId}
+          selectedId={
+            props.overrides.background?.grout_id ??
+            props.manifest.grout_region.grout_id
+          }
           onSelect={props.onSelectGrout}
           searchPlaceholder="Search grout..."
         />

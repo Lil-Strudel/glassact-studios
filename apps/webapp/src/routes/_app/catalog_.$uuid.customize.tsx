@@ -29,7 +29,7 @@ function RouteComponent() {
   );
 
   const hasRegions = createMemo(() => {
-    const regions = itemQuery.data?.manifest?.regions;
+    const regions = itemQuery.data?.manifest?.glass_regions;
     return !!regions && Object.keys(regions).length > 0;
   });
 
@@ -48,7 +48,7 @@ function RouteComponent() {
         />
       </Match>
 
-      <Match when={itemQuery.data?.is_quarantined || !hasRegions()}>
+      <Match when={itemQuery.data && !hasRegions()}>
         <Notice
           title="This design isn't available to customize yet"
           body="Its artwork couldn't be prepared for recoloring. Please contact GlassAct if you'd like it enabled."

@@ -1,4 +1,5 @@
 export * from "./auth";
+export * from "./catalog-admin";
 export * from "./catalog-item";
 export * from "./customizer";
 export * from "./dashboard";

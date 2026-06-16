@@ -83,17 +83,15 @@ export function ItemDetailModal(props: ParentProps<ItemDetailModalProps>) {
           </div>
         </div>
 
-        <Show when={!props.item.is_quarantined}>
-          <DialogFooter>
-            <Button
-              as={Link}
-              to="/catalog/$uuid/customize"
-              params={{ uuid: props.item.uuid }}
-            >
-              Customize this design
-            </Button>
-          </DialogFooter>
-        </Show>
+        <DialogFooter>
+          <Button
+            as={Link}
+            to="/catalog/$uuid/customize"
+            params={{ uuid: props.item.uuid }}
+          >
+            Customize this design
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -3,16 +3,19 @@ import { Button } from "@glassact/ui";
 
 interface CustomizerCanvasProps {
   svgText: string;
+  // pieceId -> group key. The key is opaque to the canvas; it is only echoed
+  // back through the hover/click callbacks and compared for region highlighting.
   pieceSource: Map<string, string>;
   groutPieceIds: string[];
   // Resolves the current fill for a piece. Reads reactive state, so calling it
   // inside an effect re-applies fills whenever overrides/hover-preview change.
-  resolveHex: (pieceId: string, sourceHex: string) => string;
+  resolveHex: (pieceId: string, groupKey: string) => string;
   groutHex: string | null;
   selectedPieceId: string | null;
+  // Group key whose pieces should be region-highlighted (e.g. on hover).
   highlightedRegion: string | null;
-  onPieceClick: (pieceId: string, sourceHex: string) => void;
-  onPieceHover: (pieceId: string | null, sourceHex: string | null) => void;
+  onPieceClick: (pieceId: string, groupKey: string) => void;
+  onPieceHover: (pieceId: string | null, groupKey: string | null) => void;
 }
 
 const HIGHLIGHT_CSS = `
@@ -65,9 +68,9 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
   // Apply resolved fills whenever overrides / hover-preview change.
   createEffect(() => {
     if (!ready()) return;
-    for (const [id, sourceHex] of props.pieceSource.entries()) {
+    for (const [id, groupKey] of props.pieceSource.entries()) {
       const el = pieceEls.get(id);
-      if (el) el.style.fill = props.resolveHex(id, sourceHex);
+      if (el) el.style.fill = props.resolveHex(id, groupKey);
     }
   });
 
@@ -85,13 +88,13 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
     if (!ready()) return;
     const selected = props.selectedPieceId;
     const region = props.highlightedRegion;
-    for (const [id, sourceHex] of props.pieceSource.entries()) {
+    for (const [id, groupKey] of props.pieceSource.entries()) {
       const el = pieceEls.get(id);
       if (!el) continue;
       el.classList.toggle("gac-selected", selected === id);
       el.classList.toggle(
         "gac-hover",
-        selected !== id && region !== null && sourceHex === region,
+        selected !== id && region !== null && groupKey === region,
       );
     }
   });
@@ -215,3 +218,5 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
     </div>
   );
 }
+
+export type { CustomizerCanvasProps };

@@ -26,8 +26,6 @@ type CatalogItems struct {
 	DefaultPriceGroupID int32
 	SvgURL              string
 	Manifest            string
-	IsQuarantined       bool
-	QuarantineReason    *string
 	IsActive            bool
 	CreatedAt           time.Time
 	UpdatedAt           time.Time

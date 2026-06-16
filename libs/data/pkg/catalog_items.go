@@ -28,8 +28,6 @@ type CatalogItem struct {
 	DefaultPriceGroupID int                    `json:"default_price_group_id"`
 	SvgURL              string                 `json:"svg_url"`
 	Manifest            map[string]interface{} `json:"manifest"`
-	IsQuarantined       bool                   `json:"is_quarantined"`
-	QuarantineReason    *string                `json:"quarantine_reason"`
 	IsActive            bool                   `json:"is_active"`
 	Tags                []string               `json:"tags,omitempty"`
 }
@@ -71,8 +69,6 @@ func catalogItemFromGen(genCatalogItem model.CatalogItems) *CatalogItem {
 		DefaultPriceGroupID: int(genCatalogItem.DefaultPriceGroupID),
 		SvgURL:              genCatalogItem.SvgURL,
 		Manifest:            manifest,
-		IsQuarantined:       genCatalogItem.IsQuarantined,
-		QuarantineReason:    genCatalogItem.QuarantineReason,
 		IsActive:            genCatalogItem.IsActive,
 	}
 
@@ -113,8 +109,6 @@ func catalogItemToGen(ci *CatalogItem) (*model.CatalogItems, error) {
 		DefaultPriceGroupID: int32(ci.DefaultPriceGroupID),
 		SvgURL:              ci.SvgURL,
 		Manifest:            manifestStr,
-		IsQuarantined:       ci.IsQuarantined,
-		QuarantineReason:    ci.QuarantineReason,
 		IsActive:            ci.IsActive,
 		UpdatedAt:           ci.UpdatedAt,
 		CreatedAt:           ci.CreatedAt,
@@ -151,8 +145,6 @@ func (m CatalogItemModel) Insert(catalogItem *CatalogItem) error {
 		table.CatalogItems.DefaultPriceGroupID,
 		table.CatalogItems.SvgURL,
 		table.CatalogItems.Manifest,
-		table.CatalogItems.IsQuarantined,
-		table.CatalogItems.QuarantineReason,
 		table.CatalogItems.IsActive,
 	).MODEL(
 		genCatalogItem,
@@ -339,8 +331,6 @@ func (m CatalogItemModel) Update(catalogItem *CatalogItem) error {
 		table.CatalogItems.DefaultPriceGroupID,
 		table.CatalogItems.SvgURL,
 		table.CatalogItems.Manifest,
-		table.CatalogItems.IsQuarantined,
-		table.CatalogItems.QuarantineReason,
 		table.CatalogItems.IsActive,
 		table.CatalogItems.Version,
 	).MODEL(

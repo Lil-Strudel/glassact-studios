@@ -57,10 +57,6 @@ func (m *CustomizerModule) HandleBake(w http.ResponseWriter, r *http.Request) {
 		m.WriteError(w, r, m.Err.RecordNotFound, nil)
 		return
 	}
-	if item.IsQuarantined {
-		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("catalog item is not customizable"))
-		return
-	}
 
 	var body bakeRequest
 	if err := m.ReadJSONBody(w, r, &body); err != nil {
@@ -73,7 +69,7 @@ func (m *CustomizerModule) HandleBake(w http.ResponseWriter, r *http.Request) {
 		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to decode manifest: %w", err))
 		return
 	}
-	if len(manifest.Regions) == 0 {
+	if len(manifest.GlassRegions) == 0 {
 		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("catalog item has no recolorable regions"))
 		return
 	}
@@ -94,9 +90,9 @@ func (m *CustomizerModule) HandleBake(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	key := strings.TrimPrefix(item.SvgURL, "/")
-	canonical, err := upload.GetFileFromS3(ctx, m.S3, m.Cfg, key)
+	structureSVG, err := upload.GetFileFromS3(ctx, m.S3, m.Cfg, key)
 	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to fetch canonical svg: %w", err))
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to fetch baked svg: %w", err))
 		return
 	}
 
@@ -105,7 +101,7 @@ func (m *CustomizerModule) HandleBake(w http.ResponseWriter, r *http.Request) {
 		scaleFactor = 1.0
 	}
 
-	baked, err := svg.Bake(canonical, manifest, scaleFactor, overrides, glassHexByID, groutHexByID)
+	baked, err := svg.BakeConsumer(structureSVG, manifest, scaleFactor, overrides, glassHexByID, groutHexByID)
 	if err != nil {
 		m.WriteError(w, r, m.Err.BadRequest, err)
 		return

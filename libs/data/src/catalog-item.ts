@@ -17,9 +17,8 @@ export type CatalogItem = StandardTable<{
   min_height: number;
   default_price_group_id: number;
   svg_url: string;
-  // Server-managed by the SVG ingest step (not part of create/update requests).
+  // Server-managed: baked by the catalog write step from the finalized manifest
+  // (not part of create/update request bodies — those carry the manifest instead).
   manifest?: Manifest;
-  is_quarantined?: boolean;
-  quarantine_reason?: string | null;
   is_active: boolean;
 }>;
