@@ -46,14 +46,14 @@ func TestGetDealershipDashboard_WithProjects_ReturnsCorrectStatusCounts(t *testi
 
 	insertProjectWithStatus(t, models, dealershipA.ID, ProjectStatuses.Draft)
 	insertProjectWithStatus(t, models, dealershipA.ID, ProjectStatuses.Draft)
-	insertProjectWithStatus(t, models, dealershipA.ID, ProjectStatuses.Designing)
+	insertProjectWithStatus(t, models, dealershipA.ID, ProjectStatuses.Ordered)
 	insertProjectWithStatus(t, models, dealershipB.ID, ProjectStatuses.Draft)
 
 	dashboard, err := models.Dashboard.GetDealershipDashboard(dealershipA.ID)
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(2), findStatusCount(dashboard.ProjectStatusCounts, string(ProjectStatuses.Draft)))
-	assert.Equal(t, int64(1), findStatusCount(dashboard.ProjectStatusCounts, string(ProjectStatuses.Designing)))
+	assert.Equal(t, int64(1), findStatusCount(dashboard.ProjectStatusCounts, string(ProjectStatuses.Ordered)))
 	assert.Len(t, dashboard.ProjectStatusCounts, 2)
 	assert.Len(t, dashboard.RecentProjects, 3)
 }
@@ -87,7 +87,7 @@ func TestGetDealershipDashboard_WithSentInvoice_ReturnsOutstandingAmount(t *test
 	snapshot := &OrderSnapshot{
 		ProjectID:    project.ID,
 		InlayID:      inlay.ID,
-		ProofID:      proof.ID,
+		ProofID:      &proof.ID,
 		PriceGroupID: priceGroup.ID,
 		PriceCents:   75000,
 		Width:        100.0,
@@ -132,7 +132,7 @@ func TestGetInternalDashboard_WithProjects_ReturnsAllStatusCounts(t *testing.T) 
 	dealershipB := createTestDealership(t, models)
 
 	insertProjectWithStatus(t, models, dealershipA.ID, ProjectStatuses.Draft)
-	insertProjectWithStatus(t, models, dealershipA.ID, ProjectStatuses.Designing)
+	insertProjectWithStatus(t, models, dealershipA.ID, ProjectStatuses.Ordered)
 	insertProjectWithStatus(t, models, dealershipB.ID, ProjectStatuses.Draft)
 	insertProjectWithStatus(t, models, dealershipB.ID, ProjectStatuses.Ordered)
 
@@ -140,8 +140,7 @@ func TestGetInternalDashboard_WithProjects_ReturnsAllStatusCounts(t *testing.T) 
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(2), findStatusCount(dashboard.ProjectStatusCounts, string(ProjectStatuses.Draft)))
-	assert.Equal(t, int64(1), findStatusCount(dashboard.ProjectStatusCounts, string(ProjectStatuses.Designing)))
-	assert.Equal(t, int64(1), findStatusCount(dashboard.ProjectStatusCounts, string(ProjectStatuses.Ordered)))
+	assert.Equal(t, int64(2), findStatusCount(dashboard.ProjectStatusCounts, string(ProjectStatuses.Ordered)))
 }
 
 func TestGetInternalDashboard_WithActiveBlockers_ReturnsBlockerCounts(t *testing.T) {

@@ -46,10 +46,10 @@ type Inlay struct {
 	ProjectID         int               `json:"project_id"`
 	Name              string            `json:"name"`
 	Type              InlayType         `json:"type"`
+	IsCustomized      bool              `json:"is_customized"`
 	PreviewURL        string            `json:"preview_url"`
 	ApprovedProofID   *int              `json:"approved_proof_id,omitempty"`
 	ManufacturingStep *string           `json:"manufacturing_step,omitempty"`
-	ExcludedFromOrder bool              `json:"excluded_from_order"`
 	CatalogInfo       *InlayCatalogInfo `json:"catalog_info,omitempty"`
 	CustomInfo        *InlayCustomInfo  `json:"custom_info,omitempty"`
 }
@@ -68,11 +68,11 @@ func inlayFromGen(genInlay model.Inlays, genCatalogInfo *model.InlayCatalogInfos
 			UpdatedAt: genInlay.UpdatedAt,
 			Version:   int(genInlay.Version),
 		},
-		ProjectID:         int(genInlay.ProjectID),
-		Name:              genInlay.Name,
-		Type:              InlayType(genInlay.Type),
-		PreviewURL:        genInlay.PreviewURL,
-		ExcludedFromOrder: genInlay.ExcludedFromOrder,
+		ProjectID:    int(genInlay.ProjectID),
+		Name:         genInlay.Name,
+		Type:         InlayType(genInlay.Type),
+		IsCustomized: genInlay.IsCustomized,
+		PreviewURL:   genInlay.PreviewURL,
 	}
 
 	if genInlay.ApprovedProofID != nil {
@@ -130,16 +130,16 @@ func inlayToGen(in *Inlay) (*model.Inlays, error) {
 	}
 
 	genInlay := model.Inlays{
-		ID:                int32(in.ID),
-		UUID:              inlayUUID,
-		ProjectID:         int32(in.ProjectID),
-		Name:              in.Name,
-		Type:              string(in.Type),
-		PreviewURL:        in.PreviewURL,
-		ExcludedFromOrder: in.ExcludedFromOrder,
-		UpdatedAt:         in.UpdatedAt,
-		CreatedAt:         in.CreatedAt,
-		Version:           int32(in.Version),
+		ID:           int32(in.ID),
+		UUID:         inlayUUID,
+		ProjectID:    int32(in.ProjectID),
+		Name:         in.Name,
+		Type:         string(in.Type),
+		IsCustomized: in.IsCustomized,
+		PreviewURL:   in.PreviewURL,
+		UpdatedAt:    in.UpdatedAt,
+		CreatedAt:    in.CreatedAt,
+		Version:      int32(in.Version),
 	}
 
 	if in.ApprovedProofID != nil {
@@ -305,6 +305,7 @@ func (m InlayModel) Insert(inlay *Inlay) error {
 		table.Inlays.ProjectID,
 		table.Inlays.Name,
 		table.Inlays.Type,
+		table.Inlays.IsCustomized,
 		table.Inlays.PreviewURL,
 	).MODEL(
 		genInlay,
@@ -354,6 +355,7 @@ func (m InlayModel) TxInsert(tx *sql.Tx, inlay *Inlay) error {
 		table.Inlays.ProjectID,
 		table.Inlays.Name,
 		table.Inlays.Type,
+		table.Inlays.IsCustomized,
 		table.Inlays.PreviewURL,
 	).MODEL(
 		genInlay,
@@ -645,10 +647,10 @@ func (m InlayModel) TxUpdateFields(tx *sql.Tx, inlay *Inlay) error {
 	}
 
 	query := table.Inlays.UPDATE(
+		table.Inlays.IsCustomized,
 		table.Inlays.PreviewURL,
 		table.Inlays.ApprovedProofID,
 		table.Inlays.ManufacturingStep,
-		table.Inlays.ExcludedFromOrder,
 		table.Inlays.Version,
 	).MODEL(
 		genInlay,
@@ -677,16 +679,13 @@ func (m InlayModel) TxUpdateFields(tx *sql.Tx, inlay *Inlay) error {
 	return nil
 }
 
-func (m InlayModel) CountIncludedByProjectID(projectID int) (int, error) {
+func (m InlayModel) CountByProjectID(projectID int) (int, error) {
 	query := postgres.SELECT(
 		postgres.COUNT(table.Inlays.ID),
 	).FROM(
 		table.Inlays,
 	).WHERE(
-		postgres.AND(
-			table.Inlays.ProjectID.EQ(postgres.Int(int64(projectID))),
-			table.Inlays.ExcludedFromOrder.EQ(postgres.Bool(false)),
-		),
+		table.Inlays.ProjectID.EQ(postgres.Int(int64(projectID))),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

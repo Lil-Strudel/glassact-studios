@@ -371,6 +371,9 @@ func (u *InternalUser) Can(action string) bool {
 	case ActionCreateProof:
 		return u.Role == InternalUserRoles.Designer ||
 			u.Role == InternalUserRoles.Admin
+	case ActionInternalApproveProof:
+		return u.Role == InternalUserRoles.Designer ||
+			u.Role == InternalUserRoles.Admin
 	case ActionManageKanban:
 		return u.Role == InternalUserRoles.Production ||
 			u.Role == InternalUserRoles.Admin

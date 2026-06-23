@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
 
-import type { Project, GET, InlayType, InlayWithInfo } from "@glassact/data";
+import type { Project, GET } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
 export async function getProjects(): Promise<GET<Project>[]> {
@@ -28,9 +28,14 @@ export function getProjectOpts(uuid: string) {
   });
 }
 
-export async function postProject(body: {
+export interface PostProjectRequest {
   name: string;
-}): Promise<GET<Project>> {
+  internal_reference?: string | null;
+}
+
+export async function postProject(
+  body: PostProjectRequest,
+): Promise<GET<Project>> {
   const res = await api.post("/project", body);
   return res.data;
 }
@@ -41,42 +46,14 @@ export function postProjectOpts() {
   });
 }
 
-export interface PostProjectWithInlaysInlay {
-  name: string;
-  type: InlayType;
-  preview_url: string;
-  catalog_info?: {
-    catalog_item_id: number;
-    customization_notes: string;
-  };
-  custom_info?: {
-    description: string;
-    requested_width: number;
-    requested_height: number;
-  };
-}
-
-export type PostProjectWithInlaysRequest = {
-  name: string;
-  inlays: PostProjectWithInlaysInlay[];
-};
-
-export async function postProjectWithInlays(
-  body: PostProjectWithInlaysRequest,
-): Promise<GET<Project> & { inlays: InlayWithInfo[] }> {
-  const res = await api.post("/project/with-inlays", body);
-  return res.data;
-}
-
-export function postProjectWithInlaysOpts() {
-  return mutationOptions({
-    mutationFn: postProjectWithInlays,
-  });
+export interface PatchProjectRequest {
+  name?: string;
+  internal_reference?: string | null;
 }
 
 export async function patchProject(params: {
   uuid: string;
-  body: { name?: string };
+  body: PatchProjectRequest;
 }): Promise<GET<Project>> {
   const res = await api.patch(`/project/${params.uuid}`, params.body);
   return res.data;
@@ -96,18 +73,5 @@ export async function deleteProject(uuid: string): Promise<GET<Project>> {
 export function deleteProjectOpts() {
   return mutationOptions({
     mutationFn: deleteProject,
-  });
-}
-
-export async function postSubmitProject(
-  uuid: string,
-): Promise<GET<Project>> {
-  const res = await api.post(`/project/${uuid}/submit`);
-  return res.data;
-}
-
-export function postSubmitProjectOpts() {
-  return mutationOptions({
-    mutationFn: postSubmitProject,
   });
 }

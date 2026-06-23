@@ -144,42 +144,38 @@ GlassAct Studios manufactures custom stained glass inlays for gravestones. The p
 ### Project Status Flow
 
 ```
-                    ┌─────────────────────────────────────────────┐
-                    │                                             │
-                    ▼                                             │
-┌───────┐    ┌───────────┐    ┌──────────────────┐    ┌──────────┴─┐
-│ draft │───►│ designing │───►│ pending-approval │───►│  approved  │
-└───────┘    └───────────┘    └──────────────────┘    └────────────┘
-                                                            │
-                                                            ▼
-┌───────────┐    ┌───────────┐    ┌─────────┐    ┌───────────────┐
-│ completed │◄───│  invoiced │◄───│delivered│◄───│in-production  │◄─┐
-└───────────┘    └───────────┘    └─────────┘    └───────────────┘  │
-                                       ▲                            │
-                                       │         ┌─────────┐        │
-                                       └─────────│ shipped │◄───────┤
-                                                 └─────────┘        │
-                                                                    │
-                                                            ┌───────┴─┐
-                                                            │ ordered │
-                                                            └─────────┘
+┌───────┐    ┌─────────┐    ┌───────────────┐    ┌─────────┐    ┌───────────┐    ┌──────────┐    ┌───────────┐
+│ draft │───►│ ordered │───►│ in-production │───►│ shipped │───►│ delivered │───►│ invoiced │───►│ completed │
+└───────┘    └─────────┘    └───────────────┘    └─────────┘    └───────────┘    └──────────┘    └───────────┘
 
-Any status ───► cancelled
+draft │ ordered ───► cancelled   (in-production onwards cannot be cancelled)
 ```
 
-| Status           | Description                         | Actions Available   |
-| ---------------- | ----------------------------------- | ------------------- |
-| draft            | Project created, adding inlays      | Add/remove inlays   |
-| designing        | Proofs being created                | Chat, create proofs |
-| pending-approval | Proofs sent, awaiting approval      | Approve/decline     |
-| approved         | All inlays approved                 | Place order         |
-| ordered          | Order placed, queued for production | -                   |
-| in-production    | Manufacturing in progress           | Track milestones    |
-| shipped          | All inlays shipped                  | Track delivery      |
-| delivered        | Delivery confirmed                  | Create invoice      |
-| invoiced         | Invoice sent                        | Pay                 |
-| completed        | Payment received                    | -                   |
-| cancelled        | Project cancelled                   | -                   |
+The project itself only has two pre-order states: `draft` (project exists, building inlays) and `ordered` (order placed, manufacturing about to start). Inlay-level readiness — not a project-level status — gates the Place Order button.
+
+| Status        | Description                            | Actions Available                                                                  |
+| ------------- | -------------------------------------- | ---------------------------------------------------------------------------------- |
+| draft         | Project is being built / inlays added  | Add/remove inlays, customize, edit name/internal_reference, cancel, place order    |
+| ordered       | Order placed, queued for production    | Cancel (only here and in `draft`)                                                  |
+| in-production | Manufacturing in progress              | Track milestones                                                                   |
+| shipped       | All inlays shipped                     | Track delivery                                                                     |
+| delivered     | Delivery confirmed                     | Create invoice                                                                     |
+| invoiced      | Invoice sent                           | Pay                                                                                |
+| completed     | Payment received                       | -                                                                                  |
+| cancelled     | Project cancelled                      | - (terminal)                                                                       |
+
+### Inlay Readiness
+
+Place Order is enabled only when **every** inlay on the project is "ready". An inlay is ready if any of:
+
+- **Stock catalog inlay** (`type='catalog'`, `is_customized=false`) — ready immediately. Priced at the catalog item's `default_price_group_id`.
+- **Customized catalog inlay** (`type='catalog'`, `is_customized=true`) — produced via the customizer. Becomes ready once the auto-created `inlay_proof` (with `approval_authority='internal'`) is approved by an internal designer/admin, who may also override the price group.
+- **Custom inlay** (`type='custom'`) — becomes ready once an internal designer creates a proof (with `approval_authority='dealership'`) and the dealership approves it. This is the only flow that still uses the legacy "designer uploads → customer reviews" loop.
+
+### Project Fields
+
+- `name` (required) — display name.
+- `internal_reference` (optional, nullable TEXT) — dealership's PO number / internal job reference. Surface alongside the project name everywhere.
 
 ### Proof Status Flow
 
@@ -202,6 +198,10 @@ Any status ───► cancelled
 - `declined` triggers feedback; designer creates new proof.
 - When a new proof is created, previous `pending` proofs become `superseded`.
 
+**Approval authority** (`inlay_proofs.approval_authority`):
+- `dealership` — customer-facing proof (custom inlays). An approver/admin dealership user approves or declines; the approval lands in the inlay chat thread and notifies internal staff.
+- `internal` — customizer-baked proof (customized catalog inlays). An internal designer/admin (with `internal_approve_proof` permission) approves and may override `price_group_id`. No chat message; no customer involvement.
+
 ### Manufacturing Steps
 
 ```
@@ -217,40 +217,17 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 
 ### Ordering
 
-**Order placement requires:** all inlays in the project have an approved proof; user has "approver" or "admin" role; project is in "approved" status.
+**Order placement requires:** project is in `draft`; user has `place_order` permission (dealership approver or admin); every selected inlay is ready (see Inlay Readiness above). The dealership user picks which inlays to include in the cart — only the selected ones get an `order_snapshot` and enter manufacturing.
 
-**Price locking.** When an order is placed:
-1. Create `order_snapshot` for each inlay with `proof_id`, `price_group_id`, `price_cents`, `width`, `height`.
-2. Snapshot values are immutable.
-3. Invoice uses snapshot prices, not current catalog prices.
+**Price locking.** When an order is placed, one `order_snapshot` is created per selected inlay:
 
-Reference pseudocode (Go):
+| Inlay flavor                           | `proof_id`           | `price_group_id` / `price_cents` source                                          | `width` / `height` source       |
+| -------------------------------------- | -------------------- | -------------------------------------------------------------------------------- | ------------------------------- |
+| Stock catalog                          | NULL                 | catalog item's `default_price_group_id` and that group's `base_price_cents`      | catalog item defaults           |
+| Customized catalog (approved internal) | approved proof's ID  | from the approved proof (price_group_id; price_cents if set else group base)     | from the approved proof         |
+| Custom (approved dealership)           | approved proof's ID  | same                                                                             | from the approved proof         |
 
-```go
-func placeOrder(project *Project, user *DealershipUser) error {
-    for _, inlay := range project.Inlays {
-        if inlay.ApprovedProofID == nil {
-            return fmt.Errorf("inlay %s not approved", inlay.Name)
-        }
-    }
-    for _, inlay := range project.Inlays {
-        proof := getProof(inlay.ApprovedProofID)
-        createOrderSnapshot(OrderSnapshot{
-            ProjectID: project.ID, InlayID: inlay.ID, ProofID: proof.ID,
-            PriceGroupID: proof.PriceGroupID, PriceCents: proof.PriceCents,
-            Width: proof.Width, Height: proof.Height,
-        })
-    }
-    project.Status = "ordered"
-    project.OrderedAt = now()
-    project.OrderedBy = user.ID
-    for _, inlay := range project.Inlays {
-        inlay.ManufacturingStep = "ordered"
-        createMilestone(inlay.ID, "ordered", "entered")
-    }
-    createNotification("order_placed", project)
-}
-```
+Snapshot values are immutable. Invoices read from snapshots, not from current catalog or proof state.
 
 ### Proofs
 

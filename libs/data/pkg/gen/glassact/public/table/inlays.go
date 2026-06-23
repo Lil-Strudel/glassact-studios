@@ -22,10 +22,10 @@ type inlaysTable struct {
 	ProjectID         postgres.ColumnInteger
 	Name              postgres.ColumnString
 	Type              postgres.ColumnString
+	IsCustomized      postgres.ColumnBool
 	PreviewURL        postgres.ColumnString
 	ApprovedProofID   postgres.ColumnInteger
 	ManufacturingStep postgres.ColumnString
-	ExcludedFromOrder postgres.ColumnBool
 	CreatedAt         postgres.ColumnTimestampz
 	UpdatedAt         postgres.ColumnTimestampz
 	Version           postgres.ColumnInteger
@@ -75,16 +75,16 @@ func newInlaysTableImpl(schemaName, tableName, alias string) inlaysTable {
 		ProjectIDColumn         = postgres.IntegerColumn("project_id")
 		NameColumn              = postgres.StringColumn("name")
 		TypeColumn              = postgres.StringColumn("type")
+		IsCustomizedColumn      = postgres.BoolColumn("is_customized")
 		PreviewURLColumn        = postgres.StringColumn("preview_url")
 		ApprovedProofIDColumn   = postgres.IntegerColumn("approved_proof_id")
 		ManufacturingStepColumn = postgres.StringColumn("manufacturing_step")
-		ExcludedFromOrderColumn = postgres.BoolColumn("excluded_from_order")
 		CreatedAtColumn         = postgres.TimestampzColumn("created_at")
 		UpdatedAtColumn         = postgres.TimestampzColumn("updated_at")
 		VersionColumn           = postgres.IntegerColumn("version")
-		allColumns              = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, PreviewURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, ExcludedFromOrderColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns          = postgres.ColumnList{UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, PreviewURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, ExcludedFromOrderColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		defaultColumns          = postgres.ColumnList{IDColumn, UUIDColumn, PreviewURLColumn, ExcludedFromOrderColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		allColumns              = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, IsCustomizedColumn, PreviewURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns          = postgres.ColumnList{UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, IsCustomizedColumn, PreviewURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		defaultColumns          = postgres.ColumnList{IDColumn, UUIDColumn, IsCustomizedColumn, PreviewURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
 	return inlaysTable{
@@ -96,10 +96,10 @@ func newInlaysTableImpl(schemaName, tableName, alias string) inlaysTable {
 		ProjectID:         ProjectIDColumn,
 		Name:              NameColumn,
 		Type:              TypeColumn,
+		IsCustomized:      IsCustomizedColumn,
 		PreviewURL:        PreviewURLColumn,
 		ApprovedProofID:   ApprovedProofIDColumn,
 		ManufacturingStep: ManufacturingStepColumn,
-		ExcludedFromOrder: ExcludedFromOrderColumn,
 		CreatedAt:         CreatedAtColumn,
 		UpdatedAt:         UpdatedAtColumn,
 		Version:           VersionColumn,

@@ -17,37 +17,37 @@ import (
 type NotificationEventType string
 
 type notificationEventTypes struct {
-	ProofReady       NotificationEventType
-	ProofApproved    NotificationEventType
-	ProofDeclined    NotificationEventType
-	ProjectSubmitted NotificationEventType
-	OrderPlaced      NotificationEventType
-	InlayStepChanged NotificationEventType
-	InlayBlocked     NotificationEventType
-	InlayUnblocked   NotificationEventType
-	ProjectShipped   NotificationEventType
-	ProjectDelivered NotificationEventType
-	InvoiceSent      NotificationEventType
-	InvoiceVoided    NotificationEventType
-	PaymentReceived  NotificationEventType
-	ChatMessage      NotificationEventType
+	ProofReady              NotificationEventType
+	ProofApproved           NotificationEventType
+	ProofDeclined           NotificationEventType
+	InternalReviewRequired  NotificationEventType
+	OrderPlaced             NotificationEventType
+	InlayStepChanged        NotificationEventType
+	InlayBlocked            NotificationEventType
+	InlayUnblocked          NotificationEventType
+	ProjectShipped          NotificationEventType
+	ProjectDelivered        NotificationEventType
+	InvoiceSent             NotificationEventType
+	InvoiceVoided           NotificationEventType
+	PaymentReceived         NotificationEventType
+	ChatMessage             NotificationEventType
 }
 
 var NotificationEventTypes = notificationEventTypes{
-	ProofReady:       NotificationEventType("proof_ready"),
-	ProofApproved:    NotificationEventType("proof_approved"),
-	ProofDeclined:    NotificationEventType("proof_declined"),
-	ProjectSubmitted: NotificationEventType("project_submitted"),
-	OrderPlaced:      NotificationEventType("order_placed"),
-	InlayStepChanged: NotificationEventType("inlay_step_changed"),
-	InlayBlocked:     NotificationEventType("inlay_blocked"),
-	InlayUnblocked:   NotificationEventType("inlay_unblocked"),
-	ProjectShipped:   NotificationEventType("project_shipped"),
-	ProjectDelivered: NotificationEventType("project_delivered"),
-	InvoiceSent:      NotificationEventType("invoice_sent"),
-	InvoiceVoided:    NotificationEventType("invoice_voided"),
-	PaymentReceived:  NotificationEventType("payment_received"),
-	ChatMessage:      NotificationEventType("chat_message"),
+	ProofReady:             NotificationEventType("proof_ready"),
+	ProofApproved:          NotificationEventType("proof_approved"),
+	ProofDeclined:          NotificationEventType("proof_declined"),
+	InternalReviewRequired: NotificationEventType("internal_review_required"),
+	OrderPlaced:            NotificationEventType("order_placed"),
+	InlayStepChanged:       NotificationEventType("inlay_step_changed"),
+	InlayBlocked:           NotificationEventType("inlay_blocked"),
+	InlayUnblocked:         NotificationEventType("inlay_unblocked"),
+	ProjectShipped:         NotificationEventType("project_shipped"),
+	ProjectDelivered:       NotificationEventType("project_delivered"),
+	InvoiceSent:            NotificationEventType("invoice_sent"),
+	InvoiceVoided:          NotificationEventType("invoice_voided"),
+	PaymentReceived:        NotificationEventType("payment_received"),
+	ChatMessage:            NotificationEventType("chat_message"),
 }
 
 type Notification struct {

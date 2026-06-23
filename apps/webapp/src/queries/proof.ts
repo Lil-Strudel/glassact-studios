@@ -56,10 +56,18 @@ export function postProofOpts() {
   });
 }
 
-export async function postApproveProof(
-  proofUuid: string,
-): Promise<GET<InlayProof>> {
-  const res = await api.post(`/proof/${proofUuid}/approve`);
+export interface ApproveProofRequest {
+  price_group_id?: number | null;
+}
+
+export async function postApproveProof(params: {
+  proofUuid: string;
+  body?: ApproveProofRequest;
+}): Promise<GET<InlayProof>> {
+  const res = await api.post(
+    `/proof/${params.proofUuid}/approve`,
+    params.body ?? {},
+  );
   return res.data;
 }
 

@@ -28,20 +28,19 @@ interface StatusGroup {
 
 const DEALERSHIP_GROUPS: StatusGroup[] = [
   {
-    title: "Needs Action",
-    description:
-      "Projects needing submission, proof approval, or invoice payment.",
-    statuses: ["draft", "pending-approval", "approved", "invoiced"],
+    title: "Drafts",
+    description: "Projects you're still preparing.",
+    statuses: ["draft"],
   },
   {
-    title: "Pending",
-    description: "Projects currently being designed.",
-    statuses: ["designing"],
+    title: "Ordered",
+    description: "Orders placed and awaiting production.",
+    statuses: ["ordered"],
   },
   {
-    title: "Active",
-    description: "Projects currently in progress.",
-    statuses: ["ordered", "in-production", "shipped", "delivered"],
+    title: "In Production",
+    description: "Projects currently being manufactured or shipped.",
+    statuses: ["in-production", "shipped", "delivered", "invoiced"],
   },
   {
     title: "Completed",
@@ -52,25 +51,20 @@ const DEALERSHIP_GROUPS: StatusGroup[] = [
 
 const INTERNAL_GROUPS: StatusGroup[] = [
   {
-    title: "Needs Action",
-    description: "Projects requiring design work or delivery confirmation.",
-    statuses: ["designing", "delivered"],
-  },
-  {
     title: "Incoming",
     description:
       "New projects from dealerships that are still being prepared.",
     statuses: ["draft"],
   },
   {
-    title: "Pending",
-    description: "Projects awaiting approval or already approved.",
-    statuses: ["pending-approval", "approved"],
+    title: "Ordered",
+    description: "Orders placed and awaiting production.",
+    statuses: ["ordered"],
   },
   {
-    title: "Active",
-    description: "Projects currently in progress.",
-    statuses: ["ordered", "in-production", "shipped", "invoiced"],
+    title: "In Production",
+    description: "Projects currently being manufactured or shipped.",
+    statuses: ["in-production", "shipped", "delivered", "invoiced"],
   },
   {
     title: "Completed",

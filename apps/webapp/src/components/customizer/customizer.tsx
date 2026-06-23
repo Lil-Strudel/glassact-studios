@@ -7,6 +7,7 @@ import {
 } from "solid-js";
 import { useMutation } from "@tanstack/solid-query";
 import type {
+  BakeResult,
   CatalogItem,
   ColorOverrides,
   GlassColor,
@@ -33,6 +34,7 @@ interface CustomizerProps {
   svgText: string;
   glassColors: GET<GlassColor>[];
   grouts: GET<Grout>[];
+  onBakeComplete?: (result: BakeResult) => void;
 }
 
 interface PersistedState {
@@ -247,15 +249,22 @@ export function Customizer(props: CustomizerProps) {
   const bake = useMutation(() => postBakeOpts());
 
   function onSave() {
-    bake.mutate({
-      uuid: props.item.uuid,
-      body: {
-        scale_factor: width() / props.item.default_width,
-        width: width(),
-        height: height(),
-        color_overrides: overrides(),
+    bake.mutate(
+      {
+        uuid: props.item.uuid,
+        body: {
+          scale_factor: width() / props.item.default_width,
+          width: width(),
+          height: height(),
+          color_overrides: overrides(),
+        },
       },
-    });
+      {
+        onSuccess(result) {
+          props.onBakeComplete?.(result);
+        },
+      },
+    );
   }
 
   const customPieces = createMemo(() => totalCustomPieces(overrides()));
@@ -307,7 +316,7 @@ export function Customizer(props: CustomizerProps) {
         </div>
       </div>
 
-      <Show when={bake.isSuccess && bake.data}>
+      <Show when={!props.onBakeComplete && bake.isSuccess && bake.data}>
         {(result) => (
           <Alert variant="success">
             <AlertDescription class="flex items-center justify-between">

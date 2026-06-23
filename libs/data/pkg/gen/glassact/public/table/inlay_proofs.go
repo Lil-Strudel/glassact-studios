@@ -17,27 +17,30 @@ type inlayProofsTable struct {
 	postgres.Table
 
 	// Columns
-	ID             postgres.ColumnInteger
-	UUID           postgres.ColumnString
-	InlayID        postgres.ColumnInteger
-	VersionNumber  postgres.ColumnInteger
-	DesignAssetURL postgres.ColumnString
-	Width          postgres.ColumnFloat
-	Height         postgres.ColumnFloat
-	PriceGroupID   postgres.ColumnInteger
-	PriceCents     postgres.ColumnInteger
-	ScaleFactor    postgres.ColumnFloat
-	ColorOverrides postgres.ColumnString
-	Status         postgres.ColumnString
-	ApprovedAt     postgres.ColumnTimestampz
-	ApprovedBy     postgres.ColumnInteger
-	DeclinedAt     postgres.ColumnTimestampz
-	DeclinedBy     postgres.ColumnInteger
-	DeclineReason  postgres.ColumnString
-	SentInChatID   postgres.ColumnInteger
-	CreatedAt      postgres.ColumnTimestampz
-	UpdatedAt      postgres.ColumnTimestampz
-	Version        postgres.ColumnInteger
+	ID                         postgres.ColumnInteger
+	UUID                       postgres.ColumnString
+	InlayID                    postgres.ColumnInteger
+	VersionNumber              postgres.ColumnInteger
+	DesignAssetURL             postgres.ColumnString
+	Width                      postgres.ColumnFloat
+	Height                     postgres.ColumnFloat
+	PriceGroupID               postgres.ColumnInteger
+	PriceCents                 postgres.ColumnInteger
+	ScaleFactor                postgres.ColumnFloat
+	ColorOverrides             postgres.ColumnString
+	ApprovalAuthority          postgres.ColumnString
+	Status                     postgres.ColumnString
+	ApprovedAt                 postgres.ColumnTimestampz
+	ApprovedByDealershipUserID postgres.ColumnInteger
+	ApprovedByInternalUserID   postgres.ColumnInteger
+	DeclinedAt                 postgres.ColumnTimestampz
+	DeclinedByDealershipUserID postgres.ColumnInteger
+	DeclinedByInternalUserID   postgres.ColumnInteger
+	DeclineReason              postgres.ColumnString
+	SentInChatID               postgres.ColumnInteger
+	CreatedAt                  postgres.ColumnTimestampz
+	UpdatedAt                  postgres.ColumnTimestampz
+	Version                    postgres.ColumnInteger
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -79,57 +82,63 @@ func newInlayProofsTable(schemaName, tableName, alias string) *InlayProofsTable 
 
 func newInlayProofsTableImpl(schemaName, tableName, alias string) inlayProofsTable {
 	var (
-		IDColumn             = postgres.IntegerColumn("id")
-		UUIDColumn           = postgres.StringColumn("uuid")
-		InlayIDColumn        = postgres.IntegerColumn("inlay_id")
-		VersionNumberColumn  = postgres.IntegerColumn("version_number")
-		DesignAssetURLColumn = postgres.StringColumn("design_asset_url")
-		WidthColumn          = postgres.FloatColumn("width")
-		HeightColumn         = postgres.FloatColumn("height")
-		PriceGroupIDColumn   = postgres.IntegerColumn("price_group_id")
-		PriceCentsColumn     = postgres.IntegerColumn("price_cents")
-		ScaleFactorColumn    = postgres.FloatColumn("scale_factor")
-		ColorOverridesColumn = postgres.StringColumn("color_overrides")
-		StatusColumn         = postgres.StringColumn("status")
-		ApprovedAtColumn     = postgres.TimestampzColumn("approved_at")
-		ApprovedByColumn     = postgres.IntegerColumn("approved_by")
-		DeclinedAtColumn     = postgres.TimestampzColumn("declined_at")
-		DeclinedByColumn     = postgres.IntegerColumn("declined_by")
-		DeclineReasonColumn  = postgres.StringColumn("decline_reason")
-		SentInChatIDColumn   = postgres.IntegerColumn("sent_in_chat_id")
-		CreatedAtColumn      = postgres.TimestampzColumn("created_at")
-		UpdatedAtColumn      = postgres.TimestampzColumn("updated_at")
-		VersionColumn        = postgres.IntegerColumn("version")
-		allColumns           = postgres.ColumnList{IDColumn, UUIDColumn, InlayIDColumn, VersionNumberColumn, DesignAssetURLColumn, WidthColumn, HeightColumn, PriceGroupIDColumn, PriceCentsColumn, ScaleFactorColumn, ColorOverridesColumn, StatusColumn, ApprovedAtColumn, ApprovedByColumn, DeclinedAtColumn, DeclinedByColumn, DeclineReasonColumn, SentInChatIDColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns       = postgres.ColumnList{UUIDColumn, InlayIDColumn, VersionNumberColumn, DesignAssetURLColumn, WidthColumn, HeightColumn, PriceGroupIDColumn, PriceCentsColumn, ScaleFactorColumn, ColorOverridesColumn, StatusColumn, ApprovedAtColumn, ApprovedByColumn, DeclinedAtColumn, DeclinedByColumn, DeclineReasonColumn, SentInChatIDColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		defaultColumns       = postgres.ColumnList{IDColumn, UUIDColumn, ScaleFactorColumn, ColorOverridesColumn, StatusColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		IDColumn                         = postgres.IntegerColumn("id")
+		UUIDColumn                       = postgres.StringColumn("uuid")
+		InlayIDColumn                    = postgres.IntegerColumn("inlay_id")
+		VersionNumberColumn              = postgres.IntegerColumn("version_number")
+		DesignAssetURLColumn             = postgres.StringColumn("design_asset_url")
+		WidthColumn                      = postgres.FloatColumn("width")
+		HeightColumn                     = postgres.FloatColumn("height")
+		PriceGroupIDColumn               = postgres.IntegerColumn("price_group_id")
+		PriceCentsColumn                 = postgres.IntegerColumn("price_cents")
+		ScaleFactorColumn                = postgres.FloatColumn("scale_factor")
+		ColorOverridesColumn             = postgres.StringColumn("color_overrides")
+		ApprovalAuthorityColumn          = postgres.StringColumn("approval_authority")
+		StatusColumn                     = postgres.StringColumn("status")
+		ApprovedAtColumn                 = postgres.TimestampzColumn("approved_at")
+		ApprovedByDealershipUserIDColumn = postgres.IntegerColumn("approved_by_dealership_user_id")
+		ApprovedByInternalUserIDColumn   = postgres.IntegerColumn("approved_by_internal_user_id")
+		DeclinedAtColumn                 = postgres.TimestampzColumn("declined_at")
+		DeclinedByDealershipUserIDColumn = postgres.IntegerColumn("declined_by_dealership_user_id")
+		DeclinedByInternalUserIDColumn   = postgres.IntegerColumn("declined_by_internal_user_id")
+		DeclineReasonColumn              = postgres.StringColumn("decline_reason")
+		SentInChatIDColumn               = postgres.IntegerColumn("sent_in_chat_id")
+		CreatedAtColumn                  = postgres.TimestampzColumn("created_at")
+		UpdatedAtColumn                  = postgres.TimestampzColumn("updated_at")
+		VersionColumn                    = postgres.IntegerColumn("version")
+		allColumns                       = postgres.ColumnList{IDColumn, UUIDColumn, InlayIDColumn, VersionNumberColumn, DesignAssetURLColumn, WidthColumn, HeightColumn, PriceGroupIDColumn, PriceCentsColumn, ScaleFactorColumn, ColorOverridesColumn, ApprovalAuthorityColumn, StatusColumn, ApprovedAtColumn, ApprovedByDealershipUserIDColumn, ApprovedByInternalUserIDColumn, DeclinedAtColumn, DeclinedByDealershipUserIDColumn, DeclinedByInternalUserIDColumn, DeclineReasonColumn, SentInChatIDColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns                   = postgres.ColumnList{UUIDColumn, InlayIDColumn, VersionNumberColumn, DesignAssetURLColumn, WidthColumn, HeightColumn, PriceGroupIDColumn, PriceCentsColumn, ScaleFactorColumn, ColorOverridesColumn, ApprovalAuthorityColumn, StatusColumn, ApprovedAtColumn, ApprovedByDealershipUserIDColumn, ApprovedByInternalUserIDColumn, DeclinedAtColumn, DeclinedByDealershipUserIDColumn, DeclinedByInternalUserIDColumn, DeclineReasonColumn, SentInChatIDColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		defaultColumns                   = postgres.ColumnList{IDColumn, UUIDColumn, ScaleFactorColumn, ColorOverridesColumn, ApprovalAuthorityColumn, StatusColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
 	return inlayProofsTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:             IDColumn,
-		UUID:           UUIDColumn,
-		InlayID:        InlayIDColumn,
-		VersionNumber:  VersionNumberColumn,
-		DesignAssetURL: DesignAssetURLColumn,
-		Width:          WidthColumn,
-		Height:         HeightColumn,
-		PriceGroupID:   PriceGroupIDColumn,
-		PriceCents:     PriceCentsColumn,
-		ScaleFactor:    ScaleFactorColumn,
-		ColorOverrides: ColorOverridesColumn,
-		Status:         StatusColumn,
-		ApprovedAt:     ApprovedAtColumn,
-		ApprovedBy:     ApprovedByColumn,
-		DeclinedAt:     DeclinedAtColumn,
-		DeclinedBy:     DeclinedByColumn,
-		DeclineReason:  DeclineReasonColumn,
-		SentInChatID:   SentInChatIDColumn,
-		CreatedAt:      CreatedAtColumn,
-		UpdatedAt:      UpdatedAtColumn,
-		Version:        VersionColumn,
+		ID:                         IDColumn,
+		UUID:                       UUIDColumn,
+		InlayID:                    InlayIDColumn,
+		VersionNumber:              VersionNumberColumn,
+		DesignAssetURL:             DesignAssetURLColumn,
+		Width:                      WidthColumn,
+		Height:                     HeightColumn,
+		PriceGroupID:               PriceGroupIDColumn,
+		PriceCents:                 PriceCentsColumn,
+		ScaleFactor:                ScaleFactorColumn,
+		ColorOverrides:             ColorOverridesColumn,
+		ApprovalAuthority:          ApprovalAuthorityColumn,
+		Status:                     StatusColumn,
+		ApprovedAt:                 ApprovedAtColumn,
+		ApprovedByDealershipUserID: ApprovedByDealershipUserIDColumn,
+		ApprovedByInternalUserID:   ApprovedByInternalUserIDColumn,
+		DeclinedAt:                 DeclinedAtColumn,
+		DeclinedByDealershipUserID: DeclinedByDealershipUserIDColumn,
+		DeclinedByInternalUserID:   DeclinedByInternalUserIDColumn,
+		DeclineReason:              DeclineReasonColumn,
+		SentInChatID:               SentInChatIDColumn,
+		CreatedAt:                  CreatedAtColumn,
+		UpdatedAt:                  UpdatedAtColumn,
+		Version:                    VersionColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

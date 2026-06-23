@@ -329,7 +329,7 @@ func createTestInlayProof(t *testing.T, models Models, inlayID int, priceGroupID
 		ScaleFactor:    1.0,
 		ColorOverrides: map[string]interface{}{},
 		Status:         ProofStatuses.Pending,
-		SentInChatID:   chat.ID,
+		SentInChatID:   &chat.ID,
 	}
 
 	err := models.InlayProofs.Insert(proof)

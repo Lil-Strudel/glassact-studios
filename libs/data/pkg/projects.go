@@ -17,40 +17,35 @@ import (
 type ProjectStatus string
 
 type projectStatuses struct {
-	Draft           ProjectStatus
-	Designing       ProjectStatus
-	PendingApproval ProjectStatus
-	Approved        ProjectStatus
-	Ordered         ProjectStatus
-	InProduction    ProjectStatus
-	Shipped         ProjectStatus
-	Delivered       ProjectStatus
-	Invoiced        ProjectStatus
-	Completed       ProjectStatus
-	Cancelled       ProjectStatus
+	Draft        ProjectStatus
+	Ordered      ProjectStatus
+	InProduction ProjectStatus
+	Shipped      ProjectStatus
+	Delivered    ProjectStatus
+	Invoiced     ProjectStatus
+	Completed    ProjectStatus
+	Cancelled    ProjectStatus
 }
 
 var ProjectStatuses = projectStatuses{
-	Draft:           ProjectStatus("draft"),
-	Designing:       ProjectStatus("designing"),
-	PendingApproval: ProjectStatus("pending-approval"),
-	Approved:        ProjectStatus("approved"),
-	Ordered:         ProjectStatus("ordered"),
-	InProduction:    ProjectStatus("in-production"),
-	Shipped:         ProjectStatus("shipped"),
-	Delivered:       ProjectStatus("delivered"),
-	Invoiced:        ProjectStatus("invoiced"),
-	Completed:       ProjectStatus("completed"),
-	Cancelled:       ProjectStatus("cancelled"),
+	Draft:        ProjectStatus("draft"),
+	Ordered:      ProjectStatus("ordered"),
+	InProduction: ProjectStatus("in-production"),
+	Shipped:      ProjectStatus("shipped"),
+	Delivered:    ProjectStatus("delivered"),
+	Invoiced:     ProjectStatus("invoiced"),
+	Completed:    ProjectStatus("completed"),
+	Cancelled:    ProjectStatus("cancelled"),
 }
 
 type Project struct {
 	StandardTable
-	DealershipID int           `json:"dealership_id"`
-	Name         string        `json:"name"`
-	Status       ProjectStatus `json:"status"`
-	OrderedAt    *time.Time    `json:"ordered_at"`
-	OrderedBy    *int          `json:"ordered_by"`
+	DealershipID      int           `json:"dealership_id"`
+	Name              string        `json:"name"`
+	InternalReference *string       `json:"internal_reference"`
+	Status            ProjectStatus `json:"status"`
+	OrderedAt         *time.Time    `json:"ordered_at"`
+	OrderedBy         *int          `json:"ordered_by"`
 }
 
 type ProjectModel struct {
@@ -73,11 +68,12 @@ func projectFromGen(genProj model.Projects) *Project {
 			UpdatedAt: genProj.UpdatedAt,
 			Version:   int(genProj.Version),
 		},
-		DealershipID: int(genProj.DealershipID),
-		Name:         genProj.Name,
-		Status:       ProjectStatus(genProj.Status),
-		OrderedAt:    genProj.OrderedAt,
-		OrderedBy:    orderedBy,
+		DealershipID:      int(genProj.DealershipID),
+		Name:              genProj.Name,
+		InternalReference: genProj.InternalReference,
+		Status:            ProjectStatus(genProj.Status),
+		OrderedAt:         genProj.OrderedAt,
+		OrderedBy:         orderedBy,
 	}
 
 	return &project
@@ -101,16 +97,17 @@ func projectToGen(p *Project) (*model.Projects, error) {
 	}
 
 	genProj := model.Projects{
-		ID:           int32(p.ID),
-		UUID:         projectUUID,
-		DealershipID: int32(p.DealershipID),
-		Name:         p.Name,
-		Status:       string(p.Status),
-		OrderedAt:    p.OrderedAt,
-		OrderedBy:    orderedBy,
-		UpdatedAt:    p.UpdatedAt,
-		CreatedAt:    p.CreatedAt,
-		Version:      int32(p.Version),
+		ID:                int32(p.ID),
+		UUID:              projectUUID,
+		DealershipID:      int32(p.DealershipID),
+		Name:              p.Name,
+		InternalReference: p.InternalReference,
+		Status:            string(p.Status),
+		OrderedAt:         p.OrderedAt,
+		OrderedBy:         orderedBy,
+		UpdatedAt:         p.UpdatedAt,
+		CreatedAt:         p.CreatedAt,
+		Version:           int32(p.Version),
 	}
 
 	return &genProj, nil
@@ -125,6 +122,7 @@ func (m ProjectModel) Insert(project *Project) error {
 	query := table.Projects.INSERT(
 		table.Projects.DealershipID,
 		table.Projects.Name,
+		table.Projects.InternalReference,
 		table.Projects.Status,
 		table.Projects.OrderedAt,
 		table.Projects.OrderedBy,
@@ -165,6 +163,7 @@ func (m ProjectModel) TxInsert(tx *sql.Tx, project *Project) error {
 	query := table.Projects.INSERT(
 		table.Projects.DealershipID,
 		table.Projects.Name,
+		table.Projects.InternalReference,
 		table.Projects.Status,
 		table.Projects.OrderedAt,
 		table.Projects.OrderedBy,
@@ -311,6 +310,7 @@ func (m ProjectModel) updateProject(ctx context.Context, executor qrm.Queryable,
 
 	query := table.Projects.UPDATE(
 		table.Projects.Name,
+		table.Projects.InternalReference,
 		table.Projects.Status,
 		table.Projects.OrderedAt,
 		table.Projects.OrderedBy,

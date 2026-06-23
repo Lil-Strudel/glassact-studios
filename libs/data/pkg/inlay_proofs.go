@@ -31,24 +31,39 @@ var ProofStatuses = proofStatuses{
 	Superseded: ProofStatus("superseded"),
 }
 
+type ProofApprovalAuthority string
+
+type proofApprovalAuthorities struct {
+	Dealership ProofApprovalAuthority
+	Internal   ProofApprovalAuthority
+}
+
+var ProofApprovalAuthorities = proofApprovalAuthorities{
+	Dealership: ProofApprovalAuthority("dealership"),
+	Internal:   ProofApprovalAuthority("internal"),
+}
+
 type InlayProof struct {
 	StandardTable
-	InlayID        int                    `json:"inlay_id"`
-	VersionNumber  int                    `json:"version_number"`
-	DesignAssetURL string                 `json:"design_asset_url"`
-	Width          float64                `json:"width"`
-	Height         float64                `json:"height"`
-	PriceGroupID   *int                   `json:"price_group_id"`
-	PriceCents     *int                   `json:"price_cents"`
-	ScaleFactor    float64                `json:"scale_factor"`
-	ColorOverrides map[string]interface{} `json:"color_overrides"`
-	Status         ProofStatus            `json:"status"`
-	ApprovedAt     *time.Time             `json:"approved_at"`
-	ApprovedBy     *int                   `json:"approved_by"`
-	DeclinedAt     *time.Time             `json:"declined_at"`
-	DeclinedBy     *int                   `json:"declined_by"`
-	DeclineReason  *string                `json:"decline_reason"`
-	SentInChatID   int                    `json:"sent_in_chat_id"`
+	InlayID                    int                    `json:"inlay_id"`
+	VersionNumber              int                    `json:"version_number"`
+	DesignAssetURL             string                 `json:"design_asset_url"`
+	Width                      float64                `json:"width"`
+	Height                     float64                `json:"height"`
+	PriceGroupID               *int                   `json:"price_group_id"`
+	PriceCents                 *int                   `json:"price_cents"`
+	ScaleFactor                float64                `json:"scale_factor"`
+	ColorOverrides             map[string]interface{} `json:"color_overrides"`
+	ApprovalAuthority          ProofApprovalAuthority `json:"approval_authority"`
+	Status                     ProofStatus            `json:"status"`
+	ApprovedAt                 *time.Time             `json:"approved_at"`
+	ApprovedByDealershipUserID *int                   `json:"approved_by_dealership_user_id"`
+	ApprovedByInternalUserID   *int                   `json:"approved_by_internal_user_id"`
+	DeclinedAt                 *time.Time             `json:"declined_at"`
+	DeclinedByDealershipUserID *int                   `json:"declined_by_dealership_user_id"`
+	DeclinedByInternalUserID   *int                   `json:"declined_by_internal_user_id"`
+	DeclineReason              *string                `json:"decline_reason"`
+	SentInChatID               *int                   `json:"sent_in_chat_id"`
 }
 
 type InlayProofModel struct {
@@ -69,16 +84,34 @@ func inlayProofFromGen(genProof model.InlayProofs) *InlayProof {
 		priceCents = &priceCentsVal
 	}
 
-	var approvedBy *int
-	if genProof.ApprovedBy != nil {
-		approvedByVal := int(*genProof.ApprovedBy)
-		approvedBy = &approvedByVal
+	var approvedByDealershipUserID *int
+	if genProof.ApprovedByDealershipUserID != nil {
+		v := int(*genProof.ApprovedByDealershipUserID)
+		approvedByDealershipUserID = &v
 	}
 
-	var declinedBy *int
-	if genProof.DeclinedBy != nil {
-		declinedByVal := int(*genProof.DeclinedBy)
-		declinedBy = &declinedByVal
+	var approvedByInternalUserID *int
+	if genProof.ApprovedByInternalUserID != nil {
+		v := int(*genProof.ApprovedByInternalUserID)
+		approvedByInternalUserID = &v
+	}
+
+	var declinedByDealershipUserID *int
+	if genProof.DeclinedByDealershipUserID != nil {
+		v := int(*genProof.DeclinedByDealershipUserID)
+		declinedByDealershipUserID = &v
+	}
+
+	var declinedByInternalUserID *int
+	if genProof.DeclinedByInternalUserID != nil {
+		v := int(*genProof.DeclinedByInternalUserID)
+		declinedByInternalUserID = &v
+	}
+
+	var sentInChatID *int
+	if genProof.SentInChatID != nil {
+		v := int(*genProof.SentInChatID)
+		sentInChatID = &v
 	}
 
 	var colorOverrides map[string]interface{}
@@ -94,22 +127,25 @@ func inlayProofFromGen(genProof model.InlayProofs) *InlayProof {
 			UpdatedAt: genProof.UpdatedAt,
 			Version:   int(genProof.Version),
 		},
-		InlayID:        int(genProof.InlayID),
-		VersionNumber:  int(genProof.VersionNumber),
-		DesignAssetURL: genProof.DesignAssetURL,
-		Width:          genProof.Width,
-		Height:         genProof.Height,
-		PriceGroupID:   priceGroupID,
-		PriceCents:     priceCents,
-		ScaleFactor:    genProof.ScaleFactor,
-		ColorOverrides: colorOverrides,
-		Status:         ProofStatus(genProof.Status),
-		ApprovedAt:     genProof.ApprovedAt,
-		ApprovedBy:     approvedBy,
-		DeclinedAt:     genProof.DeclinedAt,
-		DeclinedBy:     declinedBy,
-		DeclineReason:  genProof.DeclineReason,
-		SentInChatID:   int(genProof.SentInChatID),
+		InlayID:                    int(genProof.InlayID),
+		VersionNumber:              int(genProof.VersionNumber),
+		DesignAssetURL:             genProof.DesignAssetURL,
+		Width:                      genProof.Width,
+		Height:                     genProof.Height,
+		PriceGroupID:               priceGroupID,
+		PriceCents:                 priceCents,
+		ScaleFactor:                genProof.ScaleFactor,
+		ColorOverrides:             colorOverrides,
+		ApprovalAuthority:          ProofApprovalAuthority(genProof.ApprovalAuthority),
+		Status:                     ProofStatus(genProof.Status),
+		ApprovedAt:                 genProof.ApprovedAt,
+		ApprovedByDealershipUserID: approvedByDealershipUserID,
+		ApprovedByInternalUserID:   approvedByInternalUserID,
+		DeclinedAt:                 genProof.DeclinedAt,
+		DeclinedByDealershipUserID: declinedByDealershipUserID,
+		DeclinedByInternalUserID:   declinedByInternalUserID,
+		DeclineReason:              genProof.DeclineReason,
+		SentInChatID:               sentInChatID,
 	}
 
 	return &proof
@@ -138,16 +174,34 @@ func inlayProofToGen(ip *InlayProof) (*model.InlayProofs, error) {
 		priceCents = &priceCentsVal
 	}
 
-	var approvedBy *int32
-	if ip.ApprovedBy != nil {
-		approvedByVal := int32(*ip.ApprovedBy)
-		approvedBy = &approvedByVal
+	var approvedByDealershipUserID *int32
+	if ip.ApprovedByDealershipUserID != nil {
+		v := int32(*ip.ApprovedByDealershipUserID)
+		approvedByDealershipUserID = &v
 	}
 
-	var declinedBy *int32
-	if ip.DeclinedBy != nil {
-		declinedByVal := int32(*ip.DeclinedBy)
-		declinedBy = &declinedByVal
+	var approvedByInternalUserID *int32
+	if ip.ApprovedByInternalUserID != nil {
+		v := int32(*ip.ApprovedByInternalUserID)
+		approvedByInternalUserID = &v
+	}
+
+	var declinedByDealershipUserID *int32
+	if ip.DeclinedByDealershipUserID != nil {
+		v := int32(*ip.DeclinedByDealershipUserID)
+		declinedByDealershipUserID = &v
+	}
+
+	var declinedByInternalUserID *int32
+	if ip.DeclinedByInternalUserID != nil {
+		v := int32(*ip.DeclinedByInternalUserID)
+		declinedByInternalUserID = &v
+	}
+
+	var sentInChatID *int32
+	if ip.SentInChatID != nil {
+		v := int32(*ip.SentInChatID)
+		sentInChatID = &v
 	}
 
 	colorOverridesStr := "{}"
@@ -156,28 +210,36 @@ func inlayProofToGen(ip *InlayProof) (*model.InlayProofs, error) {
 		colorOverridesStr = string(colorOverridesBytes)
 	}
 
+	authority := string(ip.ApprovalAuthority)
+	if authority == "" {
+		authority = string(ProofApprovalAuthorities.Dealership)
+	}
+
 	genProof := model.InlayProofs{
-		ID:             int32(ip.ID),
-		UUID:           proofUUID,
-		InlayID:        int32(ip.InlayID),
-		VersionNumber:  int32(ip.VersionNumber),
-		DesignAssetURL: ip.DesignAssetURL,
-		Width:          ip.Width,
-		Height:         ip.Height,
-		PriceGroupID:   priceGroupID,
-		PriceCents:     priceCents,
-		ScaleFactor:    ip.ScaleFactor,
-		ColorOverrides: colorOverridesStr,
-		Status:         string(ip.Status),
-		ApprovedAt:     ip.ApprovedAt,
-		ApprovedBy:     approvedBy,
-		DeclinedAt:     ip.DeclinedAt,
-		DeclinedBy:     declinedBy,
-		DeclineReason:  ip.DeclineReason,
-		SentInChatID:   int32(ip.SentInChatID),
-		UpdatedAt:      ip.UpdatedAt,
-		CreatedAt:      ip.CreatedAt,
-		Version:        int32(ip.Version),
+		ID:                         int32(ip.ID),
+		UUID:                       proofUUID,
+		InlayID:                    int32(ip.InlayID),
+		VersionNumber:              int32(ip.VersionNumber),
+		DesignAssetURL:             ip.DesignAssetURL,
+		Width:                      ip.Width,
+		Height:                     ip.Height,
+		PriceGroupID:               priceGroupID,
+		PriceCents:                 priceCents,
+		ScaleFactor:                ip.ScaleFactor,
+		ColorOverrides:             colorOverridesStr,
+		ApprovalAuthority:          authority,
+		Status:                     string(ip.Status),
+		ApprovedAt:                 ip.ApprovedAt,
+		ApprovedByDealershipUserID: approvedByDealershipUserID,
+		ApprovedByInternalUserID:   approvedByInternalUserID,
+		DeclinedAt:                 ip.DeclinedAt,
+		DeclinedByDealershipUserID: declinedByDealershipUserID,
+		DeclinedByInternalUserID:   declinedByInternalUserID,
+		DeclineReason:              ip.DeclineReason,
+		SentInChatID:               sentInChatID,
+		UpdatedAt:                  ip.UpdatedAt,
+		CreatedAt:                  ip.CreatedAt,
+		Version:                    int32(ip.Version),
 	}
 
 	return &genProof, nil
@@ -199,6 +261,7 @@ func (m InlayProofModel) insertProof(ctx context.Context, executor qrm.Queryable
 		table.InlayProofs.PriceCents,
 		table.InlayProofs.ScaleFactor,
 		table.InlayProofs.ColorOverrides,
+		table.InlayProofs.ApprovalAuthority,
 		table.InlayProofs.Status,
 		table.InlayProofs.SentInChatID,
 	).MODEL(
@@ -413,11 +476,15 @@ func (m InlayProofModel) updateProof(ctx context.Context, executor qrm.Queryable
 	}
 
 	query := table.InlayProofs.UPDATE(
+		table.InlayProofs.PriceGroupID,
+		table.InlayProofs.PriceCents,
 		table.InlayProofs.Status,
 		table.InlayProofs.ApprovedAt,
-		table.InlayProofs.ApprovedBy,
+		table.InlayProofs.ApprovedByDealershipUserID,
+		table.InlayProofs.ApprovedByInternalUserID,
 		table.InlayProofs.DeclinedAt,
-		table.InlayProofs.DeclinedBy,
+		table.InlayProofs.DeclinedByDealershipUserID,
+		table.InlayProofs.DeclinedByInternalUserID,
 		table.InlayProofs.DeclineReason,
 		table.InlayProofs.Version,
 	).MODEL(

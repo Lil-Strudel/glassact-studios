@@ -198,11 +198,9 @@ CREATE TABLE projects (
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     dealership_id INTEGER NOT NULL REFERENCES dealerships ON DELETE RESTRICT,
     name TEXT NOT NULL,
+    internal_reference TEXT,
     status VARCHAR(255) NOT NULL DEFAULT 'draft' CHECK (status IN (
         'draft',
-        'designing',
-        'pending-approval',
-        'approved',
         'ordered',
         'in-production',
         'shipped',
@@ -231,12 +229,12 @@ CREATE TABLE inlays (
     project_id INTEGER NOT NULL REFERENCES projects ON DELETE RESTRICT,
     name TEXT NOT NULL,
     type VARCHAR(255) NOT NULL CHECK (type IN ('catalog', 'custom')),
+    is_customized BOOLEAN NOT NULL DEFAULT false,
     preview_url TEXT NOT NULL DEFAULT '',
     approved_proof_id INTEGER,
     manufacturing_step VARCHAR(255) CHECK (manufacturing_step IS NULL OR manufacturing_step IN (
         'ordered', 'materials-prep', 'cutting', 'fire-polish', 'packaging', 'shipped', 'delivered'
     )),
-    excluded_from_order BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     version INTEGER NOT NULL DEFAULT 1
@@ -323,19 +321,30 @@ CREATE TABLE inlay_proofs (
     price_cents INTEGER,
     scale_factor DOUBLE PRECISION NOT NULL DEFAULT 1.0,
     color_overrides JSONB NOT NULL DEFAULT '{}',
+    approval_authority VARCHAR(255) NOT NULL DEFAULT 'dealership' CHECK (approval_authority IN (
+        'dealership', 'internal'
+    )),
     status VARCHAR(255) NOT NULL DEFAULT 'pending' CHECK (status IN (
         'pending', 'approved', 'declined', 'superseded'
     )),
     approved_at TIMESTAMPTZ,
-    approved_by INTEGER REFERENCES dealership_users,
+    approved_by_dealership_user_id INTEGER REFERENCES dealership_users,
+    approved_by_internal_user_id INTEGER REFERENCES internal_users,
     declined_at TIMESTAMPTZ,
-    declined_by INTEGER REFERENCES dealership_users,
+    declined_by_dealership_user_id INTEGER REFERENCES dealership_users,
+    declined_by_internal_user_id INTEGER REFERENCES internal_users,
     decline_reason TEXT,
-    sent_in_chat_id INTEGER REFERENCES inlay_chats NOT NULL,
+    sent_in_chat_id INTEGER REFERENCES inlay_chats,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     version INTEGER NOT NULL DEFAULT 1,
-    UNIQUE(inlay_id, version_number)
+    UNIQUE(inlay_id, version_number),
+    CONSTRAINT inlay_proofs_approver_check CHECK (
+        approved_by_dealership_user_id IS NULL OR approved_by_internal_user_id IS NULL
+    ),
+    CONSTRAINT inlay_proofs_decliner_check CHECK (
+        declined_by_dealership_user_id IS NULL OR declined_by_internal_user_id IS NULL
+    )
 );
 
 CREATE INDEX idx_inlay_proofs_inlay ON inlay_proofs(inlay_id);
@@ -421,7 +430,7 @@ CREATE TABLE order_snapshots (
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     project_id INTEGER NOT NULL REFERENCES projects ON DELETE RESTRICT,
     inlay_id INTEGER NOT NULL UNIQUE REFERENCES inlays ON DELETE RESTRICT,
-    proof_id INTEGER NOT NULL REFERENCES inlay_proofs,
+    proof_id INTEGER REFERENCES inlay_proofs,
     price_group_id INTEGER NOT NULL,
     price_cents INTEGER NOT NULL,
     width DOUBLE PRECISION NOT NULL,
@@ -459,7 +468,7 @@ CREATE TABLE notifications (
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     dealership_user_id INTEGER REFERENCES dealership_users ON DELETE CASCADE,
     internal_user_id INTEGER REFERENCES internal_users ON DELETE CASCADE,
-    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'project_submitted', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'invoice_voided', 'payment_received', 'chat_message')),
+    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'internal_review_required', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'invoice_voided', 'payment_received', 'chat_message')),
     title TEXT NOT NULL,
     body TEXT NOT NULL,
     project_id INTEGER REFERENCES projects ON DELETE SET NULL,
@@ -485,7 +494,7 @@ CREATE INDEX idx_notifications_unread_internal ON notifications(internal_user_id
 CREATE TABLE dealership_user_notification_prefs (
     id SERIAL PRIMARY KEY,
     dealership_user_id INTEGER NOT NULL REFERENCES dealership_users ON DELETE CASCADE,
-    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'project_submitted', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'payment_received', 'chat_message')),
+    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'internal_review_required', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'payment_received', 'chat_message')),
     email_enabled BOOLEAN NOT NULL DEFAULT true,
     UNIQUE(dealership_user_id, event_type)
 );
@@ -493,7 +502,7 @@ CREATE TABLE dealership_user_notification_prefs (
 CREATE TABLE internal_user_notification_prefs (
     id SERIAL PRIMARY KEY,
     internal_user_id INTEGER NOT NULL REFERENCES internal_users ON DELETE CASCADE,
-    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'project_submitted', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'payment_received', 'chat_message')),
+    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'internal_review_required', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'payment_received', 'chat_message')),
     email_enabled BOOLEAN NOT NULL DEFAULT true,
     UNIQUE(internal_user_id, event_type)
 );

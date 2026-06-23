@@ -17,7 +17,7 @@ func TestOrderSnapshot_Insert(t *testing.T) {
 	snapshot := &OrderSnapshot{
 		ProjectID:    project.ID,
 		InlayID:      inlay.ID,
-		ProofID:      proof.ID,
+		ProofID:      &proof.ID,
 		PriceGroupID: priceGroup.ID,
 		PriceCents:   50000,
 		Width:        100.5,
@@ -53,7 +53,7 @@ func TestOrderSnapshot_GetByID(t *testing.T) {
 	original := &OrderSnapshot{
 		ProjectID:    project.ID,
 		InlayID:      inlay.ID,
-		ProofID:      proof.ID,
+		ProofID:      &proof.ID,
 		PriceGroupID: priceGroup.ID,
 		PriceCents:   75000,
 		Width:        150.0,
@@ -102,7 +102,7 @@ func TestOrderSnapshot_GetByUUID(t *testing.T) {
 	original := &OrderSnapshot{
 		ProjectID:    project.ID,
 		InlayID:      inlay.ID,
-		ProofID:      proof.ID,
+		ProofID:      &proof.ID,
 		PriceGroupID: priceGroup.ID,
 		PriceCents:   100000,
 		Width:        200.0,
@@ -142,7 +142,7 @@ func TestOrderSnapshot_GetByProjectID(t *testing.T) {
 	snapshot1 := &OrderSnapshot{
 		ProjectID:    projectID,
 		InlayID:      inlay1.ID,
-		ProofID:      proof1.ID,
+		ProofID:      &proof1.ID,
 		PriceGroupID: priceGroup.ID,
 		PriceCents:   50000,
 		Width:        100.0,
@@ -152,7 +152,7 @@ func TestOrderSnapshot_GetByProjectID(t *testing.T) {
 	snapshot2 := &OrderSnapshot{
 		ProjectID:    projectID,
 		InlayID:      inlay2.ID,
-		ProofID:      proof2.ID,
+		ProofID:      &proof2.ID,
 		PriceGroupID: priceGroup.ID,
 		PriceCents:   60000,
 		Width:        120.0,
@@ -191,7 +191,7 @@ func TestOrderSnapshot_GetByInlayID(t *testing.T) {
 	snapshot := &OrderSnapshot{
 		ProjectID:    project.ID,
 		InlayID:      inlayID,
-		ProofID:      proof.ID,
+		ProofID:      &proof.ID,
 		PriceGroupID: priceGroup.ID,
 		PriceCents:   55000,
 		Width:        110.0,
@@ -228,7 +228,7 @@ func TestOrderSnapshot_Delete(t *testing.T) {
 	snapshot := &OrderSnapshot{
 		ProjectID:    project.ID,
 		InlayID:      inlay.ID,
-		ProofID:      proof.ID,
+		ProofID:      &proof.ID,
 		PriceGroupID: priceGroup.ID,
 		PriceCents:   45000,
 		Width:        90.0,
@@ -270,7 +270,7 @@ func TestOrderSnapshot_GetAll(t *testing.T) {
 	snapshot1 := &OrderSnapshot{
 		ProjectID:    project1.ID,
 		InlayID:      inlay1.ID,
-		ProofID:      proof1.ID,
+		ProofID:      &proof1.ID,
 		PriceGroupID: priceGroup.ID,
 		PriceCents:   40000,
 		Width:        80.0,
@@ -280,7 +280,7 @@ func TestOrderSnapshot_GetAll(t *testing.T) {
 	snapshot2 := &OrderSnapshot{
 		ProjectID:    project2.ID,
 		InlayID:      inlay2.ID,
-		ProofID:      proof2.ID,
+		ProofID:      &proof2.ID,
 		PriceGroupID: priceGroup.ID,
 		PriceCents:   35000,
 		Width:        70.0,

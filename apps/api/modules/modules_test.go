@@ -423,32 +423,38 @@ func TestAPIEndpoints(t *testing.T) {
 			t.Logf("✓ POST /api/project (%d)", resp.statusCode)
 		})
 
-		t.Run("POST /api/project/with-inlays", func(t *testing.T) {
+		t.Run("POST /api/project + add catalog inlay", func(t *testing.T) {
 			priceGroup := seedPriceGroup(t, testCtx, "Test Price Group")
 			catalogItem := seedCatalogItem(t, testCtx, priceGroup.ID, "TEST-INLAY-001")
 
-			resp := testCtx.request(testRequest{
+			projectResp := testCtx.request(testRequest{
 				method: "POST",
-				path:   "/api/project/with-inlays",
+				path:   "/api/project",
 				body: map[string]interface{}{
 					"name": "Project with Inlays",
-					"inlays": []map[string]interface{}{
-						{
-							"name":        "Inlay 1",
-							"type":        "catalog",
-							"preview_url": "https://example.com/preview.png",
-							"catalog_info": map[string]interface{}{
-								"catalog_item_id":     catalogItem.ID,
-								"customization_notes": "",
-							},
-						},
-					},
 				},
 				token: dealershipToken,
 			})
 
-			assert.Equal(t, http.StatusCreated, resp.statusCode)
-			t.Logf("✓ POST /api/project/with-inlays (%d)", resp.statusCode)
+			require.Equal(t, http.StatusCreated, projectResp.statusCode)
+
+			var projectData map[string]interface{}
+			require.NoError(t, json.Unmarshal(projectResp.body, &projectData))
+			projectUUID := projectData["uuid"].(string)
+
+			inlayResp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/project/%s/inlays/catalog", projectUUID),
+				body: map[string]interface{}{
+					"name":                "Inlay 1",
+					"catalog_item_id":     catalogItem.ID,
+					"customization_notes": "",
+				},
+				token: dealershipToken,
+			})
+
+			assert.Equal(t, http.StatusCreated, inlayResp.statusCode)
+			t.Logf("✓ POST /api/project + inlays/catalog (%d)", inlayResp.statusCode)
 		})
 
 		projects, _ := testCtx.db.Projects.GetAll()
@@ -1140,26 +1146,14 @@ func TestAPIEndpoints(t *testing.T) {
 	})
 
 	t.Run("Invoice Module", func(t *testing.T) {
-		// Setup: Create a project and advance it to delivered status
-		// First, create inlays and get project to delivered
+		// Setup: Create a project, add a catalog inlay, then advance to delivered.
 		catalogItem := seedCatalogItem(t, testCtx, seedPriceGroup(t, testCtx, "Invoice Test Group").ID, "TEST-INVOICE-INLAY")
 
 		projectResp := testCtx.request(testRequest{
 			method: "POST",
-			path:   "/api/project/with-inlays",
+			path:   "/api/project",
 			body: map[string]interface{}{
 				"name": "Invoice Test Project",
-				"inlays": []map[string]interface{}{
-					{
-						"name":        "Test Inlay",
-						"type":        "catalog",
-						"preview_url": "https://example.com/preview.png",
-						"catalog_info": map[string]interface{}{
-							"catalog_item_id":     catalogItem.ID,
-							"customization_notes": "",
-						},
-					},
-				},
 			},
 			token: dealershipToken,
 		})
@@ -1167,6 +1161,17 @@ func TestAPIEndpoints(t *testing.T) {
 		var projectData map[string]interface{}
 		_ = json.Unmarshal(projectResp.body, &projectData)
 		projectUUID := projectData["uuid"].(string)
+
+		testCtx.request(testRequest{
+			method: "POST",
+			path:   fmt.Sprintf("/api/project/%s/inlays/catalog", projectUUID),
+			body: map[string]interface{}{
+				"name":                "Test Inlay",
+				"catalog_item_id":     catalogItem.ID,
+				"customization_notes": "",
+			},
+			token: dealershipToken,
+		})
 
 		// Get the project and advance it through the workflow manually
 		projects, found, _ := testCtx.db.Projects.GetByUUID(projectUUID)

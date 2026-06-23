@@ -18,10 +18,10 @@ type Inlays struct {
 	ProjectID         int32
 	Name              string
 	Type              string
+	IsCustomized      bool
 	PreviewURL        string
 	ApprovedProofID   *int32
 	ManufacturingStep *string
-	ExcludedFromOrder bool
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	Version           int32

@@ -27,7 +27,7 @@ const ProofActions: Component<ProofActionsProps> = (props) => {
   };
 
   const handleApprove = () => {
-    approveMutation.mutate(props.proof.uuid, {
+    approveMutation.mutate({ proofUuid: props.proof.uuid }, {
       onSuccess() {
         showToast({ title: "Proof approved", variant: "success" });
         invalidateQueries();

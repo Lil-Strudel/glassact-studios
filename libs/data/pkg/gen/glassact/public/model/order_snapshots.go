@@ -17,7 +17,7 @@ type OrderSnapshots struct {
 	UUID         uuid.UUID
 	ProjectID    int32
 	InlayID      int32
-	ProofID      int32
+	ProofID      *int32
 	PriceGroupID int32
 	PriceCents   int32
 	Width        float64

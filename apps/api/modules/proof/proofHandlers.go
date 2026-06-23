@@ -129,6 +129,10 @@ func (m ProofModule) HandleGetProof(w http.ResponseWriter, r *http.Request) {
 	m.WriteJSON(w, r, http.StatusOK, proof)
 }
 
+// HandleCreateProof is used by internal designers to upload a proof for a
+// custom inlay. It always creates a dealership-authority proof (the dealership
+// then approves or declines it). Customizer-baked proofs for catalog inlays
+// are created inside inlay.HandlePostCatalogInlay, not here.
 func (m ProofModule) HandleCreateProof(w http.ResponseWriter, r *http.Request) {
 	inlay, project, ok := m.getInlayWithAccessCheck(w, r)
 	if !ok {
@@ -157,8 +161,8 @@ func (m ProofModule) HandleCreateProof(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if project.Status == data.ProjectStatuses.Draft {
-		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("cannot create proofs for a project that has not been submitted for design"))
+	if project.Status != data.ProjectStatuses.Draft {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("can only create proofs for draft projects, currently: %s", project.Status))
 		return
 	}
 
@@ -200,18 +204,20 @@ func (m ProofModule) HandleCreateProof(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	chatID := chatMessage.ID
 	proof := data.InlayProof{
-		InlayID:        inlay.ID,
-		VersionNumber:  versionNumber,
-		DesignAssetURL: body.DesignAssetURL,
-		Width:          body.Width,
-		Height:         body.Height,
-		PriceGroupID:   body.PriceGroupID,
-		PriceCents:     body.PriceCents,
-		ScaleFactor:    scaleFactor,
-		ColorOverrides: colorOverrides,
-		Status:         data.ProofStatuses.Pending,
-		SentInChatID:   chatMessage.ID,
+		InlayID:           inlay.ID,
+		VersionNumber:     versionNumber,
+		DesignAssetURL:    body.DesignAssetURL,
+		Width:             body.Width,
+		Height:            body.Height,
+		PriceGroupID:      body.PriceGroupID,
+		PriceCents:        body.PriceCents,
+		ScaleFactor:       scaleFactor,
+		ColorOverrides:    colorOverrides,
+		ApprovalAuthority: data.ProofApprovalAuthorities.Dealership,
+		Status:            data.ProofStatuses.Pending,
+		SentInChatID:      &chatID,
 	}
 
 	err = m.Db.InlayProofs.TxInsert(tx, &proof)
@@ -233,15 +239,6 @@ func (m ProofModule) HandleCreateProof(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if project.Status == data.ProjectStatuses.Designing {
-		project.Status = data.ProjectStatuses.PendingApproval
-		err = m.Db.Projects.TxUpdate(tx, project)
-		if err != nil {
-			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to update project status: %w", err))
-			return
-		}
-	}
-
 	err = tx.Commit()
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
@@ -259,23 +256,87 @@ func (m ProofModule) HandleCreateProof(w http.ResponseWriter, r *http.Request) {
 	m.WriteJSON(w, r, http.StatusCreated, proof)
 }
 
-func (m ProofModule) HandleApproveProof(w http.ResponseWriter, r *http.Request) {
+// loadProofWithContext fetches a proof and its surrounding inlay + project,
+// running the dealership scope check before returning.
+func (m ProofModule) loadProofWithContext(w http.ResponseWriter, r *http.Request) (*data.InlayProof, *data.Inlay, *data.Project, bool) {
 	proofUUID := r.PathValue("uuid")
 
 	err := m.Validate.Var(proofUUID, "required,uuid4")
 	if err != nil {
 		m.WriteError(w, r, m.Err.BadRequest, err)
-		return
+		return nil, nil, nil, false
 	}
 
 	proof, found, err := m.Db.InlayProofs.GetByUUID(proofUUID)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
+		return nil, nil, nil, false
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return nil, nil, nil, false
+	}
+
+	inlay, found, err := m.Db.Inlays.GetByID(proof.InlayID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return nil, nil, nil, false
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return nil, nil, nil, false
+	}
+
+	project, found, err := m.Db.Projects.GetByID(inlay.ProjectID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return nil, nil, nil, false
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return nil, nil, nil, false
+	}
+
+	user := m.ContextGetUser(r)
+	if user.IsDealership() {
+		dealershipID := user.GetDealershipID()
+		if dealershipID == nil || *dealershipID != project.DealershipID {
+			m.WriteError(w, r, m.Err.Forbidden, nil)
+			return nil, nil, nil, false
+		}
+	}
+
+	return proof, inlay, project, true
+}
+
+// authorizeProofAction enforces that the calling user has the right to act on
+// this proof, branching on the proof's approval authority.
+func (m ProofModule) authorizeProofAction(w http.ResponseWriter, r *http.Request, proof *data.InlayProof) bool {
+	user := m.ContextGetUser(r)
+
+	switch proof.ApprovalAuthority {
+	case data.ProofApprovalAuthorities.Internal:
+		if !user.IsInternal() || !user.Can(data.ActionInternalApproveProof) {
+			m.WriteError(w, r, m.Err.Forbidden, nil)
+			return false
+		}
+	default: // dealership
+		if !user.Can(data.ActionApproveProof) {
+			m.WriteError(w, r, m.Err.Forbidden, nil)
+			return false
+		}
+	}
+
+	return true
+}
+
+func (m ProofModule) HandleApproveProof(w http.ResponseWriter, r *http.Request) {
+	proof, inlay, project, ok := m.loadProofWithContext(w, r)
+	if !ok {
 		return
 	}
 
-	if !found {
-		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+	if !m.authorizeProofAction(w, r, proof) {
 		return
 	}
 
@@ -284,36 +345,19 @@ func (m ProofModule) HandleApproveProof(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	inlay, found, err := m.Db.Inlays.GetByID(proof.InlayID)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
+	// Internal-authority approvals may override price_group_id (and clear
+	// price_cents so the new group's base price applies).
+	var body struct {
+		PriceGroupID *int `json:"price_group_id"`
 	}
-
-	if !found {
-		m.WriteError(w, r, m.Err.RecordNotFound, nil)
-		return
-	}
-
-	project, found, err := m.Db.Projects.GetByID(inlay.ProjectID)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
-	}
-
-	if !found {
-		m.WriteError(w, r, m.Err.RecordNotFound, nil)
-		return
-	}
-
-	user := m.ContextGetUser(r)
-	if user.IsDealership() {
-		dealershipID := user.GetDealershipID()
-		if dealershipID == nil || *dealershipID != project.DealershipID {
-			m.WriteError(w, r, m.Err.Forbidden, nil)
+	if r.ContentLength > 0 {
+		if err := m.ReadJSONBody(w, r, &body); err != nil {
+			m.WriteError(w, r, m.Err.BadRequest, err)
 			return
 		}
 	}
+
+	user := m.ContextGetUser(r)
 
 	tx, err := m.Db.STDB.Begin()
 	if err != nil {
@@ -322,11 +366,22 @@ func (m ProofModule) HandleApproveProof(w http.ResponseWriter, r *http.Request) 
 	}
 	defer tx.Rollback()
 
+	if proof.ApprovalAuthority == data.ProofApprovalAuthorities.Internal && body.PriceGroupID != nil {
+		proof.PriceGroupID = body.PriceGroupID
+		proof.PriceCents = nil
+	}
+
 	now := time.Now()
 	userID := user.GetID()
 	proof.Status = data.ProofStatuses.Approved
 	proof.ApprovedAt = &now
-	proof.ApprovedBy = &userID
+	if user.IsInternal() {
+		proof.ApprovedByInternalUserID = &userID
+		proof.ApprovedByDealershipUserID = nil
+	} else {
+		proof.ApprovedByDealershipUserID = &userID
+		proof.ApprovedByInternalUserID = nil
+	}
 
 	err = m.Db.InlayProofs.TxUpdate(tx, proof)
 	if err != nil {
@@ -334,18 +389,26 @@ func (m ProofModule) HandleApproveProof(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	dealershipUserID := user.GetID()
-	chatMessage := data.InlayChat{
-		InlayID:          inlay.ID,
-		DealershipUserID: &dealershipUserID,
-		MessageType:      data.ChatMessageTypes.ProofApproved,
-		Message:          fmt.Sprintf("Proof v%d approved", proof.VersionNumber),
-	}
+	// Only customer-facing approvals get a chat message; internal review of a
+	// customized catalog inlay is an internal process.
+	if proof.ApprovalAuthority == data.ProofApprovalAuthorities.Dealership {
+		actorID := user.GetID()
+		chatMessage := data.InlayChat{
+			InlayID:     inlay.ID,
+			MessageType: data.ChatMessageTypes.ProofApproved,
+			Message:     fmt.Sprintf("Proof v%d approved", proof.VersionNumber),
+		}
+		if user.IsInternal() {
+			chatMessage.InternalUserID = &actorID
+		} else {
+			chatMessage.DealershipUserID = &actorID
+		}
 
-	err = m.Db.InlayChats.TxInsert(tx, &chatMessage)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to create approval chat message: %w", err))
-		return
+		err = m.Db.InlayChats.TxInsert(tx, &chatMessage)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to create approval chat message: %w", err))
+			return
+		}
 	}
 
 	inlay.ApprovedProofID = &proof.ID
@@ -355,81 +418,33 @@ func (m ProofModule) HandleApproveProof(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	allInlays, err := m.Db.Inlays.GetByProjectID(project.ID)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
-	}
-
-	allApproved := true
-	for _, projectInlay := range allInlays {
-		if projectInlay.ExcludedFromOrder {
-			continue
-		}
-		if projectInlay.ID == inlay.ID {
-			continue
-		}
-		if projectInlay.ApprovedProofID == nil {
-			allApproved = false
-			break
-		}
-	}
-
-	if allApproved {
-		project.Status = data.ProjectStatuses.Approved
-	} else {
-		project.Status = data.ProjectStatuses.PendingApproval
-	}
-
-	err = m.Db.Projects.TxUpdate(tx, project)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to update project status: %w", err))
-		return
-	}
-
 	err = tx.Commit()
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
-	m.SendNotificationToAllInternalUsers(
-		data.NotificationEventTypes.ProofApproved,
-		fmt.Sprintf("Proof approved: %s", inlay.Name),
-		fmt.Sprintf("Proof v%d for inlay %q has been approved.", proof.VersionNumber, inlay.Name),
-		&project.ID, &inlay.ID,
-	)
+	// Only notify internal users about dealership approvals (the internal user
+	// who approves an internal-authority proof already knows about it).
+	if proof.ApprovalAuthority == data.ProofApprovalAuthorities.Dealership {
+		m.SendNotificationToAllInternalUsers(
+			data.NotificationEventTypes.ProofApproved,
+			fmt.Sprintf("Proof approved: %s", inlay.Name),
+			fmt.Sprintf("Proof v%d for inlay %q has been approved.", proof.VersionNumber, inlay.Name),
+			&project.ID, &inlay.ID,
+		)
+	}
 
 	m.WriteJSON(w, r, http.StatusOK, proof)
 }
 
 func (m ProofModule) HandleDeclineProof(w http.ResponseWriter, r *http.Request) {
-	proofUUID := r.PathValue("uuid")
-
-	err := m.Validate.Var(proofUUID, "required,uuid4")
-	if err != nil {
-		m.WriteError(w, r, m.Err.BadRequest, err)
+	proof, inlay, project, ok := m.loadProofWithContext(w, r)
+	if !ok {
 		return
 	}
 
-	var body struct {
-		DeclineReason string `json:"decline_reason" validate:"required"`
-	}
-
-	err = m.ReadJSONBody(w, r, &body)
-	if err != nil {
-		m.WriteError(w, r, m.Err.BadRequest, err)
-		return
-	}
-
-	proof, found, err := m.Db.InlayProofs.GetByUUID(proofUUID)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
-	}
-
-	if !found {
-		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+	if !m.authorizeProofAction(w, r, proof) {
 		return
 	}
 
@@ -438,36 +453,17 @@ func (m ProofModule) HandleDeclineProof(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	inlay, found, err := m.Db.Inlays.GetByID(proof.InlayID)
+	var body struct {
+		DeclineReason string `json:"decline_reason" validate:"required"`
+	}
+
+	err := m.ReadJSONBody(w, r, &body)
 	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
-	}
-
-	if !found {
-		m.WriteError(w, r, m.Err.RecordNotFound, nil)
-		return
-	}
-
-	project, found, err := m.Db.Projects.GetByID(inlay.ProjectID)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
-	}
-
-	if !found {
-		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		m.WriteError(w, r, m.Err.BadRequest, err)
 		return
 	}
 
 	user := m.ContextGetUser(r)
-	if user.IsDealership() {
-		dealershipID := user.GetDealershipID()
-		if dealershipID == nil || *dealershipID != project.DealershipID {
-			m.WriteError(w, r, m.Err.Forbidden, nil)
-			return
-		}
-	}
 
 	tx, err := m.Db.STDB.Begin()
 	if err != nil {
@@ -480,8 +476,14 @@ func (m ProofModule) HandleDeclineProof(w http.ResponseWriter, r *http.Request) 
 	userID := user.GetID()
 	proof.Status = data.ProofStatuses.Declined
 	proof.DeclinedAt = &now
-	proof.DeclinedBy = &userID
 	proof.DeclineReason = &body.DeclineReason
+	if user.IsInternal() {
+		proof.DeclinedByInternalUserID = &userID
+		proof.DeclinedByDealershipUserID = nil
+	} else {
+		proof.DeclinedByDealershipUserID = &userID
+		proof.DeclinedByInternalUserID = nil
+	}
 
 	err = m.Db.InlayProofs.TxUpdate(tx, proof)
 	if err != nil {
@@ -489,50 +491,23 @@ func (m ProofModule) HandleDeclineProof(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	dealershipUserID := user.GetID()
-	chatMessage := data.InlayChat{
-		InlayID:          inlay.ID,
-		DealershipUserID: &dealershipUserID,
-		MessageType:      data.ChatMessageTypes.ProofDeclined,
-		Message:          fmt.Sprintf("Proof v%d declined: %s", proof.VersionNumber, body.DeclineReason),
-	}
+	if proof.ApprovalAuthority == data.ProofApprovalAuthorities.Dealership {
+		actorID := user.GetID()
+		chatMessage := data.InlayChat{
+			InlayID:     inlay.ID,
+			MessageType: data.ChatMessageTypes.ProofDeclined,
+			Message:     fmt.Sprintf("Proof v%d declined: %s", proof.VersionNumber, body.DeclineReason),
+		}
+		if user.IsInternal() {
+			chatMessage.InternalUserID = &actorID
+		} else {
+			chatMessage.DealershipUserID = &actorID
+		}
 
-	err = m.Db.InlayChats.TxInsert(tx, &chatMessage)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to create decline chat message: %w", err))
-		return
-	}
-
-	if project.Status == data.ProjectStatuses.PendingApproval || project.Status == data.ProjectStatuses.Approved {
-		allInlays, err := m.Db.Inlays.GetByProjectID(project.ID)
+		err = m.Db.InlayChats.TxInsert(tx, &chatMessage)
 		if err != nil {
-			m.WriteError(w, r, m.Err.ServerError, err)
+			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to create decline chat message: %w", err))
 			return
-		}
-
-		hasPendingProofs := false
-		for _, projectInlay := range allInlays {
-			if projectInlay.ExcludedFromOrder {
-				continue
-			}
-			latestProof, found, err := m.Db.InlayProofs.GetLatestByInlayID(projectInlay.ID)
-			if err != nil {
-				m.WriteError(w, r, m.Err.ServerError, err)
-				return
-			}
-			if found && latestProof.Status == data.ProofStatuses.Pending {
-				hasPendingProofs = true
-				break
-			}
-		}
-
-		if !hasPendingProofs {
-			project.Status = data.ProjectStatuses.Designing
-			err = m.Db.Projects.TxUpdate(tx, project)
-			if err != nil {
-				m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to update project status: %w", err))
-				return
-			}
 		}
 	}
 
@@ -542,12 +517,14 @@ func (m ProofModule) HandleDeclineProof(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	m.SendNotificationToAllInternalUsers(
-		data.NotificationEventTypes.ProofDeclined,
-		fmt.Sprintf("Proof declined: %s", inlay.Name),
-		fmt.Sprintf("Proof v%d for inlay %q has been declined: %s", proof.VersionNumber, inlay.Name, body.DeclineReason),
-		&project.ID, &inlay.ID,
-	)
+	if proof.ApprovalAuthority == data.ProofApprovalAuthorities.Dealership {
+		m.SendNotificationToAllInternalUsers(
+			data.NotificationEventTypes.ProofDeclined,
+			fmt.Sprintf("Proof declined: %s", inlay.Name),
+			fmt.Sprintf("Proof v%d for inlay %q has been declined: %s", proof.VersionNumber, inlay.Name, body.DeclineReason),
+			&project.ID, &inlay.ID,
+		)
+	}
 
 	m.WriteJSON(w, r, http.StatusOK, proof)
 }
