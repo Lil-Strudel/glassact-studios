@@ -21,7 +21,8 @@ type InlayProofs struct {
 	Width                      float64
 	Height                     float64
 	PriceGroupID               *int32
-	PriceCents                 *int32
+	PriceAdjustmentType        string
+	PriceAdjustmentValue       float64
 	ScaleFactor                float64
 	ColorOverrides             string
 	ApprovalAuthority          string

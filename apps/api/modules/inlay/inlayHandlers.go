@@ -74,13 +74,26 @@ func (m InlayModule) validateInlayOwnership(w http.ResponseWriter, r *http.Reque
 // order and what each line will cost.
 type InlayWithProofStatus struct {
 	*data.Inlay
-	HasPendingProof   bool    `json:"has_pending_proof"`
-	LatestProofStatus *string `json:"latest_proof_status"`
-	IsReady           bool    `json:"is_ready"`
-	PriceGroupID      *int    `json:"price_group_id"`
-	PriceGroupName    *string `json:"price_group_name"`
-	PriceCents        *int    `json:"price_cents"`
-	HasActiveBlocker  bool    `json:"has_active_blocker"`
+	HasPendingProof      bool                     `json:"has_pending_proof"`
+	LatestProofStatus    *string                  `json:"latest_proof_status"`
+	IsReady              bool                     `json:"is_ready"`
+	PriceGroupID         *int                     `json:"price_group_id"`
+	PriceGroupName       *string                  `json:"price_group_name"`
+	PriceCents           *int                     `json:"price_cents"`
+	PriceAdjustmentType  data.PriceAdjustmentType `json:"price_adjustment_type"`
+	PriceAdjustmentValue float64                  `json:"price_adjustment_value"`
+	HasActiveBlocker     bool                     `json:"has_active_blocker"`
+}
+
+// inlayPricing carries the resolved pricing for an inlay: which price group
+// applies, its display name, the final per-unit price after adjustment, and the
+// adjustment itself (so the frontend can render the "PG1 + 20%" formula).
+type inlayPricing struct {
+	PriceGroupID    *int
+	PriceGroupName  *string
+	PriceCents      *int
+	AdjustmentType  data.PriceAdjustmentType
+	AdjustmentValue float64
 }
 
 // inlayIsReady is the single source of truth for "can this inlay be ordered?"
@@ -92,33 +105,19 @@ func inlayIsReady(inlay *data.Inlay) bool {
 	return inlay.ApprovedProofID != nil
 }
 
-// buildInlayPricing returns (priceGroupID, priceGroupName, priceCents) for an
-// inlay. Stock catalog inlays use the catalog's default price group; otherwise
-// we look at the approved proof (or, for customized catalog inlays still
-// pending internal review, the proof's draft pricing).
-func (m InlayModule) buildInlayPricing(inlay *data.Inlay) (*int, *string, *int, error) {
+// buildInlayPricing resolves the price group, final per-unit price, and the
+// adjustment formula for an inlay. Stock catalog inlays use the catalog's
+// default price group (no adjustment); otherwise we look at the approved proof
+// (or, for customized catalog inlays still pending internal review, the latest
+// proof's proposed pricing).
+func (m InlayModule) buildInlayPricing(inlay *data.Inlay) (inlayPricing, error) {
 	if inlay.ApprovedProofID != nil {
 		proof, found, err := m.Db.InlayProofs.GetByID(*inlay.ApprovedProofID)
 		if err != nil {
-			return nil, nil, nil, err
+			return inlayPricing{}, err
 		}
 		if found && proof.PriceGroupID != nil {
-			pg, pgFound, pgErr := m.Db.PriceGroups.GetByID(*proof.PriceGroupID)
-			if pgErr != nil {
-				return nil, nil, nil, pgErr
-			}
-			priceGroupID := proof.PriceGroupID
-			priceCents := proof.PriceCents
-			var priceGroupName *string
-			if pgFound {
-				name := pg.Name
-				priceGroupName = &name
-				if priceCents == nil {
-					base := pg.BasePriceCents
-					priceCents = &base
-				}
-			}
-			return priceGroupID, priceGroupName, priceCents, nil
+			return m.pricingFromProof(proof)
 		}
 	}
 
@@ -127,53 +126,63 @@ func (m InlayModule) buildInlayPricing(inlay *data.Inlay) (*int, *string, *int, 
 	if inlay.Type == data.InlayTypes.Catalog && inlay.IsCustomized && inlay.ApprovedProofID == nil {
 		latest, found, err := m.Db.InlayProofs.GetLatestByInlayID(inlay.ID)
 		if err != nil {
-			return nil, nil, nil, err
+			return inlayPricing{}, err
 		}
 		if found && latest.PriceGroupID != nil {
-			pg, pgFound, pgErr := m.Db.PriceGroups.GetByID(*latest.PriceGroupID)
-			if pgErr != nil {
-				return nil, nil, nil, pgErr
-			}
-			priceGroupID := latest.PriceGroupID
-			priceCents := latest.PriceCents
-			var priceGroupName *string
-			if pgFound {
-				name := pg.Name
-				priceGroupName = &name
-				if priceCents == nil {
-					base := pg.BasePriceCents
-					priceCents = &base
-				}
-			}
-			return priceGroupID, priceGroupName, priceCents, nil
+			return m.pricingFromProof(latest)
 		}
 	}
 
-	// Stock catalog inlay: catalog defaults.
+	// Stock catalog inlay: catalog defaults, no adjustment.
 	if inlay.Type == data.InlayTypes.Catalog && inlay.CatalogInfo != nil {
 		catalogItem, found, err := m.Db.CatalogItems.GetByID(inlay.CatalogInfo.CatalogItemID)
 		if err != nil {
-			return nil, nil, nil, err
+			return inlayPricing{}, err
 		}
 		if found {
 			pg, pgFound, pgErr := m.Db.PriceGroups.GetByID(catalogItem.DefaultPriceGroupID)
 			if pgErr != nil {
-				return nil, nil, nil, pgErr
+				return inlayPricing{}, pgErr
 			}
 			priceGroupID := catalogItem.DefaultPriceGroupID
-			var priceGroupName *string
-			var priceCents *int
+			pricing := inlayPricing{
+				PriceGroupID:   &priceGroupID,
+				AdjustmentType: data.PriceAdjustmentTypes.None,
+			}
 			if pgFound {
 				name := pg.Name
-				priceGroupName = &name
 				base := pg.BasePriceCents
-				priceCents = &base
+				pricing.PriceGroupName = &name
+				pricing.PriceCents = &base
 			}
-			return &priceGroupID, priceGroupName, priceCents, nil
+			return pricing, nil
 		}
 	}
 
-	return nil, nil, nil, nil
+	return inlayPricing{AdjustmentType: data.PriceAdjustmentTypes.None}, nil
+}
+
+// pricingFromProof resolves a proof's price group base and applies its
+// adjustment to produce the final per-unit price plus the formula components.
+func (m InlayModule) pricingFromProof(proof *data.InlayProof) (inlayPricing, error) {
+	pg, pgFound, pgErr := m.Db.PriceGroups.GetByID(*proof.PriceGroupID)
+	if pgErr != nil {
+		return inlayPricing{}, pgErr
+	}
+
+	pricing := inlayPricing{
+		PriceGroupID:    proof.PriceGroupID,
+		AdjustmentType:  proof.PriceAdjustmentType,
+		AdjustmentValue: proof.PriceAdjustmentValue,
+	}
+	if pgFound {
+		name := pg.Name
+		pricing.PriceGroupName = &name
+		priceCents := data.ComputeAdjustedPriceCents(pg.BasePriceCents, proof.PriceAdjustmentType, proof.PriceAdjustmentValue)
+		pricing.PriceCents = &priceCents
+	}
+
+	return pricing, nil
 }
 
 func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Request) {
@@ -215,14 +224,16 @@ func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Req
 			result[i].HasPendingProof = latestProof.Status == data.ProofStatuses.Pending
 		}
 
-		priceGroupID, priceGroupName, priceCents, err := m.buildInlayPricing(inlay)
+		pricing, err := m.buildInlayPricing(inlay)
 		if err != nil {
 			m.WriteError(w, r, m.Err.ServerError, err)
 			return
 		}
-		result[i].PriceGroupID = priceGroupID
-		result[i].PriceGroupName = priceGroupName
-		result[i].PriceCents = priceCents
+		result[i].PriceGroupID = pricing.PriceGroupID
+		result[i].PriceGroupName = pricing.PriceGroupName
+		result[i].PriceCents = pricing.PriceCents
+		result[i].PriceAdjustmentType = pricing.AdjustmentType
+		result[i].PriceAdjustmentValue = pricing.AdjustmentValue
 
 		unresolvedBlockers, err := m.Db.InlayBlockers.GetUnresolved(inlay.ID)
 		if err != nil {

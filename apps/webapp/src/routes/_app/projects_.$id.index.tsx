@@ -43,6 +43,7 @@ import { Can } from "../../components/Can";
 import { useUserContext } from "../../providers/user";
 import { isApiError } from "../../utils/is-api-error";
 import { formatMoney } from "../../utils/format-money";
+import { formatPriceFormula } from "../../utils/format-price-formula";
 import { PlaceOrderCart } from "../../components/place-order-cart";
 import {
   IoTrashOutline,
@@ -617,6 +618,13 @@ function InlayCard(props: InlayCardProps) {
     const dollars = (props.inlay.price_cents ?? 0) / 100;
     return formatMoney(dollars);
   });
+  const priceFormula = createMemo(() =>
+    formatPriceFormula(
+      props.inlay.price_group_name,
+      props.inlay.price_adjustment_type,
+      props.inlay.price_adjustment_value,
+    ),
+  );
 
   const showInternalApprove = createMemo(
     () =>
@@ -675,10 +683,10 @@ function InlayCard(props: InlayCardProps) {
               </Badge>
             </Show>
           </div>
-          <div class="flex items-center justify-between text-xs text-gray-600">
+          <div class="flex items-end justify-between text-xs text-gray-600">
             <span>{priceLabel()}</span>
-            <Show when={props.inlay.price_group_name}>
-              <span class="text-gray-500">{props.inlay.price_group_name}</span>
+            <Show when={priceFormula()}>
+              <span class="text-gray-500">{priceFormula()}</span>
             </Show>
           </div>
           <Show when={showManufacturingTracker()}>

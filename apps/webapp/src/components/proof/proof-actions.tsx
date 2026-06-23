@@ -4,6 +4,7 @@ import { Button, TextArea, TextFieldRoot, showToast } from "@glassact/ui";
 import type { GET, InlayProof } from "@glassact/data";
 import { postApproveProofOpts, postDeclineProofOpts } from "../../queries/proof";
 import { isApiError } from "../../utils/is-api-error";
+import InternalApproveProof from "./internal-approve-proof";
 import type { Component } from "solid-js";
 
 interface ProofActionsProps {
@@ -108,23 +109,42 @@ const ProofActions: Component<ProofActionsProps> = (props) => {
             </div>
           }
         >
-          <div class="flex gap-2">
-            <Button
-              size="sm"
-              variant="default"
-              disabled={approveMutation.isPending}
-              onClick={handleApprove}
-            >
-              {approveMutation.isPending ? "Approving..." : "Approve"}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowDeclineForm(true)}
-            >
-              Decline
-            </Button>
-          </div>
+          <Show
+            when={props.proof.approval_authority === "internal"}
+            fallback={
+              <div class="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="default"
+                  disabled={approveMutation.isPending}
+                  onClick={handleApprove}
+                >
+                  {approveMutation.isPending ? "Approving..." : "Approve"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowDeclineForm(true)}
+                >
+                  Decline
+                </Button>
+              </div>
+            }
+          >
+            <div class="flex flex-col gap-2">
+              <InternalApproveProof
+                proof={props.proof}
+                onApproved={invalidateQueries}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowDeclineForm(true)}
+              >
+                Decline
+              </Button>
+            </div>
+          </Show>
         </Show>
       </div>
     </Show>

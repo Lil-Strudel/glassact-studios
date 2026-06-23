@@ -25,7 +25,8 @@ type inlayProofsTable struct {
 	Width                      postgres.ColumnFloat
 	Height                     postgres.ColumnFloat
 	PriceGroupID               postgres.ColumnInteger
-	PriceCents                 postgres.ColumnInteger
+	PriceAdjustmentType        postgres.ColumnString
+	PriceAdjustmentValue       postgres.ColumnFloat
 	ScaleFactor                postgres.ColumnFloat
 	ColorOverrides             postgres.ColumnString
 	ApprovalAuthority          postgres.ColumnString
@@ -90,7 +91,8 @@ func newInlayProofsTableImpl(schemaName, tableName, alias string) inlayProofsTab
 		WidthColumn                      = postgres.FloatColumn("width")
 		HeightColumn                     = postgres.FloatColumn("height")
 		PriceGroupIDColumn               = postgres.IntegerColumn("price_group_id")
-		PriceCentsColumn                 = postgres.IntegerColumn("price_cents")
+		PriceAdjustmentTypeColumn        = postgres.StringColumn("price_adjustment_type")
+		PriceAdjustmentValueColumn       = postgres.FloatColumn("price_adjustment_value")
 		ScaleFactorColumn                = postgres.FloatColumn("scale_factor")
 		ColorOverridesColumn             = postgres.StringColumn("color_overrides")
 		ApprovalAuthorityColumn          = postgres.StringColumn("approval_authority")
@@ -106,9 +108,9 @@ func newInlayProofsTableImpl(schemaName, tableName, alias string) inlayProofsTab
 		CreatedAtColumn                  = postgres.TimestampzColumn("created_at")
 		UpdatedAtColumn                  = postgres.TimestampzColumn("updated_at")
 		VersionColumn                    = postgres.IntegerColumn("version")
-		allColumns                       = postgres.ColumnList{IDColumn, UUIDColumn, InlayIDColumn, VersionNumberColumn, DesignAssetURLColumn, WidthColumn, HeightColumn, PriceGroupIDColumn, PriceCentsColumn, ScaleFactorColumn, ColorOverridesColumn, ApprovalAuthorityColumn, StatusColumn, ApprovedAtColumn, ApprovedByDealershipUserIDColumn, ApprovedByInternalUserIDColumn, DeclinedAtColumn, DeclinedByDealershipUserIDColumn, DeclinedByInternalUserIDColumn, DeclineReasonColumn, SentInChatIDColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns                   = postgres.ColumnList{UUIDColumn, InlayIDColumn, VersionNumberColumn, DesignAssetURLColumn, WidthColumn, HeightColumn, PriceGroupIDColumn, PriceCentsColumn, ScaleFactorColumn, ColorOverridesColumn, ApprovalAuthorityColumn, StatusColumn, ApprovedAtColumn, ApprovedByDealershipUserIDColumn, ApprovedByInternalUserIDColumn, DeclinedAtColumn, DeclinedByDealershipUserIDColumn, DeclinedByInternalUserIDColumn, DeclineReasonColumn, SentInChatIDColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		defaultColumns                   = postgres.ColumnList{IDColumn, UUIDColumn, ScaleFactorColumn, ColorOverridesColumn, ApprovalAuthorityColumn, StatusColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		allColumns                       = postgres.ColumnList{IDColumn, UUIDColumn, InlayIDColumn, VersionNumberColumn, DesignAssetURLColumn, WidthColumn, HeightColumn, PriceGroupIDColumn, PriceAdjustmentTypeColumn, PriceAdjustmentValueColumn, ScaleFactorColumn, ColorOverridesColumn, ApprovalAuthorityColumn, StatusColumn, ApprovedAtColumn, ApprovedByDealershipUserIDColumn, ApprovedByInternalUserIDColumn, DeclinedAtColumn, DeclinedByDealershipUserIDColumn, DeclinedByInternalUserIDColumn, DeclineReasonColumn, SentInChatIDColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns                   = postgres.ColumnList{UUIDColumn, InlayIDColumn, VersionNumberColumn, DesignAssetURLColumn, WidthColumn, HeightColumn, PriceGroupIDColumn, PriceAdjustmentTypeColumn, PriceAdjustmentValueColumn, ScaleFactorColumn, ColorOverridesColumn, ApprovalAuthorityColumn, StatusColumn, ApprovedAtColumn, ApprovedByDealershipUserIDColumn, ApprovedByInternalUserIDColumn, DeclinedAtColumn, DeclinedByDealershipUserIDColumn, DeclinedByInternalUserIDColumn, DeclineReasonColumn, SentInChatIDColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		defaultColumns                   = postgres.ColumnList{IDColumn, UUIDColumn, PriceAdjustmentTypeColumn, PriceAdjustmentValueColumn, ScaleFactorColumn, ColorOverridesColumn, ApprovalAuthorityColumn, StatusColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
 	return inlayProofsTable{
@@ -123,7 +125,8 @@ func newInlayProofsTableImpl(schemaName, tableName, alias string) inlayProofsTab
 		Width:                      WidthColumn,
 		Height:                     HeightColumn,
 		PriceGroupID:               PriceGroupIDColumn,
-		PriceCents:                 PriceCentsColumn,
+		PriceAdjustmentType:        PriceAdjustmentTypeColumn,
+		PriceAdjustmentValue:       PriceAdjustmentValueColumn,
 		ScaleFactor:                ScaleFactorColumn,
 		ColorOverrides:             ColorOverridesColumn,
 		ApprovalAuthority:          ApprovalAuthorityColumn,

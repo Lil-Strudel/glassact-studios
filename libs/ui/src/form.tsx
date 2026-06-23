@@ -129,6 +129,7 @@ interface FormNumberFieldProps {
   fullWidth?: boolean;
   int?: boolean;
   decimalPlaces?: number;
+  allowNegative?: boolean;
 }
 function FormNumberField(props: FormNumberFieldProps) {
   const validationState = useValidationState(() => props.field());
@@ -158,6 +159,7 @@ function FormNumberField(props: FormNumberFieldProps) {
         onChange={handleChange}
         int={props.int}
         decimalPlaces={props.decimalPlaces}
+        allowNegative={props.allowNegative}
       />
       {props.description && (
         <TextFieldDescription>{props.description}</TextFieldDescription>

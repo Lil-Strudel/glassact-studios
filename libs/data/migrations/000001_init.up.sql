@@ -318,7 +318,10 @@ CREATE TABLE inlay_proofs (
     width DOUBLE PRECISION NOT NULL,
     height DOUBLE PRECISION NOT NULL,
     price_group_id INTEGER REFERENCES price_groups,
-    price_cents INTEGER,
+    price_adjustment_type VARCHAR(255) NOT NULL DEFAULT 'none' CHECK (price_adjustment_type IN (
+        'none', 'percent', 'fixed'
+    )),
+    price_adjustment_value DOUBLE PRECISION NOT NULL DEFAULT 0,
     scale_factor DOUBLE PRECISION NOT NULL DEFAULT 1.0,
     color_overrides JSONB NOT NULL DEFAULT '{}',
     approval_authority VARCHAR(255) NOT NULL DEFAULT 'dealership' CHECK (approval_authority IN (
@@ -433,6 +436,10 @@ CREATE TABLE order_snapshots (
     proof_id INTEGER REFERENCES inlay_proofs,
     price_group_id INTEGER NOT NULL,
     price_cents INTEGER NOT NULL,
+    price_adjustment_type VARCHAR(255) NOT NULL DEFAULT 'none' CHECK (price_adjustment_type IN (
+        'none', 'percent', 'fixed'
+    )),
+    price_adjustment_value DOUBLE PRECISION NOT NULL DEFAULT 0,
     width DOUBLE PRECISION NOT NULL,
     height DOUBLE PRECISION NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()

@@ -18,6 +18,7 @@ import type { InlayWithInfo } from "@glassact/data";
 import { postPlaceOrderOpts } from "../queries/order";
 import { isApiError } from "../utils/is-api-error";
 import { formatMoney } from "../utils/format-money";
+import { formatPriceFormula } from "../utils/format-price-formula";
 import { IoCheckmarkCircle } from "solid-icons/io";
 
 interface PlaceOrderCartProps {
@@ -144,6 +145,12 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                 {(inlay) => {
                   const isSelected = () => selected().has(inlay.uuid);
                   const unitDollars = () => dollarsFromCents(inlay.price_cents);
+                  const priceFormula = () =>
+                    formatPriceFormula(
+                      inlay.price_group_name,
+                      inlay.price_adjustment_type,
+                      inlay.price_adjustment_value,
+                    );
                   const isCatalog = () => inlay.type === "catalog";
                   const catalogCode = () =>
                     inlay.catalog_info ? `Catalog #${inlay.catalog_info.catalog_item_id}` : null;
@@ -199,15 +206,14 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                             <Show when={dims()}>
                               <span>{dims()}</span>
                             </Show>
-                            <Show when={inlay.price_group_name}>
-                              <span>{inlay.price_group_name}</span>
-                            </Show>
                           </div>
                         </div>
                         <div class="flex flex-col items-end shrink-0 text-sm">
-                          <span class="text-gray-500 text-xs">
-                            Unit {formatMoney(unitDollars())}
-                          </span>
+                          <Show when={priceFormula()}>
+                            <span class="text-gray-500 text-xs">
+                              {priceFormula()}
+                            </span>
+                          </Show>
                           <span class="font-semibold">
                             {formatMoney(unitDollars())}
                           </span>

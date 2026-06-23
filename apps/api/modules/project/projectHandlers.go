@@ -378,32 +378,31 @@ func (m ProjectModule) buildOrderSnapshot(projectID int, inlay *data.Inlay) (*da
 		}
 
 		priceGroupID := 0
+		baseCents := 0
 		if approvedProof.PriceGroupID != nil {
 			priceGroupID = *approvedProof.PriceGroupID
-		}
-
-		priceCents := 0
-		if approvedProof.PriceCents != nil {
-			priceCents = *approvedProof.PriceCents
-		} else if approvedProof.PriceGroupID != nil {
 			pg, pgFound, pgErr := m.Db.PriceGroups.GetByID(*approvedProof.PriceGroupID)
 			if pgErr != nil {
 				return nil, fmt.Errorf("failed to load price group for inlay %q: %w", inlay.Name, pgErr)
 			}
 			if pgFound {
-				priceCents = pg.BasePriceCents
+				baseCents = pg.BasePriceCents
 			}
 		}
 
+		priceCents := data.ComputeAdjustedPriceCents(baseCents, approvedProof.PriceAdjustmentType, approvedProof.PriceAdjustmentValue)
+
 		proofID := approvedProof.ID
 		return &data.OrderSnapshot{
-			ProjectID:    projectID,
-			InlayID:      inlay.ID,
-			ProofID:      &proofID,
-			PriceGroupID: priceGroupID,
-			PriceCents:   priceCents,
-			Width:        approvedProof.Width,
-			Height:       approvedProof.Height,
+			ProjectID:            projectID,
+			InlayID:              inlay.ID,
+			ProofID:              &proofID,
+			PriceGroupID:         priceGroupID,
+			PriceCents:           priceCents,
+			PriceAdjustmentType:  approvedProof.PriceAdjustmentType,
+			PriceAdjustmentValue: approvedProof.PriceAdjustmentValue,
+			Width:                approvedProof.Width,
+			Height:               approvedProof.Height,
 		}, nil
 	}
 
@@ -429,13 +428,15 @@ func (m ProjectModule) buildOrderSnapshot(projectID int, inlay *data.Inlay) (*da
 	}
 
 	return &data.OrderSnapshot{
-		ProjectID:    projectID,
-		InlayID:      inlay.ID,
-		ProofID:      nil,
-		PriceGroupID: catalogItem.DefaultPriceGroupID,
-		PriceCents:   priceGroup.BasePriceCents,
-		Width:        catalogItem.DefaultWidth,
-		Height:       catalogItem.DefaultHeight,
+		ProjectID:            projectID,
+		InlayID:              inlay.ID,
+		ProofID:              nil,
+		PriceGroupID:         catalogItem.DefaultPriceGroupID,
+		PriceCents:           priceGroup.BasePriceCents,
+		PriceAdjustmentType:  data.PriceAdjustmentTypes.None,
+		PriceAdjustmentValue: 0,
+		Width:                catalogItem.DefaultWidth,
+		Height:               catalogItem.DefaultHeight,
 	}, nil
 }
 

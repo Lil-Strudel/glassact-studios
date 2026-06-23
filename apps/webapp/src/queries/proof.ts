@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
-import type { GET, InlayProof } from "@glassact/data";
+import type { GET, InlayProof, PriceAdjustmentType } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
 export async function getProofsByInlay(
@@ -34,7 +34,8 @@ export interface CreateProofRequest {
   width: number;
   height: number;
   price_group_id?: number;
-  price_cents?: number;
+  price_adjustment_type?: PriceAdjustmentType;
+  price_adjustment_value?: number;
   scale_factor?: number;
   color_overrides?: Record<string, unknown>;
 }
@@ -58,6 +59,8 @@ export function postProofOpts() {
 
 export interface ApproveProofRequest {
   price_group_id?: number | null;
+  price_adjustment_type?: PriceAdjustmentType;
+  price_adjustment_value?: number;
 }
 
 export async function postApproveProof(params: {

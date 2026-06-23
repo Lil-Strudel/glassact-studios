@@ -43,6 +43,24 @@ var ProofApprovalAuthorities = proofApprovalAuthorities{
 	Internal:   ProofApprovalAuthority("internal"),
 }
 
+// PriceAdjustmentType describes how a proof's price is derived from its price
+// group's base price. The accompanying PriceAdjustmentValue is interpreted as
+// percentage points for "percent" (20 = +20%) and as cents for "fixed"
+// (1221 = +$12.21). Both may be negative (discounts). "none" ignores the value.
+type PriceAdjustmentType string
+
+type priceAdjustmentTypes struct {
+	None    PriceAdjustmentType
+	Percent PriceAdjustmentType
+	Fixed   PriceAdjustmentType
+}
+
+var PriceAdjustmentTypes = priceAdjustmentTypes{
+	None:    PriceAdjustmentType("none"),
+	Percent: PriceAdjustmentType("percent"),
+	Fixed:   PriceAdjustmentType("fixed"),
+}
+
 type InlayProof struct {
 	StandardTable
 	InlayID                    int                    `json:"inlay_id"`
@@ -51,7 +69,8 @@ type InlayProof struct {
 	Width                      float64                `json:"width"`
 	Height                     float64                `json:"height"`
 	PriceGroupID               *int                   `json:"price_group_id"`
-	PriceCents                 *int                   `json:"price_cents"`
+	PriceAdjustmentType        PriceAdjustmentType    `json:"price_adjustment_type"`
+	PriceAdjustmentValue       float64                `json:"price_adjustment_value"`
 	ScaleFactor                float64                `json:"scale_factor"`
 	ColorOverrides             map[string]interface{} `json:"color_overrides"`
 	ApprovalAuthority          ProofApprovalAuthority `json:"approval_authority"`
@@ -76,12 +95,6 @@ func inlayProofFromGen(genProof model.InlayProofs) *InlayProof {
 	if genProof.PriceGroupID != nil {
 		priceGroupIDVal := int(*genProof.PriceGroupID)
 		priceGroupID = &priceGroupIDVal
-	}
-
-	var priceCents *int
-	if genProof.PriceCents != nil {
-		priceCentsVal := int(*genProof.PriceCents)
-		priceCents = &priceCentsVal
 	}
 
 	var approvedByDealershipUserID *int
@@ -133,7 +146,8 @@ func inlayProofFromGen(genProof model.InlayProofs) *InlayProof {
 		Width:                      genProof.Width,
 		Height:                     genProof.Height,
 		PriceGroupID:               priceGroupID,
-		PriceCents:                 priceCents,
+		PriceAdjustmentType:        PriceAdjustmentType(genProof.PriceAdjustmentType),
+		PriceAdjustmentValue:       genProof.PriceAdjustmentValue,
 		ScaleFactor:                genProof.ScaleFactor,
 		ColorOverrides:             colorOverrides,
 		ApprovalAuthority:          ProofApprovalAuthority(genProof.ApprovalAuthority),
@@ -166,12 +180,6 @@ func inlayProofToGen(ip *InlayProof) (*model.InlayProofs, error) {
 	if ip.PriceGroupID != nil {
 		priceGroupIDVal := int32(*ip.PriceGroupID)
 		priceGroupID = &priceGroupIDVal
-	}
-
-	var priceCents *int32
-	if ip.PriceCents != nil {
-		priceCentsVal := int32(*ip.PriceCents)
-		priceCents = &priceCentsVal
 	}
 
 	var approvedByDealershipUserID *int32
@@ -215,6 +223,11 @@ func inlayProofToGen(ip *InlayProof) (*model.InlayProofs, error) {
 		authority = string(ProofApprovalAuthorities.Dealership)
 	}
 
+	adjustmentType := string(ip.PriceAdjustmentType)
+	if adjustmentType == "" {
+		adjustmentType = string(PriceAdjustmentTypes.None)
+	}
+
 	genProof := model.InlayProofs{
 		ID:                         int32(ip.ID),
 		UUID:                       proofUUID,
@@ -224,7 +237,8 @@ func inlayProofToGen(ip *InlayProof) (*model.InlayProofs, error) {
 		Width:                      ip.Width,
 		Height:                     ip.Height,
 		PriceGroupID:               priceGroupID,
-		PriceCents:                 priceCents,
+		PriceAdjustmentType:        adjustmentType,
+		PriceAdjustmentValue:       ip.PriceAdjustmentValue,
 		ScaleFactor:                ip.ScaleFactor,
 		ColorOverrides:             colorOverridesStr,
 		ApprovalAuthority:          authority,
@@ -258,7 +272,8 @@ func (m InlayProofModel) insertProof(ctx context.Context, executor qrm.Queryable
 		table.InlayProofs.Width,
 		table.InlayProofs.Height,
 		table.InlayProofs.PriceGroupID,
-		table.InlayProofs.PriceCents,
+		table.InlayProofs.PriceAdjustmentType,
+		table.InlayProofs.PriceAdjustmentValue,
 		table.InlayProofs.ScaleFactor,
 		table.InlayProofs.ColorOverrides,
 		table.InlayProofs.ApprovalAuthority,
@@ -477,7 +492,8 @@ func (m InlayProofModel) updateProof(ctx context.Context, executor qrm.Queryable
 
 	query := table.InlayProofs.UPDATE(
 		table.InlayProofs.PriceGroupID,
-		table.InlayProofs.PriceCents,
+		table.InlayProofs.PriceAdjustmentType,
+		table.InlayProofs.PriceAdjustmentValue,
 		table.InlayProofs.Status,
 		table.InlayProofs.ApprovedAt,
 		table.InlayProofs.ApprovedByDealershipUserID,

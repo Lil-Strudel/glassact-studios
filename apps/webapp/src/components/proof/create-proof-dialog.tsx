@@ -17,6 +17,10 @@ import { z } from "zod";
 import { postProofOpts } from "../../queries/proof";
 import { postUploadOpts } from "../../queries/upload";
 import { isApiError } from "../../utils/is-api-error";
+import {
+  PRICE_ADJUSTMENT_OPTIONS,
+  adjustmentValueToCents,
+} from "../../utils/proof-pricing";
 import PriceGroupCombobox from "../price-group-combobox";
 
 interface CreateProofDialogProps {
@@ -29,6 +33,8 @@ const CreateProofSchema = z.object({
   width: z.number().positive("Width must be greater than 0"),
   height: z.number().positive("Height must be greater than 0"),
   price_group_id: z.number().int().optional(),
+  price_adjustment_type: z.enum(["none", "percent", "fixed"]),
+  price_adjustment_value: z.number().optional(),
 });
 
 export default function CreateProofDialog(props: CreateProofDialogProps) {
@@ -44,6 +50,8 @@ export default function CreateProofDialog(props: CreateProofDialogProps) {
       width: "" as unknown as number,
       height: "" as unknown as number,
       price_group_id: undefined,
+      price_adjustment_type: "none",
+      price_adjustment_value: undefined,
     } as z.output<typeof CreateProofSchema>,
     validators: {
       onSubmit: CreateProofSchema,
@@ -58,6 +66,15 @@ export default function CreateProofDialog(props: CreateProofDialogProps) {
             height: value.height!,
             ...(value.price_group_id
               ? { price_group_id: value.price_group_id }
+              : {}),
+            ...(value.price_adjustment_type !== "none"
+              ? {
+                  price_adjustment_type: value.price_adjustment_type,
+                  price_adjustment_value: adjustmentValueToCents(
+                    value.price_adjustment_type,
+                    value.price_adjustment_value ?? 0,
+                  ),
+                }
               : {}),
           },
         },
@@ -163,6 +180,41 @@ export default function CreateProofDialog(props: CreateProofDialogProps) {
                   Optional. Leave blank to use default pricing, or select to
                   override.
                 </p>
+              </div>
+            )}
+          />
+
+          <form.Field
+            name="price_adjustment_type"
+            children={(typeField) => (
+              <div class="flex flex-col gap-2">
+                <Form.Select
+                  field={typeField}
+                  label="Price Adjustment"
+                  options={PRICE_ADJUSTMENT_OPTIONS}
+                />
+                <Show when={typeField().state.value !== "none"}>
+                  <form.Field
+                    name="price_adjustment_value"
+                    children={(valueField) => (
+                      <Form.NumberField
+                        field={valueField}
+                        label={
+                          typeField().state.value === "percent"
+                            ? "Adjustment (%)"
+                            : "Adjustment ($)"
+                        }
+                        placeholder={
+                          typeField().state.value === "percent"
+                            ? "e.g., 20 or -10"
+                            : "e.g., 12.21"
+                        }
+                        decimalPlaces={2}
+                        allowNegative
+                      />
+                    )}
+                  />
+                </Show>
               </div>
             )}
           />

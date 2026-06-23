@@ -15,16 +15,18 @@ import (
 )
 
 type OrderSnapshot struct {
-	ID           int       `json:"id"`
-	UUID         string    `json:"uuid"`
-	ProjectID    int       `json:"project_id"`
-	InlayID      int       `json:"inlay_id"`
-	ProofID      *int      `json:"proof_id"`
-	PriceGroupID int       `json:"price_group_id"`
-	PriceCents   int       `json:"price_cents"`
-	Width        float64   `json:"width"`
-	Height       float64   `json:"height"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID                   int                 `json:"id"`
+	UUID                 string              `json:"uuid"`
+	ProjectID            int                 `json:"project_id"`
+	InlayID              int                 `json:"inlay_id"`
+	ProofID              *int                `json:"proof_id"`
+	PriceGroupID         int                 `json:"price_group_id"`
+	PriceCents           int                 `json:"price_cents"`
+	PriceAdjustmentType  PriceAdjustmentType `json:"price_adjustment_type"`
+	PriceAdjustmentValue float64             `json:"price_adjustment_value"`
+	Width                float64             `json:"width"`
+	Height               float64             `json:"height"`
+	CreatedAt            time.Time           `json:"created_at"`
 }
 
 type OrderSnapshotModel struct {
@@ -40,16 +42,18 @@ func orderSnapshotFromGen(genSnapshot model.OrderSnapshots) *OrderSnapshot {
 	}
 
 	snapshot := OrderSnapshot{
-		ID:           int(genSnapshot.ID),
-		UUID:         genSnapshot.UUID.String(),
-		ProjectID:    int(genSnapshot.ProjectID),
-		InlayID:      int(genSnapshot.InlayID),
-		ProofID:      proofID,
-		PriceGroupID: int(genSnapshot.PriceGroupID),
-		PriceCents:   int(genSnapshot.PriceCents),
-		Width:        genSnapshot.Width,
-		Height:       genSnapshot.Height,
-		CreatedAt:    genSnapshot.CreatedAt,
+		ID:                   int(genSnapshot.ID),
+		UUID:                 genSnapshot.UUID.String(),
+		ProjectID:            int(genSnapshot.ProjectID),
+		InlayID:              int(genSnapshot.InlayID),
+		ProofID:              proofID,
+		PriceGroupID:         int(genSnapshot.PriceGroupID),
+		PriceCents:           int(genSnapshot.PriceCents),
+		PriceAdjustmentType:  PriceAdjustmentType(genSnapshot.PriceAdjustmentType),
+		PriceAdjustmentValue: genSnapshot.PriceAdjustmentValue,
+		Width:                genSnapshot.Width,
+		Height:               genSnapshot.Height,
+		CreatedAt:            genSnapshot.CreatedAt,
 	}
 
 	return &snapshot
@@ -72,17 +76,24 @@ func orderSnapshotToGen(os *OrderSnapshot) (*model.OrderSnapshots, error) {
 		proofID = &v
 	}
 
+	adjustmentType := string(os.PriceAdjustmentType)
+	if adjustmentType == "" {
+		adjustmentType = string(PriceAdjustmentTypes.None)
+	}
+
 	genSnapshot := model.OrderSnapshots{
-		ID:           int32(os.ID),
-		UUID:         snapshotUUID,
-		ProjectID:    int32(os.ProjectID),
-		InlayID:      int32(os.InlayID),
-		ProofID:      proofID,
-		PriceGroupID: int32(os.PriceGroupID),
-		PriceCents:   int32(os.PriceCents),
-		Width:        os.Width,
-		Height:       os.Height,
-		CreatedAt:    os.CreatedAt,
+		ID:                   int32(os.ID),
+		UUID:                 snapshotUUID,
+		ProjectID:            int32(os.ProjectID),
+		InlayID:              int32(os.InlayID),
+		ProofID:              proofID,
+		PriceGroupID:         int32(os.PriceGroupID),
+		PriceCents:           int32(os.PriceCents),
+		PriceAdjustmentType:  adjustmentType,
+		PriceAdjustmentValue: os.PriceAdjustmentValue,
+		Width:                os.Width,
+		Height:               os.Height,
+		CreatedAt:            os.CreatedAt,
 	}
 
 	return &genSnapshot, nil
@@ -100,6 +111,8 @@ func (m OrderSnapshotModel) insertSnapshot(ctx context.Context, executor qrm.Que
 		table.OrderSnapshots.ProofID,
 		table.OrderSnapshots.PriceGroupID,
 		table.OrderSnapshots.PriceCents,
+		table.OrderSnapshots.PriceAdjustmentType,
+		table.OrderSnapshots.PriceAdjustmentValue,
 		table.OrderSnapshots.Width,
 		table.OrderSnapshots.Height,
 	).MODEL(

@@ -140,13 +140,14 @@ func (m ProofModule) HandleCreateProof(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		DesignAssetURL string                 `json:"design_asset_url" validate:"required"`
-		Width          float64                `json:"width" validate:"required,gt=0"`
-		Height         float64                `json:"height" validate:"required,gt=0"`
-		PriceGroupID   *int                   `json:"price_group_id"`
-		PriceCents     *int                   `json:"price_cents"`
-		ScaleFactor    *float64               `json:"scale_factor"`
-		ColorOverrides map[string]interface{} `json:"color_overrides"`
+		DesignAssetURL       string                 `json:"design_asset_url" validate:"required"`
+		Width                float64                `json:"width" validate:"required,gt=0"`
+		Height               float64                `json:"height" validate:"required,gt=0"`
+		PriceGroupID         *int                   `json:"price_group_id"`
+		PriceAdjustmentType  *string                `json:"price_adjustment_type" validate:"omitempty,oneof=none percent fixed"`
+		PriceAdjustmentValue *float64               `json:"price_adjustment_value"`
+		ScaleFactor          *float64               `json:"scale_factor"`
+		ColorOverrides       map[string]interface{} `json:"color_overrides"`
 	}
 
 	err := m.ReadJSONBody(w, r, &body)
@@ -178,6 +179,15 @@ func (m ProofModule) HandleCreateProof(w http.ResponseWriter, r *http.Request) {
 		scaleFactor = *body.ScaleFactor
 	}
 
+	adjustmentType := data.PriceAdjustmentTypes.None
+	if body.PriceAdjustmentType != nil {
+		adjustmentType = data.PriceAdjustmentType(*body.PriceAdjustmentType)
+	}
+	adjustmentValue := 0.0
+	if body.PriceAdjustmentValue != nil {
+		adjustmentValue = *body.PriceAdjustmentValue
+	}
+
 	colorOverrides := map[string]interface{}{}
 	if body.ColorOverrides != nil {
 		colorOverrides = body.ColorOverrides
@@ -206,18 +216,19 @@ func (m ProofModule) HandleCreateProof(w http.ResponseWriter, r *http.Request) {
 
 	chatID := chatMessage.ID
 	proof := data.InlayProof{
-		InlayID:           inlay.ID,
-		VersionNumber:     versionNumber,
-		DesignAssetURL:    body.DesignAssetURL,
-		Width:             body.Width,
-		Height:            body.Height,
-		PriceGroupID:      body.PriceGroupID,
-		PriceCents:        body.PriceCents,
-		ScaleFactor:       scaleFactor,
-		ColorOverrides:    colorOverrides,
-		ApprovalAuthority: data.ProofApprovalAuthorities.Dealership,
-		Status:            data.ProofStatuses.Pending,
-		SentInChatID:      &chatID,
+		InlayID:              inlay.ID,
+		VersionNumber:        versionNumber,
+		DesignAssetURL:       body.DesignAssetURL,
+		Width:                body.Width,
+		Height:               body.Height,
+		PriceGroupID:         body.PriceGroupID,
+		PriceAdjustmentType:  adjustmentType,
+		PriceAdjustmentValue: adjustmentValue,
+		ScaleFactor:          scaleFactor,
+		ColorOverrides:       colorOverrides,
+		ApprovalAuthority:    data.ProofApprovalAuthorities.Dealership,
+		Status:               data.ProofStatuses.Pending,
+		SentInChatID:         &chatID,
 	}
 
 	err = m.Db.InlayProofs.TxInsert(tx, &proof)
@@ -345,10 +356,12 @@ func (m ProofModule) HandleApproveProof(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Internal-authority approvals may override price_group_id (and clear
-	// price_cents so the new group's base price applies).
+	// Internal-authority approvals may override the price group and apply a
+	// price adjustment (percent or fixed) on top of the group's base price.
 	var body struct {
-		PriceGroupID *int `json:"price_group_id"`
+		PriceGroupID         *int     `json:"price_group_id"`
+		PriceAdjustmentType  *string  `json:"price_adjustment_type" validate:"omitempty,oneof=none percent fixed"`
+		PriceAdjustmentValue *float64 `json:"price_adjustment_value"`
 	}
 	if r.ContentLength > 0 {
 		if err := m.ReadJSONBody(w, r, &body); err != nil {
@@ -366,9 +379,17 @@ func (m ProofModule) HandleApproveProof(w http.ResponseWriter, r *http.Request) 
 	}
 	defer tx.Rollback()
 
-	if proof.ApprovalAuthority == data.ProofApprovalAuthorities.Internal && body.PriceGroupID != nil {
-		proof.PriceGroupID = body.PriceGroupID
-		proof.PriceCents = nil
+	if proof.ApprovalAuthority == data.ProofApprovalAuthorities.Internal {
+		if body.PriceGroupID != nil {
+			proof.PriceGroupID = body.PriceGroupID
+		}
+		if body.PriceAdjustmentType != nil {
+			proof.PriceAdjustmentType = data.PriceAdjustmentType(*body.PriceAdjustmentType)
+			proof.PriceAdjustmentValue = 0
+			if body.PriceAdjustmentValue != nil {
+				proof.PriceAdjustmentValue = *body.PriceAdjustmentValue
+			}
+		}
 	}
 
 	now := time.Now()
