@@ -1,4 +1,5 @@
 import { StandardTable } from "./helpers";
+import { Manifest } from "./customizer";
 
 export type CatalogItemTag = StandardTable<{
   catalog_item_id: number;
@@ -16,5 +17,8 @@ export type CatalogItem = StandardTable<{
   min_height: number;
   default_price_group_id: number;
   svg_url: string;
+  // Server-managed: baked by the catalog write step from the finalized manifest
+  // (not part of create/update request bodies — those carry the manifest instead).
+  manifest?: Manifest;
   is_active: boolean;
 }>;

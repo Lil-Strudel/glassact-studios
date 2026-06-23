@@ -64,6 +64,14 @@ DROP TRIGGER IF EXISTS increment_dealership_users_version ON dealership_users;
 DROP TRIGGER IF EXISTS update_dealerships_updated_at ON dealerships;
 DROP TRIGGER IF EXISTS increment_dealerships_version ON dealerships;
 
+-- Grouts
+DROP TRIGGER IF EXISTS update_grouts_updated_at ON grouts;
+DROP TRIGGER IF EXISTS increment_grouts_version ON grouts;
+
+-- Glass Colors
+DROP TRIGGER IF EXISTS update_glass_colors_updated_at ON glass_colors;
+DROP TRIGGER IF EXISTS increment_glass_colors_version ON glass_colors;
+
 -- Price Groups
 DROP TRIGGER IF EXISTS update_price_groups_updated_at ON price_groups;
 DROP TRIGGER IF EXISTS increment_price_groups_version ON price_groups;

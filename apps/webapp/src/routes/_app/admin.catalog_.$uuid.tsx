@@ -3,14 +3,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import {
   getCatalogItemOpts,
   getCatalogTagsOpts,
-  patchCatalogOpts,
-  postCatalogTagOpts,
-  deleteCatalogTagOpts,
+  putCatalogOpts,
   deleteCatalogOpts,
 } from "../../queries/catalog";
-import { CatalogItem, POST } from "@glassact/data";
-import { CatalogForm } from "../../components/admin/catalog-form";
-import { Show } from "solid-js";
+import { getCatalogSvgTextOpts } from "../../queries/customize";
+import type { CatalogWriteRequest } from "@glassact/data";
+import {
+  CatalogForm,
+  type CatalogFormEditState,
+} from "../../components/admin/catalog-form";
+import { createMemo, Show } from "solid-js";
 import { Button } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/admin/catalog_/$uuid")({
@@ -24,37 +26,29 @@ function RouteComponent() {
 
   const itemQuery = useQuery(() => getCatalogItemOpts(params().uuid));
   const tagsQuery = useQuery(() => getCatalogTagsOpts(params().uuid));
-  const patchCatalog = useMutation(() => patchCatalogOpts());
+  const svgQuery = useQuery(() => getCatalogSvgTextOpts(params().uuid));
+  const putCatalog = useMutation(() => putCatalogOpts());
   const deleteCatalog = useMutation(() => deleteCatalogOpts());
-  const deleteTag = useMutation(() => deleteCatalogTagOpts());
-  const postTag = useMutation(() => postCatalogTagOpts());
 
-  const handleSubmit = async (data: POST<CatalogItem>, newTags: string[]) => {
-    const currentTags = tagsQuery.data ?? [];
+  // The editor needs the stored SVG text + the finalized manifest before it can
+  // render. Tags are carried in the write request, so no separate tag mutations.
+  const editState = createMemo<CatalogFormEditState | null>(() => {
+    const item = itemQuery.data;
+    const svgText = svgQuery.data;
+    if (!item || !item.manifest || svgText == null) return null;
+    return {
+      item,
+      svgText,
+      manifest: item.manifest,
+      tags: tagsQuery.data ?? [],
+    };
+  });
 
-    patchCatalog.mutate(
-      { uuid: params().uuid, body: data },
+  const handleSubmit = async (req: CatalogWriteRequest) => {
+    await putCatalog.mutateAsync(
+      { uuid: params().uuid, body: req },
       {
-        onSuccess: async () => {
-          const tagsToRemove = currentTags.filter((t) => !newTags.includes(t));
-          const tagsToAdd = newTags.filter((t) => !currentTags.includes(t));
-
-          for (const tag of tagsToRemove) {
-            try {
-              deleteTag.mutateAsync({ uuid: params().uuid, tag });
-            } catch (e) {
-              console.error("Failed to remove tag:", tag, e);
-            }
-          }
-
-          for (const tag of tagsToAdd) {
-            try {
-              postTag.mutateAsync({ uuid: params().uuid, tag });
-            } catch (e) {
-              console.error("Failed to add tag:", tag, e);
-            }
-          }
-
+        onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["catalog"] });
           navigate({ to: "/admin/catalog" });
         },
@@ -107,11 +101,11 @@ function RouteComponent() {
               </Button>
             </div>
 
-            <Show when={patchCatalog.isError}>
+            <Show when={putCatalog.isError}>
               <div class="bg-red-50 border border-red-200 rounded-md p-4">
                 <p class="text-sm text-red-600">
-                  {patchCatalog.error instanceof Error
-                    ? patchCatalog.error.message
+                  {putCatalog.error instanceof Error
+                    ? putCatalog.error.message
                     : "Failed to update catalog item"}
                 </p>
               </div>
@@ -127,12 +121,20 @@ function RouteComponent() {
               </div>
             </Show>
 
-            <CatalogForm
-              defaultValues={item()}
-              onSubmit={handleSubmit}
-              isLoading={patchCatalog.isPending}
-              isEditMode={true}
-            />
+            <Show
+              when={editState()}
+              fallback={
+                <p class="text-gray-600">Loading editor...</p>
+              }
+            >
+              {(state) => (
+                <CatalogForm
+                  edit={state()}
+                  onSubmit={handleSubmit}
+                  isLoading={putCatalog.isPending}
+                />
+              )}
+            </Show>
           </>
         )}
       </Show>

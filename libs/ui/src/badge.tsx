@@ -10,6 +10,7 @@ const badgeVariants = cva(
         default: "bg-primary text-primary-foreground",
         secondary: "bg-secondary text-secondary-foreground",
         outline: "border border-input bg-background",
+        warning: "bg-amber-100 text-amber-700",
       },
     },
     defaultVariants: {
@@ -19,7 +20,7 @@ const badgeVariants = cva(
 );
 
 export interface BadgeProps extends JSX.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "secondary" | "outline";
+  variant?: "default" | "secondary" | "outline" | "warning";
   children?: JSX.Element;
 }
 

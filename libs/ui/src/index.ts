@@ -2,6 +2,8 @@ export * from "./cn";
 
 export * from "./accordion";
 
+export * from "./alert";
+
 export * from "./breadcrumb";
 
 export * from "./button";
@@ -14,6 +16,8 @@ export * from "./card";
 export * from "./checkbox";
 
 export * from "./combobox";
+
+export * from "./combobox-free";
 
 export * from "./dialog";
 

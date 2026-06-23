@@ -1,6 +1,13 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
-import type { CatalogItem, GET, POST, PATCH } from "@glassact/data";
+import type {
+  CatalogItem,
+  GET,
+  PATCH,
+  AnalyzeRequest,
+  AnalyzeResponse,
+  CatalogWriteRequest,
+} from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
 export async function getCatalogList(params?: {
@@ -54,8 +61,21 @@ export function getCatalogItemOpts(uuid: string) {
   });
 }
 
+export async function postCatalogAnalyze(
+  body: AnalyzeRequest,
+): Promise<AnalyzeResponse> {
+  const res = await api.post("/catalog/analyze", body);
+  return res.data;
+}
+
+export function postCatalogAnalyzeOpts() {
+  return mutationOptions({
+    mutationFn: postCatalogAnalyze,
+  });
+}
+
 export async function postCatalog(
-  body: POST<CatalogItem>,
+  body: CatalogWriteRequest,
 ): Promise<GET<CatalogItem>> {
   const res = await api.post("/catalog", body);
   return res.data;
@@ -64,6 +84,20 @@ export async function postCatalog(
 export function postCatalogOpts() {
   return mutationOptions({
     mutationFn: postCatalog,
+  });
+}
+
+export async function putCatalog(params: {
+  uuid: string;
+  body: CatalogWriteRequest;
+}): Promise<GET<CatalogItem>> {
+  const res = await api.put(`/catalog/${params.uuid}`, params.body);
+  return res.data;
+}
+
+export function putCatalogOpts() {
+  return mutationOptions({
+    mutationFn: putCatalog,
   });
 }
 

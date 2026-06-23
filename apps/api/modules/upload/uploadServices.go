@@ -79,6 +79,35 @@ func UploadFileToS3(
 	return result, nil
 }
 
+// GetFileFromS3 reads an object's bytes. `key` is the S3 key (the svg_url with
+// its leading slash stripped, e.g. "file/catalog-items/<uuid>.svg").
+func GetFileFromS3(
+	ctx context.Context,
+	s3Client *s3.Client,
+	cfg *config.Config,
+	key string,
+) ([]byte, error) {
+	if s3Client == nil {
+		return nil, fmt.Errorf("S3 client not initialized")
+	}
+
+	out, err := s3Client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(cfg.S3.Bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get object from S3: %w", err)
+	}
+	defer out.Body.Close()
+
+	data, err := io.ReadAll(out.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read S3 object body: %w", err)
+	}
+
+	return data, nil
+}
+
 func GenerateSignedURL(
 	ctx context.Context,
 	s3Client *s3.Client,

@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { useMutation, useQueryClient } from "@tanstack/solid-query";
-import { postCatalogOpts, postCatalogTagOpts } from "../../queries/catalog";
+import { postCatalogOpts } from "../../queries/catalog";
 import { CatalogForm } from "../../components/admin/catalog-form";
 import { Show } from "solid-js";
-import { CatalogItem, POST } from "@glassact/data";
+import type { CatalogWriteRequest } from "@glassact/data";
 
 export const Route = createFileRoute("/_app/admin/catalog_/create")({
   component: RouteComponent,
@@ -13,20 +13,10 @@ function RouteComponent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const postCatalog = useMutation(() => postCatalogOpts());
-  const postTag = useMutation(() => postCatalogTagOpts());
 
-  const handleSubmit = async (data: POST<CatalogItem>, tags: string[]) => {
-    console.log("here: ", data);
-    postCatalog.mutate(data, {
-      onSuccess: async (result) => {
-        for (const tag of tags) {
-          try {
-            await postTag.mutateAsync({ uuid: result.uuid, tag });
-          } catch (e) {
-            console.error("Failed to add tag:", tag, e);
-          }
-        }
-
+  const handleSubmit = async (req: CatalogWriteRequest) => {
+    await postCatalog.mutateAsync(req, {
+      onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["catalog"] });
         navigate({ to: "/admin/catalog" });
       },
@@ -61,11 +51,7 @@ function RouteComponent() {
         </div>
       </Show>
 
-      <CatalogForm
-        onSubmit={handleSubmit}
-        isLoading={postCatalog.isPending}
-        isEditMode={false}
-      />
+      <CatalogForm onSubmit={handleSubmit} isLoading={postCatalog.isPending} />
     </div>
   );
 }

@@ -25,6 +25,7 @@ type CatalogItems struct {
 	MinHeight           float64
 	DefaultPriceGroupID int32
 	SvgURL              string
+	Manifest            string
 	IsActive            bool
 	CreatedAt           time.Time
 	UpdatedAt           time.Time

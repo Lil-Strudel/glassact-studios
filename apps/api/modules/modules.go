@@ -8,8 +8,11 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/blocker"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/catalog"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/chat"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/customizer"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dashboard"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dealership"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/glasscolor"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/grout"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/inlay"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/invoice"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/notification"
@@ -123,7 +126,9 @@ func GetRoutes(app *app.Application) http.Handler {
 
 	catalogModule := catalog.NewCatalogModule(app)
 	mux.Handle("GET /api/catalog", canManageCatalog.ThenFunc(catalogModule.HandleGetCatalog))
+	mux.Handle("POST /api/catalog/analyze", canManageCatalog.ThenFunc(catalogModule.HandleAnalyze))
 	mux.Handle("POST /api/catalog", canManageCatalog.ThenFunc(catalogModule.HandlePostCatalog))
+	mux.Handle("PUT /api/catalog/{uuid}", canManageCatalog.ThenFunc(catalogModule.HandlePutCatalog))
 	mux.Handle("PATCH /api/catalog/{uuid}", canManageCatalog.ThenFunc(catalogModule.HandlePatchCatalog))
 	mux.Handle("DELETE /api/catalog/{uuid}", canManageCatalog.ThenFunc(catalogModule.HandleDeleteCatalog))
 
@@ -135,6 +140,18 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/catalog/tags", protected.ThenFunc(catalogModule.HandleGetAllTags))
 	mux.Handle("GET /api/catalog/{uuid}", protected.ThenFunc(catalogModule.HandleGetCatalogItem))
 	mux.Handle("GET /api/catalog/{uuid}/tags", protected.ThenFunc(catalogModule.HandleGetTags))
+	mux.Handle("GET /api/catalog/{uuid}/svg", protected.ThenFunc(catalogModule.HandleGetCatalogSVG))
+
+	customizerModule := customizer.NewCustomizerModule(app)
+	mux.Handle("POST /api/catalog/{uuid}/bake", protected.ThenFunc(customizerModule.HandleBake))
+
+	glassColorModule := glasscolor.NewGlassColorModule(app)
+	mux.Handle("GET /api/glass-colors", protected.ThenFunc(glassColorModule.HandleGetGlassColors))
+	mux.Handle("GET /api/glass-colors/{uuid}", protected.ThenFunc(glassColorModule.HandleGetGlassColor))
+
+	groutModule := grout.NewGroutModule(app)
+	mux.Handle("GET /api/grouts", protected.ThenFunc(groutModule.HandleGetGrouts))
+	mux.Handle("GET /api/grouts/{uuid}", protected.ThenFunc(groutModule.HandleGetGrout))
 
 	priceGroupModule := pricegroup.NewPriceGroupModule(app)
 	mux.Handle("GET /api/price-groups", canManagePriceGroups.ThenFunc(priceGroupModule.HandleGetPriceGroups))

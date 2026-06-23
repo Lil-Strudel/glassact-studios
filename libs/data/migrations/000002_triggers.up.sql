@@ -29,8 +29,32 @@ CREATE TRIGGER update_price_groups_updated_at
     BEFORE UPDATE ON price_groups 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER increment_price_groups_version 
-    BEFORE UPDATE ON price_groups 
+CREATE TRIGGER increment_price_groups_version
+    BEFORE UPDATE ON price_groups
+    FOR EACH ROW EXECUTE FUNCTION increment_version_column();
+
+--------------------------------------------------------------------------------
+-- GLASS COLORS
+--------------------------------------------------------------------------------
+
+CREATE TRIGGER update_glass_colors_updated_at
+    BEFORE UPDATE ON glass_colors
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER increment_glass_colors_version
+    BEFORE UPDATE ON glass_colors
+    FOR EACH ROW EXECUTE FUNCTION increment_version_column();
+
+--------------------------------------------------------------------------------
+-- GROUTS
+--------------------------------------------------------------------------------
+
+CREATE TRIGGER update_grouts_updated_at
+    BEFORE UPDATE ON grouts
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER increment_grouts_version
+    BEFORE UPDATE ON grouts
     FOR EACH ROW EXECUTE FUNCTION increment_version_column();
 
 --------------------------------------------------------------------------------

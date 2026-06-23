@@ -5,8 +5,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
   Button,
 } from "@glassact/ui";
+import { Link } from "@tanstack/solid-router";
 import { ParentProps, Show } from "solid-js";
 
 interface ItemDetailModalProps {
@@ -80,6 +82,16 @@ export function ItemDetailModal(props: ParentProps<ItemDetailModalProps>) {
             </div>
           </div>
         </div>
+
+        <DialogFooter>
+          <Button
+            as={Link}
+            to="/catalog/$uuid/customize"
+            params={{ uuid: props.item.uuid }}
+          >
+            Customize this design
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
