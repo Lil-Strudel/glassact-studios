@@ -2,6 +2,10 @@ packages:
   - apps/*
   - libs/*
 
+allowBuilds:
+  esbuild: true
+  sharp: true
+
 catalog:
   '@tanstack/solid-form': ^1.28.3
   '@tanstack/solid-router': ^1.163.3
