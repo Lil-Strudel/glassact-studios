@@ -7,8 +7,7 @@ export type NotificationEventType =
   | "internal_review_required"
   | "order_placed"
   | "inlay_step_changed"
-  | "inlay_blocked"
-  | "inlay_unblocked"
+  | "inlay_update"
   | "project_shipped"
   | "project_delivered"
   | "invoice_sent"
@@ -22,8 +21,7 @@ export const NOTIFICATION_EVENT_TYPES: NotificationEventType[] = [
   "internal_review_required",
   "order_placed",
   "inlay_step_changed",
-  "inlay_blocked",
-  "inlay_unblocked",
+  "inlay_update",
   "project_shipped",
   "project_delivered",
   "invoice_sent",
@@ -36,8 +34,7 @@ export const DEALERSHIP_NOTIFICATION_EVENT_TYPES: NotificationEventType[] = [
   "proof_approved",
   "proof_declined",
   "inlay_step_changed",
-  "inlay_blocked",
-  "inlay_unblocked",
+  "inlay_update",
   "project_shipped",
   "project_delivered",
   "invoice_sent",
@@ -63,8 +60,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> =
     internal_review_required: "Customized Inlay Ready for Internal Review",
     order_placed: "Order Placed",
     inlay_step_changed: "Inlay Step Changed",
-    inlay_blocked: "Inlay Blocked",
-    inlay_unblocked: "Inlay Unblocked",
+    inlay_update: "Inlay Update",
     project_shipped: "Project Shipped",
     project_delivered: "Project Delivered",
     invoice_sent: "Invoice Sent",

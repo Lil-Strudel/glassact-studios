@@ -1,12 +1,18 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
-import type { GET, InlayBlocker, InlayWithInfo, ManufacturingStep } from "@glassact/data";
+import type {
+  GET,
+  InlayMilestone,
+  InlayUpdate,
+  InlayUpdateType,
+  InlayWithInfo,
+  ManufacturingStep,
+} from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
 export type KanbanInlay = GET<InlayWithInfo> & {
   project_name: string;
   dealership_name: string;
-  has_hard_blocker: boolean;
 };
 
 export async function getKanbanInlays(): Promise<KanbanInlay[]> {
@@ -37,57 +43,52 @@ export function patchInlayStepOpts() {
   });
 }
 
-export async function getBlockersByInlay(
+export async function getInlayMilestones(
   inlayUuid: string,
-): Promise<GET<InlayBlocker>[]> {
-  const res = await api.get(`/inlay/${inlayUuid}/blockers`);
+): Promise<GET<InlayMilestone>[]> {
+  const res = await api.get(`/inlay/${inlayUuid}/milestones`);
   return res.data;
 }
 
-export function getBlockersByInlayOpts(inlayUuid: string) {
+export function getInlayMilestonesOpts(inlayUuid: string) {
   return queryOptions({
-    queryKey: ["inlay", inlayUuid, "blockers"],
-    queryFn: () => getBlockersByInlay(inlayUuid),
+    queryKey: ["inlay", inlayUuid, "milestones"],
+    queryFn: () => getInlayMilestones(inlayUuid),
   });
 }
 
-export interface PostBlockerRequest {
-  blocker_type: "soft" | "hard";
-  reason: string;
-  step_blocked: string;
-}
-
-export async function postBlocker(params: {
-  inlayUuid: string;
-  body: PostBlockerRequest;
-}): Promise<GET<InlayBlocker>> {
-  const res = await api.post(`/inlay/${params.inlayUuid}/blockers`, params.body);
+export async function getInlayUpdates(
+  inlayUuid: string,
+): Promise<GET<InlayUpdate>[]> {
+  const res = await api.get(`/inlay/${inlayUuid}/updates`);
   return res.data;
 }
 
-export function postBlockerOpts() {
-  return mutationOptions({
-    mutationFn: postBlocker,
+export function getInlayUpdatesOpts(inlayUuid: string) {
+  return queryOptions({
+    queryKey: ["inlay", inlayUuid, "updates"],
+    queryFn: () => getInlayUpdates(inlayUuid),
   });
 }
 
-export interface PostResolveBlockerRequest {
-  resolution_notes?: string;
+export interface PostInlayUpdateRequest {
+  update_type: InlayUpdateType;
+  message: string;
 }
 
-export async function postResolveBlocker(params: {
-  blockerUuid: string;
-  body: PostResolveBlockerRequest;
-}): Promise<GET<InlayBlocker>> {
+export async function postInlayUpdate(params: {
+  inlayUuid: string;
+  body: PostInlayUpdateRequest;
+}): Promise<GET<InlayUpdate>> {
   const res = await api.post(
-    `/blocker/${params.blockerUuid}/resolve`,
+    `/inlay/${params.inlayUuid}/updates`,
     params.body,
   );
   return res.data;
 }
 
-export function postResolveBlockerOpts() {
+export function postInlayUpdateOpts() {
   return mutationOptions({
-    mutationFn: postResolveBlocker,
+    mutationFn: postInlayUpdate,
   });
 }
