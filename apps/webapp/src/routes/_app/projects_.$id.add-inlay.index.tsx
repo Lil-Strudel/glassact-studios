@@ -24,7 +24,7 @@ import { postCatalogInlayOpts, postCustomInlayOpts } from "../../queries/inlay";
 import { getProjectOpts } from "../../queries/project";
 import { isApiError } from "../../utils/is-api-error";
 
-export const Route = createFileRoute("/_app/projects_/$id/add-inlay")({
+export const Route = createFileRoute("/_app/projects_/$id/add-inlay/")({
   component: RouteComponent,
 });
 
