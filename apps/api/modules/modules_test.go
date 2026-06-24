@@ -341,7 +341,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "GET",
 				path:   "/api/dealership",
-				token:  dealershipToken,
+				token:  internalAdminToken,
 			})
 
 			assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -385,7 +385,7 @@ func TestAPIEndpoints(t *testing.T) {
 				resp := testCtx.request(testRequest{
 					method: "GET",
 					path:   fmt.Sprintf("/api/dealership/%s", dealerships[0].UUID),
-					token:  dealershipToken,
+					token:  internalAdminToken,
 				})
 
 				assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -488,7 +488,7 @@ func TestAPIEndpoints(t *testing.T) {
 			resp := testCtx.request(testRequest{
 				method: "GET",
 				path:   "/api/dealership-user",
-				token:  dealershipToken,
+				token:  internalAdminToken,
 			})
 
 			assert.Equal(t, http.StatusOK, resp.statusCode)
@@ -519,7 +519,7 @@ func TestAPIEndpoints(t *testing.T) {
 				resp := testCtx.request(testRequest{
 					method: "GET",
 					path:   fmt.Sprintf("/api/dealership-user/%s", targetUser.UUID),
-					token:  dealershipToken,
+					token:  internalAdminToken,
 				})
 
 				assert.Equal(t, http.StatusOK, resp.statusCode)
