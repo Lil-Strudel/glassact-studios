@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
-import type { GET, Project, ProjectStatus } from "@glassact/data";
+import type { ProjectListItem, ProjectStatus } from "@glassact/data";
 import {
   Button,
   Breadcrumb,
@@ -81,7 +81,7 @@ function RouteComponent() {
     isDealership() ? DEALERSHIP_GROUPS : INTERNAL_GROUPS,
   );
 
-  function getByStatuses(statuses: ProjectStatus[]): GET<Project>[] {
+  function getByStatuses(statuses: ProjectStatus[]): ProjectListItem[] {
     if (!query.isSuccess) return [];
     return query.data.filter((project) => statuses.includes(project.status));
   }
@@ -198,7 +198,7 @@ const SectionMessage: Component<SectionMessageProps> = (props) => {
 };
 
 interface ProjectCardProps {
-  project: GET<Project>;
+  project: ProjectListItem;
 }
 
 const ProjectCard: Component<ProjectCardProps> = (props) => {
@@ -211,6 +211,8 @@ const ProjectCard: Component<ProjectCardProps> = (props) => {
     });
   };
 
+  const summary = () => props.project.action_summary;
+
   return (
     <Card class="hover:shadow-md transition-shadow">
       <CardHeader class="flex flex-row items-start justify-between gap-4 space-y-0">
@@ -219,6 +221,35 @@ const ProjectCard: Component<ProjectCardProps> = (props) => {
           <div class="flex items-center gap-2 flex-wrap">
             <ProjectStatusBadge status={props.project.status} />
           </div>
+          <Show when={summary()}>
+            {(s) => (
+              <Show
+                when={
+                  s().needs_internal_approval > 0 ||
+                  s().needs_proof > 0 ||
+                  s().awaiting_reply > 0
+                }
+              >
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <Show when={s().needs_internal_approval > 0}>
+                    <Badge variant="warning" class="text-xs">
+                      Needs approval · {s().needs_internal_approval}
+                    </Badge>
+                  </Show>
+                  <Show when={s().needs_proof > 0}>
+                    <Badge variant="outline" class="text-xs">
+                      Needs proof · {s().needs_proof}
+                    </Badge>
+                  </Show>
+                  <Show when={s().awaiting_reply > 0}>
+                    <Badge variant="secondary" class="text-xs">
+                      Awaiting reply · {s().awaiting_reply}
+                    </Badge>
+                  </Show>
+                </div>
+              </Show>
+            )}
+          </Show>
           <p class="text-xs text-gray-500">{formattedDate()}</p>
         </div>
         <Button

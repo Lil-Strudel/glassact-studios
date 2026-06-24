@@ -25,6 +25,7 @@ const ProofActions: Component<ProofActionsProps> = (props) => {
     queryClient.invalidateQueries({ queryKey: ["inlay", props.inlayUuid, "chats"] });
     queryClient.invalidateQueries({ queryKey: ["inlay", props.inlayUuid] });
     queryClient.invalidateQueries({ queryKey: ["project"] });
+    queryClient.invalidateQueries({ queryKey: ["review-queue"] });
   };
 
   const handleApprove = () => {

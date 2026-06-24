@@ -705,10 +705,6 @@ function InlayCard(props: InlayCardProps) {
         <div class="px-6 pb-4 flex flex-col gap-2">
           <Show when={showInternalApprove()}>
             <Can permission={PERMISSION_ACTIONS.INTERNAL_APPROVE_PROOF}>
-              {/* TODO: implement internal review dialog with price-group
-                  override. The pending proof UUID is not exposed on the
-                  inlay list endpoint; for now route to the inlay detail
-                  page where the standard approve flow lives. */}
               <Button
                 as={Link}
                 to="/projects/$id/inlay/$inlayId"

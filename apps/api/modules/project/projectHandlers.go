@@ -41,7 +41,37 @@ func (m ProjectModule) HandleGetProjects(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	m.WriteJSON(w, r, http.StatusOK, projects)
+	// Dealership users get the bare project list. Internal users additionally
+	// get a per-project action summary so the project list can flag, at a
+	// glance, which projects need their attention.
+	if user.IsDealership() {
+		m.WriteJSON(w, r, http.StatusOK, projects)
+		return
+	}
+
+	summaries, err := m.Db.Projects.GetActionSummaries()
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	result := make([]projectListItem, len(projects))
+	for i, project := range projects {
+		result[i] = projectListItem{Project: project}
+		if summary, ok := summaries[project.ID]; ok {
+			result[i].ActionSummary = &summary
+		}
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, result)
+}
+
+// projectListItem embeds the project and, for internal users, the action
+// summary. The summary is omitted entirely for projects with no outstanding
+// internal action.
+type projectListItem struct {
+	*data.Project
+	ActionSummary *data.ProjectActionSummary `json:"action_summary,omitempty"`
 }
 
 func (m ProjectModule) HandleGetProjectByUUID(w http.ResponseWriter, r *http.Request) {

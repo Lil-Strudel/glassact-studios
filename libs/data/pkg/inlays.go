@@ -528,6 +528,88 @@ func (m InlayModel) GetByProjectID(projectID int) ([]*Inlay, error) {
 	return inlays, nil
 }
 
+// GetNeedingInternalApproval returns every customized catalog inlay across all
+// projects that has an outstanding internal-authority proof awaiting approval.
+// This powers the internal review queue.
+func (m InlayModel) GetNeedingInternalApproval() ([]*Inlay, error) {
+	pendingInternalProof := postgres.EXISTS(
+		postgres.SELECT(table.InlayProofs.ID).FROM(table.InlayProofs).WHERE(
+			postgres.AND(
+				table.InlayProofs.InlayID.EQ(table.Inlays.ID),
+				table.InlayProofs.Status.EQ(postgres.String(string(ProofStatuses.Pending))),
+				table.InlayProofs.ApprovalAuthority.EQ(postgres.String(string(ProofApprovalAuthorities.Internal))),
+			),
+		),
+	)
+
+	return m.queryInlaysWithInfo(
+		postgres.AND(
+			table.Inlays.Type.EQ(postgres.String(string(InlayTypes.Catalog))),
+			table.Inlays.IsCustomized.EQ(postgres.Bool(true)),
+			table.Inlays.ApprovedProofID.IS_NULL(),
+			pendingInternalProof,
+		),
+	)
+}
+
+// GetCustomNeedingProof returns every custom inlay across all projects that is
+// not yet ready and has no pending proof — i.e. a designer still needs to
+// create the first proof for it.
+func (m InlayModel) GetCustomNeedingProof() ([]*Inlay, error) {
+	pendingProof := postgres.EXISTS(
+		postgres.SELECT(table.InlayProofs.ID).FROM(table.InlayProofs).WHERE(
+			postgres.AND(
+				table.InlayProofs.InlayID.EQ(table.Inlays.ID),
+				table.InlayProofs.Status.EQ(postgres.String(string(ProofStatuses.Pending))),
+			),
+		),
+	)
+
+	return m.queryInlaysWithInfo(
+		postgres.AND(
+			table.Inlays.Type.EQ(postgres.String(string(InlayTypes.Custom))),
+			table.Inlays.ApprovedProofID.IS_NULL(),
+			postgres.NOT(pendingProof),
+		),
+	)
+}
+
+func (m InlayModel) queryInlaysWithInfo(where postgres.BoolExpression) ([]*Inlay, error) {
+	query := postgres.SELECT(
+		table.Inlays.AllColumns,
+		table.InlayCatalogInfos.AllColumns,
+		table.InlayCustomInfos.AllColumns,
+	).FROM(
+		table.Inlays.
+			LEFT_JOIN(table.InlayCatalogInfos, table.InlayCatalogInfos.InlayID.EQ(table.Inlays.ID)).
+			LEFT_JOIN(table.InlayCustomInfos, table.InlayCustomInfos.InlayID.EQ(table.Inlays.ID)),
+	).WHERE(
+		where,
+	).ORDER_BY(
+		table.Inlays.CreatedAt.ASC(),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest []struct {
+		model.Inlays
+		InlayCatalogInfos *model.InlayCatalogInfos
+		InlayCustomInfos  *model.InlayCustomInfos
+	}
+	err := query.QueryContext(ctx, m.STDB, &dest)
+	if err != nil {
+		return nil, err
+	}
+
+	inlays := make([]*Inlay, len(dest))
+	for i, d := range dest {
+		inlays[i] = inlayFromGen(d.Inlays, d.InlayCatalogInfos, d.InlayCustomInfos)
+	}
+
+	return inlays, nil
+}
+
 func (m InlayModel) Update(inlay *Inlay) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
