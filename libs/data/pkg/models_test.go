@@ -23,8 +23,8 @@ func TestNewModels(t *testing.T) {
 	if models.Dealerships.DB == nil {
 		t.Errorf("Expected Dealerships.DB to be initialized")
 	}
-	if models.InlayBlockers.DB == nil {
-		t.Errorf("Expected InlayBlockers.DB to be initialized")
+	if models.InlayUpdates.DB == nil {
+		t.Errorf("Expected InlayUpdates.DB to be initialized")
 	}
 	if models.InlayChats.DB == nil {
 		t.Errorf("Expected InlayChats.DB to be initialized")

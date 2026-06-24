@@ -11,7 +11,7 @@ DROP TABLE IF EXISTS order_snapshots;
 
 DROP TABLE IF EXISTS project_chats;
 
-DROP TABLE IF EXISTS inlay_blockers;
+DROP TABLE IF EXISTS inlay_updates;
 DROP TABLE IF EXISTS inlay_milestones;
 
 -- Remove FK before dropping inlay_proofs

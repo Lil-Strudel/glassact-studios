@@ -198,15 +198,6 @@ const InternalDashboardBody: Component<InternalDashboardBodyProps> = (
   return (
     <div class="flex flex-col gap-8 mt-8">
       <div class="flex flex-col gap-3">
-        <Show when={props.data.hard_blocker_count > 0}>
-          <AlertBanner
-            to="/inlays"
-            text={`${props.data.hard_blocker_count} hard ${
-              props.data.hard_blocker_count === 1 ? "blocker" : "blockers"
-            } need attention`}
-            action="View Kanban"
-          />
-        </Show>
         <Show when={props.data.pending_proof_count > 0}>
           <AlertBanner
             to="/projects"
@@ -231,11 +222,6 @@ const InternalDashboardBody: Component<InternalDashboardBodyProps> = (
         <StatCard
           label="Pending Proofs"
           value={props.data.pending_proof_count.toString()}
-        />
-        <StatCard
-          label="Active Blockers"
-          value={props.data.active_blocker_count.toString()}
-          detail={`${props.data.active_blocker_count} total, ${props.data.hard_blocker_count} hard`}
         />
         <StatCard
           label="Outstanding Amount"

@@ -101,7 +101,7 @@ Deeper conventions live alongside the code they govern:
 
 ### Code style
 - No redundant comments. Comments explain WHY, never WHAT — prefer more descriptive identifiers over a comment. Only comment things a developer could not infer from reading the code.
-- Be descriptive over brief. Booleans read as questions (`isActive`, `hasHardBlocker`). Functions describe actions (`createProof`, `resolveBlocker`).
+- Be descriptive over brief. Booleans read as questions (`isActive`, `hasPendingProof`). Functions describe actions (`createProof`, `declineProof`).
 - One primary export per file. File size soft limit: ~300 lines before splitting.
 - Handle errors explicitly — never swallow. Wrap with context: `fmt.Errorf("failed to create proof for inlay %d: %w", inlayID, err)`.
 
@@ -211,7 +211,7 @@ ordered → materials-prep → cutting → fire-polish → packaging → shipped
 - Steps can move backward (via "revert" milestone events).
 - Each transition creates an `inlay_milestone` record.
 - Progress is event-based, not a single status field.
-- Multiple blockers can exist per inlay.
+- Step transitions are unconditional — nothing blocks an inlay from moving. Internal users post `inlay_updates` to communicate issues (see Inlay Updates below).
 
 ## Business Rules
 
@@ -259,14 +259,16 @@ Example:
 
 `inlays.manufacturing_step` is stored for query convenience; the milestone history is the source of truth.
 
-**Blockers:**
+**Inlay Updates:**
 
-| Type | Effect                                       |
-| ---- | -------------------------------------------- |
-| soft | Informational only, doesn't prevent progress |
-| hard | Prevents moving to the next step             |
+Internal users (production/admin, `create_inlay_update` permission) post `inlay_updates` to keep the dealership informed about what's happening to an inlay. Updates are informational only — they **never** block a step transition and have no resolution lifecycle.
 
-An inlay can have multiple active blockers simultaneously; each is resolved independently.
+| Type  | Meaning                                              |
+| ----- | ---------------------------------------------------- |
+| info  | General note (e.g. "ahead of schedule")              |
+| issue | Something went wrong / needs rework (e.g. "dropped during fire-polish, restarting from materials-prep") |
+
+Each update carries a free-text `message` and a `step` (the inlay's manufacturing step when posted, for context). Updates are shown interleaved chronologically with milestone events on the inlay's manufacturing timeline, and posting one notifies the dealership (`inlay_update`).
 
 ### Users & Permissions
 
@@ -286,7 +288,7 @@ An inlay can have multiple active blockers simultaneously; each is resolved inde
 | Role       | Can Do                                 |
 | ---------- | -------------------------------------- |
 | designer   | Create proofs, respond to design chats |
-| production | Manage kanban, create/resolve blockers |
+| production | Manage kanban, post inlay updates       |
 | billing    | Create invoices, mark paid             |
 | admin      | Everything                             |
 
@@ -307,8 +309,7 @@ An inlay can have multiple active blockers simultaneously; each is resolved inde
 | proof_declined     | Internal designers                 | Proof was declined           |
 | order_placed       | Internal production                | New order in queue           |
 | inlay_step_changed | Dealership users                   | Inlay moved in manufacturing |
-| inlay_blocked      | Dealership users                   | Issue with inlay             |
-| inlay_unblocked    | Dealership users                   | Issue resolved               |
+| inlay_update       | Dealership users                   | New update posted on inlay   |
 | project_shipped    | Dealership users                   | Project shipped              |
 | project_delivered  | Dealership users, internal billing | Ready for invoice            |
 | invoice_sent       | Dealership users (admin)           | Invoice available            |

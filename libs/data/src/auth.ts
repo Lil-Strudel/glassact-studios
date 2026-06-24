@@ -11,7 +11,7 @@ export const PERMISSION_ACTIONS = {
   CREATE_PROOF: "create_proof",
   INTERNAL_APPROVE_PROOF: "internal_approve_proof",
   MANAGE_KANBAN: "manage_kanban",
-  CREATE_BLOCKER: "create_blocker",
+  CREATE_INLAY_UPDATE: "create_inlay_update",
   CREATE_INVOICE: "create_invoice",
   MANAGE_INTERNAL_USERS: "manage_internal_users",
   MANAGE_DEALERSHIPS: "manage_dealerships",

@@ -695,7 +695,6 @@ function InlayCard(props: InlayCardProps) {
                 currentStep={
                   props.inlay.manufacturing_step as ManufacturingStep
                 }
-                hasBlocker={props.inlay.has_active_blocker}
               />
             </div>
           </Show>

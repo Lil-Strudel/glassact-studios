@@ -33,8 +33,6 @@ type DealershipDashboard struct {
 type InternalDashboard struct {
 	ProjectStatusCounts           []StatusCount            `json:"project_status_counts"`
 	ManufacturingStepCounts       []ManufacturingStepCount `json:"manufacturing_step_counts"`
-	ActiveBlockerCount            int64                    `json:"active_blocker_count"`
-	HardBlockerCount              int64                    `json:"hard_blocker_count"`
 	PendingProofCount             int64                    `json:"pending_proof_count"`
 	OutstandingInvoiceCount       int64                    `json:"outstanding_invoice_count"`
 	OutstandingInvoiceAmountCents int64                    `json:"outstanding_invoice_amount_cents"`
@@ -98,13 +96,6 @@ func (m DashboardModel) GetInternalDashboard() (*InternalDashboard, error) {
 		return nil, fmt.Errorf("manufacturing step counts: %w", err)
 	}
 	dashboard.ManufacturingStepCounts = stepCounts
-
-	activeCount, hardCount, err := m.blockerCountsGlobal()
-	if err != nil {
-		return nil, fmt.Errorf("blocker counts: %w", err)
-	}
-	dashboard.ActiveBlockerCount = activeCount
-	dashboard.HardBlockerCount = hardCount
 
 	pendingProof, err := m.pendingProofCountGlobal()
 	if err != nil {
@@ -202,38 +193,6 @@ func (m DashboardModel) manufacturingStepCountsGlobal() ([]ManufacturingStepCoun
 		return nil, err
 	}
 	return counts, nil
-}
-
-func (m DashboardModel) blockerCountsGlobal() (int64, int64, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	rows, err := m.STDB.QueryContext(ctx, `
-		SELECT blocker_type, COUNT(*) FROM inlay_blockers
-		WHERE resolved_at IS NULL
-		GROUP BY blocker_type
-	`)
-	if err != nil {
-		return 0, 0, err
-	}
-	defer rows.Close()
-
-	var active, hard int64
-	for rows.Next() {
-		var blockerType string
-		var count int64
-		if err := rows.Scan(&blockerType, &count); err != nil {
-			return 0, 0, err
-		}
-		active += count
-		if blockerType == string(BlockerTypes.Hard) {
-			hard += count
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return 0, 0, err
-	}
-	return active, hard, nil
 }
 
 func (m DashboardModel) pendingApprovalCountByDealership(dealershipID int) (int64, error) {

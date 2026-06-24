@@ -138,8 +138,8 @@ func getTestModels(t *testing.T) Models {
 
 func cleanupTables(t *testing.T) {
 	t.Helper()
-	_, err := testDB.STDB.Exec(`TRUNCATE TABLE 
-		inlay_blockers,
+	_, err := testDB.STDB.Exec(`TRUNCATE TABLE
+		inlay_updates,
 		inlay_milestones,
 		inlay_proofs,
 		inlay_chats,

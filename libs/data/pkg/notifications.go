@@ -23,8 +23,7 @@ type notificationEventTypes struct {
 	InternalReviewRequired  NotificationEventType
 	OrderPlaced             NotificationEventType
 	InlayStepChanged        NotificationEventType
-	InlayBlocked            NotificationEventType
-	InlayUnblocked          NotificationEventType
+	InlayUpdate             NotificationEventType
 	ProjectShipped          NotificationEventType
 	ProjectDelivered        NotificationEventType
 	InvoiceSent             NotificationEventType
@@ -40,8 +39,7 @@ var NotificationEventTypes = notificationEventTypes{
 	InternalReviewRequired: NotificationEventType("internal_review_required"),
 	OrderPlaced:            NotificationEventType("order_placed"),
 	InlayStepChanged:       NotificationEventType("inlay_step_changed"),
-	InlayBlocked:           NotificationEventType("inlay_blocked"),
-	InlayUnblocked:         NotificationEventType("inlay_unblocked"),
+	InlayUpdate:            NotificationEventType("inlay_update"),
 	ProjectShipped:         NotificationEventType("project_shipped"),
 	ProjectDelivered:       NotificationEventType("project_delivered"),
 	InvoiceSent:            NotificationEventType("invoice_sent"),

@@ -1,11 +1,9 @@
 import { For } from "solid-js";
 import { cn } from "@glassact/ui";
-import { IoWarningOutline } from "solid-icons/io";
 import type { ManufacturingStep } from "@glassact/data";
 
 interface ManufacturingTrackerProps {
   currentStep: ManufacturingStep;
-  hasBlocker?: boolean;
 }
 
 const STEPS: { id: ManufacturingStep; label: string }[] = [
@@ -53,11 +51,6 @@ export function ManufacturingTracker(props: ManufacturingTrackerProps) {
                   )}
                   title={step.label}
                 />
-                {isCurrent() && props.hasBlocker && (
-                  <span class="absolute -top-2.5 -right-2.5 text-amber-500">
-                    <IoWarningOutline size={12} />
-                  </span>
-                )}
               </div>
             </div>
           );

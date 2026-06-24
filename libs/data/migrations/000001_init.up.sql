@@ -379,24 +379,21 @@ CREATE INDEX idx_inlay_milestones_inlay ON inlay_milestones(inlay_id);
 CREATE INDEX idx_inlay_milestones_step ON inlay_milestones(step);
 CREATE INDEX idx_inlay_milestones_event_time ON inlay_milestones(inlay_id, event_time);
 
-CREATE TABLE inlay_blockers (
+CREATE TABLE inlay_updates (
     id SERIAL PRIMARY KEY,
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     inlay_id INTEGER NOT NULL REFERENCES inlays ON DELETE RESTRICT,
-    blocker_type VARCHAR(255) NOT NULL CHECK (blocker_type IN ('soft', 'hard')),
-    reason TEXT NOT NULL,
-    step_blocked VARCHAR(255) NOT NULL,
+    update_type VARCHAR(255) NOT NULL CHECK (update_type IN ('info', 'issue')),
+    message TEXT NOT NULL,
+    step VARCHAR(255),
     created_by INTEGER REFERENCES internal_users,
-    resolved_at TIMESTAMPTZ,
-    resolved_by INTEGER REFERENCES internal_users,
-    resolution_notes TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     version INTEGER NOT NULL DEFAULT 1
 );
 
-CREATE INDEX idx_inlay_blockers_inlay ON inlay_blockers(inlay_id);
-CREATE INDEX idx_inlay_blockers_active ON inlay_blockers(inlay_id) WHERE resolved_at IS NULL;
+CREATE INDEX idx_inlay_updates_inlay ON inlay_updates(inlay_id);
+CREATE INDEX idx_inlay_updates_time ON inlay_updates(inlay_id, created_at);
 
 --------------------------------------------------------------------------------
 -- PROJECT CHATS (Manufacturing-phase discussion)

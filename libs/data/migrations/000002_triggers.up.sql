@@ -214,15 +214,15 @@ CREATE TRIGGER increment_inlay_milestones_version
     FOR EACH ROW EXECUTE FUNCTION increment_version_column();
 
 --------------------------------------------------------------------------------
--- INLAY BLOCKERS
+-- INLAY UPDATES
 --------------------------------------------------------------------------------
 
-CREATE TRIGGER update_inlay_blockers_updated_at 
-    BEFORE UPDATE ON inlay_blockers 
+CREATE TRIGGER update_inlay_updates_updated_at
+    BEFORE UPDATE ON inlay_updates 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER increment_inlay_blockers_version 
-    BEFORE UPDATE ON inlay_blockers 
+CREATE TRIGGER increment_inlay_updates_version 
+    BEFORE UPDATE ON inlay_updates 
     FOR EACH ROW EXECUTE FUNCTION increment_version_column();
 
 --------------------------------------------------------------------------------

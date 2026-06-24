@@ -15,10 +15,10 @@ type Models struct {
 	Dealerships             DealershipModel
 	GlassColors             GlassColorModel
 	Grouts                  GroutModel
-	InlayBlockers           InlayBlockerModel
 	InlayChats              InlayChatModel
 	InlayMilestones         InlayMilestoneModel
 	InlayProofs             InlayProofModel
+	InlayUpdates            InlayUpdateModel
 	Inlays                  InlayModel
 	InternalAccounts        InternalAccountModel
 	InternalTokens          InternalTokenModel
@@ -44,10 +44,10 @@ func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 		Dealerships:             DealershipModel{DB: db, STDB: stdb},
 		GlassColors:             GlassColorModel{DB: db, STDB: stdb},
 		Grouts:                  GroutModel{DB: db, STDB: stdb},
-		InlayBlockers:           InlayBlockerModel{DB: db, STDB: stdb},
 		InlayChats:              InlayChatModel{DB: db, STDB: stdb},
 		InlayMilestones:         InlayMilestoneModel{DB: db, STDB: stdb},
 		InlayProofs:             InlayProofModel{DB: db, STDB: stdb},
+		InlayUpdates:            InlayUpdateModel{DB: db, STDB: stdb},
 		Inlays:                  InlayModel{DB: db, STDB: stdb},
 		InternalAccounts:        InternalAccountModel{DB: db, STDB: stdb},
 		InternalTokens:          InternalTokenModel{DB: db, STDB: stdb},

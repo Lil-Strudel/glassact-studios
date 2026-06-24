@@ -8,9 +8,9 @@ DROP TRIGGER IF EXISTS increment_invoices_version ON invoices;
 DROP TRIGGER IF EXISTS update_project_chats_updated_at ON project_chats;
 DROP TRIGGER IF EXISTS increment_project_chats_version ON project_chats;
 
--- Inlay Blockers
-DROP TRIGGER IF EXISTS update_inlay_blockers_updated_at ON inlay_blockers;
-DROP TRIGGER IF EXISTS increment_inlay_blockers_version ON inlay_blockers;
+-- Inlay Updates
+DROP TRIGGER IF EXISTS update_inlay_updates_updated_at ON inlay_updates;
+DROP TRIGGER IF EXISTS increment_inlay_updates_version ON inlay_updates;
 
 -- Inlay Milestones
 DROP TRIGGER IF EXISTS update_inlay_milestones_updated_at ON inlay_milestones;

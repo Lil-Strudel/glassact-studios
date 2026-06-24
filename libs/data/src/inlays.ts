@@ -46,5 +46,4 @@ export type InlayWithInfo = GET<Inlay> & {
   price_cents: number | null;
   price_adjustment_type: PriceAdjustmentType;
   price_adjustment_value: number;
-  has_active_blocker?: boolean;
 };

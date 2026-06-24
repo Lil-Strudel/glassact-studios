@@ -10,6 +10,7 @@ import { Can } from "../../components/Can";
 import ChatThread from "../../components/chat/chat-thread";
 import ChatInput from "../../components/chat/chat-input";
 import ProofHistory from "../../components/proof/proof-history";
+import { InlayTimeline } from "../../components/manufacturing/inlay-timeline";
 import ProofActions from "../../components/proof/proof-actions";
 import CreateProofDialog from "../../components/proof/create-proof-dialog";
 import { ProofStatusBadge } from "../../components/proof/proof-status-badge";
@@ -180,6 +181,8 @@ function InlayDetailPage() {
               </Show>
 
               <ProofHistory inlayUuid={params().inlayId} />
+
+              <InlayTimeline inlayUuid={params().inlayId} />
             </div>
 
             <div
