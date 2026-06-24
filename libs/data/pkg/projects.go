@@ -302,6 +302,101 @@ func (m ProjectModel) GetAll() ([]*Project, error) {
 	return projects, nil
 }
 
+// ProjectActionSummary captures the per-project counts that tell an internal
+// user, at a glance, which projects need their attention.
+type ProjectActionSummary struct {
+	NeedsInternalApproval int `json:"needs_internal_approval"`
+	NeedsProof            int `json:"needs_proof"`
+	AwaitingReply         int `json:"awaiting_reply"`
+}
+
+// GetActionSummaries returns a map keyed by project ID of the internal
+// action counts across all projects. It runs three set-based queries (no
+// N+1): customized catalog inlays awaiting internal approval, custom inlays
+// still needing a proof, and inlays whose most recent chat message came from
+// the dealership (awaiting an internal reply). Projects with no outstanding
+// action simply won't appear in the map.
+func (m ProjectModel) GetActionSummaries() (map[int]ProjectActionSummary, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	summaries := make(map[int]ProjectActionSummary)
+
+	applyCounts := func(query string, set func(s *ProjectActionSummary, count int)) error {
+		rows, err := m.DB.Query(ctx, query)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var projectID, count int
+			if err := rows.Scan(&projectID, &count); err != nil {
+				return err
+			}
+			s := summaries[projectID]
+			set(&s, count)
+			summaries[projectID] = s
+		}
+
+		return rows.Err()
+	}
+
+	needsApproval := `
+		SELECT i.project_id, COUNT(*)
+		FROM inlays i
+		WHERE i.type = 'catalog'
+		  AND i.is_customized = true
+		  AND i.approved_proof_id IS NULL
+		  AND EXISTS (
+		    SELECT 1 FROM inlay_proofs p
+		    WHERE p.inlay_id = i.id
+		      AND p.status = 'pending'
+		      AND p.approval_authority = 'internal'
+		  )
+		GROUP BY i.project_id`
+	if err := applyCounts(needsApproval, func(s *ProjectActionSummary, count int) {
+		s.NeedsInternalApproval = count
+	}); err != nil {
+		return nil, err
+	}
+
+	needsProof := `
+		SELECT i.project_id, COUNT(*)
+		FROM inlays i
+		WHERE i.type = 'custom'
+		  AND i.approved_proof_id IS NULL
+		  AND NOT EXISTS (
+		    SELECT 1 FROM inlay_proofs p
+		    WHERE p.inlay_id = i.id
+		      AND p.status = 'pending'
+		  )
+		GROUP BY i.project_id`
+	if err := applyCounts(needsProof, func(s *ProjectActionSummary, count int) {
+		s.NeedsProof = count
+	}); err != nil {
+		return nil, err
+	}
+
+	awaitingReply := `
+		SELECT latest.project_id, COUNT(*)
+		FROM (
+		  SELECT DISTINCT ON (c.inlay_id) i.project_id, c.dealership_user_id
+		  FROM inlay_chats c
+		  JOIN inlays i ON i.id = c.inlay_id
+		  ORDER BY c.inlay_id, c.created_at DESC, c.id DESC
+		) latest
+		WHERE latest.dealership_user_id IS NOT NULL
+		GROUP BY latest.project_id`
+	if err := applyCounts(awaitingReply, func(s *ProjectActionSummary, count int) {
+		s.AwaitingReply = count
+	}); err != nil {
+		return nil, err
+	}
+
+	return summaries, nil
+}
+
 func (m ProjectModel) updateProject(ctx context.Context, executor qrm.Queryable, project *Project) error {
 	genProj, err := projectToGen(project)
 	if err != nil {

@@ -19,6 +19,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/pricegroup"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/project"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/proof"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/review"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/upload"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/user"
 	data "github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
@@ -178,6 +179,9 @@ func GetRoutes(app *app.Application) http.Handler {
 	dashboardModule := dashboard.NewDashboardModule(app)
 	mux.Handle("GET /api/dashboard/dealership", protected.ThenFunc(dashboardModule.HandleGetDealershipDashboard))
 	mux.Handle("GET /api/dashboard/internal", protected.ThenFunc(dashboardModule.HandleGetInternalDashboard))
+
+	reviewModule := review.NewReviewModule(app)
+	mux.Handle("GET /api/review-queue", protected.ThenFunc(reviewModule.HandleGetReviewQueue))
 
 	mux.Handle("/", unprotected.ThenFunc(app.HandleNotFound))
 	return standard.Then(mux)
