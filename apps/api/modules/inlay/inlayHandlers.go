@@ -82,7 +82,6 @@ type InlayWithProofStatus struct {
 	PriceCents           *int                     `json:"price_cents"`
 	PriceAdjustmentType  data.PriceAdjustmentType `json:"price_adjustment_type"`
 	PriceAdjustmentValue float64                  `json:"price_adjustment_value"`
-	HasActiveBlocker     bool                     `json:"has_active_blocker"`
 }
 
 // inlayPricing carries the resolved pricing for an inlay: which price group
@@ -234,13 +233,6 @@ func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Req
 		result[i].PriceCents = pricing.PriceCents
 		result[i].PriceAdjustmentType = pricing.AdjustmentType
 		result[i].PriceAdjustmentValue = pricing.AdjustmentValue
-
-		unresolvedBlockers, err := m.Db.InlayBlockers.GetUnresolved(inlay.ID)
-		if err != nil {
-			m.WriteError(w, r, m.Err.ServerError, err)
-			return
-		}
-		result[i].HasActiveBlocker = len(unresolvedBlockers) > 0
 	}
 
 	m.WriteJSON(w, r, http.StatusOK, result)
@@ -578,7 +570,6 @@ type KanbanInlay struct {
 	*data.Inlay
 	ProjectName    string `json:"project_name"`
 	DealershipName string `json:"dealership_name"`
-	HasHardBlocker bool   `json:"has_hard_blocker"`
 }
 
 func (m InlayModule) HandleGetKanbanInlays(w http.ResponseWriter, r *http.Request) {
@@ -631,24 +622,10 @@ func (m InlayModule) HandleGetKanbanInlays(w http.ResponseWriter, r *http.Reques
 			inlay.ApprovedProofID = &id
 		}
 
-		hasHardBlocker := false
-		unresolvedBlockers, err := m.Db.InlayBlockers.GetUnresolved(inlay.ID)
-		if err != nil {
-			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to get blockers for inlay %d: %w", inlay.ID, err))
-			return
-		}
-		for _, b := range unresolvedBlockers {
-			if b.BlockerType == data.BlockerTypes.Hard {
-				hasHardBlocker = true
-				break
-			}
-		}
-
 		result[i] = KanbanInlay{
 			Inlay:          &inlay,
 			ProjectName:    d.ProjectName,
 			DealershipName: d.DealershipName,
-			HasHardBlocker: hasHardBlocker,
 		}
 	}
 
@@ -687,18 +664,6 @@ func (m InlayModule) HandlePatchInlayStep(w http.ResponseWriter, r *http.Request
 	if !found {
 		m.WriteError(w, r, m.Err.RecordNotFound, nil)
 		return
-	}
-
-	unresolvedBlockers, err := m.Db.InlayBlockers.GetUnresolved(inlay.ID)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to check blockers: %w", err))
-		return
-	}
-	for _, b := range unresolvedBlockers {
-		if b.BlockerType == data.BlockerTypes.Hard {
-			m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("inlay has unresolved hard blockers that must be resolved before moving to the next step"))
-			return
-		}
 	}
 
 	user := m.ContextGetUser(r)
@@ -871,7 +836,7 @@ func (m InlayModule) tryAdvanceProjectStatus(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func (m InlayModule) HandleGetBlockersByInlay(w http.ResponseWriter, r *http.Request) {
+func (m InlayModule) HandleGetInlayMilestones(w http.ResponseWriter, r *http.Request) {
 	inlayUUID := r.PathValue("uuid")
 
 	err := m.Validate.Var(inlayUUID, "required,uuid4")
@@ -897,16 +862,51 @@ func (m InlayModule) HandleGetBlockersByInlay(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	blockers, err := m.Db.InlayBlockers.GetByInlayID(inlay.ID)
+	milestones, err := m.Db.InlayMilestones.GetByInlayID(inlay.ID)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
-	m.WriteJSON(w, r, http.StatusOK, blockers)
+	m.WriteJSON(w, r, http.StatusOK, milestones)
 }
 
-func (m InlayModule) HandlePostBlocker(w http.ResponseWriter, r *http.Request) {
+func (m InlayModule) HandleGetInlayUpdates(w http.ResponseWriter, r *http.Request) {
+	inlayUUID := r.PathValue("uuid")
+
+	err := m.Validate.Var(inlayUUID, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	inlay, found, err := m.Db.Inlays.GetByUUID(inlayUUID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	user := m.ContextGetUser(r)
+	if user.IsDealership() {
+		if _, ok := m.validateInlayOwnership(w, r, inlay); !ok {
+			return
+		}
+	}
+
+	updates, err := m.Db.InlayUpdates.GetByInlayID(inlay.ID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, updates)
+}
+
+func (m InlayModule) HandlePostInlayUpdate(w http.ResponseWriter, r *http.Request) {
 	inlayUUID := r.PathValue("uuid")
 
 	err := m.Validate.Var(inlayUUID, "required,uuid4")
@@ -916,9 +916,8 @@ func (m InlayModule) HandlePostBlocker(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		BlockerType data.BlockerType `json:"blocker_type" validate:"required"`
-		Reason      string           `json:"reason" validate:"required"`
-		StepBlocked string           `json:"step_blocked" validate:"required"`
+		UpdateType data.InlayUpdateType `json:"update_type" validate:"required"`
+		Message    string               `json:"message" validate:"required"`
 	}
 
 	err = m.ReadJSONBody(w, r, &body)
@@ -927,8 +926,8 @@ func (m InlayModule) HandlePostBlocker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if body.BlockerType != data.BlockerTypes.Soft && body.BlockerType != data.BlockerTypes.Hard {
-		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("invalid blocker_type: must be 'soft' or 'hard'"))
+	if body.UpdateType != data.InlayUpdateTypes.Info && body.UpdateType != data.InlayUpdateTypes.Issue {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("invalid update_type: must be 'info' or 'issue'"))
 		return
 	}
 
@@ -945,27 +944,27 @@ func (m InlayModule) HandlePostBlocker(w http.ResponseWriter, r *http.Request) {
 	user := m.ContextGetUser(r)
 	userID := user.GetID()
 
-	blocker := data.InlayBlocker{
-		InlayID:     inlay.ID,
-		BlockerType: body.BlockerType,
-		Reason:      body.Reason,
-		StepBlocked: body.StepBlocked,
-		CreatedBy:   &userID,
+	update := data.InlayUpdate{
+		InlayID:    inlay.ID,
+		UpdateType: body.UpdateType,
+		Message:    body.Message,
+		Step:       inlay.ManufacturingStep,
+		CreatedBy:  &userID,
 	}
 
-	err = m.Db.InlayBlockers.Insert(&blocker)
+	err = m.Db.InlayUpdates.Insert(&update)
 	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to insert blocker: %w", err))
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to insert inlay update: %w", err))
 		return
 	}
 
 	m.SendNotificationToAllDealershipUsersForProject(
 		inlay.ProjectID,
-		data.NotificationEventTypes.InlayBlocked,
-		fmt.Sprintf("Issue with inlay: %s", inlay.Name),
-		fmt.Sprintf("Inlay %q has been blocked: %s", inlay.Name, body.Reason),
+		data.NotificationEventTypes.InlayUpdate,
+		fmt.Sprintf("Update on inlay: %s", inlay.Name),
+		fmt.Sprintf("New update on inlay %q: %s", inlay.Name, body.Message),
 		&inlay.ID,
 	)
 
-	m.WriteJSON(w, r, http.StatusCreated, blocker)
+	m.WriteJSON(w, r, http.StatusCreated, update)
 }

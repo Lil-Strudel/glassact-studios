@@ -6,10 +6,6 @@ import {
   CardTitle,
   Button,
   showToast,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@glassact/ui";
 import { createFileRoute } from "@tanstack/solid-router";
 import {
@@ -33,7 +29,6 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { CleanupFn } from "@atlaskit/pragmatic-drag-and-drop/dist/types/internal-types";
 import { z } from "zod";
-import { IoWarningOutline } from "solid-icons/io";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import type { ManufacturingStep } from "@glassact/data";
 import {
@@ -41,7 +36,6 @@ import {
   patchInlayStep,
   type KanbanInlay,
 } from "../../queries/manufacturing";
-import { BlockersDialog } from "../../components/manufacturing/blockers-dialog";
 import { isApiError } from "../../utils/is-api-error";
 
 export const Route = createFileRoute("/_app/inlays")({
@@ -65,7 +59,6 @@ const STEP_COLUMNS: StepColumn[] = [
 
 interface InlayCardProps {
   inlay: KanbanInlay;
-  onOpenBlockers: (uuid: string) => void;
 }
 
 function InlayCard(props: InlayCardProps) {
@@ -79,7 +72,6 @@ function InlayCard(props: InlayCardProps) {
       element: ref,
       getInitialData: () => ({
         uuid: props.inlay.uuid,
-        hasHardBlocker: props.inlay.has_hard_blocker,
       }),
       onDragStart: () => setDragging(true),
       onDrop: () => setDragging(false),
@@ -116,32 +108,6 @@ function InlayCard(props: InlayCardProps) {
             </CardDescription>
           </div>
         </div>
-        <Show when={props.inlay.has_hard_blocker}>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="text-red-500 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              props.onOpenBlockers(props.inlay.uuid);
-            }}
-          >
-            <IoWarningOutline size={20} />
-          </Button>
-        </Show>
-        <Show when={!props.inlay.has_hard_blocker}>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="text-gray-400 hover:text-gray-600 flex-shrink-0"
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              props.onOpenBlockers(props.inlay.uuid);
-            }}
-          >
-            <IoWarningOutline size={20} />
-          </Button>
-        </Show>
       </CardHeader>
     </Card>
   );
@@ -240,13 +206,6 @@ function RouteComponent() {
       queryClient.invalidateQueries({ queryKey: ["kanban-inlays"] }),
   }));
 
-  const [blockersDialogUuid, setBlockersDialogUuid] = createSignal<
-    string | null
-  >(null);
-  const [hardBlockerWarningUuid, setHardBlockerWarningUuid] = createSignal<
-    string | null
-  >(null);
-
   const columnData = createMemo(() => {
     const inlays = kanbanQuery.isSuccess ? kanbanQuery.data : [];
     const map = new Map<ManufacturingStep, KanbanInlay[]>();
@@ -274,23 +233,16 @@ function RouteComponent() {
           .object({
             destId: z.string(),
             cardUuid: z.string(),
-            hasHardBlocker: z.boolean(),
           })
           .safeParse({
             destId: dest.data.id,
             cardUuid: source.data.uuid,
-            hasHardBlocker: source.data.hasHardBlocker,
           });
 
         if (!success) return;
 
-        const { destId, cardUuid, hasHardBlocker } = data;
+        const { destId, cardUuid } = data;
         const destStep = destId as ManufacturingStep;
-
-        if (hasHardBlocker) {
-          setHardBlockerWarningUuid(cardUuid);
-          return;
-        }
 
         patchStep.mutate({ uuid: cardUuid, step: destStep });
       },
@@ -347,58 +299,12 @@ function RouteComponent() {
           {(col) => (
             <StepColumn column={col}>
               <For each={columnData().get(col.id) ?? []}>
-                {(inlay) => (
-                  <InlayCard
-                    inlay={inlay}
-                    onOpenBlockers={setBlockersDialogUuid}
-                  />
-                )}
+                {(inlay) => <InlayCard inlay={inlay} />}
               </For>
             </StepColumn>
           )}
         </For>
       </div>
-
-      <Show when={blockersDialogUuid()}>
-        {(uuid) => (
-          <BlockersDialog
-            inlayUuid={uuid()}
-            open={true}
-            onOpenChange={(open) => {
-              if (!open) setBlockersDialogUuid(null);
-            }}
-          />
-        )}
-      </Show>
-
-      <Dialog
-        open={hardBlockerWarningUuid() !== null}
-        onOpenChange={(open) => {
-          if (!open) setHardBlockerWarningUuid(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cannot Move Inlay</DialogTitle>
-          </DialogHeader>
-          <div class="space-y-3">
-            <p class="text-sm text-gray-600">
-              This inlay has unresolved hard blockers. You must resolve all hard
-              blockers before moving it to the next step.
-            </p>
-            <Button
-              class="w-full"
-              onClick={() => {
-                const uuid = hardBlockerWarningUuid();
-                setHardBlockerWarningUuid(null);
-                if (uuid) setBlockersDialogUuid(uuid);
-              }}
-            >
-              View Blockers
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

@@ -143,37 +143,6 @@ func TestGetInternalDashboard_WithProjects_ReturnsAllStatusCounts(t *testing.T) 
 	assert.Equal(t, int64(2), findStatusCount(dashboard.ProjectStatusCounts, string(ProjectStatuses.Ordered)))
 }
 
-func TestGetInternalDashboard_WithActiveBlockers_ReturnsBlockerCounts(t *testing.T) {
-	t.Cleanup(func() { cleanupTables(t) })
-
-	models := getTestModels(t)
-	dealership := createTestDealership(t, models)
-	project := createTestProject(t, models, dealership.ID)
-	inlay := createTestInlay(t, models, project.ID)
-
-	hardBlocker := &InlayBlocker{
-		InlayID:     inlay.ID,
-		BlockerType: BlockerTypes.Hard,
-		Reason:      "Material unavailable",
-		StepBlocked: "materials-prep",
-	}
-	require.NoError(t, models.InlayBlockers.Insert(hardBlocker))
-
-	softBlocker := &InlayBlocker{
-		InlayID:     inlay.ID,
-		BlockerType: BlockerTypes.Soft,
-		Reason:      "Awaiting clarification",
-		StepBlocked: "cutting",
-	}
-	require.NoError(t, models.InlayBlockers.Insert(softBlocker))
-
-	dashboard, err := models.Dashboard.GetInternalDashboard()
-	require.NoError(t, err)
-
-	assert.Equal(t, int64(2), dashboard.ActiveBlockerCount)
-	assert.Equal(t, int64(1), dashboard.HardBlockerCount)
-}
-
 func TestGetInternalDashboard_WithManufacturingInlays_ReturnsStepCounts(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
@@ -211,8 +180,6 @@ func TestGetInternalDashboard_EmptyDatabase_ReturnsZeros(t *testing.T) {
 
 	assert.Empty(t, dashboard.ProjectStatusCounts)
 	assert.Empty(t, dashboard.ManufacturingStepCounts)
-	assert.Equal(t, int64(0), dashboard.ActiveBlockerCount)
-	assert.Equal(t, int64(0), dashboard.HardBlockerCount)
 	assert.Equal(t, int64(0), dashboard.PendingProofCount)
 	assert.Equal(t, int64(0), dashboard.OutstandingInvoiceCount)
 	assert.Equal(t, int64(0), dashboard.OutstandingInvoiceAmountCents)

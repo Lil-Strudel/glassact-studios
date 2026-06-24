@@ -22,8 +22,6 @@ export type DealershipDashboard = {
 export type InternalDashboard = {
   project_status_counts: StatusCount[];
   manufacturing_step_counts: ManufacturingStepCount[];
-  active_blocker_count: number;
-  hard_blocker_count: number;
   pending_proof_count: number;
   outstanding_invoice_count: number;
   outstanding_invoice_amount_cents: number;
