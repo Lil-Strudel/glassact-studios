@@ -114,7 +114,7 @@ func TestProject_GetAll(t *testing.T) {
 	project2 := &Project{
 		DealershipID: dealership.ID,
 		Name:         "Another Project",
-		Status:       ProjectStatuses.Designing,
+		Status:       ProjectStatuses.Ordered,
 	}
 	err := models.Projects.Insert(project2)
 	if err != nil {
@@ -139,7 +139,7 @@ func TestProject_Update(t *testing.T) {
 	project := createTestProject(t, models, dealership.ID)
 
 	project.Name = "Updated Project"
-	project.Status = ProjectStatuses.Approved
+	project.Status = ProjectStatuses.Ordered
 
 	err := models.Projects.Update(project)
 	if err != nil {
@@ -154,7 +154,7 @@ func TestProject_Update(t *testing.T) {
 	if retrieved.Name != "Updated Project" {
 		t.Errorf("Expected name to be updated, got %s", retrieved.Name)
 	}
-	if retrieved.Status != ProjectStatuses.Approved {
+	if retrieved.Status != ProjectStatuses.Ordered {
 		t.Errorf("Expected status to be updated, got %s", retrieved.Status)
 	}
 }
@@ -313,9 +313,6 @@ func TestProject_TxInsertRollback(t *testing.T) {
 func TestProjectStatuses(t *testing.T) {
 	statuses := []ProjectStatus{
 		ProjectStatuses.Draft,
-		ProjectStatuses.Designing,
-		ProjectStatuses.PendingApproval,
-		ProjectStatuses.Approved,
 		ProjectStatuses.Ordered,
 		ProjectStatuses.InProduction,
 		ProjectStatuses.Shipped,

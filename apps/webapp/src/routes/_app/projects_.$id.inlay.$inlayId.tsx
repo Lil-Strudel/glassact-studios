@@ -156,12 +156,24 @@ function InlayDetailPage() {
                           Download Design
                         </Button>
                       </Show>
-                      <Can permission="approve_proof">
-                        <ProofActions
-                          proof={proof()}
-                          inlayUuid={params().inlayId}
-                        />
-                      </Can>
+                      <Show
+                        when={proof().approval_authority === "internal"}
+                        fallback={
+                          <Can permission="approve_proof">
+                            <ProofActions
+                              proof={proof()}
+                              inlayUuid={params().inlayId}
+                            />
+                          </Can>
+                        }
+                      >
+                        <Can permission="internal_approve_proof">
+                          <ProofActions
+                            proof={proof()}
+                            inlayUuid={params().inlayId}
+                          />
+                        </Can>
+                      </Show>
                     </div>
                   </div>
                 )}

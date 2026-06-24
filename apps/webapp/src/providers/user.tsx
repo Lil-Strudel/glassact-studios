@@ -116,6 +116,8 @@ export const UserProvider: ParentComponent = (props) => {
       switch (action) {
         case PERMISSION_ACTIONS.CREATE_PROOF:
           return role === "designer" || role === "admin";
+        case PERMISSION_ACTIONS.INTERNAL_APPROVE_PROOF:
+          return role === "designer" || role === "admin";
         case PERMISSION_ACTIONS.MANAGE_KANBAN:
           return role === "production" || role === "admin";
         case PERMISSION_ACTIONS.CREATE_BLOCKER:

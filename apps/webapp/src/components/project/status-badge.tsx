@@ -9,18 +9,6 @@ const STATUS_CONFIG: Record<
     label: "Draft",
     class: "bg-gray-100 text-gray-700 border-gray-300",
   },
-  designing: {
-    label: "Designing",
-    class: "bg-blue-100 text-blue-700 border-blue-300",
-  },
-  "pending-approval": {
-    label: "Pending Approval",
-    class: "bg-yellow-100 text-yellow-700 border-yellow-300",
-  },
-  approved: {
-    label: "Approved",
-    class: "bg-green-100 text-green-700 border-green-300",
-  },
   ordered: {
     label: "Ordered",
     class: "bg-indigo-100 text-indigo-700 border-indigo-300",

@@ -11,8 +11,9 @@ const (
 	ActionManageProject         = "manage_project"
 	ActionSendChat              = "send_chat"
 
-	ActionCreateProof         = "create_proof"
-	ActionManageKanban        = "manage_kanban"
+	ActionCreateProof          = "create_proof"
+	ActionInternalApproveProof = "internal_approve_proof"
+	ActionManageKanban         = "manage_kanban"
 	ActionCreateBlocker       = "create_blocker"
 	ActionCreateInvoice       = "create_invoice"
 	ActionManageInternalUsers = "manage_internal_users"

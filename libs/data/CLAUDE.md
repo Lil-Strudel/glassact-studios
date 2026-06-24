@@ -57,9 +57,6 @@ import { StandardTable } from "./helpers";
 
 export type ProjectStatus =
   | "draft"
-  | "designing"
-  | "pending-approval"
-  | "approved"
   | "ordered"
   | "in-production"
   | "shipped"
@@ -126,9 +123,6 @@ Define string literal unions with a constant array for runtime validation:
 ```typescript
 export type ProjectStatus =
   | "draft"
-  | "designing"
-  | "pending-approval"
-  | "approved"
   | "ordered"
   | "in-production"
   | "shipped"
@@ -139,9 +133,6 @@ export type ProjectStatus =
 
 export const PROJECT_STATUSES: ProjectStatus[] = [
   "draft",
-  "designing",
-  "pending-approval",
-  "approved",
   "ordered",
   "in-production",
   "shipped",
@@ -289,31 +280,25 @@ import (
 type ProjectStatus string
 
 type projectStatuses struct {
-    Draft           ProjectStatus
-    Designing       ProjectStatus
-    PendingApproval ProjectStatus
-    Approved        ProjectStatus
-    Ordered         ProjectStatus
-    InProduction    ProjectStatus
-    Shipped         ProjectStatus
-    Delivered       ProjectStatus
-    Invoiced        ProjectStatus
-    Completed       ProjectStatus
-    Cancelled       ProjectStatus
+    Draft        ProjectStatus
+    Ordered      ProjectStatus
+    InProduction ProjectStatus
+    Shipped      ProjectStatus
+    Delivered    ProjectStatus
+    Invoiced     ProjectStatus
+    Completed    ProjectStatus
+    Cancelled    ProjectStatus
 }
 
 var ProjectStatuses = projectStatuses{
-    Draft:           ProjectStatus("draft"),
-    Designing:       ProjectStatus("designing"),
-    PendingApproval: ProjectStatus("pending-approval"),
-    Approved:        ProjectStatus("approved"),
-    Ordered:         ProjectStatus("ordered"),
-    InProduction:    ProjectStatus("in-production"),
-    Shipped:         ProjectStatus("shipped"),
-    Delivered:       ProjectStatus("delivered"),
-    Invoiced:        ProjectStatus("invoiced"),
-    Completed:       ProjectStatus("completed"),
-    Cancelled:       ProjectStatus("cancelled"),
+    Draft:        ProjectStatus("draft"),
+    Ordered:      ProjectStatus("ordered"),
+    InProduction: ProjectStatus("in-production"),
+    Shipped:      ProjectStatus("shipped"),
+    Delivered:    ProjectStatus("delivered"),
+    Invoiced:     ProjectStatus("invoiced"),
+    Completed:    ProjectStatus("completed"),
+    Cancelled:    ProjectStatus("cancelled"),
 }
 
 // 2. API struct (what handlers use)

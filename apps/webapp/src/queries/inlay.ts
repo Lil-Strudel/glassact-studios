@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
-import type { InlayWithInfo } from "@glassact/data";
+import type { ColorOverrides, InlayWithInfo } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
 export async function getInlaysByProject(
@@ -29,10 +29,19 @@ export function getInlayOpts(uuid: string) {
   });
 }
 
+export interface PostCatalogInlayCustomization {
+  baked_design_asset_url: string;
+  scale_factor: number;
+  width: number;
+  height: number;
+  color_overrides: ColorOverrides;
+}
+
 export interface PostCatalogInlayRequest {
   name: string;
   catalog_item_id: number;
   customization_notes?: string;
+  customization?: PostCatalogInlayCustomization;
 }
 
 export async function postCatalogInlay(params: {
@@ -98,21 +107,5 @@ export async function deleteInlay(uuid: string): Promise<{ success: boolean }> {
 export function deleteInlayOpts() {
   return mutationOptions({
     mutationFn: deleteInlay,
-  });
-}
-
-export async function patchExcludeInlay(params: {
-  uuid: string;
-  excluded: boolean;
-}): Promise<InlayWithInfo> {
-  const res = await api.patch(`/inlay/${params.uuid}/exclude`, {
-    excluded: params.excluded,
-  });
-  return res.data;
-}
-
-export function patchExcludeInlayOpts() {
-  return mutationOptions({
-    mutationFn: patchExcludeInlay,
   });
 }

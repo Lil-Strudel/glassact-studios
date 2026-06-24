@@ -46,10 +46,10 @@ type Inlay struct {
 	ProjectID         int               `json:"project_id"`
 	Name              string            `json:"name"`
 	Type              InlayType         `json:"type"`
+	IsCustomized      bool              `json:"is_customized"`
 	PreviewURL        string            `json:"preview_url"`
 	ApprovedProofID   *int              `json:"approved_proof_id,omitempty"`
 	ManufacturingStep *string           `json:"manufacturing_step,omitempty"`
-	ExcludedFromOrder bool              `json:"excluded_from_order"`
 	CatalogInfo       *InlayCatalogInfo `json:"catalog_info,omitempty"`
 	CustomInfo        *InlayCustomInfo  `json:"custom_info,omitempty"`
 }
@@ -68,11 +68,11 @@ func inlayFromGen(genInlay model.Inlays, genCatalogInfo *model.InlayCatalogInfos
 			UpdatedAt: genInlay.UpdatedAt,
 			Version:   int(genInlay.Version),
 		},
-		ProjectID:         int(genInlay.ProjectID),
-		Name:              genInlay.Name,
-		Type:              InlayType(genInlay.Type),
-		PreviewURL:        genInlay.PreviewURL,
-		ExcludedFromOrder: genInlay.ExcludedFromOrder,
+		ProjectID:    int(genInlay.ProjectID),
+		Name:         genInlay.Name,
+		Type:         InlayType(genInlay.Type),
+		IsCustomized: genInlay.IsCustomized,
+		PreviewURL:   genInlay.PreviewURL,
 	}
 
 	if genInlay.ApprovedProofID != nil {
@@ -130,16 +130,16 @@ func inlayToGen(in *Inlay) (*model.Inlays, error) {
 	}
 
 	genInlay := model.Inlays{
-		ID:                int32(in.ID),
-		UUID:              inlayUUID,
-		ProjectID:         int32(in.ProjectID),
-		Name:              in.Name,
-		Type:              string(in.Type),
-		PreviewURL:        in.PreviewURL,
-		ExcludedFromOrder: in.ExcludedFromOrder,
-		UpdatedAt:         in.UpdatedAt,
-		CreatedAt:         in.CreatedAt,
-		Version:           int32(in.Version),
+		ID:           int32(in.ID),
+		UUID:         inlayUUID,
+		ProjectID:    int32(in.ProjectID),
+		Name:         in.Name,
+		Type:         string(in.Type),
+		IsCustomized: in.IsCustomized,
+		PreviewURL:   in.PreviewURL,
+		UpdatedAt:    in.UpdatedAt,
+		CreatedAt:    in.CreatedAt,
+		Version:      int32(in.Version),
 	}
 
 	if in.ApprovedProofID != nil {
@@ -305,6 +305,7 @@ func (m InlayModel) Insert(inlay *Inlay) error {
 		table.Inlays.ProjectID,
 		table.Inlays.Name,
 		table.Inlays.Type,
+		table.Inlays.IsCustomized,
 		table.Inlays.PreviewURL,
 	).MODEL(
 		genInlay,
@@ -354,6 +355,7 @@ func (m InlayModel) TxInsert(tx *sql.Tx, inlay *Inlay) error {
 		table.Inlays.ProjectID,
 		table.Inlays.Name,
 		table.Inlays.Type,
+		table.Inlays.IsCustomized,
 		table.Inlays.PreviewURL,
 	).MODEL(
 		genInlay,
@@ -526,6 +528,88 @@ func (m InlayModel) GetByProjectID(projectID int) ([]*Inlay, error) {
 	return inlays, nil
 }
 
+// GetNeedingInternalApproval returns every customized catalog inlay across all
+// projects that has an outstanding internal-authority proof awaiting approval.
+// This powers the internal review queue.
+func (m InlayModel) GetNeedingInternalApproval() ([]*Inlay, error) {
+	pendingInternalProof := postgres.EXISTS(
+		postgres.SELECT(table.InlayProofs.ID).FROM(table.InlayProofs).WHERE(
+			postgres.AND(
+				table.InlayProofs.InlayID.EQ(table.Inlays.ID),
+				table.InlayProofs.Status.EQ(postgres.String(string(ProofStatuses.Pending))),
+				table.InlayProofs.ApprovalAuthority.EQ(postgres.String(string(ProofApprovalAuthorities.Internal))),
+			),
+		),
+	)
+
+	return m.queryInlaysWithInfo(
+		postgres.AND(
+			table.Inlays.Type.EQ(postgres.String(string(InlayTypes.Catalog))),
+			table.Inlays.IsCustomized.EQ(postgres.Bool(true)),
+			table.Inlays.ApprovedProofID.IS_NULL(),
+			pendingInternalProof,
+		),
+	)
+}
+
+// GetCustomNeedingProof returns every custom inlay across all projects that is
+// not yet ready and has no pending proof — i.e. a designer still needs to
+// create the first proof for it.
+func (m InlayModel) GetCustomNeedingProof() ([]*Inlay, error) {
+	pendingProof := postgres.EXISTS(
+		postgres.SELECT(table.InlayProofs.ID).FROM(table.InlayProofs).WHERE(
+			postgres.AND(
+				table.InlayProofs.InlayID.EQ(table.Inlays.ID),
+				table.InlayProofs.Status.EQ(postgres.String(string(ProofStatuses.Pending))),
+			),
+		),
+	)
+
+	return m.queryInlaysWithInfo(
+		postgres.AND(
+			table.Inlays.Type.EQ(postgres.String(string(InlayTypes.Custom))),
+			table.Inlays.ApprovedProofID.IS_NULL(),
+			postgres.NOT(pendingProof),
+		),
+	)
+}
+
+func (m InlayModel) queryInlaysWithInfo(where postgres.BoolExpression) ([]*Inlay, error) {
+	query := postgres.SELECT(
+		table.Inlays.AllColumns,
+		table.InlayCatalogInfos.AllColumns,
+		table.InlayCustomInfos.AllColumns,
+	).FROM(
+		table.Inlays.
+			LEFT_JOIN(table.InlayCatalogInfos, table.InlayCatalogInfos.InlayID.EQ(table.Inlays.ID)).
+			LEFT_JOIN(table.InlayCustomInfos, table.InlayCustomInfos.InlayID.EQ(table.Inlays.ID)),
+	).WHERE(
+		where,
+	).ORDER_BY(
+		table.Inlays.CreatedAt.ASC(),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest []struct {
+		model.Inlays
+		InlayCatalogInfos *model.InlayCatalogInfos
+		InlayCustomInfos  *model.InlayCustomInfos
+	}
+	err := query.QueryContext(ctx, m.STDB, &dest)
+	if err != nil {
+		return nil, err
+	}
+
+	inlays := make([]*Inlay, len(dest))
+	for i, d := range dest {
+		inlays[i] = inlayFromGen(d.Inlays, d.InlayCatalogInfos, d.InlayCustomInfos)
+	}
+
+	return inlays, nil
+}
+
 func (m InlayModel) Update(inlay *Inlay) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -645,10 +729,10 @@ func (m InlayModel) TxUpdateFields(tx *sql.Tx, inlay *Inlay) error {
 	}
 
 	query := table.Inlays.UPDATE(
+		table.Inlays.IsCustomized,
 		table.Inlays.PreviewURL,
 		table.Inlays.ApprovedProofID,
 		table.Inlays.ManufacturingStep,
-		table.Inlays.ExcludedFromOrder,
 		table.Inlays.Version,
 	).MODEL(
 		genInlay,
@@ -677,16 +761,13 @@ func (m InlayModel) TxUpdateFields(tx *sql.Tx, inlay *Inlay) error {
 	return nil
 }
 
-func (m InlayModel) CountIncludedByProjectID(projectID int) (int, error) {
+func (m InlayModel) CountByProjectID(projectID int) (int, error) {
 	query := postgres.SELECT(
 		postgres.COUNT(table.Inlays.ID),
 	).FROM(
 		table.Inlays,
 	).WHERE(
-		postgres.AND(
-			table.Inlays.ProjectID.EQ(postgres.Int(int64(projectID))),
-			table.Inlays.ExcludedFromOrder.EQ(postgres.Bool(false)),
-		),
+		table.Inlays.ProjectID.EQ(postgres.Int(int64(projectID))),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

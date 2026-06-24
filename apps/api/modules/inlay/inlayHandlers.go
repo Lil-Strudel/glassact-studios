@@ -69,14 +69,120 @@ func (m InlayModule) validateInlayOwnership(w http.ResponseWriter, r *http.Reque
 	return project, true
 }
 
+// InlayWithProofStatus is the API response shape for inlays. The frontend uses
+// `is_ready` + price fields directly so the user can see what's blocking the
+// order and what each line will cost.
 type InlayWithProofStatus struct {
 	*data.Inlay
-	HasPendingProof             bool    `json:"has_pending_proof"`
-	LatestProofStatus           *string `json:"latest_proof_status"`
-	ApprovedProofPriceGroupID   *int    `json:"approved_proof_price_group_id"`
-	ApprovedProofPriceGroupName *string `json:"approved_proof_price_group_name"`
-	ApprovedProofPriceCents     *int    `json:"approved_proof_price_cents"`
-	HasActiveBlocker            bool    `json:"has_active_blocker"`
+	HasPendingProof      bool                     `json:"has_pending_proof"`
+	LatestProofStatus    *string                  `json:"latest_proof_status"`
+	IsReady              bool                     `json:"is_ready"`
+	PriceGroupID         *int                     `json:"price_group_id"`
+	PriceGroupName       *string                  `json:"price_group_name"`
+	PriceCents           *int                     `json:"price_cents"`
+	PriceAdjustmentType  data.PriceAdjustmentType `json:"price_adjustment_type"`
+	PriceAdjustmentValue float64                  `json:"price_adjustment_value"`
+	HasActiveBlocker     bool                     `json:"has_active_blocker"`
+}
+
+// inlayPricing carries the resolved pricing for an inlay: which price group
+// applies, its display name, the final per-unit price after adjustment, and the
+// adjustment itself (so the frontend can render the "PG1 + 20%" formula).
+type inlayPricing struct {
+	PriceGroupID    *int
+	PriceGroupName  *string
+	PriceCents      *int
+	AdjustmentType  data.PriceAdjustmentType
+	AdjustmentValue float64
+}
+
+// inlayIsReady is the single source of truth for "can this inlay be ordered?"
+// It mirrors the rule in projectHandlers.inlayIsReady.
+func inlayIsReady(inlay *data.Inlay) bool {
+	if inlay.Type == data.InlayTypes.Catalog && !inlay.IsCustomized {
+		return true
+	}
+	return inlay.ApprovedProofID != nil
+}
+
+// buildInlayPricing resolves the price group, final per-unit price, and the
+// adjustment formula for an inlay. Stock catalog inlays use the catalog's
+// default price group (no adjustment); otherwise we look at the approved proof
+// (or, for customized catalog inlays still pending internal review, the latest
+// proof's proposed pricing).
+func (m InlayModule) buildInlayPricing(inlay *data.Inlay) (inlayPricing, error) {
+	if inlay.ApprovedProofID != nil {
+		proof, found, err := m.Db.InlayProofs.GetByID(*inlay.ApprovedProofID)
+		if err != nil {
+			return inlayPricing{}, err
+		}
+		if found && proof.PriceGroupID != nil {
+			return m.pricingFromProof(proof)
+		}
+	}
+
+	// Customized catalog inlay still awaiting internal review: pull the latest
+	// pending internal-authority proof to surface the proposed price.
+	if inlay.Type == data.InlayTypes.Catalog && inlay.IsCustomized && inlay.ApprovedProofID == nil {
+		latest, found, err := m.Db.InlayProofs.GetLatestByInlayID(inlay.ID)
+		if err != nil {
+			return inlayPricing{}, err
+		}
+		if found && latest.PriceGroupID != nil {
+			return m.pricingFromProof(latest)
+		}
+	}
+
+	// Stock catalog inlay: catalog defaults, no adjustment.
+	if inlay.Type == data.InlayTypes.Catalog && inlay.CatalogInfo != nil {
+		catalogItem, found, err := m.Db.CatalogItems.GetByID(inlay.CatalogInfo.CatalogItemID)
+		if err != nil {
+			return inlayPricing{}, err
+		}
+		if found {
+			pg, pgFound, pgErr := m.Db.PriceGroups.GetByID(catalogItem.DefaultPriceGroupID)
+			if pgErr != nil {
+				return inlayPricing{}, pgErr
+			}
+			priceGroupID := catalogItem.DefaultPriceGroupID
+			pricing := inlayPricing{
+				PriceGroupID:   &priceGroupID,
+				AdjustmentType: data.PriceAdjustmentTypes.None,
+			}
+			if pgFound {
+				name := pg.Name
+				base := pg.BasePriceCents
+				pricing.PriceGroupName = &name
+				pricing.PriceCents = &base
+			}
+			return pricing, nil
+		}
+	}
+
+	return inlayPricing{AdjustmentType: data.PriceAdjustmentTypes.None}, nil
+}
+
+// pricingFromProof resolves a proof's price group base and applies its
+// adjustment to produce the final per-unit price plus the formula components.
+func (m InlayModule) pricingFromProof(proof *data.InlayProof) (inlayPricing, error) {
+	pg, pgFound, pgErr := m.Db.PriceGroups.GetByID(*proof.PriceGroupID)
+	if pgErr != nil {
+		return inlayPricing{}, pgErr
+	}
+
+	pricing := inlayPricing{
+		PriceGroupID:    proof.PriceGroupID,
+		AdjustmentType:  proof.PriceAdjustmentType,
+		AdjustmentValue: proof.PriceAdjustmentValue,
+	}
+	if pgFound {
+		name := pg.Name
+		pricing.PriceGroupName = &name
+		priceCents := data.ComputeAdjustedPriceCents(pg.BasePriceCents, proof.PriceAdjustmentType, proof.PriceAdjustmentValue)
+		pricing.PriceCents = &priceCents
+	}
+
+	return pricing, nil
 }
 
 func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Request) {
@@ -102,9 +208,8 @@ func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Req
 	result := make([]InlayWithProofStatus, len(inlays))
 	for i, inlay := range inlays {
 		result[i] = InlayWithProofStatus{
-			Inlay:             inlay,
-			HasPendingProof:   false,
-			LatestProofStatus: nil,
+			Inlay:   inlay,
+			IsReady: inlayIsReady(inlay),
 		}
 
 		latestProof, found, err := m.Db.InlayProofs.GetLatestByInlayID(inlay.ID)
@@ -119,30 +224,16 @@ func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Req
 			result[i].HasPendingProof = latestProof.Status == data.ProofStatuses.Pending
 		}
 
-		if inlay.ApprovedProofID != nil {
-			approvedProof, found, err := m.Db.InlayProofs.GetByID(*inlay.ApprovedProofID)
-			if err != nil {
-				m.WriteError(w, r, m.Err.ServerError, err)
-				return
-			}
-
-			if found && approvedProof.PriceGroupID != nil {
-				result[i].ApprovedProofPriceGroupID = approvedProof.PriceGroupID
-				result[i].ApprovedProofPriceCents = approvedProof.PriceCents
-
-				priceGroup, found, err := m.Db.PriceGroups.GetByID(*approvedProof.PriceGroupID)
-				if err != nil {
-					m.WriteError(w, r, m.Err.ServerError, err)
-					return
-				}
-				if found {
-					result[i].ApprovedProofPriceGroupName = &priceGroup.Name
-					if result[i].ApprovedProofPriceCents == nil {
-						result[i].ApprovedProofPriceCents = &priceGroup.BasePriceCents
-					}
-				}
-			}
+		pricing, err := m.buildInlayPricing(inlay)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
 		}
+		result[i].PriceGroupID = pricing.PriceGroupID
+		result[i].PriceGroupName = pricing.PriceGroupName
+		result[i].PriceCents = pricing.PriceCents
+		result[i].PriceAdjustmentType = pricing.AdjustmentType
+		result[i].PriceAdjustmentValue = pricing.AdjustmentValue
 
 		unresolvedBlockers, err := m.Db.InlayBlockers.GetUnresolved(inlay.ID)
 		if err != nil {
@@ -190,10 +281,19 @@ func (m InlayModule) HandlePostCatalogInlay(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// The Customization sub-object is optional. When provided, the inlay was
+	// produced via the customizer and needs internal review.
 	var body struct {
 		Name               string `json:"name" validate:"required"`
 		CatalogItemID      int    `json:"catalog_item_id" validate:"required,gt=0"`
 		CustomizationNotes string `json:"customization_notes"`
+		Customization      *struct {
+			BakedDesignAssetURL string                 `json:"baked_design_asset_url" validate:"required"`
+			ScaleFactor         float64                `json:"scale_factor" validate:"required,gt=0"`
+			Width               float64                `json:"width" validate:"required,gt=0"`
+			Height              float64                `json:"height" validate:"required,gt=0"`
+			ColorOverrides      map[string]interface{} `json:"color_overrides"`
+		} `json:"customization"`
 	}
 
 	err = m.ReadJSONBody(w, r, &body)
@@ -207,8 +307,8 @@ func (m InlayModule) HandlePostCatalogInlay(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if project.Status != data.ProjectStatuses.Draft && project.Status != data.ProjectStatuses.Designing {
-		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("can only add inlays to projects in draft or designing status, current status: %s", project.Status))
+	if project.Status != data.ProjectStatuses.Draft {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("can only add inlays to projects in draft status, current status: %s", project.Status))
 		return
 	}
 
@@ -222,22 +322,91 @@ func (m InlayModule) HandlePostCatalogInlay(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	if body.Customization == nil {
+		// Stock catalog inlay — ready immediately, no proof needed.
+		inlay := data.Inlay{
+			ProjectID:    project.ID,
+			Name:         body.Name,
+			Type:         data.InlayTypes.Catalog,
+			IsCustomized: false,
+			PreviewURL:   catalogItem.SvgURL,
+			CatalogInfo: &data.InlayCatalogInfo{
+				CatalogItemID:      body.CatalogItemID,
+				CustomizationNotes: body.CustomizationNotes,
+			},
+		}
+
+		if err := m.Db.Inlays.Insert(&inlay); err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+
+		m.WriteJSON(w, r, http.StatusCreated, inlay)
+		return
+	}
+
+	// Customized catalog inlay — bake the SVG was already uploaded; we now
+	// persist the inlay and a pending internal-authority proof in one tx.
+	tx, err := m.Db.STDB.Begin()
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	defer tx.Rollback()
+
 	inlay := data.Inlay{
-		ProjectID:  project.ID,
-		Name:       body.Name,
-		Type:       data.InlayTypes.Catalog,
-		PreviewURL: catalogItem.SvgURL,
+		ProjectID:    project.ID,
+		Name:         body.Name,
+		Type:         data.InlayTypes.Catalog,
+		IsCustomized: true,
+		PreviewURL:   body.Customization.BakedDesignAssetURL,
 		CatalogInfo: &data.InlayCatalogInfo{
 			CatalogItemID:      body.CatalogItemID,
 			CustomizationNotes: body.CustomizationNotes,
 		},
 	}
 
-	err = m.Db.Inlays.Insert(&inlay)
-	if err != nil {
+	if err := m.Db.Inlays.TxInsert(tx, &inlay); err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
+
+	defaultPriceGroupID := catalogItem.DefaultPriceGroupID
+	colorOverrides := map[string]interface{}{}
+	if body.Customization.ColorOverrides != nil {
+		colorOverrides = body.Customization.ColorOverrides
+	}
+
+	proof := data.InlayProof{
+		InlayID:           inlay.ID,
+		VersionNumber:     1,
+		DesignAssetURL:    body.Customization.BakedDesignAssetURL,
+		Width:             body.Customization.Width,
+		Height:            body.Customization.Height,
+		PriceGroupID:      &defaultPriceGroupID,
+		ScaleFactor:       body.Customization.ScaleFactor,
+		ColorOverrides:    colorOverrides,
+		ApprovalAuthority: data.ProofApprovalAuthorities.Internal,
+		Status:            data.ProofStatuses.Pending,
+		SentInChatID:      nil,
+	}
+
+	if err := m.Db.InlayProofs.TxInsert(tx, &proof); err != nil {
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to create customizer proof: %w", err))
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	m.SendNotificationToAllInternalUsers(
+		data.NotificationEventTypes.InternalReviewRequired,
+		fmt.Sprintf("Customized inlay needs review: %s", inlay.Name),
+		fmt.Sprintf("A customized inlay %q (from catalog %s) is ready for internal pricing review.", inlay.Name, catalogItem.CatalogCode),
+		&project.ID, &inlay.ID,
+	)
 
 	m.WriteJSON(w, r, http.StatusCreated, inlay)
 }
@@ -269,16 +438,17 @@ func (m InlayModule) HandlePostCustomInlay(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if project.Status != data.ProjectStatuses.Draft && project.Status != data.ProjectStatuses.Designing {
-		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("can only add inlays to projects in draft or designing status, current status: %s", project.Status))
+	if project.Status != data.ProjectStatuses.Draft {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("can only add inlays to projects in draft status, current status: %s", project.Status))
 		return
 	}
 
 	inlay := data.Inlay{
-		ProjectID:  project.ID,
-		Name:       body.Name,
-		Type:       data.InlayTypes.Custom,
-		PreviewURL: "",
+		ProjectID:    project.ID,
+		Name:         body.Name,
+		Type:         data.InlayTypes.Custom,
+		IsCustomized: false,
+		PreviewURL:   "",
 		CustomInfo: &data.InlayCustomInfo{
 			Description:     body.Description,
 			RequestedWidth:  body.RequestedWidth,
@@ -329,8 +499,8 @@ func (m InlayModule) HandlePatchInlay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if project.Status != data.ProjectStatuses.Draft && project.Status != data.ProjectStatuses.Designing {
-		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("can only modify inlays on projects in draft or designing status"))
+	if project.Status != data.ProjectStatuses.Draft {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("can only modify inlays on projects in draft status"))
 		return
 	}
 
@@ -371,8 +541,8 @@ func (m InlayModule) HandleDeleteInlay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if project.Status != data.ProjectStatuses.Draft && project.Status != data.ProjectStatuses.Designing {
-		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("can only remove inlays from projects in draft or designing status"))
+	if project.Status != data.ProjectStatuses.Draft {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("can only remove inlays from projects in draft status"))
 		return
 	}
 
@@ -383,13 +553,6 @@ func (m InlayModule) HandleDeleteInlay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	m.WriteJSON(w, r, http.StatusOK, map[string]bool{"success": true})
-}
-
-var preOrderStatuses = map[data.ProjectStatus]bool{
-	data.ProjectStatuses.Draft:           true,
-	data.ProjectStatuses.Designing:       true,
-	data.ProjectStatuses.PendingApproval: true,
-	data.ProjectStatuses.Approved:        true,
 }
 
 var manufacturingStepOrder = []data.ManufacturingStep{
@@ -458,8 +621,8 @@ func (m InlayModule) HandleGetKanbanInlays(w http.ResponseWriter, r *http.Reques
 			ProjectID:         int(d.Inlays.ProjectID),
 			Name:              d.Inlays.Name,
 			Type:              data.InlayType(d.Inlays.Type),
+			IsCustomized:      d.Inlays.IsCustomized,
 			PreviewURL:        d.Inlays.PreviewURL,
-			ExcludedFromOrder: d.Inlays.ExcludedFromOrder,
 			ManufacturingStep: d.Inlays.ManufacturingStep,
 		}
 
@@ -638,9 +801,13 @@ func (m InlayModule) tryAdvanceProjectStatus(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// Only inlays that actually went into production (have a manufacturing
+	// step) participate in project-level advancement. Inlays that the user
+	// removed from the cart never enter production and would otherwise hold
+	// the project back forever.
 	var activeInlays []*data.Inlay
 	for _, inlay := range projectInlays {
-		if !inlay.ExcludedFromOrder {
+		if inlay.ManufacturingStep != nil {
 			activeInlays = append(activeInlays, inlay)
 		}
 	}
@@ -652,11 +819,6 @@ func (m InlayModule) tryAdvanceProjectStatus(w http.ResponseWriter, r *http.Requ
 	allDelivered := true
 	allShipped := true
 	for _, inlay := range activeInlays {
-		if inlay.ManufacturingStep == nil {
-			allDelivered = false
-			allShipped = false
-			break
-		}
 		step := data.ManufacturingStep(*inlay.ManufacturingStep)
 		if step != data.ManufacturingSteps.Delivered {
 			allDelivered = false
@@ -806,67 +968,4 @@ func (m InlayModule) HandlePostBlocker(w http.ResponseWriter, r *http.Request) {
 	)
 
 	m.WriteJSON(w, r, http.StatusCreated, blocker)
-}
-
-func (m InlayModule) HandleExcludeInlay(w http.ResponseWriter, r *http.Request) {
-	inlayUUID := r.PathValue("uuid")
-
-	err := m.Validate.Var(inlayUUID, "required,uuid4")
-	if err != nil {
-		m.WriteError(w, r, m.Err.BadRequest, err)
-		return
-	}
-
-	var body struct {
-		Excluded bool `json:"excluded"`
-	}
-
-	err = m.ReadJSONBody(w, r, &body)
-	if err != nil {
-		m.WriteError(w, r, m.Err.BadRequest, err)
-		return
-	}
-
-	inlay, found, err := m.Db.Inlays.GetByUUID(inlayUUID)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
-	}
-	if !found {
-		m.WriteError(w, r, m.Err.RecordNotFound, nil)
-		return
-	}
-
-	project, ok := m.validateInlayOwnership(w, r, inlay)
-	if !ok {
-		return
-	}
-
-	if !preOrderStatuses[project.Status] {
-		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("can only change inlay inclusion on projects before ordering"))
-		return
-	}
-
-	inlay.ExcludedFromOrder = body.Excluded
-
-	tx, err := m.Db.STDB.Begin()
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
-	}
-	defer tx.Rollback()
-
-	err = m.Db.Inlays.TxUpdateFields(tx, inlay)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
-	}
-
-	m.WriteJSON(w, r, http.StatusOK, inlay)
 }

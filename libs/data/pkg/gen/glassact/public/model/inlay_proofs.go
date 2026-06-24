@@ -13,25 +13,29 @@ import (
 )
 
 type InlayProofs struct {
-	ID             int32 `sql:"primary_key"`
-	UUID           uuid.UUID
-	InlayID        int32
-	VersionNumber  int32
-	DesignAssetURL string
-	Width          float64
-	Height         float64
-	PriceGroupID   *int32
-	PriceCents     *int32
-	ScaleFactor    float64
-	ColorOverrides string
-	Status         string
-	ApprovedAt     *time.Time
-	ApprovedBy     *int32
-	DeclinedAt     *time.Time
-	DeclinedBy     *int32
-	DeclineReason  *string
-	SentInChatID   int32
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	Version        int32
+	ID                         int32 `sql:"primary_key"`
+	UUID                       uuid.UUID
+	InlayID                    int32
+	VersionNumber              int32
+	DesignAssetURL             string
+	Width                      float64
+	Height                     float64
+	PriceGroupID               *int32
+	PriceAdjustmentType        string
+	PriceAdjustmentValue       float64
+	ScaleFactor                float64
+	ColorOverrides             string
+	ApprovalAuthority          string
+	Status                     string
+	ApprovedAt                 *time.Time
+	ApprovedByDealershipUserID *int32
+	ApprovedByInternalUserID   *int32
+	DeclinedAt                 *time.Time
+	DeclinedByDealershipUserID *int32
+	DeclinedByInternalUserID   *int32
+	DeclineReason              *string
+	SentInChatID               *int32
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
+	Version                    int32
 }

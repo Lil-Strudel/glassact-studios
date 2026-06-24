@@ -556,9 +556,9 @@ func TestProjectStatus_Transitions(t *testing.T) {
         to          data.ProjectStatus
         shouldError bool
     }{
-        {"draft to designing", data.ProjectStatuses.Draft, data.ProjectStatuses.Designing, false},
-        {"designing to ordered", data.ProjectStatuses.Designing, data.ProjectStatuses.Ordered, true},
-        {"approved to ordered", data.ProjectStatuses.Approved, data.ProjectStatuses.Ordered, false},
+        {"draft to ordered", data.ProjectStatuses.Draft, data.ProjectStatuses.Ordered, false},
+        {"ordered to in-production", data.ProjectStatuses.Ordered, data.ProjectStatuses.InProduction, false},
+        {"draft to in-production (skips ordered)", data.ProjectStatuses.Draft, data.ProjectStatuses.InProduction, true},
     }
 
     for _, tt := range tests {

@@ -9,6 +9,7 @@ export const PERMISSION_ACTIONS = {
   VIEW_PROJECTS: "view_projects",
   VIEW_INVOICES: "view_invoices",
   CREATE_PROOF: "create_proof",
+  INTERNAL_APPROVE_PROOF: "internal_approve_proof",
   MANAGE_KANBAN: "manage_kanban",
   CREATE_BLOCKER: "create_blocker",
   CREATE_INVOICE: "create_invoice",

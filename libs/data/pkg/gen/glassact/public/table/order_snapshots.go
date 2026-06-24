@@ -17,16 +17,18 @@ type orderSnapshotsTable struct {
 	postgres.Table
 
 	// Columns
-	ID           postgres.ColumnInteger
-	UUID         postgres.ColumnString
-	ProjectID    postgres.ColumnInteger
-	InlayID      postgres.ColumnInteger
-	ProofID      postgres.ColumnInteger
-	PriceGroupID postgres.ColumnInteger
-	PriceCents   postgres.ColumnInteger
-	Width        postgres.ColumnFloat
-	Height       postgres.ColumnFloat
-	CreatedAt    postgres.ColumnTimestampz
+	ID                   postgres.ColumnInteger
+	UUID                 postgres.ColumnString
+	ProjectID            postgres.ColumnInteger
+	InlayID              postgres.ColumnInteger
+	ProofID              postgres.ColumnInteger
+	PriceGroupID         postgres.ColumnInteger
+	PriceCents           postgres.ColumnInteger
+	PriceAdjustmentType  postgres.ColumnString
+	PriceAdjustmentValue postgres.ColumnFloat
+	Width                postgres.ColumnFloat
+	Height               postgres.ColumnFloat
+	CreatedAt            postgres.ColumnTimestampz
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -68,35 +70,39 @@ func newOrderSnapshotsTable(schemaName, tableName, alias string) *OrderSnapshots
 
 func newOrderSnapshotsTableImpl(schemaName, tableName, alias string) orderSnapshotsTable {
 	var (
-		IDColumn           = postgres.IntegerColumn("id")
-		UUIDColumn         = postgres.StringColumn("uuid")
-		ProjectIDColumn    = postgres.IntegerColumn("project_id")
-		InlayIDColumn      = postgres.IntegerColumn("inlay_id")
-		ProofIDColumn      = postgres.IntegerColumn("proof_id")
-		PriceGroupIDColumn = postgres.IntegerColumn("price_group_id")
-		PriceCentsColumn   = postgres.IntegerColumn("price_cents")
-		WidthColumn        = postgres.FloatColumn("width")
-		HeightColumn       = postgres.FloatColumn("height")
-		CreatedAtColumn    = postgres.TimestampzColumn("created_at")
-		allColumns         = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, InlayIDColumn, ProofIDColumn, PriceGroupIDColumn, PriceCentsColumn, WidthColumn, HeightColumn, CreatedAtColumn}
-		mutableColumns     = postgres.ColumnList{UUIDColumn, ProjectIDColumn, InlayIDColumn, ProofIDColumn, PriceGroupIDColumn, PriceCentsColumn, WidthColumn, HeightColumn, CreatedAtColumn}
-		defaultColumns     = postgres.ColumnList{IDColumn, UUIDColumn, CreatedAtColumn}
+		IDColumn                   = postgres.IntegerColumn("id")
+		UUIDColumn                 = postgres.StringColumn("uuid")
+		ProjectIDColumn            = postgres.IntegerColumn("project_id")
+		InlayIDColumn              = postgres.IntegerColumn("inlay_id")
+		ProofIDColumn              = postgres.IntegerColumn("proof_id")
+		PriceGroupIDColumn         = postgres.IntegerColumn("price_group_id")
+		PriceCentsColumn           = postgres.IntegerColumn("price_cents")
+		PriceAdjustmentTypeColumn  = postgres.StringColumn("price_adjustment_type")
+		PriceAdjustmentValueColumn = postgres.FloatColumn("price_adjustment_value")
+		WidthColumn                = postgres.FloatColumn("width")
+		HeightColumn               = postgres.FloatColumn("height")
+		CreatedAtColumn            = postgres.TimestampzColumn("created_at")
+		allColumns                 = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, InlayIDColumn, ProofIDColumn, PriceGroupIDColumn, PriceCentsColumn, PriceAdjustmentTypeColumn, PriceAdjustmentValueColumn, WidthColumn, HeightColumn, CreatedAtColumn}
+		mutableColumns             = postgres.ColumnList{UUIDColumn, ProjectIDColumn, InlayIDColumn, ProofIDColumn, PriceGroupIDColumn, PriceCentsColumn, PriceAdjustmentTypeColumn, PriceAdjustmentValueColumn, WidthColumn, HeightColumn, CreatedAtColumn}
+		defaultColumns             = postgres.ColumnList{IDColumn, UUIDColumn, PriceAdjustmentTypeColumn, PriceAdjustmentValueColumn, CreatedAtColumn}
 	)
 
 	return orderSnapshotsTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:           IDColumn,
-		UUID:         UUIDColumn,
-		ProjectID:    ProjectIDColumn,
-		InlayID:      InlayIDColumn,
-		ProofID:      ProofIDColumn,
-		PriceGroupID: PriceGroupIDColumn,
-		PriceCents:   PriceCentsColumn,
-		Width:        WidthColumn,
-		Height:       HeightColumn,
-		CreatedAt:    CreatedAtColumn,
+		ID:                   IDColumn,
+		UUID:                 UUIDColumn,
+		ProjectID:            ProjectIDColumn,
+		InlayID:              InlayIDColumn,
+		ProofID:              ProofIDColumn,
+		PriceGroupID:         PriceGroupIDColumn,
+		PriceCents:           PriceCentsColumn,
+		PriceAdjustmentType:  PriceAdjustmentTypeColumn,
+		PriceAdjustmentValue: PriceAdjustmentValueColumn,
+		Width:                WidthColumn,
+		Height:               HeightColumn,
+		CreatedAt:            CreatedAtColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

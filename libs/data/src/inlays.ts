@@ -1,5 +1,5 @@
 import type { GET, StandardTable } from "./helpers";
-import type { ProofStatus } from "./inlay-proofs";
+import type { PriceAdjustmentType, ProofStatus } from "./inlay-proofs";
 
 export type InlayType = "catalog" | "custom";
 
@@ -29,10 +29,10 @@ export type Inlay = StandardTable<{
   project_id: number;
   name: string;
   type: InlayType;
+  is_customized: boolean;
   preview_url: string;
   approved_proof_id: number | null;
   manufacturing_step: ManufacturingStep | null;
-  excluded_from_order: boolean;
 }>;
 
 export type InlayWithInfo = GET<Inlay> & {
@@ -40,8 +40,11 @@ export type InlayWithInfo = GET<Inlay> & {
   custom_info?: GET<InlayCustomInfo> | null;
   has_pending_proof?: boolean;
   latest_proof_status?: ProofStatus | null;
-  approved_proof_price_group_id?: number | null;
-  approved_proof_price_group_name?: string | null;
-  approved_proof_price_cents?: number | null;
+  is_ready: boolean;
+  price_group_id: number | null;
+  price_group_name: string | null;
+  price_cents: number | null;
+  price_adjustment_type: PriceAdjustmentType;
+  price_adjustment_value: number;
   has_active_blocker?: boolean;
 };

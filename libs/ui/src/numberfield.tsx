@@ -25,6 +25,7 @@ type numberFieldInputProps<T extends ValidComponent = "input"> = VoidProps<
     class?: string;
     int?: boolean;
     decimalPlaces?: number;
+    allowNegative?: boolean;
     onChange?: (value: string) => void;
   }
 >;
@@ -33,9 +34,12 @@ const filterNumberInput = (
   value: string,
   int: boolean = false,
   decimalPlaces: number = 1,
+  allowNegative: boolean = false,
 ): string => {
+  const sign = allowNegative && value.trimStart().startsWith("-") ? "-" : "";
+
   if (int) {
-    return value.replace(/[^\d]/g, "");
+    return sign + value.replace(/[^\d]/g, "");
   }
 
   const parts = value.split(".");
@@ -53,7 +57,7 @@ const filterNumberInput = (
     filtered = filtered ? `${filtered}.${decimals}` : `.${decimals}`;
   }
 
-  return filtered;
+  return sign + filtered;
 };
 
 export const NumberField = <T extends ValidComponent = "input">(
@@ -63,6 +67,7 @@ export const NumberField = <T extends ValidComponent = "input">(
     "class",
     "int",
     "decimalPlaces",
+    "allowNegative",
     "onChange",
   ]);
 
@@ -72,6 +77,7 @@ export const NumberField = <T extends ValidComponent = "input">(
       target.value,
       local.int || false,
       local.decimalPlaces || 1,
+      local.allowNegative || false,
     );
     target.value = filtered;
 

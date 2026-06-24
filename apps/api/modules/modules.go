@@ -19,6 +19,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/pricegroup"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/project"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/proof"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/review"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/upload"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/user"
 	data "github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
@@ -61,11 +62,9 @@ func GetRoutes(app *app.Application) http.Handler {
 	projectModule := project.NewProjectModule(app)
 	mux.Handle("GET /api/project", protected.ThenFunc(projectModule.HandleGetProjects))
 	mux.Handle("POST /api/project", canCreateProject.ThenFunc(projectModule.HandlePostProject))
-	mux.Handle("POST /api/project/with-inlays", canCreateProject.ThenFunc(projectModule.HandlePostProjectWithInlays))
 	mux.Handle("GET /api/project/{uuid}", protected.ThenFunc(projectModule.HandleGetProjectByUUID))
 	mux.Handle("PATCH /api/project/{uuid}", canManageProject.ThenFunc(projectModule.HandlePatchProject))
 	mux.Handle("DELETE /api/project/{uuid}", canManageProject.ThenFunc(projectModule.HandleDeleteProject))
-	mux.Handle("POST /api/project/{uuid}/submit", canCreateProject.ThenFunc(projectModule.HandleSubmitProject))
 	mux.Handle("POST /api/project/{uuid}/place-order", canPlaceOrder.ThenFunc(projectModule.HandlePlaceOrder))
 
 	canManageKanban := alice.New(app.Authenticate, app.RequirePermission(data.ActionManageKanban))
@@ -80,7 +79,6 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("PATCH /api/inlay/{uuid}", canManageProject.ThenFunc(inlayModule.HandlePatchInlay))
 	mux.Handle("PATCH /api/inlay/{uuid}/step", canManageKanban.ThenFunc(inlayModule.HandlePatchInlayStep))
 	mux.Handle("DELETE /api/inlay/{uuid}", canManageProject.ThenFunc(inlayModule.HandleDeleteInlay))
-	mux.Handle("PATCH /api/inlay/{uuid}/exclude", canCreateProject.ThenFunc(inlayModule.HandleExcludeInlay))
 	mux.Handle("GET /api/inlay/{uuid}/blockers", protected.ThenFunc(inlayModule.HandleGetBlockersByInlay))
 	mux.Handle("POST /api/inlay/{uuid}/blockers", canCreateBlocker.ThenFunc(inlayModule.HandlePostBlocker))
 
@@ -92,14 +90,15 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("POST /api/inlay/{uuid}/chats", canSendChat.ThenFunc(chatModule.HandlePostInlayChat))
 
 	canCreateProof := alice.New(app.Authenticate, app.RequirePermission(data.ActionCreateProof))
-	canApproveProof := alice.New(app.Authenticate, app.RequirePermission(data.ActionApproveProof))
 
 	proofModule := proof.NewProofModule(app)
 	mux.Handle("GET /api/inlay/{uuid}/proofs", protected.ThenFunc(proofModule.HandleGetProofsByInlay))
 	mux.Handle("POST /api/inlay/{uuid}/proofs", canCreateProof.ThenFunc(proofModule.HandleCreateProof))
 	mux.Handle("GET /api/proof/{uuid}", protected.ThenFunc(proofModule.HandleGetProof))
-	mux.Handle("POST /api/proof/{uuid}/approve", canApproveProof.ThenFunc(proofModule.HandleApproveProof))
-	mux.Handle("POST /api/proof/{uuid}/decline", canApproveProof.ThenFunc(proofModule.HandleDeclineProof))
+	// approve/decline branch on proof.approval_authority and check the right
+	// permission inside the handler, so the middleware just authenticates.
+	mux.Handle("POST /api/proof/{uuid}/approve", protected.ThenFunc(proofModule.HandleApproveProof))
+	mux.Handle("POST /api/proof/{uuid}/decline", protected.ThenFunc(proofModule.HandleDeclineProof))
 
 	canManageDealershipUsers := alice.New(app.Authenticate, app.RequirePermission(data.ActionManageDealershipUsers))
 	canManageInternalUsers := alice.New(app.Authenticate, app.RequirePermission(data.ActionManageInternalUsers))
@@ -180,6 +179,9 @@ func GetRoutes(app *app.Application) http.Handler {
 	dashboardModule := dashboard.NewDashboardModule(app)
 	mux.Handle("GET /api/dashboard/dealership", protected.ThenFunc(dashboardModule.HandleGetDealershipDashboard))
 	mux.Handle("GET /api/dashboard/internal", protected.ThenFunc(dashboardModule.HandleGetInternalDashboard))
+
+	reviewModule := review.NewReviewModule(app)
+	mux.Handle("GET /api/review-queue", protected.ThenFunc(reviewModule.HandleGetReviewQueue))
 
 	mux.Handle("/", unprotected.ThenFunc(app.HandleNotFound))
 	return standard.Then(mux)

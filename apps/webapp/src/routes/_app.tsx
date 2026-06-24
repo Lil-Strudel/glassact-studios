@@ -40,6 +40,11 @@ const navigation = [
   { name: "Projects", to: "/projects" },
   { name: "Catalog", to: "/catalog" },
   {
+    name: "Review",
+    to: "/review-queue",
+    permission: PERMISSION_ACTIONS.INTERNAL_APPROVE_PROOF,
+  },
+  {
     name: "Inlays",
     to: "/inlays",
     permission: PERMISSION_ACTIONS.MANAGE_KANBAN,
