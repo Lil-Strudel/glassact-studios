@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
@@ -56,12 +57,27 @@ func (m *UserModule) HandleGetUserByUUID(w http.ResponseWriter, r *http.Request)
 	m.WriteJSON(w, r, http.StatusOK, user)
 }
 
+// canManageDealershipUser enforces tenant scope for mutations on an existing
+// dealership user. Internal users (already gated by permission) may act across
+// dealerships; dealership users are confined to their own dealership.
+func (m *UserModule) canManageDealershipUser(r *http.Request, target *data.DealershipUser) bool {
+	requester := m.ContextGetUser(r)
+	if requester.IsInternal() {
+		return true
+	}
+
+	id := requester.GetDealershipID()
+	return id != nil && *id == target.DealershipID
+}
+
 func (m *UserModule) HandleCreateDealershipUser(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Name   string                  `json:"name" validate:"required"`
-		Email  string                  `json:"email" validate:"required,email"`
-		Avatar string                  `json:"avatar" validate:"required,url"`
-		Role   data.DealershipUserRole `json:"role" validate:"required"`
+		Name         string                  `json:"name" validate:"required"`
+		Email        string                  `json:"email" validate:"required,email"`
+		Avatar       string                  `json:"avatar" validate:"required,url"`
+		Role         data.DealershipUserRole `json:"role" validate:"required"`
+		DealershipID int                     `json:"dealership_id"`
+		IsActive     bool                    `json:"is_active"`
 	}
 
 	err := m.ReadJSONBody(w, r, &body)
@@ -70,15 +86,42 @@ func (m *UserModule) HandleCreateDealershipUser(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	dealershipUser := m.ContextGetDealershipUser(r)
+	// Resolve the target dealership. Dealership admins may only create users in
+	// their own dealership (never trust a client-supplied dealership_id). Internal
+	// admins act on behalf of a specific dealership supplied in the request.
+	requester := m.ContextGetUser(r)
+	var dealershipID int
+	if requester.IsDealership() {
+		id := requester.GetDealershipID()
+		if id == nil {
+			m.WriteError(w, r, m.Err.Forbidden, nil)
+			return
+		}
+		dealershipID = *id
+	} else {
+		if body.DealershipID <= 0 {
+			m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("dealership_id is required"))
+			return
+		}
+		_, found, err := m.Db.Dealerships.GetByID(body.DealershipID)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+		if !found {
+			m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("dealership %d not found", body.DealershipID))
+			return
+		}
+		dealershipID = body.DealershipID
+	}
 
 	user := data.DealershipUser{
 		Name:         body.Name,
 		Email:        body.Email,
 		Avatar:       body.Avatar,
-		DealershipID: dealershipUser.DealershipID,
+		DealershipID: dealershipID,
 		Role:         body.Role,
-		IsActive:     true,
+		IsActive:     body.IsActive,
 	}
 
 	err = m.Db.DealershipUsers.Insert(&user)
@@ -109,8 +152,7 @@ func (m *UserModule) HandleUpdateDealershipUser(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	dealershipUser := m.ContextGetDealershipUser(r)
-	if user.DealershipID != dealershipUser.DealershipID {
+	if !m.canManageDealershipUser(r, user) {
 		m.WriteError(w, r, m.Err.Forbidden, nil)
 		return
 	}
@@ -169,8 +211,7 @@ func (m *UserModule) HandleDeleteDealershipUser(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	dealershipUser := m.ContextGetDealershipUser(r)
-	if user.DealershipID != dealershipUser.DealershipID {
+	if !m.canManageDealershipUser(r, user) {
 		m.WriteError(w, r, m.Err.Forbidden, nil)
 		return
 	}

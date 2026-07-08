@@ -31,6 +31,7 @@ var dealershipEventTypes = []data.NotificationEventType{
 
 var internalEventTypes = []data.NotificationEventType{
 	data.NotificationEventTypes.InternalReviewRequired,
+	data.NotificationEventTypes.CustomInlaySubmitted,
 	data.NotificationEventTypes.OrderPlaced,
 	data.NotificationEventTypes.ProofReady,
 	data.NotificationEventTypes.ProofApproved,

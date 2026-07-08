@@ -37,6 +37,8 @@ import {
   type KanbanInlay,
 } from "../../queries/manufacturing";
 import { isApiError } from "../../utils/is-api-error";
+import { Can } from "../../components/Can";
+import { AddInlayUpdateDialog } from "../../components/manufacturing/add-inlay-update-dialog";
 
 export const Route = createFileRoute("/_app/inlays")({
   component: RouteComponent,
@@ -108,6 +110,13 @@ function InlayCard(props: InlayCardProps) {
             </CardDescription>
           </div>
         </div>
+        <Can permission="create_inlay_update">
+          <AddInlayUpdateDialog
+            inlayUuid={props.inlay.uuid}
+            triggerLabel="+ Update"
+            triggerClass="flex-shrink-0 text-xs font-medium text-primary hover:underline cursor-pointer"
+          />
+        </Can>
       </CardHeader>
     </Card>
   );

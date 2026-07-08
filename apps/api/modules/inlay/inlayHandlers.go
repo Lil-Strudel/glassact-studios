@@ -454,6 +454,13 @@ func (m InlayModule) HandlePostCustomInlay(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	m.SendNotificationToAllInternalUsers(
+		data.NotificationEventTypes.CustomInlaySubmitted,
+		fmt.Sprintf("Custom inlay needs a proof: %s", inlay.Name),
+		fmt.Sprintf("A custom inlay %q was submitted and needs a designer to create a proof.", inlay.Name),
+		&project.ID, &inlay.ID,
+	)
+
 	m.WriteJSON(w, r, http.StatusCreated, inlay)
 }
 
@@ -733,13 +740,19 @@ func (m InlayModule) HandlePatchInlayStep(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	m.SendNotificationToAllDealershipUsersForProject(
-		inlay.ProjectID,
-		data.NotificationEventTypes.InlayStepChanged,
-		fmt.Sprintf("Inlay moved to %s: %s", body.Step, inlay.Name),
-		fmt.Sprintf("Inlay %q has moved to the %s step.", inlay.Name, body.Step),
-		&inlay.ID,
-	)
+	// Manufacturing moves through many steps; notifying the dealership on every
+	// transition is noise. Only the "cutting" milestone is worth an alert (the
+	// dealership sees the full step history on the inlay timeline). Shipping and
+	// delivery are surfaced separately via project_shipped / project_delivered.
+	if body.Step == data.ManufacturingSteps.Cutting {
+		m.SendNotificationToAllDealershipUsersForProject(
+			inlay.ProjectID,
+			data.NotificationEventTypes.InlayStepChanged,
+			fmt.Sprintf("Inlay now being cut: %s", inlay.Name),
+			fmt.Sprintf("Inlay %q has reached the cutting step.", inlay.Name),
+			&inlay.ID,
+		)
+	}
 
 	m.tryAdvanceProjectStatus(w, r, inlay.ProjectID)
 

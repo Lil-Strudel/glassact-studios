@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/solid-query";
+import { keepPreviousData, queryOptions } from "@tanstack/solid-query";
 import api from "./api";
 import type { CatalogItem, GET } from "@glassact/data";
 
@@ -37,6 +37,7 @@ export function browseCatalogOpts(params?: {
   return queryOptions({
     queryKey: ["catalog-browse", params],
     queryFn: () => browseCatalog(params),
+    placeholderData: keepPreviousData,
   });
 }
 

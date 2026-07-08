@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
 
-import type { Project, ProjectListItem, GET } from "@glassact/data";
+import type { Project, ProjectDetail, ProjectListItem, GET } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
 export async function getProjects(): Promise<ProjectListItem[]> {
@@ -16,7 +16,7 @@ export function getProjectsOpts() {
   });
 }
 
-export async function getProject(uuid: string): Promise<GET<Project>> {
+export async function getProject(uuid: string): Promise<ProjectDetail> {
   const res = await api.get(`/project/${uuid}`);
   return res.data;
 }

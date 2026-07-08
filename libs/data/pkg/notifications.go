@@ -17,19 +17,20 @@ import (
 type NotificationEventType string
 
 type notificationEventTypes struct {
-	ProofReady              NotificationEventType
-	ProofApproved           NotificationEventType
-	ProofDeclined           NotificationEventType
-	InternalReviewRequired  NotificationEventType
-	OrderPlaced             NotificationEventType
-	InlayStepChanged        NotificationEventType
-	InlayUpdate             NotificationEventType
-	ProjectShipped          NotificationEventType
-	ProjectDelivered        NotificationEventType
-	InvoiceSent             NotificationEventType
-	InvoiceVoided           NotificationEventType
-	PaymentReceived         NotificationEventType
-	ChatMessage             NotificationEventType
+	ProofReady             NotificationEventType
+	ProofApproved          NotificationEventType
+	ProofDeclined          NotificationEventType
+	InternalReviewRequired NotificationEventType
+	CustomInlaySubmitted   NotificationEventType
+	OrderPlaced            NotificationEventType
+	InlayStepChanged       NotificationEventType
+	InlayUpdate            NotificationEventType
+	ProjectShipped         NotificationEventType
+	ProjectDelivered       NotificationEventType
+	InvoiceSent            NotificationEventType
+	InvoiceVoided          NotificationEventType
+	PaymentReceived        NotificationEventType
+	ChatMessage            NotificationEventType
 }
 
 var NotificationEventTypes = notificationEventTypes{
@@ -37,6 +38,7 @@ var NotificationEventTypes = notificationEventTypes{
 	ProofApproved:          NotificationEventType("proof_approved"),
 	ProofDeclined:          NotificationEventType("proof_declined"),
 	InternalReviewRequired: NotificationEventType("internal_review_required"),
+	CustomInlaySubmitted:   NotificationEventType("custom_inlay_submitted"),
 	OrderPlaced:            NotificationEventType("order_placed"),
 	InlayStepChanged:       NotificationEventType("inlay_step_changed"),
 	InlayUpdate:            NotificationEventType("inlay_update"),

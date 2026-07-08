@@ -38,8 +38,15 @@ export type ProjectActionSummary = {
   awaiting_reply: number;
 };
 
-// The project list entry. `action_summary` is present only for internal users
-// and only when the project has outstanding internal action.
+// The project list entry. `action_summary` and `dealership_name` are present
+// only for internal users; `action_summary` only when the project has
+// outstanding internal action.
 export type ProjectListItem = GET<Project> & {
+  dealership_name?: string;
   action_summary?: ProjectActionSummary;
+};
+
+// The single-project detail response. Adds the owning dealership's name.
+export type ProjectDetail = GET<Project> & {
+  dealership_name?: string;
 };

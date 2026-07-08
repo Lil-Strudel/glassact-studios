@@ -95,7 +95,6 @@ interface CatalogSelectorProps {
 function CatalogSelector(props: CatalogSelectorProps) {
   const [search, setSearch] = createSignal("");
   const [category, setCategory] = createSignal("");
-  const [tags, setTags] = createSignal<string[]>([]);
   const [offset, setOffset] = createSignal(0);
 
   const limit = 50;
@@ -106,7 +105,6 @@ function CatalogSelector(props: CatalogSelectorProps) {
     browseCatalogOpts({
       search: debouncedSearch(),
       category: category(),
-      tags: tags(),
       limit,
       offset: offset(),
     }),
@@ -152,17 +150,12 @@ function CatalogSelector(props: CatalogSelectorProps) {
         <FilterSidebar
           searchValue={search()}
           selectedCategory={category()}
-          selectedTags={tags()}
           onSearchChange={(value) => {
             setSearch(value);
             setOffset(0);
           }}
           onCategoryChange={(value) => {
             setCategory(value);
-            setOffset(0);
-          }}
-          onTagsChange={(newTags) => {
-            setTags(newTags);
             setOffset(0);
           }}
         />

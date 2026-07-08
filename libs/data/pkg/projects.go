@@ -397,6 +397,40 @@ func (m ProjectModel) GetActionSummaries() (map[int]ProjectActionSummary, error)
 	return summaries, nil
 }
 
+// GetDealershipNames returns a map keyed by project ID of the owning
+// dealership's name for the given project IDs. Used to surface the dealership
+// on the project list for internal users (who see projects across dealerships).
+func (m ProjectModel) GetDealershipNames(projectIDs []int) (map[int]string, error) {
+	names := make(map[int]string)
+	if len(projectIDs) == 0 {
+		return names, nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.Query(ctx, `
+		SELECT p.id, d.name
+		FROM projects p
+		JOIN dealerships d ON d.id = p.dealership_id
+		WHERE p.id = ANY($1)`, projectIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var projectID int
+		var name string
+		if err := rows.Scan(&projectID, &name); err != nil {
+			return nil, err
+		}
+		names[projectID] = name
+	}
+
+	return names, rows.Err()
+}
+
 func (m ProjectModel) updateProject(ctx context.Context, executor qrm.Queryable, project *Project) error {
 	genProj, err := projectToGen(project)
 	if err != nil {

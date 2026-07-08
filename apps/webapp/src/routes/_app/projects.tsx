@@ -218,6 +218,16 @@ const ProjectCard: Component<ProjectCardProps> = (props) => {
       <CardHeader class="flex flex-row items-start justify-between gap-4 space-y-0">
         <div class="flex flex-col gap-2 min-w-0">
           <CardTitle class="text-base truncate">{props.project.name}</CardTitle>
+          <Show when={props.project.dealership_name}>
+            {(name) => (
+              <p class="text-xs font-medium text-gray-600 truncate">{name()}</p>
+            )}
+          </Show>
+          <Show when={props.project.internal_reference}>
+            {(ref) => (
+              <p class="text-xs text-gray-500 truncate">PO / Ref: {ref()}</p>
+            )}
+          </Show>
           <div class="flex items-center gap-2 flex-wrap">
             <ProjectStatusBadge status={props.project.status} />
           </div>

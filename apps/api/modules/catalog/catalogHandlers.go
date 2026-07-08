@@ -609,6 +609,7 @@ func (m *CatalogModule) HandleBrowseCatalog(w http.ResponseWriter, r *http.Reque
 	}
 
 	filtered := filterCatalogItemsWithTags(items, search, category, tags)
+	total := len(filtered)
 
 	end := offset + limit
 	if end > len(filtered) {
@@ -623,7 +624,7 @@ func (m *CatalogModule) HandleBrowseCatalog(w http.ResponseWriter, r *http.Reque
 
 	m.WriteJSON(w, r, http.StatusOK, map[string]interface{}{
 		"items":  filtered,
-		"total":  len(items),
+		"total":  total,
 		"limit":  limit,
 		"offset": offset,
 	})

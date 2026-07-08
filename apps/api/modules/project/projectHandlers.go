@@ -55,9 +55,23 @@ func (m ProjectModule) HandleGetProjects(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	projectIDs := make([]int, len(projects))
+	for i, project := range projects {
+		projectIDs[i] = project.ID
+	}
+
+	dealershipNames, err := m.Db.Projects.GetDealershipNames(projectIDs)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
 	result := make([]projectListItem, len(projects))
 	for i, project := range projects {
-		result[i] = projectListItem{Project: project}
+		result[i] = projectListItem{
+			Project:        project,
+			DealershipName: dealershipNames[project.ID],
+		}
 		if summary, ok := summaries[project.ID]; ok {
 			result[i].ActionSummary = &summary
 		}
@@ -67,11 +81,19 @@ func (m ProjectModule) HandleGetProjects(w http.ResponseWriter, r *http.Request)
 }
 
 // projectListItem embeds the project and, for internal users, the action
-// summary. The summary is omitted entirely for projects with no outstanding
-// internal action.
+// summary plus the owning dealership's name. The summary is omitted entirely
+// for projects with no outstanding internal action.
 type projectListItem struct {
 	*data.Project
-	ActionSummary *data.ProjectActionSummary `json:"action_summary,omitempty"`
+	DealershipName string                     `json:"dealership_name,omitempty"`
+	ActionSummary  *data.ProjectActionSummary `json:"action_summary,omitempty"`
+}
+
+// projectDetail embeds the project and the owning dealership's name, surfaced
+// on the project detail page.
+type projectDetail struct {
+	*data.Project
+	DealershipName string `json:"dealership_name,omitempty"`
 }
 
 func (m ProjectModule) HandleGetProjectByUUID(w http.ResponseWriter, r *http.Request) {
@@ -102,7 +124,12 @@ func (m ProjectModule) HandleGetProjectByUUID(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	m.WriteJSON(w, r, http.StatusOK, project)
+	detail := projectDetail{Project: project}
+	if dealership, found, err := m.Db.Dealerships.GetByID(project.DealershipID); err == nil && found {
+		detail.DealershipName = dealership.Name
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, detail)
 }
 
 func (m ProjectModule) HandlePostProject(w http.ResponseWriter, r *http.Request) {

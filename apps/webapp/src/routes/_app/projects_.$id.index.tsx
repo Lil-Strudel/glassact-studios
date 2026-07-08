@@ -249,6 +249,11 @@ function RouteComponent() {
                 </h1>
                 <ProjectStatusBadge status={projectQuery.data!.status} />
               </div>
+              <Show when={projectQuery.data!.dealership_name}>
+                {(name) => (
+                  <p class="text-sm font-medium text-gray-600">{name()}</p>
+                )}
+              </Show>
               <InternalReferenceField
                 projectUuid={projectQuery.data!.uuid}
                 value={projectQuery.data!.internal_reference}

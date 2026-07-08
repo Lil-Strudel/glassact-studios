@@ -5,12 +5,14 @@ export type NotificationEventType =
   | "proof_approved"
   | "proof_declined"
   | "internal_review_required"
+  | "custom_inlay_submitted"
   | "order_placed"
   | "inlay_step_changed"
   | "inlay_update"
   | "project_shipped"
   | "project_delivered"
   | "invoice_sent"
+  | "invoice_voided"
   | "payment_received"
   | "chat_message";
 
@@ -19,12 +21,14 @@ export const NOTIFICATION_EVENT_TYPES: NotificationEventType[] = [
   "proof_approved",
   "proof_declined",
   "internal_review_required",
+  "custom_inlay_submitted",
   "order_placed",
   "inlay_step_changed",
   "inlay_update",
   "project_shipped",
   "project_delivered",
   "invoice_sent",
+  "invoice_voided",
   "payment_received",
   "chat_message",
 ];
@@ -44,6 +48,7 @@ export const DEALERSHIP_NOTIFICATION_EVENT_TYPES: NotificationEventType[] = [
 
 export const INTERNAL_NOTIFICATION_EVENT_TYPES: NotificationEventType[] = [
   "internal_review_required",
+  "custom_inlay_submitted",
   "order_placed",
   "proof_ready",
   "proof_approved",
@@ -58,12 +63,14 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> =
     proof_approved: "Proof Approved",
     proof_declined: "Proof Declined",
     internal_review_required: "Customized Inlay Ready for Internal Review",
+    custom_inlay_submitted: "Custom Inlay Submitted",
     order_placed: "Order Placed",
     inlay_step_changed: "Inlay Step Changed",
     inlay_update: "Inlay Update",
     project_shipped: "Project Shipped",
     project_delivered: "Project Delivered",
     invoice_sent: "Invoice Sent",
+    invoice_voided: "Invoice Voided",
     payment_received: "Payment Received",
     chat_message: "New Chat Message",
   };

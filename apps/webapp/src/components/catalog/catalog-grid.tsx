@@ -62,10 +62,6 @@ export function CatalogGrid(props: CatalogGridProps) {
                     <p class="text-xs text-gray-500 mt-1">{item.category}</p>
                   </div>
 
-                  <div class="text-xs text-gray-400 py-1">
-                    Tags available in detail view
-                  </div>
-
                   <ItemDetailModal item={item}>
                     <Button variant="outline" class="w-full text-xs">
                       View Details

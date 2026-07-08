@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/solid-query";
 import { browseCatalogOpts } from "../../queries/catalog-browse";
 import { FilterSidebar } from "../../components/catalog/filter-sidebar";
 import { CatalogGrid } from "../../components/catalog/catalog-grid";
+import { useDebounce } from "../../hooks/use-debounce";
 
 export const Route = createFileRoute("/_app/catalog/")({
   component: RouteComponent,
@@ -12,16 +13,16 @@ export const Route = createFileRoute("/_app/catalog/")({
 function RouteComponent() {
   const [search, setSearch] = createSignal("");
   const [category, setCategory] = createSignal("");
-  const [tags, setTags] = createSignal<string[]>([]);
   const [page, setPage] = createSignal(1);
 
   const limit = 50;
 
+  const debouncedSearch = useDebounce(search, 300);
+
   const query = useQuery(() =>
     browseCatalogOpts({
-      search: search(),
+      search: debouncedSearch(),
       category: category(),
-      tags: tags(),
       limit,
       offset: (page() - 1) * limit,
     }),
@@ -41,20 +42,13 @@ function RouteComponent() {
     setPage(1);
   };
 
-  const handleTagsChange = (newTags: string[]) => {
-    setTags(newTags);
-    setPage(1);
-  };
-
   return (
     <div class="flex flex-col lg:flex-row gap-6">
       <FilterSidebar
         searchValue={search()}
         selectedCategory={category()}
-        selectedTags={tags()}
         onSearchChange={handleSearchChange}
         onCategoryChange={handleCategoryChange}
-        onTagsChange={handleTagsChange}
       />
 
       <CatalogGrid

@@ -1,8 +1,6 @@
 import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js";
-import { Badge, Button, Form, showToast } from "@glassact/ui";
-import { createForm } from "@tanstack/solid-form";
-import { z } from "zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
+import { Badge, Button } from "@glassact/ui";
+import { useQuery } from "@tanstack/solid-query";
 import {
   IoAlertCircleOutline,
   IoInformationCircleOutline,
@@ -16,10 +14,9 @@ import type {
 import {
   getInlayMilestonesOpts,
   getInlayUpdatesOpts,
-  postInlayUpdateOpts,
 } from "../../queries/manufacturing";
 import { Can } from "../Can";
-import { isApiError } from "../../utils/is-api-error";
+import { AddInlayUpdateForm } from "./add-inlay-update-form";
 
 interface InlayTimelineProps {
   inlayUuid: string;
@@ -42,11 +39,6 @@ function stepLabel(step: string) {
 type TimelineItem =
   | { kind: "milestone"; time: string; milestone: GET<InlayMilestone> }
   | { kind: "update"; time: string; update: GET<InlayUpdate> };
-
-const AddUpdateSchema = z.object({
-  update_type: z.enum(["info", "issue"]),
-  message: z.string().min(1, "Message is required"),
-});
 
 function formatTime(time: string) {
   return new Date(time).toLocaleString(undefined, {
@@ -140,14 +132,12 @@ function UpdateRow(props: { update: GET<InlayUpdate> }) {
 }
 
 export function InlayTimeline(props: InlayTimelineProps) {
-  const queryClient = useQueryClient();
   const [showAddForm, setShowAddForm] = createSignal(false);
 
   const milestonesQuery = useQuery(() =>
     getInlayMilestonesOpts(props.inlayUuid),
   );
   const updatesQuery = useQuery(() => getInlayUpdatesOpts(props.inlayUuid));
-  const addUpdate = useMutation(() => postInlayUpdateOpts());
 
   const isLoading = () => milestonesQuery.isLoading || updatesQuery.isLoading;
   const isError = () => milestonesQuery.isError || updatesQuery.isError;
@@ -173,50 +163,6 @@ export function InlayTimeline(props: InlayTimelineProps) {
       (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime(),
     );
   });
-
-  const form = createForm(() => ({
-    defaultValues: {
-      update_type: "issue" as "info" | "issue",
-      message: "",
-    } as z.output<typeof AddUpdateSchema>,
-    validators: {
-      onSubmit: AddUpdateSchema,
-    },
-    onSubmit: async ({ value }) => {
-      addUpdate.mutate(
-        {
-          inlayUuid: props.inlayUuid,
-          body: {
-            update_type: value.update_type,
-            message: value.message,
-          },
-        },
-        {
-          onSuccess() {
-            form.reset();
-            setShowAddForm(false);
-            queryClient.invalidateQueries({
-              queryKey: ["inlay", props.inlayUuid, "updates"],
-            });
-            showToast({
-              title: "Update posted",
-              description: "The update has been added to the timeline.",
-              variant: "success",
-            });
-          },
-          onError(error) {
-            if (isApiError(error)) {
-              showToast({
-                title: "Failed to post update",
-                description: error?.data?.error ?? "Unknown error",
-                variant: "error",
-              });
-            }
-          },
-        },
-      );
-    },
-  }));
 
   return (
     <div class="border rounded-lg p-4 space-y-4">
@@ -277,60 +223,11 @@ export function InlayTimeline(props: InlayTimelineProps) {
             >
               <div class="border rounded-lg p-4 space-y-3 bg-gray-50">
                 <p class="text-sm font-medium">Add Update</p>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    form.handleSubmit();
-                  }}
-                  class="space-y-3"
-                >
-                  <form.Field
-                    name="update_type"
-                    children={(field) => (
-                      <Form.Select
-                        field={field}
-                        label="Type"
-                        options={[
-                          { value: "issue", label: "Issue" },
-                          { value: "info", label: "Info" },
-                        ]}
-                        placeholder="Select type"
-                      />
-                    )}
-                  />
-
-                  <form.Field
-                    name="message"
-                    children={(field) => (
-                      <Form.TextArea
-                        field={field}
-                        label="Message"
-                        placeholder="Describe what happened..."
-                      />
-                    )}
-                  />
-
-                  <div class="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      class="flex-1"
-                      onClick={() => {
-                        setShowAddForm(false);
-                        form.reset();
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      class="flex-1"
-                      disabled={addUpdate.isPending}
-                    >
-                      {addUpdate.isPending ? "Posting..." : "Post Update"}
-                    </Button>
-                  </div>
-                </form>
+                <AddInlayUpdateForm
+                  inlayUuid={props.inlayUuid}
+                  onSuccess={() => setShowAddForm(false)}
+                  onCancel={() => setShowAddForm(false)}
+                />
               </div>
             </Show>
           </Can>
