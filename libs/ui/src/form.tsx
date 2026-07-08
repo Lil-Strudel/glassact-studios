@@ -1,4 +1,4 @@
-import type { AnyFieldApi } from "@tanstack/solid-form";
+import type { AnyFieldApi, SolidFormExtendedApi } from "@tanstack/solid-form";
 import {
   TextFieldRoot,
   TextFieldLabel,
@@ -9,7 +9,7 @@ import {
 } from "./textfield";
 import { NumberField } from "./numberfield";
 import { cn } from "./cn";
-import { createEffect, createSignal, JSX, Show, For } from "solid-js";
+import { createEffect, createSignal, JSX, onCleanup, Show, For } from "solid-js";
 import { TextArea } from "./textarea";
 import {
   Combobox,
@@ -30,6 +30,24 @@ import {
 } from "./filefield";
 import { FileUpload, type UploadResponse } from "./file-upload";
 import { Checkbox, CheckboxControl, CheckboxLabel } from "./checkbox";
+import { loadGooglePlaces } from "./google-places";
+
+/* eslint-disable @typescript-eslint/no-explicit-any -- type-erased escape hatch, matches AnyFieldApi's own style */
+type AnyFormApi = SolidFormExtendedApi<
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any
+>;
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 function useValidationState(getField: () => AnyFieldApi) {
   const [validationState, setValidationState] = createSignal<
@@ -396,6 +414,200 @@ function FormCheckbox(props: FormCheckboxProps) {
   );
 }
 
+interface AddressSuggestionOption {
+  label: string;
+  value: string;
+}
+
+interface FormAddressFieldProps {
+  form: AnyFormApi;
+  name: string;
+  apiKey: string;
+  label?: string;
+  class?: JSX.HTMLAttributes<"div">["class"];
+}
+
+function FormAddressField(props: FormAddressFieldProps) {
+  const [suggestions, setSuggestions] = createSignal<
+    google.maps.places.AutocompleteSuggestion[]
+  >([]);
+
+  let sessionToken: google.maps.places.AutocompleteSessionToken | undefined;
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const options = (): AddressSuggestionOption[] =>
+    suggestions().map((suggestion, index) => ({
+      label: suggestion.placePrediction?.text.toString() ?? "",
+      value: index.toString(),
+    }));
+
+  const handleInputChange = (input: string) => {
+    clearTimeout(debounceTimer);
+
+    if (!input) {
+      setSuggestions([]);
+      return;
+    }
+
+    debounceTimer = setTimeout(async () => {
+      try {
+        const places = await loadGooglePlaces(props.apiKey);
+        if (!sessionToken) {
+          sessionToken = new places.AutocompleteSessionToken();
+        }
+        const { suggestions: results } =
+          await places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+            input,
+            sessionToken,
+          });
+        setSuggestions(results);
+      } catch (error) {
+        console.error("Failed to fetch address suggestions:", error);
+      }
+    }, 300);
+  };
+
+  const handleSelect = async (option: AddressSuggestionOption | null) => {
+    const prediction = option
+      ? suggestions()[Number(option.value)]?.placePrediction
+      : undefined;
+    if (!prediction) return;
+
+    try {
+      const place = prediction.toPlace();
+      await place.fetchFields({ fields: ["addressComponents", "location"] });
+
+      const component = (type: string) =>
+        place.addressComponents?.find((c) => c.types.includes(type));
+
+      const streetNumber = component("street_number")?.longText ?? "";
+      const route = component("route")?.longText ?? "";
+
+      props.form.setFieldValue(
+        `${props.name}.street`,
+        [streetNumber, route].filter(Boolean).join(" "),
+      );
+      props.form.setFieldValue(
+        `${props.name}.city`,
+        component("locality")?.longText ?? "",
+      );
+      props.form.setFieldValue(
+        `${props.name}.state`,
+        component("administrative_area_level_1")?.shortText ?? "",
+      );
+      props.form.setFieldValue(
+        `${props.name}.postal_code`,
+        component("postal_code")?.longText ?? "",
+      );
+      props.form.setFieldValue(
+        `${props.name}.country`,
+        component("country")?.shortText ?? "",
+      );
+      props.form.setFieldValue(
+        `${props.name}.latitude`,
+        place.location?.lat() ?? "",
+      );
+      props.form.setFieldValue(
+        `${props.name}.longitude`,
+        place.location?.lng() ?? "",
+      );
+    } catch (error) {
+      console.error("Failed to fetch address details:", error);
+    } finally {
+      setSuggestions([]);
+      sessionToken = undefined;
+    }
+  };
+
+  onCleanup(() => clearTimeout(debounceTimer));
+
+  return (
+    <div class={cn("flex flex-col gap-4", props.class)}>
+      <Combobox
+        options={options()}
+        optionValue="value"
+        optionLabel="label"
+        optionTextValue="label"
+        defaultFilter={() => true}
+        onInputChange={handleInputChange}
+        onChange={handleSelect}
+        itemComponent={(itemProps) => (
+          <ComboboxItem item={itemProps.item}>
+            {itemProps.item.rawValue.label}
+          </ComboboxItem>
+        )}
+      >
+        {props.label && <ComboboxLabel>{props.label}</ComboboxLabel>}
+        <ComboboxControl class="w-full">
+          <ComboboxInput />
+          <ComboboxTrigger />
+        </ComboboxControl>
+        <ComboboxContent />
+      </Combobox>
+
+      <div class="grid grid-cols-1 gap-4">
+        <props.form.Field
+          name={`${props.name}.street`}
+          children={(field) => <FormTextField field={field} label="Street" />}
+        />
+
+        <props.form.Field
+          name={`${props.name}.street_ext`}
+          children={(field) => (
+            <FormTextField field={field} label="Street Extension" />
+          )}
+        />
+
+        <div class="grid grid-cols-2 gap-4">
+          <props.form.Field
+            name={`${props.name}.city`}
+            children={(field) => <FormTextField field={field} label="City" />}
+          />
+
+          <props.form.Field
+            name={`${props.name}.state`}
+            children={(field) => (
+              <FormTextField field={field} label="State" />
+            )}
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <props.form.Field
+            name={`${props.name}.postal_code`}
+            children={(field) => (
+              <FormTextField field={field} label="Postal Code" />
+            )}
+          />
+
+          <props.form.Field
+            name={`${props.name}.country`}
+            children={(field) => (
+              <FormTextField field={field} label="Country" />
+            )}
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <props.form.Field
+            name={`${props.name}.latitude`}
+            children={(field) => (
+              <FormTextField field={field} label="Latitude" />
+            )}
+          />
+
+          <props.form.Field
+            name={`${props.name}.longitude`}
+            children={(field) => (
+              <FormTextField field={field} label="Longitude" />
+            )}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const Form = {
   TextField: FormTextField,
   TextArea: FormTextArea,
@@ -405,4 +617,5 @@ export const Form = {
   Select: FormSelect,
   Checkbox: FormCheckbox,
   ErrorLabel: FormErrorLabel,
+  AddressField: FormAddressField,
 } as const;

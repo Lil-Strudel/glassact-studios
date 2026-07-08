@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
-import { For, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +16,7 @@ import {
   Button,
   TextField,
   TextFieldRoot,
+  showToast,
 } from "@glassact/ui";
 import {
   createSolidTable,
@@ -29,11 +30,12 @@ import { Dealership, GET } from "@glassact/data";
 import { IoBuildOutline } from "solid-icons/io";
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
-import { useMutation, useQuery } from "@tanstack/solid-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import {
   getDealershipsOpts,
   postDealershipOpts,
 } from "../../queries/dealership";
+import { isApiError } from "../../utils/is-api-error";
 
 export const Route = createFileRoute("/_app/admin/dealerships")({
   component: RouteComponent,
@@ -92,6 +94,7 @@ const formSchema = z.object({
 
 function RouteComponent() {
   const query = useQuery(() => getDealershipsOpts());
+  const queryClient = useQueryClient();
 
   const postDealership = useMutation(postDealershipOpts);
 
@@ -104,6 +107,15 @@ function RouteComponent() {
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
+
+  const [dialogOpen, setDialogOpen] = createSignal(false);
+
+  const handleDialogOpenChange = (isOpen: boolean) => {
+    setDialogOpen(isOpen);
+    if (!isOpen) {
+      setTimeout(() => form.reset(), 300);
+    }
+  };
 
   const form = createForm(() => ({
     defaultValues: {
@@ -124,7 +136,28 @@ function RouteComponent() {
     },
     onSubmit: async ({ value }) => {
       const output = formSchema.parse(value);
-      postDealership.mutate(output, { onSuccess() {} });
+      postDealership.mutate(output, {
+        onSuccess() {
+          setDialogOpen(false);
+          showToast({
+            title: "Created new dealership!",
+            description: `${value.name} was created.`,
+            variant: "success",
+          });
+        },
+        onError(error) {
+          if (isApiError(error)) {
+            showToast({
+              title: "Problem creating new dealership...",
+              description: error?.data?.error ?? "Unknown error",
+              variant: "error",
+            });
+          }
+        },
+        onSettled() {
+          queryClient.invalidateQueries({ queryKey: ["dealership"] });
+        },
+      });
     },
   }));
   return (
@@ -136,7 +169,7 @@ function RouteComponent() {
         >
           <TextField placeholder="Filter by name..." class="max-w-sm" />
         </TextFieldRoot>
-        <Dialog>
+        <Dialog open={dialogOpen()} onOpenChange={handleDialogOpenChange}>
           <DialogTrigger>
             <Button>Add a new dealership</Button>
           </DialogTrigger>
@@ -162,72 +195,17 @@ function RouteComponent() {
               <div class="border-t pt-4">
                 <h3 class="text-sm font-medium text-gray-900 mb-3">Address</h3>
 
-                <div class="grid grid-cols-1 gap-4">
-                  <form.Field
-                    name="address.street"
-                    children={(field) => (
-                      <Form.TextField field={field} label="Street" />
-                    )}
-                  />
-
-                  <form.Field
-                    name="address.street_ext"
-                    children={(field) => (
-                      <Form.TextField field={field} label="Street Extension" />
-                    )}
-                  />
-
-                  <div class="grid grid-cols-2 gap-4">
-                    <form.Field
-                      name="address.city"
-                      children={(field) => (
-                        <Form.TextField field={field} label="City" />
-                      )}
-                    />
-
-                    <form.Field
-                      name="address.state"
-                      children={(field) => (
-                        <Form.TextField field={field} label="State" />
-                      )}
-                    />
-                  </div>
-
-                  <div class="grid grid-cols-2 gap-4">
-                    <form.Field
-                      name="address.postal_code"
-                      children={(field) => (
-                        <Form.TextField field={field} label="Postal Code" />
-                      )}
-                    />
-
-                    <form.Field
-                      name="address.country"
-                      children={(field) => (
-                        <Form.TextField field={field} label="Country" />
-                      )}
-                    />
-                  </div>
-
-                  <div class="grid grid-cols-2 gap-4">
-                    <form.Field
-                      name="address.latitude"
-                      children={(field) => (
-                        <Form.TextField field={field} label="Latitude" />
-                      )}
-                    />
-
-                    <form.Field
-                      name="address.longitude"
-                      children={(field) => (
-                        <Form.TextField field={field} label="Longitude" />
-                      )}
-                    />
-                  </div>
-                </div>
+                <Form.AddressField
+                  form={form}
+                  name="address"
+                  apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+                  label="Search address"
+                />
               </div>
 
-              <Button type="submit">Add</Button>
+              <Button type="submit" disabled={postDealership.isPending}>
+                Add
+              </Button>
             </form>
           </DialogContent>
         </Dialog>

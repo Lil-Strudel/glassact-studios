@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@eslint/js": "catalog:eslint",
+    "@types/google.maps": "^3.58.1",
     "eslint": "catalog:eslint",
     "eslint-plugin-solid": "catalog:eslint",
     "globals": "catalog:eslint",
