@@ -21,3 +21,5 @@ Installation kits
 Build out custom order so they can upload pictures
 
 invoice is at shipment. Some people are invoice paid before shipped. Make it configurable per dealership.
+
+Create page to manage colors and grout
