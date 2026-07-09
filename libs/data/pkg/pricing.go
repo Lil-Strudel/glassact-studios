@@ -2,6 +2,11 @@ package data
 
 import "math"
 
+// InstallationKitPriceCents is the flat add-on price charged per inlay when a
+// dealership opts into an installation kit at order time. Keep this in sync with
+// INSTALLATION_KIT_PRICE_CENTS in libs/data/src/installation-kits.ts.
+const InstallationKitPriceCents = 4900
+
 // ComputeAdjustedPriceCents applies a proof's price adjustment to a price
 // group's base price. For "percent", adjValue is percentage points
 // (20 = +20%); for "fixed", adjValue is cents (1221 = +$12.21). Adjustments may

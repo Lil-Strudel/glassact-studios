@@ -13,16 +13,18 @@ import (
 )
 
 type OrderSnapshots struct {
-	ID                   int32 `sql:"primary_key"`
-	UUID                 uuid.UUID
-	ProjectID            int32
-	InlayID              int32
-	ProofID              *int32
-	PriceGroupID         int32
-	PriceCents           int32
-	PriceAdjustmentType  string
-	PriceAdjustmentValue float64
-	Width                float64
-	Height               float64
-	CreatedAt            time.Time
+	ID                        int32 `sql:"primary_key"`
+	UUID                      uuid.UUID
+	ProjectID                 int32
+	InlayID                   int32
+	ProofID                   *int32
+	PriceGroupID              int32
+	PriceCents                int32
+	PriceAdjustmentType       string
+	PriceAdjustmentValue      float64
+	Width                     float64
+	Height                    float64
+	InstallationKit           bool
+	InstallationKitPriceCents int32
+	CreatedAt                 time.Time
 }

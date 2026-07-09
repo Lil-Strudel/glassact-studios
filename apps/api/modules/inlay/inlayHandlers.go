@@ -474,7 +474,8 @@ func (m InlayModule) HandlePatchInlay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		Name *string `json:"name"`
+		Name            *string `json:"name"`
+		InstallationKit *bool   `json:"installation_kit"`
 	}
 
 	err = m.ReadJSONBody(w, r, &body)
@@ -505,6 +506,10 @@ func (m InlayModule) HandlePatchInlay(w http.ResponseWriter, r *http.Request) {
 
 	if body.Name != nil {
 		inlay.Name = *body.Name
+	}
+
+	if body.InstallationKit != nil {
+		inlay.InstallationKit = *body.InstallationKit
 	}
 
 	err = m.Db.Inlays.Update(inlay)

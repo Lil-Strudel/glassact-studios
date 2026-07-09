@@ -19,6 +19,7 @@ type Inlays struct {
 	Name              string
 	Type              string
 	IsCustomized      bool
+	InstallationKit   bool
 	PreviewURL        string
 	ApprovedProofID   *int32
 	ManufacturingStep *string

@@ -87,7 +87,7 @@ export function postCustomInlayOpts() {
 
 export async function patchInlay(params: {
   uuid: string;
-  body: { name?: string };
+  body: { name?: string; installation_kit?: boolean };
 }): Promise<InlayWithInfo> {
   const res = await api.patch(`/inlay/${params.uuid}`, params.body);
   return res.data;

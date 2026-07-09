@@ -14,6 +14,7 @@ export * from "./inlay-milestones";
 export * from "./inlay-proofs";
 export * from "./inlay-updates";
 export * from "./inlays";
+export * from "./installation-kits";
 export * from "./internal-accounts";
 export * from "./internal-users";
 export * from "./invoices";

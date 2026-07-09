@@ -47,6 +47,7 @@ type Inlay struct {
 	Name              string            `json:"name"`
 	Type              InlayType         `json:"type"`
 	IsCustomized      bool              `json:"is_customized"`
+	InstallationKit   bool              `json:"installation_kit"`
 	PreviewURL        string            `json:"preview_url"`
 	ApprovedProofID   *int              `json:"approved_proof_id,omitempty"`
 	ManufacturingStep *string           `json:"manufacturing_step,omitempty"`
@@ -68,11 +69,12 @@ func inlayFromGen(genInlay model.Inlays, genCatalogInfo *model.InlayCatalogInfos
 			UpdatedAt: genInlay.UpdatedAt,
 			Version:   int(genInlay.Version),
 		},
-		ProjectID:    int(genInlay.ProjectID),
-		Name:         genInlay.Name,
-		Type:         InlayType(genInlay.Type),
-		IsCustomized: genInlay.IsCustomized,
-		PreviewURL:   genInlay.PreviewURL,
+		ProjectID:       int(genInlay.ProjectID),
+		Name:            genInlay.Name,
+		Type:            InlayType(genInlay.Type),
+		IsCustomized:    genInlay.IsCustomized,
+		InstallationKit: genInlay.InstallationKit,
+		PreviewURL:      genInlay.PreviewURL,
 	}
 
 	if genInlay.ApprovedProofID != nil {
@@ -130,16 +132,17 @@ func inlayToGen(in *Inlay) (*model.Inlays, error) {
 	}
 
 	genInlay := model.Inlays{
-		ID:           int32(in.ID),
-		UUID:         inlayUUID,
-		ProjectID:    int32(in.ProjectID),
-		Name:         in.Name,
-		Type:         string(in.Type),
-		IsCustomized: in.IsCustomized,
-		PreviewURL:   in.PreviewURL,
-		UpdatedAt:    in.UpdatedAt,
-		CreatedAt:    in.CreatedAt,
-		Version:      int32(in.Version),
+		ID:              int32(in.ID),
+		UUID:            inlayUUID,
+		ProjectID:       int32(in.ProjectID),
+		Name:            in.Name,
+		Type:            string(in.Type),
+		IsCustomized:    in.IsCustomized,
+		InstallationKit: in.InstallationKit,
+		PreviewURL:      in.PreviewURL,
+		UpdatedAt:       in.UpdatedAt,
+		CreatedAt:       in.CreatedAt,
+		Version:         int32(in.Version),
 	}
 
 	if in.ApprovedProofID != nil {
@@ -629,6 +632,7 @@ func (m InlayModel) Update(inlay *Inlay) error {
 		table.Inlays.ProjectID,
 		table.Inlays.Name,
 		table.Inlays.Type,
+		table.Inlays.InstallationKit,
 		table.Inlays.PreviewURL,
 	).MODEL(
 		genInlay,

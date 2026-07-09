@@ -230,6 +230,7 @@ CREATE TABLE inlays (
     name TEXT NOT NULL,
     type VARCHAR(255) NOT NULL CHECK (type IN ('catalog', 'custom')),
     is_customized BOOLEAN NOT NULL DEFAULT false,
+    installation_kit BOOLEAN NOT NULL DEFAULT false,
     preview_url TEXT NOT NULL DEFAULT '',
     approved_proof_id INTEGER,
     manufacturing_step VARCHAR(255) CHECK (manufacturing_step IS NULL OR manufacturing_step IN (
@@ -439,6 +440,8 @@ CREATE TABLE order_snapshots (
     price_adjustment_value DOUBLE PRECISION NOT NULL DEFAULT 0,
     width DOUBLE PRECISION NOT NULL,
     height DOUBLE PRECISION NOT NULL,
+    installation_kit BOOLEAN NOT NULL DEFAULT false,
+    installation_kit_price_cents INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

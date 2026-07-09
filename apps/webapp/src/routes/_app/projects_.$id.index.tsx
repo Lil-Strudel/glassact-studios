@@ -25,6 +25,7 @@ import {
 import {
   getInlaysByProjectOpts,
   deleteInlayOpts,
+  patchInlayOpts,
 } from "../../queries/inlay";
 import {
   getProjectInvoiceOpts,
@@ -37,7 +38,7 @@ import type {
   ProjectStatus,
   InlayWithInfo,
 } from "@glassact/data";
-import { PERMISSION_ACTIONS } from "@glassact/data";
+import { PERMISSION_ACTIONS, INSTALLATION_KIT_PRICE_CENTS } from "@glassact/data";
 import { ProjectStatusBadge } from "../../components/project/status-badge";
 import { Can } from "../../components/Can";
 import { useUserContext } from "../../providers/user";
@@ -98,6 +99,7 @@ function RouteComponent() {
   const inlaysQuery = useQuery(() => getInlaysByProjectOpts(params().id));
   const cancelProject = useMutation(deleteProjectOpts);
   const removeInlay = useMutation(deleteInlayOpts);
+  const toggleKit = useMutation(patchInlayOpts);
 
   const INVOICE_STATUSES: ProjectStatus[] = [
     "delivered",
@@ -134,9 +136,37 @@ function RouteComponent() {
     return list.every((inlay) => inlay.is_ready);
   });
 
-  const totalPriceCents = createMemo(() =>
-    inlays().reduce((sum, inlay) => sum + (inlay.price_cents ?? 0), 0),
+  const installationKitCount = createMemo(
+    () => inlays().filter((inlay) => inlay.installation_kit).length,
   );
+
+  const totalPriceCents = createMemo(
+    () =>
+      inlays().reduce((sum, inlay) => sum + (inlay.price_cents ?? 0), 0) +
+      installationKitCount() * INSTALLATION_KIT_PRICE_CENTS,
+  );
+
+  function handleToggleKit(inlay: InlayWithInfo, next: boolean) {
+    toggleKit.mutate(
+      { uuid: inlay.uuid, body: { installation_kit: next } },
+      {
+        onSuccess() {
+          queryClient.invalidateQueries({
+            queryKey: ["project", params().id, "inlays"],
+          });
+        },
+        onError(error) {
+          if (isApiError(error)) {
+            showToast({
+              title: "Failed to update installation kit",
+              description: error?.data?.error ?? "Unknown error",
+              variant: "error",
+            });
+          }
+        },
+      },
+    );
+  }
 
   const currentStepIndex = createMemo(() => {
     if (!projectQuery.isSuccess) return -1;
@@ -262,6 +292,12 @@ function RouteComponent() {
                 Project total:{" "}
                 <span class="font-semibold text-gray-900">
                   {formatMoney(totalPriceCents() / 100)}
+                </span>
+              </p>
+              <p class="text-sm text-gray-500">
+                Installation kits:{" "}
+                <span class="font-semibold text-gray-900">
+                  {installationKitCount()}
                 </span>
               </p>
             </div>
@@ -429,6 +465,9 @@ function RouteComponent() {
                         }
                         onDelete={() => handleDeleteInlay(inlay)}
                         isDeleting={removeInlay.isPending}
+                        canEditKit={projectQuery.data!.status === "draft"}
+                        onToggleKit={(next) => handleToggleKit(inlay, next)}
+                        isTogglingKit={toggleKit.isPending}
                       />
                     )}
                   </For>
@@ -572,6 +611,9 @@ interface InlayCardProps {
   canDelete: boolean;
   onDelete: () => void;
   isDeleting: boolean;
+  canEditKit: boolean;
+  onToggleKit: (next: boolean) => void;
+  isTogglingKit: boolean;
 }
 
 type ReadinessBadge =
@@ -694,6 +736,11 @@ function InlayCard(props: InlayCardProps) {
               <span class="text-gray-500">{priceFormula()}</span>
             </Show>
           </div>
+          <Show when={props.inlay.installation_kit}>
+            <div class="text-xs text-green-700">
+              + Installation kit ({formatMoney(INSTALLATION_KIT_PRICE_CENTS / 100)})
+            </div>
+          </Show>
           <Show when={showManufacturingTracker()}>
             <div class="pt-1">
               <ManufacturingTracker
@@ -705,8 +752,25 @@ function InlayCard(props: InlayCardProps) {
           </Show>
         </CardHeader>
       </Link>
-      <Show when={props.canDelete || showInternalApprove()}>
+      <Show when={props.canDelete || showInternalApprove() || props.canEditKit}>
         <div class="px-6 pb-4 flex flex-col gap-2">
+          <Show when={props.canEditKit}>
+            <button
+              type="button"
+              disabled={props.isTogglingKit}
+              onClick={() =>
+                props.onToggleKit(!props.inlay.installation_kit)
+              }
+              class={`text-xs rounded px-2 py-1 border transition-colors w-full ${
+                props.inlay.installation_kit
+                  ? "border-green-600 bg-green-50 text-green-700"
+                  : "border-gray-300 text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {props.inlay.installation_kit ? "✓ " : "+ "}
+              Installation kit ({formatMoney(INSTALLATION_KIT_PRICE_CENTS / 100)})
+            </button>
+          </Show>
           <Show when={showInternalApprove()}>
             <Can permission={PERMISSION_ACTIONS.INTERNAL_APPROVE_PROOF}>
               <Button

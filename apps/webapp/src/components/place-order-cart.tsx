@@ -15,7 +15,9 @@ import {
   showToast,
 } from "@glassact/ui";
 import type { InlayWithInfo } from "@glassact/data";
+import { INSTALLATION_KIT_PRICE_CENTS } from "@glassact/data";
 import { postPlaceOrderOpts } from "../queries/order";
+import { patchInlayOpts } from "../queries/inlay";
 import { isApiError } from "../utils/is-api-error";
 import { formatMoney } from "../utils/format-money";
 import { formatPriceFormula } from "../utils/format-price-formula";
@@ -30,6 +32,9 @@ interface PlaceOrderCartProps {
 export function PlaceOrderCart(props: PlaceOrderCartProps) {
   const queryClient = useQueryClient();
   const placeOrder = useMutation(() => postPlaceOrderOpts());
+  const patchInlay = useMutation(() => patchInlayOpts());
+
+  const kitPriceDollars = INSTALLATION_KIT_PRICE_CENTS / 100;
 
   const [selected, setSelected] = createSignal<Set<string>>(new Set());
   const [open, setOpen] = createSignal(false);
@@ -63,6 +68,39 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
       .filter((inlay) => sel.has(inlay.uuid))
       .reduce((sum, inlay) => sum + dollarsFromCents(inlay.price_cents), 0);
   });
+
+  const kitCount = createMemo(() => {
+    const sel = selected();
+    return readyInlays().filter(
+      (inlay) => sel.has(inlay.uuid) && inlay.installation_kit,
+    ).length;
+  });
+
+  const kitTotalDollars = createMemo(() => kitCount() * kitPriceDollars);
+
+  const totalDollars = createMemo(() => subtotalDollars() + kitTotalDollars());
+
+  function handleToggleKit(inlay: InlayWithInfo, next: boolean) {
+    patchInlay.mutate(
+      { uuid: inlay.uuid, body: { installation_kit: next } },
+      {
+        onSuccess() {
+          queryClient.invalidateQueries({
+            queryKey: ["project", props.project.uuid, "inlays"],
+          });
+        },
+        onError(error) {
+          if (isApiError(error)) {
+            showToast({
+              title: "Failed to update installation kit",
+              description: error?.data?.error ?? "Unknown error",
+              variant: "error",
+            });
+          }
+        },
+      },
+    );
+  }
 
   const selectedCount = () => selected().size;
 
@@ -208,7 +246,7 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                             </Show>
                           </div>
                         </div>
-                        <div class="flex flex-col items-end shrink-0 text-sm">
+                        <div class="flex flex-col items-end shrink-0 text-sm gap-1">
                           <Show when={priceFormula()}>
                             <span class="text-gray-500 text-xs">
                               {priceFormula()}
@@ -217,6 +255,23 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                           <span class="font-semibold">
                             {formatMoney(unitDollars())}
                           </span>
+                          <button
+                            type="button"
+                            disabled={patchInlay.isPending}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleToggleKit(inlay, !inlay.installation_kit);
+                            }}
+                            class={`text-xs rounded px-2 py-0.5 border transition-colors ${
+                              inlay.installation_kit
+                                ? "border-green-600 bg-green-50 text-green-700"
+                                : "border-gray-300 text-gray-500 hover:bg-gray-50"
+                            }`}
+                          >
+                            {inlay.installation_kit ? "✓ " : "+ "}
+                            Install kit ({formatMoney(kitPriceDollars)})
+                          </button>
                         </div>
                       </label>
                     </Checkbox>
@@ -230,9 +285,13 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                 <span>Subtotal ({selectedCount()} item{selectedCount() === 1 ? "" : "s"})</span>
                 <span>{formatMoney(subtotalDollars())}</span>
               </div>
+              <div class="flex justify-between text-gray-600">
+                <span>Installation kits ({kitCount()})</span>
+                <span>{formatMoney(kitTotalDollars())}</span>
+              </div>
               <div class="flex justify-between text-base font-semibold">
                 <span>Total</span>
-                <span>{formatMoney(subtotalDollars())}</span>
+                <span>{formatMoney(totalDollars())}</span>
               </div>
             </div>
           </Show>

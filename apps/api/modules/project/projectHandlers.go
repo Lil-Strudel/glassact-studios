@@ -425,6 +425,11 @@ func (m ProjectModule) HandlePlaceOrder(w http.ResponseWriter, r *http.Request) 
 // inlay at order time. Stock catalog inlays pull from the catalog defaults;
 // approved-proof inlays pull from the proof.
 func (m ProjectModule) buildOrderSnapshot(projectID int, inlay *data.Inlay) (*data.OrderSnapshot, error) {
+	kitCents := 0
+	if inlay.InstallationKit {
+		kitCents = data.InstallationKitPriceCents
+	}
+
 	if inlay.ApprovedProofID != nil {
 		approvedProof, proofFound, err := m.Db.InlayProofs.GetByID(*inlay.ApprovedProofID)
 		if err != nil {
@@ -451,15 +456,17 @@ func (m ProjectModule) buildOrderSnapshot(projectID int, inlay *data.Inlay) (*da
 
 		proofID := approvedProof.ID
 		return &data.OrderSnapshot{
-			ProjectID:            projectID,
-			InlayID:              inlay.ID,
-			ProofID:              &proofID,
-			PriceGroupID:         priceGroupID,
-			PriceCents:           priceCents,
-			PriceAdjustmentType:  approvedProof.PriceAdjustmentType,
-			PriceAdjustmentValue: approvedProof.PriceAdjustmentValue,
-			Width:                approvedProof.Width,
-			Height:               approvedProof.Height,
+			ProjectID:                 projectID,
+			InlayID:                   inlay.ID,
+			ProofID:                   &proofID,
+			PriceGroupID:              priceGroupID,
+			PriceCents:                priceCents,
+			PriceAdjustmentType:       approvedProof.PriceAdjustmentType,
+			PriceAdjustmentValue:      approvedProof.PriceAdjustmentValue,
+			Width:                     approvedProof.Width,
+			Height:                    approvedProof.Height,
+			InstallationKit:           inlay.InstallationKit,
+			InstallationKitPriceCents: kitCents,
 		}, nil
 	}
 
@@ -485,15 +492,17 @@ func (m ProjectModule) buildOrderSnapshot(projectID int, inlay *data.Inlay) (*da
 	}
 
 	return &data.OrderSnapshot{
-		ProjectID:            projectID,
-		InlayID:              inlay.ID,
-		ProofID:              nil,
-		PriceGroupID:         catalogItem.DefaultPriceGroupID,
-		PriceCents:           priceGroup.BasePriceCents,
-		PriceAdjustmentType:  data.PriceAdjustmentTypes.None,
-		PriceAdjustmentValue: 0,
-		Width:                catalogItem.DefaultWidth,
-		Height:               catalogItem.DefaultHeight,
+		ProjectID:                 projectID,
+		InlayID:                   inlay.ID,
+		ProofID:                   nil,
+		PriceGroupID:              catalogItem.DefaultPriceGroupID,
+		PriceCents:                priceGroup.BasePriceCents,
+		PriceAdjustmentType:       data.PriceAdjustmentTypes.None,
+		PriceAdjustmentValue:      0,
+		Width:                     catalogItem.DefaultWidth,
+		Height:                    catalogItem.DefaultHeight,
+		InstallationKit:           inlay.InstallationKit,
+		InstallationKitPriceCents: kitCents,
 	}, nil
 }
 

@@ -30,6 +30,7 @@ export type Inlay = StandardTable<{
   name: string;
   type: InlayType;
   is_customized: boolean;
+  installation_kit: boolean;
   preview_url: string;
   approved_proof_id: number | null;
   manufacturing_step: ManufacturingStep | null;
