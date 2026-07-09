@@ -90,10 +90,23 @@ type projectListItem struct {
 }
 
 // projectDetail embeds the project and the owning dealership's name, surfaced
-// on the project detail page.
+// on the project detail page. AwaitingPayment is a soft, informational signal
+// (see the field docs on ProjectDetail in @glassact/data): the owning
+// dealership requires payment before shipping and there is an unpaid invoice on
+// a project that has not yet shipped. It never blocks internal staff.
 type projectDetail struct {
 	*data.Project
-	DealershipName string `json:"dealership_name,omitempty"`
+	DealershipName  string `json:"dealership_name,omitempty"`
+	AwaitingPayment bool   `json:"awaiting_payment"`
+}
+
+// preShipStatuses are the project statuses that precede shipment. A project in
+// one of these can still be held back by an unpaid invoice when the dealership
+// requires payment before shipping.
+var preShipStatuses = map[data.ProjectStatus]bool{
+	data.ProjectStatuses.Draft:        true,
+	data.ProjectStatuses.Ordered:      true,
+	data.ProjectStatuses.InProduction: true,
 }
 
 func (m ProjectModule) HandleGetProjectByUUID(w http.ResponseWriter, r *http.Request) {
@@ -127,6 +140,14 @@ func (m ProjectModule) HandleGetProjectByUUID(w http.ResponseWriter, r *http.Req
 	detail := projectDetail{Project: project}
 	if dealership, found, err := m.Db.Dealerships.GetByID(project.DealershipID); err == nil && found {
 		detail.DealershipName = dealership.Name
+
+		if dealership.RequiresPaymentBeforeShipping && preShipStatuses[project.Status] {
+			if invoice, invFound, invErr := m.Db.Invoices.GetActiveByProjectID(project.ID); invErr == nil && invFound {
+				if invoice.Status != data.InvoiceStatuses.Void && invoice.Status != data.InvoiceStatuses.Paid {
+					detail.AwaitingPayment = true
+				}
+			}
+		}
 	}
 
 	m.WriteJSON(w, r, http.StatusOK, detail)
@@ -417,6 +438,146 @@ func (m ProjectModule) HandlePlaceOrder(w http.ResponseWriter, r *http.Request) 
 		fmt.Sprintf("A new order has been placed for project %q.", project.Name),
 		&project.ID, nil,
 	)
+
+	m.WriteJSON(w, r, http.StatusOK, project)
+}
+
+// shippableStatuses are the statuses from which an internal user may mark a
+// project shipped. Inlays no longer carry shipping steps, so shipping is an
+// explicit internal action rather than an inlay-driven transition.
+var shippableStatuses = map[data.ProjectStatus]bool{
+	data.ProjectStatuses.Ordered:      true,
+	data.ProjectStatuses.InProduction: true,
+}
+
+// HandleMarkProjectShipped records a shipment: it captures the tracking number
+// and moves the project to "shipped". Internal-only (guarded by
+// ActionManageShipping middleware). This is not blocked by an unpaid invoice —
+// the "requires payment before shipping" flag is purely a soft signal.
+func (m ProjectModule) HandleMarkProjectShipped(w http.ResponseWriter, r *http.Request) {
+	projectUUID := r.PathValue("uuid")
+
+	err := m.Validate.Var(projectUUID, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	var body struct {
+		TrackingNumber string `json:"tracking_number" validate:"required"`
+	}
+
+	err = m.ReadJSONBody(w, r, &body)
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	project, found, err := m.Db.Projects.GetByUUID(projectUUID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	if !shippableStatuses[project.Status] {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("cannot ship a project in %s status", project.Status))
+		return
+	}
+
+	project.Status = data.ProjectStatuses.Shipped
+	project.TrackingNumber = &body.TrackingNumber
+
+	err = m.Db.Projects.Update(project)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to mark project shipped: %w", err))
+		return
+	}
+
+	m.SendNotificationToAllDealershipUsersForProject(
+		project.ID,
+		data.NotificationEventTypes.ProjectShipped,
+		fmt.Sprintf("Project shipped: %s", project.Name),
+		fmt.Sprintf("Your project %q has shipped. Tracking number: %s", project.Name, body.TrackingNumber),
+		nil,
+	)
+
+	m.WriteJSON(w, r, http.StatusOK, project)
+}
+
+// HandleMarkProjectDelivered records delivery. Because delivery and billing are
+// now decoupled, the resulting project status depends on payment: if the active
+// invoice is already paid the project goes straight to "completed"; otherwise it
+// moves to "invoiced" (awaiting payment), and paying the invoice later completes
+// it. A project is therefore never surfaced in a distinct "delivered" status.
+// Internal-only (guarded by ActionManageShipping middleware).
+func (m ProjectModule) HandleMarkProjectDelivered(w http.ResponseWriter, r *http.Request) {
+	projectUUID := r.PathValue("uuid")
+
+	err := m.Validate.Var(projectUUID, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	project, found, err := m.Db.Projects.GetByUUID(projectUUID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	if project.Status != data.ProjectStatuses.Shipped {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("cannot mark delivered a project in %s status", project.Status))
+		return
+	}
+
+	invoicePaid := false
+	if invoice, invFound, invErr := m.Db.Invoices.GetActiveByProjectID(project.ID); invErr == nil && invFound {
+		invoicePaid = invoice.Status == data.InvoiceStatuses.Paid
+	}
+
+	if invoicePaid {
+		project.Status = data.ProjectStatuses.Completed
+	} else {
+		project.Status = data.ProjectStatuses.Invoiced
+	}
+
+	err = m.Db.Projects.Update(project)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to mark project delivered: %w", err))
+		return
+	}
+
+	if invoicePaid {
+		m.SendNotificationToAllDealershipUsersForProject(
+			project.ID,
+			data.NotificationEventTypes.ProjectDelivered,
+			fmt.Sprintf("Project delivered: %s", project.Name),
+			fmt.Sprintf("Your project %q has been delivered and is complete.", project.Name),
+			nil,
+		)
+	} else {
+		m.SendNotificationToAllDealershipUsersForProject(
+			project.ID,
+			data.NotificationEventTypes.ProjectDelivered,
+			fmt.Sprintf("Project delivered: %s", project.Name),
+			fmt.Sprintf("Your project %q has been delivered.", project.Name),
+			nil,
+		)
+		m.SendNotificationToAllInternalUsers(
+			data.NotificationEventTypes.ProjectDelivered,
+			fmt.Sprintf("Project delivered: %s", project.Name),
+			fmt.Sprintf("Project %q has been delivered and is awaiting payment.", project.Name),
+			&project.ID, nil,
+		)
+	}
 
 	m.WriteJSON(w, r, http.StatusOK, project)
 }

@@ -75,3 +75,32 @@ export function deleteProjectOpts() {
     mutationFn: deleteProject,
   });
 }
+
+export async function postMarkProjectShipped(params: {
+  uuid: string;
+  trackingNumber: string;
+}): Promise<GET<Project>> {
+  const res = await api.post(`/project/${params.uuid}/ship`, {
+    tracking_number: params.trackingNumber,
+  });
+  return res.data;
+}
+
+export function postMarkProjectShippedOpts() {
+  return mutationOptions({
+    mutationFn: postMarkProjectShipped,
+  });
+}
+
+export async function postMarkProjectDelivered(
+  uuid: string,
+): Promise<GET<Project>> {
+  const res = await api.post(`/project/${uuid}/deliver`);
+  return res.data;
+}
+
+export function postMarkProjectDeliveredOpts() {
+  return mutationOptions({
+    mutationFn: postMarkProjectDelivered,
+  });
+}

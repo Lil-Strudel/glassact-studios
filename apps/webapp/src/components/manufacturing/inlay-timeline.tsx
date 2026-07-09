@@ -28,8 +28,7 @@ const STEP_LABELS: Record<ManufacturingStep, string> = {
   cutting: "Cutting",
   "fire-polish": "Fire Polish",
   packaging: "Packaging",
-  shipped: "Shipped",
-  delivered: "Delivered",
+  "ready-to-ship": "Ready to Ship",
 };
 
 function stepLabel(step: string) {

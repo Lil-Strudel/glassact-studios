@@ -62,8 +62,7 @@ type manufacturingSteps struct {
 	Cutting       ManufacturingStep
 	FirePolish    ManufacturingStep
 	Packaging     ManufacturingStep
-	Shipped       ManufacturingStep
-	Delivered     ManufacturingStep
+	ReadyToShip   ManufacturingStep
 }
 
 var ManufacturingSteps = manufacturingSteps{
@@ -72,8 +71,7 @@ var ManufacturingSteps = manufacturingSteps{
 	Cutting:       ManufacturingStep("cutting"),
 	FirePolish:    ManufacturingStep("fire-polish"),
 	Packaging:     ManufacturingStep("packaging"),
-	Shipped:       ManufacturingStep("shipped"),
-	Delivered:     ManufacturingStep("delivered"),
+	ReadyToShip:   ManufacturingStep("ready-to-ship"),
 }
 
 type MilestoneEventType string

@@ -17,19 +17,20 @@ type dealershipsTable struct {
 	postgres.Table
 
 	// Columns
-	ID         postgres.ColumnInteger
-	UUID       postgres.ColumnString
-	Name       postgres.ColumnString
-	Street     postgres.ColumnString
-	StreetExt  postgres.ColumnString
-	City       postgres.ColumnString
-	State      postgres.ColumnString
-	PostalCode postgres.ColumnString
-	Country    postgres.ColumnString
-	Location   postgres.ColumnString
-	CreatedAt  postgres.ColumnTimestampz
-	UpdatedAt  postgres.ColumnTimestampz
-	Version    postgres.ColumnInteger
+	ID                            postgres.ColumnInteger
+	UUID                          postgres.ColumnString
+	Name                          postgres.ColumnString
+	Street                        postgres.ColumnString
+	StreetExt                     postgres.ColumnString
+	City                          postgres.ColumnString
+	State                         postgres.ColumnString
+	PostalCode                    postgres.ColumnString
+	Country                       postgres.ColumnString
+	Location                      postgres.ColumnString
+	RequiresPaymentBeforeShipping postgres.ColumnBool
+	CreatedAt                     postgres.ColumnTimestampz
+	UpdatedAt                     postgres.ColumnTimestampz
+	Version                       postgres.ColumnInteger
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -71,41 +72,43 @@ func newDealershipsTable(schemaName, tableName, alias string) *DealershipsTable 
 
 func newDealershipsTableImpl(schemaName, tableName, alias string) dealershipsTable {
 	var (
-		IDColumn         = postgres.IntegerColumn("id")
-		UUIDColumn       = postgres.StringColumn("uuid")
-		NameColumn       = postgres.StringColumn("name")
-		StreetColumn     = postgres.StringColumn("street")
-		StreetExtColumn  = postgres.StringColumn("street_ext")
-		CityColumn       = postgres.StringColumn("city")
-		StateColumn      = postgres.StringColumn("state")
-		PostalCodeColumn = postgres.StringColumn("postal_code")
-		CountryColumn    = postgres.StringColumn("country")
-		LocationColumn   = postgres.StringColumn("location")
-		CreatedAtColumn  = postgres.TimestampzColumn("created_at")
-		UpdatedAtColumn  = postgres.TimestampzColumn("updated_at")
-		VersionColumn    = postgres.IntegerColumn("version")
-		allColumns       = postgres.ColumnList{IDColumn, UUIDColumn, NameColumn, StreetColumn, StreetExtColumn, CityColumn, StateColumn, PostalCodeColumn, CountryColumn, LocationColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns   = postgres.ColumnList{UUIDColumn, NameColumn, StreetColumn, StreetExtColumn, CityColumn, StateColumn, PostalCodeColumn, CountryColumn, LocationColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		defaultColumns   = postgres.ColumnList{IDColumn, UUIDColumn, StreetExtColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		IDColumn                            = postgres.IntegerColumn("id")
+		UUIDColumn                          = postgres.StringColumn("uuid")
+		NameColumn                          = postgres.StringColumn("name")
+		StreetColumn                        = postgres.StringColumn("street")
+		StreetExtColumn                     = postgres.StringColumn("street_ext")
+		CityColumn                          = postgres.StringColumn("city")
+		StateColumn                         = postgres.StringColumn("state")
+		PostalCodeColumn                    = postgres.StringColumn("postal_code")
+		CountryColumn                       = postgres.StringColumn("country")
+		LocationColumn                      = postgres.StringColumn("location")
+		RequiresPaymentBeforeShippingColumn = postgres.BoolColumn("requires_payment_before_shipping")
+		CreatedAtColumn                     = postgres.TimestampzColumn("created_at")
+		UpdatedAtColumn                     = postgres.TimestampzColumn("updated_at")
+		VersionColumn                       = postgres.IntegerColumn("version")
+		allColumns                          = postgres.ColumnList{IDColumn, UUIDColumn, NameColumn, StreetColumn, StreetExtColumn, CityColumn, StateColumn, PostalCodeColumn, CountryColumn, LocationColumn, RequiresPaymentBeforeShippingColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns                      = postgres.ColumnList{UUIDColumn, NameColumn, StreetColumn, StreetExtColumn, CityColumn, StateColumn, PostalCodeColumn, CountryColumn, LocationColumn, RequiresPaymentBeforeShippingColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		defaultColumns                      = postgres.ColumnList{IDColumn, UUIDColumn, StreetExtColumn, RequiresPaymentBeforeShippingColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
 	return dealershipsTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:         IDColumn,
-		UUID:       UUIDColumn,
-		Name:       NameColumn,
-		Street:     StreetColumn,
-		StreetExt:  StreetExtColumn,
-		City:       CityColumn,
-		State:      StateColumn,
-		PostalCode: PostalCodeColumn,
-		Country:    CountryColumn,
-		Location:   LocationColumn,
-		CreatedAt:  CreatedAtColumn,
-		UpdatedAt:  UpdatedAtColumn,
-		Version:    VersionColumn,
+		ID:                            IDColumn,
+		UUID:                          UUIDColumn,
+		Name:                          NameColumn,
+		Street:                        StreetColumn,
+		StreetExt:                     StreetExtColumn,
+		City:                          CityColumn,
+		State:                         StateColumn,
+		PostalCode:                    PostalCodeColumn,
+		Country:                       CountryColumn,
+		Location:                      LocationColumn,
+		RequiresPaymentBeforeShipping: RequiresPaymentBeforeShippingColumn,
+		CreatedAt:                     CreatedAtColumn,
+		UpdatedAt:                     UpdatedAtColumn,
+		Version:                       VersionColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

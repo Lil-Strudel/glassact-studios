@@ -68,6 +68,7 @@ CREATE TABLE dealerships (
     postal_code TEXT NOT NULL,
     country TEXT NOT NULL,
     location GEOGRAPHY(Point, 4326) NOT NULL,
+    requires_payment_before_shipping BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     version INTEGER NOT NULL DEFAULT 1
@@ -204,11 +205,11 @@ CREATE TABLE projects (
         'ordered',
         'in-production',
         'shipped',
-        'delivered',
         'invoiced',
         'completed',
         'cancelled'
     )),
+    tracking_number TEXT,
     ordered_at TIMESTAMPTZ,
     ordered_by INTEGER REFERENCES dealership_users,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -234,7 +235,7 @@ CREATE TABLE inlays (
     preview_url TEXT NOT NULL DEFAULT '',
     approved_proof_id INTEGER,
     manufacturing_step VARCHAR(255) CHECK (manufacturing_step IS NULL OR manufacturing_step IN (
-        'ordered', 'materials-prep', 'cutting', 'fire-polish', 'packaging', 'shipped', 'delivered'
+        'ordered', 'materials-prep', 'cutting', 'fire-polish', 'packaging', 'ready-to-ship'
     )),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -366,7 +367,7 @@ CREATE TABLE inlay_milestones (
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     inlay_id INTEGER NOT NULL REFERENCES inlays ON DELETE RESTRICT,
     step VARCHAR(255) NOT NULL CHECK (step IN (
-        'ordered', 'materials-prep', 'cutting', 'fire-polish', 'packaging', 'shipped', 'delivered'
+        'ordered', 'materials-prep', 'cutting', 'fire-polish', 'packaging', 'ready-to-ship'
     )),
     event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('entered', 'exited', 'reverted')),
     performed_by INTEGER REFERENCES internal_users NOT NULL,

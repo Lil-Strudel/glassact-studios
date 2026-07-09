@@ -211,7 +211,7 @@ func TestInlayMilestone_Delete(t *testing.T) {
 
 	milestone := &InlayMilestone{
 		InlayID:     inlay.ID,
-		Step:        ManufacturingSteps.Shipped,
+		Step:        ManufacturingSteps.ReadyToShip,
 		EventType:   MilestoneEventTypes.Entered,
 		PerformedBy: internalUser.ID,
 		EventTime:   time.Now(),
@@ -249,7 +249,7 @@ func TestInlayMilestone_GetAll(t *testing.T) {
 
 	milestone1 := &InlayMilestone{
 		InlayID:     inlay1.ID,
-		Step:        ManufacturingSteps.Delivered,
+		Step:        ManufacturingSteps.ReadyToShip,
 		EventType:   MilestoneEventTypes.Entered,
 		PerformedBy: internalUser1.ID,
 		EventTime:   time.Now(),
@@ -296,8 +296,7 @@ func TestInlayMilestone_ManufacturingSteps(t *testing.T) {
 		ManufacturingSteps.Cutting,
 		ManufacturingSteps.FirePolish,
 		ManufacturingSteps.Packaging,
-		ManufacturingSteps.Shipped,
-		ManufacturingSteps.Delivered,
+		ManufacturingSteps.ReadyToShip,
 	}
 
 	for i, step := range steps {

@@ -40,7 +40,7 @@ const DEALERSHIP_GROUPS: StatusGroup[] = [
   {
     title: "In Production",
     description: "Projects currently being manufactured or shipped.",
-    statuses: ["in-production", "shipped", "delivered", "invoiced"],
+    statuses: ["in-production", "shipped", "invoiced"],
   },
   {
     title: "Completed",
@@ -64,7 +64,7 @@ const INTERNAL_GROUPS: StatusGroup[] = [
   {
     title: "In Production",
     description: "Projects currently being manufactured or shipped.",
-    statuses: ["in-production", "shipped", "delivered", "invoiced"],
+    statuses: ["in-production", "shipped", "invoiced"],
   },
   {
     title: "Completed",

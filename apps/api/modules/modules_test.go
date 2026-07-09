@@ -1178,8 +1178,10 @@ func TestAPIEndpoints(t *testing.T) {
 		require.True(t, found)
 		require.NotNil(t, projects)
 
-		// Update project to delivered status directly for testing
-		projects.Status = data.ProjectStatuses.Delivered
+		// Put the project in a shipped (pre-completion) status. Invoices are now
+		// decoupled from project status: attaching, voiding, or paying an invoice
+		// must not move the project on its own.
+		projects.Status = data.ProjectStatuses.Shipped
 		testCtx.db.Projects.Update(projects)
 
 		t.Run("POST /api/project/{uuid}/invoice (happy path)", func(t *testing.T) {
@@ -1200,10 +1202,10 @@ func TestAPIEndpoints(t *testing.T) {
 			assert.Equal(t, "sent", invoice["status"])
 			assert.NotNil(t, invoice["uuid"])
 
-			// Verify project status changed to invoiced
+			// Attaching an invoice must not change project status.
 			updatedProject, found, _ := testCtx.db.Projects.GetByUUID(projectUUID)
 			require.True(t, found)
-			assert.Equal(t, data.ProjectStatuses.Invoiced, updatedProject.Status)
+			assert.Equal(t, data.ProjectStatuses.Shipped, updatedProject.Status)
 		})
 
 		t.Run("POST /api/project/{uuid}/invoice (already has active invoice)", func(t *testing.T) {
@@ -1255,10 +1257,10 @@ func TestAPIEndpoints(t *testing.T) {
 			_ = json.Unmarshal(resp.body, &invoice)
 			assert.Equal(t, "void", invoice["status"])
 
-			// Verify project status reverted to delivered
+			// Voiding an invoice must not change project status.
 			updatedProject, found, _ := testCtx.db.Projects.GetByUUID(projectUUID)
 			require.True(t, found)
-			assert.Equal(t, data.ProjectStatuses.Delivered, updatedProject.Status)
+			assert.Equal(t, data.ProjectStatuses.Shipped, updatedProject.Status)
 		})
 
 		t.Run("POST /api/project/{uuid}/invoice (after voiding, can create new invoice)", func(t *testing.T) {
@@ -1274,11 +1276,16 @@ func TestAPIEndpoints(t *testing.T) {
 			assert.Equal(t, http.StatusCreated, resp.statusCode)
 			t.Logf("✓ POST /api/project/{uuid}/invoice (after voiding, can create new invoice) (%d)", resp.statusCode)
 
-			// Verify project status changed back to invoiced
+			// Re-attaching an invoice still must not change project status.
 			updatedProject, found, _ := testCtx.db.Projects.GetByUUID(projectUUID)
 			require.True(t, found)
-			assert.Equal(t, data.ProjectStatuses.Invoiced, updatedProject.Status)
+			assert.Equal(t, data.ProjectStatuses.Shipped, updatedProject.Status)
 		})
+
+		// Simulate delivery while unpaid: the project sits in "invoiced" awaiting
+		// payment. Paying the invoice should then complete the project.
+		projects.Status = data.ProjectStatuses.Invoiced
+		require.NoError(t, testCtx.db.Projects.Update(projects))
 
 		// Test marking invoice as paid
 		invoices2, found, _ := testCtx.db.Invoices.GetActiveByProjectID(projects.ID)
@@ -1299,7 +1306,7 @@ func TestAPIEndpoints(t *testing.T) {
 			_ = json.Unmarshal(resp.body, &invoice)
 			assert.Equal(t, "paid", invoice["status"])
 
-			// Verify project status changed to completed
+			// Paying an invoiced project completes it.
 			updatedProject, found, _ := testCtx.db.Projects.GetByUUID(projectUUID)
 			require.True(t, found)
 			assert.Equal(t, data.ProjectStatuses.Completed, updatedProject.Status)
@@ -1314,6 +1321,127 @@ func TestAPIEndpoints(t *testing.T) {
 
 			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
 			t.Logf("✓ POST /api/invoice/{uuid}/void (cannot void paid invoice) (%d)", resp.statusCode)
+		})
+	})
+
+	t.Run("Project Shipping", func(t *testing.T) {
+		createShippingProject := func(name string, status data.ProjectStatus) *data.Project {
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   "/api/project",
+				body:   map[string]interface{}{"name": name},
+				token:  dealershipToken,
+			})
+			var pd map[string]interface{}
+			_ = json.Unmarshal(resp.body, &pd)
+			project, found, _ := testCtx.db.Projects.GetByUUID(pd["uuid"].(string))
+			require.True(t, found)
+			project.Status = status
+			require.NoError(t, testCtx.db.Projects.Update(project))
+			return project
+		}
+
+		t.Run("dealership user is forbidden from shipping", func(t *testing.T) {
+			project := createShippingProject("Ship Forbidden", data.ProjectStatuses.InProduction)
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/project/%s/ship", project.UUID),
+				body:   map[string]interface{}{"tracking_number": "1Z-FORBIDDEN"},
+				token:  dealershipToken,
+			})
+			assert.Equal(t, http.StatusForbidden, resp.statusCode)
+			t.Logf("✓ dealership user is forbidden from shipping (%d)", resp.statusCode)
+		})
+
+		t.Run("ship requires a tracking number", func(t *testing.T) {
+			project := createShippingProject("Ship No Tracking", data.ProjectStatuses.InProduction)
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/project/%s/ship", project.UUID),
+				body:   map[string]interface{}{},
+				token:  internalAdminToken,
+			})
+			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
+			t.Logf("✓ ship requires a tracking number (%d)", resp.statusCode)
+		})
+
+		t.Run("cannot ship a draft project", func(t *testing.T) {
+			project := createShippingProject("Ship Draft", data.ProjectStatuses.Draft)
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/project/%s/ship", project.UUID),
+				body:   map[string]interface{}{"tracking_number": "1Z-DRAFT"},
+				token:  internalAdminToken,
+			})
+			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
+			t.Logf("✓ cannot ship a draft project (%d)", resp.statusCode)
+		})
+
+		t.Run("ship persists tracking number then deliver unpaid goes to invoiced", func(t *testing.T) {
+			project := createShippingProject("Ship Unpaid", data.ProjectStatuses.InProduction)
+
+			shipResp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/project/%s/ship", project.UUID),
+				body:   map[string]interface{}{"tracking_number": "1Z-UNPAID"},
+				token:  internalAdminToken,
+			})
+			assert.Equal(t, http.StatusOK, shipResp.statusCode)
+
+			shipped, found, _ := testCtx.db.Projects.GetByUUID(project.UUID)
+			require.True(t, found)
+			assert.Equal(t, data.ProjectStatuses.Shipped, shipped.Status)
+			require.NotNil(t, shipped.TrackingNumber)
+			assert.Equal(t, "1Z-UNPAID", *shipped.TrackingNumber)
+
+			deliverResp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/project/%s/deliver", project.UUID),
+				token:  internalAdminToken,
+			})
+			assert.Equal(t, http.StatusOK, deliverResp.statusCode)
+
+			delivered, found, _ := testCtx.db.Projects.GetByUUID(project.UUID)
+			require.True(t, found)
+			assert.Equal(t, data.ProjectStatuses.Invoiced, delivered.Status)
+			t.Logf("✓ deliver unpaid goes to invoiced (%d)", deliverResp.statusCode)
+		})
+
+		t.Run("deliver with a paid invoice goes straight to completed", func(t *testing.T) {
+			project := createShippingProject("Ship Paid", data.ProjectStatuses.Shipped)
+
+			now := time.Now()
+			invoiceURL := "https://invoice.example.com/paid.pdf"
+			invoice := &data.Invoice{
+				ProjectID:  project.ID,
+				InvoiceURL: &invoiceURL,
+				Status:     data.InvoiceStatuses.Paid,
+				PaidAt:     &now,
+			}
+			require.NoError(t, testCtx.db.Invoices.Insert(invoice))
+
+			deliverResp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/project/%s/deliver", project.UUID),
+				token:  internalAdminToken,
+			})
+			assert.Equal(t, http.StatusOK, deliverResp.statusCode)
+
+			completed, found, _ := testCtx.db.Projects.GetByUUID(project.UUID)
+			require.True(t, found)
+			assert.Equal(t, data.ProjectStatuses.Completed, completed.Status)
+			t.Logf("✓ deliver with paid invoice goes to completed (%d)", deliverResp.statusCode)
+		})
+
+		t.Run("cannot deliver a project that has not shipped", func(t *testing.T) {
+			project := createShippingProject("Deliver Too Early", data.ProjectStatuses.InProduction)
+			resp := testCtx.request(testRequest{
+				method: "POST",
+				path:   fmt.Sprintf("/api/project/%s/deliver", project.UUID),
+				token:  internalAdminToken,
+			})
+			assert.Equal(t, http.StatusBadRequest, resp.statusCode)
+			t.Logf("✓ cannot deliver a project that has not shipped (%d)", resp.statusCode)
 		})
 	})
 

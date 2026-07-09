@@ -25,7 +25,7 @@ const ACTIVE_ORDER_STATUSES: ProjectStatus[] = [
   "ordered",
   "in-production",
   "shipped",
-  "delivered",
+  "invoiced",
 ];
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {

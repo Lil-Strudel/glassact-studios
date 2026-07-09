@@ -14,6 +14,7 @@ const (
 	ActionCreateProof          = "create_proof"
 	ActionInternalApproveProof = "internal_approve_proof"
 	ActionManageKanban         = "manage_kanban"
+	ActionManageShipping       = "manage_shipping"
 	ActionCreateInlayUpdate    = "create_inlay_update"
 	ActionCreateInvoice        = "create_invoice"
 	ActionManageInternalUsers = "manage_internal_users"

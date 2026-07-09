@@ -57,6 +57,7 @@ func GetRoutes(app *app.Application) http.Handler {
 	canCreateProject := alice.New(app.Authenticate, app.RequirePermission(data.ActionCreateProject))
 	canManageProject := alice.New(app.Authenticate, app.RequirePermission(data.ActionManageProject))
 	canPlaceOrder := alice.New(app.Authenticate, app.RequirePermission(data.ActionPlaceOrder))
+	canManageShipping := alice.New(app.Authenticate, app.RequirePermission(data.ActionManageShipping))
 	canSendChat := alice.New(app.Authenticate, app.RequirePermission(data.ActionSendChat))
 
 	projectModule := project.NewProjectModule(app)
@@ -66,6 +67,8 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("PATCH /api/project/{uuid}", canManageProject.ThenFunc(projectModule.HandlePatchProject))
 	mux.Handle("DELETE /api/project/{uuid}", canManageProject.ThenFunc(projectModule.HandleDeleteProject))
 	mux.Handle("POST /api/project/{uuid}/place-order", canPlaceOrder.ThenFunc(projectModule.HandlePlaceOrder))
+	mux.Handle("POST /api/project/{uuid}/ship", canManageShipping.ThenFunc(projectModule.HandleMarkProjectShipped))
+	mux.Handle("POST /api/project/{uuid}/deliver", canManageShipping.ThenFunc(projectModule.HandleMarkProjectDelivered))
 
 	canManageKanban := alice.New(app.Authenticate, app.RequirePermission(data.ActionManageKanban))
 	canCreateInlayUpdate := alice.New(app.Authenticate, app.RequirePermission(data.ActionCreateInlayUpdate))

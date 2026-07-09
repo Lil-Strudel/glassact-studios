@@ -21,7 +21,6 @@ type projectStatuses struct {
 	Ordered      ProjectStatus
 	InProduction ProjectStatus
 	Shipped      ProjectStatus
-	Delivered    ProjectStatus
 	Invoiced     ProjectStatus
 	Completed    ProjectStatus
 	Cancelled    ProjectStatus
@@ -32,7 +31,6 @@ var ProjectStatuses = projectStatuses{
 	Ordered:      ProjectStatus("ordered"),
 	InProduction: ProjectStatus("in-production"),
 	Shipped:      ProjectStatus("shipped"),
-	Delivered:    ProjectStatus("delivered"),
 	Invoiced:     ProjectStatus("invoiced"),
 	Completed:    ProjectStatus("completed"),
 	Cancelled:    ProjectStatus("cancelled"),
@@ -44,6 +42,7 @@ type Project struct {
 	Name              string        `json:"name"`
 	InternalReference *string       `json:"internal_reference"`
 	Status            ProjectStatus `json:"status"`
+	TrackingNumber    *string       `json:"tracking_number"`
 	OrderedAt         *time.Time    `json:"ordered_at"`
 	OrderedBy         *int          `json:"ordered_by"`
 }
@@ -72,6 +71,7 @@ func projectFromGen(genProj model.Projects) *Project {
 		Name:              genProj.Name,
 		InternalReference: genProj.InternalReference,
 		Status:            ProjectStatus(genProj.Status),
+		TrackingNumber:    genProj.TrackingNumber,
 		OrderedAt:         genProj.OrderedAt,
 		OrderedBy:         orderedBy,
 	}
@@ -103,6 +103,7 @@ func projectToGen(p *Project) (*model.Projects, error) {
 		Name:              p.Name,
 		InternalReference: p.InternalReference,
 		Status:            string(p.Status),
+		TrackingNumber:    p.TrackingNumber,
 		OrderedAt:         p.OrderedAt,
 		OrderedBy:         orderedBy,
 		UpdatedAt:         p.UpdatedAt,
@@ -441,6 +442,7 @@ func (m ProjectModel) updateProject(ctx context.Context, executor qrm.Queryable,
 		table.Projects.Name,
 		table.Projects.InternalReference,
 		table.Projects.Status,
+		table.Projects.TrackingNumber,
 		table.Projects.OrderedAt,
 		table.Projects.OrderedBy,
 		table.Projects.Version,

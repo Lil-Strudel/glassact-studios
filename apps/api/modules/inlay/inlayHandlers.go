@@ -565,8 +565,7 @@ var manufacturingStepOrder = []data.ManufacturingStep{
 	data.ManufacturingSteps.Cutting,
 	data.ManufacturingSteps.FirePolish,
 	data.ManufacturingSteps.Packaging,
-	data.ManufacturingSteps.Shipped,
-	data.ManufacturingSteps.Delivered,
+	data.ManufacturingSteps.ReadyToShip,
 }
 
 func manufacturingStepIndex(step data.ManufacturingStep) int {
@@ -759,98 +758,33 @@ func (m InlayModule) HandlePatchInlayStep(w http.ResponseWriter, r *http.Request
 		)
 	}
 
-	m.tryAdvanceProjectStatus(w, r, inlay.ProjectID)
+	m.tryAdvanceProjectToInProduction(inlay.ProjectID, body.Step)
 
 	m.WriteJSON(w, r, http.StatusOK, inlay)
 }
 
-func (m InlayModule) tryAdvanceProjectStatus(w http.ResponseWriter, r *http.Request, projectID int) {
+// tryAdvanceProjectToInProduction nudges a project from "ordered" to
+// "in-production" the moment real manufacturing work begins (an inlay moves
+// past the "ordered" step). Shipping and delivery are now explicit internal
+// actions (see the project module), so this is the only automatic project-status
+// advancement driven by inlay milestones.
+func (m InlayModule) tryAdvanceProjectToInProduction(projectID int, step data.ManufacturingStep) {
+	if step == data.ManufacturingSteps.Ordered {
+		return
+	}
+
 	project, found, err := m.Db.Projects.GetByID(projectID)
 	if err != nil || !found {
 		return
 	}
 
-	advanceable := map[data.ProjectStatus]bool{
-		data.ProjectStatuses.Ordered:      true,
-		data.ProjectStatuses.InProduction: true,
-		data.ProjectStatuses.Shipped:      true,
-	}
-	if !advanceable[project.Status] {
+	if project.Status != data.ProjectStatuses.Ordered {
 		return
 	}
 
-	projectInlays, err := m.Db.Inlays.GetByProjectID(projectID)
-	if err != nil {
-		return
-	}
-
-	// Only inlays that actually went into production (have a manufacturing
-	// step) participate in project-level advancement. Inlays that the user
-	// removed from the cart never enter production and would otherwise hold
-	// the project back forever.
-	var activeInlays []*data.Inlay
-	for _, inlay := range projectInlays {
-		if inlay.ManufacturingStep != nil {
-			activeInlays = append(activeInlays, inlay)
-		}
-	}
-
-	if len(activeInlays) == 0 {
-		return
-	}
-
-	allDelivered := true
-	allShipped := true
-	for _, inlay := range activeInlays {
-		step := data.ManufacturingStep(*inlay.ManufacturingStep)
-		if step != data.ManufacturingSteps.Delivered {
-			allDelivered = false
-		}
-		if step != data.ManufacturingSteps.Delivered && step != data.ManufacturingSteps.Shipped {
-			allShipped = false
-		}
-	}
-
-	var newStatus data.ProjectStatus
-	if allDelivered {
-		newStatus = data.ProjectStatuses.Delivered
-	} else if allShipped {
-		newStatus = data.ProjectStatuses.Shipped
-	} else {
-		return
-	}
-
-	if project.Status == newStatus {
-		return
-	}
-
-	project.Status = newStatus
+	project.Status = data.ProjectStatuses.InProduction
 	if err := m.Db.Projects.Update(project); err != nil {
 		return
-	}
-
-	if newStatus == data.ProjectStatuses.Shipped {
-		m.SendNotificationToAllDealershipUsersForProject(
-			projectID,
-			data.NotificationEventTypes.ProjectShipped,
-			fmt.Sprintf("Project shipped: %s", project.Name),
-			fmt.Sprintf("Your project %q has been shipped.", project.Name),
-			nil,
-		)
-	} else if newStatus == data.ProjectStatuses.Delivered {
-		m.SendNotificationToAllDealershipUsersForProject(
-			projectID,
-			data.NotificationEventTypes.ProjectDelivered,
-			fmt.Sprintf("Project delivered: %s", project.Name),
-			fmt.Sprintf("Your project %q has been delivered.", project.Name),
-			nil,
-		)
-		m.SendNotificationToAllInternalUsers(
-			data.NotificationEventTypes.ProjectDelivered,
-			fmt.Sprintf("Project delivered: %s", project.Name),
-			fmt.Sprintf("Project %q has been delivered and is ready for invoicing.", project.Name),
-			&projectID, nil,
-		)
 	}
 }
 

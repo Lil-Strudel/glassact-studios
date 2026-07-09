@@ -19,6 +19,7 @@ type Projects struct {
 	Name              string
 	InternalReference *string
 	Status            string
+	TrackingNumber    *string
 	OrderedAt         *time.Time
 	OrderedBy         *int32
 	CreatedAt         time.Time

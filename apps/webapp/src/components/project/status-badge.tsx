@@ -21,10 +21,6 @@ const STATUS_CONFIG: Record<
     label: "Shipped",
     class: "bg-cyan-100 text-cyan-700 border-cyan-300",
   },
-  delivered: {
-    label: "Delivered",
-    class: "bg-teal-100 text-teal-700 border-teal-300",
-  },
   invoiced: {
     label: "Invoiced",
     class: "bg-orange-100 text-orange-700 border-orange-300",

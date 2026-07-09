@@ -80,6 +80,7 @@ const defaultColumns: ColumnDef<GET<Dealership>>[] = [
 
 const formSchema = z.object({
   name: z.string().min(1),
+  requires_payment_before_shipping: z.boolean(),
   address: z.object({
     street: z.string().min(1),
     street_ext: z.string(),
@@ -120,6 +121,7 @@ function RouteComponent() {
   const form = createForm(() => ({
     defaultValues: {
       name: "",
+      requires_payment_before_shipping: false,
       address: {
         street: "",
         street_ext: "",
@@ -189,6 +191,17 @@ function RouteComponent() {
                 name="name"
                 children={(field) => (
                   <Form.TextField field={field} label="Name" />
+                )}
+              />
+
+              <form.Field
+                name="requires_payment_before_shipping"
+                children={(field) => (
+                  <Form.Checkbox
+                    field={field}
+                    label="Require payment before shipping"
+                    description="Projects for this dealership show a notice that they will not ship until the invoice is paid. This does not block shipping."
+                  />
                 )}
               />
 

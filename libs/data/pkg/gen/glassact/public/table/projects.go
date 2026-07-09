@@ -23,6 +23,7 @@ type projectsTable struct {
 	Name              postgres.ColumnString
 	InternalReference postgres.ColumnString
 	Status            postgres.ColumnString
+	TrackingNumber    postgres.ColumnString
 	OrderedAt         postgres.ColumnTimestampz
 	OrderedBy         postgres.ColumnInteger
 	CreatedAt         postgres.ColumnTimestampz
@@ -75,13 +76,14 @@ func newProjectsTableImpl(schemaName, tableName, alias string) projectsTable {
 		NameColumn              = postgres.StringColumn("name")
 		InternalReferenceColumn = postgres.StringColumn("internal_reference")
 		StatusColumn            = postgres.StringColumn("status")
+		TrackingNumberColumn    = postgres.StringColumn("tracking_number")
 		OrderedAtColumn         = postgres.TimestampzColumn("ordered_at")
 		OrderedByColumn         = postgres.IntegerColumn("ordered_by")
 		CreatedAtColumn         = postgres.TimestampzColumn("created_at")
 		UpdatedAtColumn         = postgres.TimestampzColumn("updated_at")
 		VersionColumn           = postgres.IntegerColumn("version")
-		allColumns              = postgres.ColumnList{IDColumn, UUIDColumn, DealershipIDColumn, NameColumn, InternalReferenceColumn, StatusColumn, OrderedAtColumn, OrderedByColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns          = postgres.ColumnList{UUIDColumn, DealershipIDColumn, NameColumn, InternalReferenceColumn, StatusColumn, OrderedAtColumn, OrderedByColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		allColumns              = postgres.ColumnList{IDColumn, UUIDColumn, DealershipIDColumn, NameColumn, InternalReferenceColumn, StatusColumn, TrackingNumberColumn, OrderedAtColumn, OrderedByColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns          = postgres.ColumnList{UUIDColumn, DealershipIDColumn, NameColumn, InternalReferenceColumn, StatusColumn, TrackingNumberColumn, OrderedAtColumn, OrderedByColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 		defaultColumns          = postgres.ColumnList{IDColumn, UUIDColumn, StatusColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
@@ -95,6 +97,7 @@ func newProjectsTableImpl(schemaName, tableName, alias string) projectsTable {
 		Name:              NameColumn,
 		InternalReference: InternalReferenceColumn,
 		Status:            StatusColumn,
+		TrackingNumber:    TrackingNumberColumn,
 		OrderedAt:         OrderedAtColumn,
 		OrderedBy:         OrderedByColumn,
 		CreatedAt:         CreatedAtColumn,

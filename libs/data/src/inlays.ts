@@ -9,8 +9,7 @@ export type ManufacturingStep =
   | "cutting"
   | "fire-polish"
   | "packaging"
-  | "shipped"
-  | "delivered";
+  | "ready-to-ship";
 
 export type InlayCatalogInfo = StandardTable<{
   inlay_id: number;

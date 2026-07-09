@@ -120,6 +120,8 @@ export const UserProvider: ParentComponent = (props) => {
           return role === "designer" || role === "admin";
         case PERMISSION_ACTIONS.MANAGE_KANBAN:
           return role === "production" || role === "admin";
+        case PERMISSION_ACTIONS.MANAGE_SHIPPING:
+          return role === "production" || role === "admin";
         case PERMISSION_ACTIONS.CREATE_INLAY_UPDATE:
           return role === "production" || role === "admin";
         case PERMISSION_ACTIONS.CREATE_INVOICE:

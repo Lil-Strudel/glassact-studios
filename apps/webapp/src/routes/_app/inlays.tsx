@@ -55,8 +55,7 @@ const STEP_COLUMNS: StepColumn[] = [
   { id: "cutting", title: "Cutting" },
   { id: "fire-polish", title: "Fire Polish" },
   { id: "packaging", title: "Packaging" },
-  { id: "shipped", title: "Shipped" },
-  { id: "delivered", title: "Delivered" },
+  { id: "ready-to-ship", title: "Ready to Ship" },
 ];
 
 interface InlayCardProps {

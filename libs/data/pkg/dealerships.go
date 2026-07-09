@@ -27,8 +27,9 @@ type Address struct {
 
 type Dealership struct {
 	StandardTable
-	Name    string  `json:"name"`
-	Address Address `json:"address"`
+	Name                          string  `json:"name"`
+	RequiresPaymentBeforeShipping bool    `json:"requires_payment_before_shipping"`
+	Address                       Address `json:"address"`
 }
 
 type DealershipModel struct {
@@ -45,7 +46,8 @@ func dealershipFromGen(genDeal model.Dealerships, longitude, latitude float64) *
 			UpdatedAt: genDeal.UpdatedAt,
 			Version:   int(genDeal.Version),
 		},
-		Name: genDeal.Name,
+		Name:                          genDeal.Name,
+		RequiresPaymentBeforeShipping: genDeal.RequiresPaymentBeforeShipping,
 		Address: Address{
 			Street:     genDeal.Street,
 			StreetExt:  genDeal.StreetExt,
@@ -73,18 +75,19 @@ func dealershipToGen(d *Dealership) (*model.Dealerships, error) {
 	}
 
 	genDeal := model.Dealerships{
-		ID:         int32(d.ID),
-		UUID:       dealershipUUID,
-		Name:       d.Name,
-		Street:     d.Address.Street,
-		StreetExt:  d.Address.StreetExt,
-		City:       d.Address.City,
-		State:      d.Address.State,
-		PostalCode: d.Address.PostalCode,
-		Country:    d.Address.Country,
-		UpdatedAt:  d.UpdatedAt,
-		CreatedAt:  d.CreatedAt,
-		Version:    int32(d.Version),
+		ID:                            int32(d.ID),
+		UUID:                          dealershipUUID,
+		Name:                          d.Name,
+		Street:                        d.Address.Street,
+		StreetExt:                     d.Address.StreetExt,
+		City:                          d.Address.City,
+		State:                         d.Address.State,
+		PostalCode:                    d.Address.PostalCode,
+		Country:                       d.Address.Country,
+		RequiresPaymentBeforeShipping: d.RequiresPaymentBeforeShipping,
+		UpdatedAt:                     d.UpdatedAt,
+		CreatedAt:                     d.CreatedAt,
+		Version:                       int32(d.Version),
 	}
 
 	return &genDeal, nil
@@ -109,6 +112,7 @@ func (m DealershipModel) Insert(dealership *Dealership) error {
 		table.Dealerships.PostalCode,
 		table.Dealerships.Country,
 		table.Dealerships.Location,
+		table.Dealerships.RequiresPaymentBeforeShipping,
 	).VALUES(
 		genDeal.Name,
 		genDeal.Street,
@@ -118,6 +122,7 @@ func (m DealershipModel) Insert(dealership *Dealership) error {
 		genDeal.PostalCode,
 		genDeal.Country,
 		locationExpr,
+		genDeal.RequiresPaymentBeforeShipping,
 	).RETURNING(
 		table.Dealerships.ID,
 		table.Dealerships.UUID,
@@ -260,6 +265,7 @@ func (m DealershipModel) Update(dealership *Dealership) error {
 		table.Dealerships.PostalCode,
 		table.Dealerships.Country,
 		table.Dealerships.Location,
+		table.Dealerships.RequiresPaymentBeforeShipping,
 		table.Dealerships.Version,
 	).SET(
 		table.Dealerships.Name.SET(postgres.String(genDeal.Name)),
@@ -270,6 +276,7 @@ func (m DealershipModel) Update(dealership *Dealership) error {
 		table.Dealerships.PostalCode.SET(postgres.String(genDeal.PostalCode)),
 		table.Dealerships.Country.SET(postgres.String(genDeal.Country)),
 		table.Dealerships.Location.SET(locationExpr),
+		table.Dealerships.RequiresPaymentBeforeShipping.SET(postgres.Bool(genDeal.RequiresPaymentBeforeShipping)),
 		table.Dealerships.Version.SET(postgres.Int(int64(genDeal.Version))),
 	).WHERE(
 		postgres.AND(

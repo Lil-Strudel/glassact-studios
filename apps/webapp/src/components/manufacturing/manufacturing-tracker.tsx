@@ -12,8 +12,7 @@ const STEPS: { id: ManufacturingStep; label: string }[] = [
   { id: "cutting", label: "Cutting" },
   { id: "fire-polish", label: "Polish" },
   { id: "packaging", label: "Packaging" },
-  { id: "shipped", label: "Shipped" },
-  { id: "delivered", label: "Delivered" },
+  { id: "ready-to-ship", label: "Ready to Ship" },
 ];
 
 const STEP_ORDER = STEPS.map((s) => s.id);

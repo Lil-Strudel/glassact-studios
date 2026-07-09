@@ -68,13 +68,9 @@ func (m *InvoiceModule) HandlePostProjectInvoice(w http.ResponseWriter, r *http.
 		return
 	}
 
-	project.Status = data.ProjectStatuses.Invoiced
-	err = m.Db.Projects.Update(project)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to advance project to invoiced: %w", err))
-		return
-	}
-
+	// Attaching an invoice never changes the project status. Billing may attach
+	// an invoice at any point; the project only becomes "invoiced" when it is
+	// delivered while still unpaid (see project delivery handler).
 	projectID := project.ID
 	go m.SendNotificationToAllDealershipUsersForProject(
 		projectID,
@@ -204,16 +200,28 @@ func (m *InvoiceModule) HandleMarkInvoicePaid(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if found {
-		project.Status = data.ProjectStatuses.Completed
-		if updateErr := m.Db.Projects.Update(project); updateErr != nil {
-			m.Log.Error("failed to advance project to completed after payment", "error", updateErr, "project_id", project.ID)
+		// Payment only advances project status when the project was waiting on
+		// it — i.e. already delivered and sitting in "invoiced". Paying earlier
+		// (while still in production or shipped) leaves the status untouched;
+		// delivery will later complete it directly.
+		completedNow := false
+		if project.Status == data.ProjectStatuses.Invoiced {
+			project.Status = data.ProjectStatuses.Completed
+			completedNow = true
+			if updateErr := m.Db.Projects.Update(project); updateErr != nil {
+				m.Log.Error("failed to advance project to completed after payment", "error", updateErr, "project_id", project.ID)
+			}
 		}
 
+		body := fmt.Sprintf("Payment has been received for project %q.", project.Name)
+		if completedNow {
+			body = fmt.Sprintf("Payment has been received for project %q. The project is now complete.", project.Name)
+		}
 		go m.SendNotificationToAllDealershipUsersForProject(
 			project.ID,
 			data.NotificationEventTypes.PaymentReceived,
 			fmt.Sprintf("Payment received: %s", project.Name),
-			fmt.Sprintf("Payment has been received for project %q. The project is now complete.", project.Name),
+			body,
 			nil,
 		)
 	}
@@ -253,24 +261,15 @@ func (m *InvoiceModule) HandleVoidInvoice(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	project, found, err := m.Db.Projects.GetByID(invoice.ProjectID)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return
-	}
-	if found {
-		project.Status = data.ProjectStatuses.Delivered
-		if updateErr := m.Db.Projects.Update(project); updateErr != nil {
-			m.Log.Error("failed to revert project to delivered after voiding invoice", "error", updateErr, "project_id", project.ID)
-			m.WriteError(w, r, m.Err.ServerError, updateErr)
-			return
-		}
-
+	// Voiding an invoice no longer touches the project status — invoice and
+	// project lifecycles are decoupled. Billing can attach a replacement invoice
+	// at any point.
+	if project, found, projErr := m.Db.Projects.GetByID(invoice.ProjectID); projErr == nil && found {
 		go m.SendNotificationToAllDealershipUsersForProject(
 			project.ID,
 			data.NotificationEventTypes.InvoiceVoided,
 			fmt.Sprintf("Invoice voided: %s", project.Name),
-			fmt.Sprintf("The invoice for project %q has been voided. The project has been returned to delivered status.", project.Name),
+			fmt.Sprintf("The invoice for project %q has been voided.", project.Name),
 			nil,
 		)
 	}

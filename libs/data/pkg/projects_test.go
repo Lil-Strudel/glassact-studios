@@ -316,7 +316,6 @@ func TestProjectStatuses(t *testing.T) {
 		ProjectStatuses.Ordered,
 		ProjectStatuses.InProduction,
 		ProjectStatuses.Shipped,
-		ProjectStatuses.Delivered,
 		ProjectStatuses.Invoiced,
 		ProjectStatuses.Completed,
 		ProjectStatuses.Cancelled,

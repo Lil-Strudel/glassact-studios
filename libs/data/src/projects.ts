@@ -5,7 +5,6 @@ export type ProjectStatus =
   | "ordered"
   | "in-production"
   | "shipped"
-  | "delivered"
   | "invoiced"
   | "completed"
   | "cancelled";
@@ -15,7 +14,6 @@ export const PROJECT_STATUSES: ProjectStatus[] = [
   "ordered",
   "in-production",
   "shipped",
-  "delivered",
   "invoiced",
   "completed",
   "cancelled",
@@ -26,6 +24,7 @@ export type Project = StandardTable<{
   name: string;
   internal_reference: string | null;
   status: ProjectStatus;
+  tracking_number: string | null;
   ordered_at: string | null;
   ordered_by: number | null;
 }>;
@@ -47,6 +46,10 @@ export type ProjectListItem = GET<Project> & {
 };
 
 // The single-project detail response. Adds the owning dealership's name.
+// `awaiting_payment` is a soft, informational signal: the owning dealership
+// requires payment before shipping and there is an unpaid invoice on a project
+// that has not yet shipped. It never blocks internal staff from shipping.
 export type ProjectDetail = GET<Project> & {
   dealership_name?: string;
+  awaiting_payment?: boolean;
 };

@@ -21,6 +21,8 @@ import {
   getProjectOpts,
   deleteProjectOpts,
   patchProjectOpts,
+  postMarkProjectShippedOpts,
+  postMarkProjectDeliveredOpts,
 } from "../../queries/project";
 import {
   getInlaysByProjectOpts,
@@ -62,7 +64,6 @@ const STATUS_STEPS: ProjectStatus[] = [
   "ordered",
   "in-production",
   "shipped",
-  "delivered",
   "invoiced",
   "completed",
 ];
@@ -72,7 +73,6 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
   ordered: "Ordered",
   "in-production": "In Production",
   shipped: "Shipped",
-  delivered: "Delivered",
   invoiced: "Invoiced",
   completed: "Completed",
   cancelled: "Cancelled",
@@ -84,8 +84,9 @@ const MANUFACTURING_STATUSES: ProjectStatus[] = [
   "ordered",
   "in-production",
   "shipped",
-  "delivered",
 ];
+// Statuses from which an internal user may record a shipment.
+const SHIPPABLE_STATUSES: ProjectStatus[] = ["ordered", "in-production"];
 
 function isManufacturingStatus(status: ProjectStatus): boolean {
   return MANUFACTURING_STATUSES.includes(status);
@@ -100,15 +101,18 @@ function RouteComponent() {
   const cancelProject = useMutation(deleteProjectOpts);
   const removeInlay = useMutation(deleteInlayOpts);
   const toggleKit = useMutation(patchInlayOpts);
+  const markShipped = useMutation(postMarkProjectShippedOpts);
+  const markDelivered = useMutation(postMarkProjectDeliveredOpts);
 
-  const INVOICE_STATUSES: ProjectStatus[] = [
-    "delivered",
-    "invoiced",
-    "completed",
-  ];
+  const [trackingNumber, setTrackingNumber] = createSignal("");
+
+  // Invoices can be attached at any point once an order exists, so surface the
+  // section for every non-draft, non-cancelled project. Attaching is gated by
+  // the CREATE_INVOICE permission inside InvoiceSection itself.
   const showInvoiceSection = createMemo(() => {
     if (!projectQuery.isSuccess) return false;
-    return INVOICE_STATUSES.includes(projectQuery.data.status);
+    const status = projectQuery.data.status;
+    return status !== "draft" && status !== "cancelled";
   });
   const invoiceQuery = useQuery(() => ({
     ...getProjectInvoiceOpts(params().id),
@@ -189,6 +193,68 @@ function RouteComponent() {
         if (isApiError(error)) {
           showToast({
             title: "Failed to cancel project",
+            description: error?.data?.error ?? "Unknown error",
+            variant: "error",
+          });
+        }
+      },
+    });
+  }
+
+  const canShip = createMemo(() => {
+    if (!projectQuery.isSuccess) return false;
+    return SHIPPABLE_STATUSES.includes(projectQuery.data.status);
+  });
+
+  const canDeliver = createMemo(() => {
+    if (!projectQuery.isSuccess) return false;
+    return projectQuery.data.status === "shipped";
+  });
+
+  function handleMarkShipped() {
+    if (!projectQuery.isSuccess) return;
+    const tracking = trackingNumber().trim();
+    if (tracking === "") return;
+    markShipped.mutate(
+      { uuid: projectQuery.data.uuid, trackingNumber: tracking },
+      {
+        onSuccess() {
+          setTrackingNumber("");
+          showToast({
+            title: "Project marked shipped",
+            description: `${projectQuery.data!.name} is on its way.`,
+            variant: "success",
+          });
+          queryClient.invalidateQueries({ queryKey: ["project"] });
+        },
+        onError(error) {
+          if (isApiError(error)) {
+            showToast({
+              title: "Failed to mark shipped",
+              description: error?.data?.error ?? "Unknown error",
+              variant: "error",
+            });
+          }
+        },
+      },
+    );
+  }
+
+  function handleMarkDelivered() {
+    if (!projectQuery.isSuccess) return;
+    markDelivered.mutate(projectQuery.data.uuid, {
+      onSuccess() {
+        showToast({
+          title: "Project marked delivered",
+          description: `${projectQuery.data!.name} has been delivered.`,
+          variant: "success",
+        });
+        queryClient.invalidateQueries({ queryKey: ["project"] });
+      },
+      onError(error) {
+        if (isApiError(error)) {
+          showToast({
+            title: "Failed to mark delivered",
             description: error?.data?.error ?? "Unknown error",
             variant: "error",
           });
@@ -348,6 +414,55 @@ function RouteComponent() {
                   />
                 </Show>
               </Can>
+              <Can permission={PERMISSION_ACTIONS.MANAGE_SHIPPING}>
+                <Show when={canShip()}>
+                  <Dialog>
+                    <DialogTrigger as={Button}>Mark Shipped</DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Mark Project Shipped</DialogTitle>
+                      </DialogHeader>
+                      <p class="text-sm text-gray-600">
+                        Enter the tracking number for this shipment. It will be
+                        shared with the dealership so they can look it up.
+                      </p>
+                      <input
+                        type="text"
+                        placeholder="Tracking number"
+                        value={trackingNumber()}
+                        onInput={(e) =>
+                          setTrackingNumber(e.currentTarget.value)
+                        }
+                        class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary mt-3"
+                      />
+                      <div class="flex justify-end gap-3 mt-4">
+                        <DialogClose as={Button} variant="outline">
+                          Cancel
+                        </DialogClose>
+                        <Button
+                          onClick={handleMarkShipped}
+                          disabled={
+                            markShipped.isPending ||
+                            trackingNumber().trim() === ""
+                          }
+                        >
+                          {markShipped.isPending
+                            ? "Marking..."
+                            : "Mark Shipped"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </Show>
+                <Show when={canDeliver()}>
+                  <Button
+                    onClick={handleMarkDelivered}
+                    disabled={markDelivered.isPending}
+                  >
+                    {markDelivered.isPending ? "Marking..." : "Mark Delivered"}
+                  </Button>
+                </Show>
+              </Can>
             </div>
           </div>
 
@@ -383,6 +498,22 @@ function RouteComponent() {
                 </For>
               </div>
             </div>
+          </Show>
+
+          <Show when={projectQuery.data!.awaiting_payment}>
+            <div class="mt-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              This project is waiting to ship until the invoice is paid. Once
+              payment is received it will be released for shipment.
+            </div>
+          </Show>
+
+          <Show when={projectQuery.data!.tracking_number}>
+            {(tracking) => (
+              <div class="mt-4 rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                <span class="font-medium text-gray-900">Tracking number:</span>{" "}
+                <span class="font-mono">{tracking()}</span>
+              </div>
+            )}
           </Show>
 
           <div class="mt-8">
