@@ -22,5 +22,6 @@ const (
 	ActionManagePriceGroups   = "manage_price_groups"
 	ActionManageDealerships   = "manage_dealerships"
 	ActionManageSupport       = "manage_support"
+	ActionManageMaterials     = "manage_materials"
 	ActionAccessAdmin         = "access_admin"
 )

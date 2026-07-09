@@ -10,6 +10,8 @@ import {
   IoBusinessOutline,
   IoShapesOutline,
   IoPricetagOutline,
+  IoColorPaletteOutline,
+  IoBrushOutline,
 } from "solid-icons/io";
 import { getUserSelfOpts } from "../../queries/user";
 
@@ -48,6 +50,16 @@ const navigationItems = [
     label: "Price Groups",
     icon: IoPricetagOutline,
     path: "/admin/price-groups",
+  },
+  {
+    label: "Glass",
+    icon: IoColorPaletteOutline,
+    path: "/admin/glass",
+  },
+  {
+    label: "Grout",
+    icon: IoBrushOutline,
+    path: "/admin/grout",
   },
 ];
 

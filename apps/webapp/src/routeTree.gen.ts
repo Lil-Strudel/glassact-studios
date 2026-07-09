@@ -23,6 +23,8 @@ import { Route as AppCatalogIndexRouteImport } from './routes/_app/catalog.index
 import { Route as AppProjectsCreateProjectRouteImport } from './routes/_app/projects_.create-project'
 import { Route as AppDealershipIdRouteImport } from './routes/_app/dealership.$id'
 import { Route as AppAdminPriceGroupsRouteImport } from './routes/_app/admin.price-groups'
+import { Route as AppAdminGroutRouteImport } from './routes/_app/admin.grout'
+import { Route as AppAdminGlassRouteImport } from './routes/_app/admin.glass'
 import { Route as AppAdminDealershipsRouteImport } from './routes/_app/admin.dealerships'
 import { Route as AppAdminCatalogRouteImport } from './routes/_app/admin.catalog'
 import { Route as AppProjectsIdIndexRouteImport } from './routes/_app/projects_.$id.index'
@@ -106,6 +108,16 @@ const AppDealershipIdRoute = AppDealershipIdRouteImport.update({
 const AppAdminPriceGroupsRoute = AppAdminPriceGroupsRouteImport.update({
   id: '/price-groups',
   path: '/price-groups',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminGroutRoute = AppAdminGroutRouteImport.update({
+  id: '/grout',
+  path: '/grout',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminGlassRoute = AppAdminGlassRouteImport.update({
+  id: '/glass',
+  path: '/glass',
   getParentRoute: () => AppAdminRoute,
 } as any)
 const AppAdminDealershipsRoute = AppAdminDealershipsRouteImport.update({
@@ -194,6 +206,8 @@ export interface FileRoutesByFullPath {
   '/support': typeof AppSupportRoute
   '/admin/catalog': typeof AppAdminCatalogRoute
   '/admin/dealerships': typeof AppAdminDealershipsRoute
+  '/admin/glass': typeof AppAdminGlassRoute
+  '/admin/grout': typeof AppAdminGroutRoute
   '/admin/price-groups': typeof AppAdminPriceGroupsRoute
   '/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/projects/create-project': typeof AppProjectsCreateProjectRoute
@@ -223,6 +237,8 @@ export interface FileRoutesByTo {
   '/support': typeof AppSupportRoute
   '/admin/catalog': typeof AppAdminCatalogRoute
   '/admin/dealerships': typeof AppAdminDealershipsRoute
+  '/admin/glass': typeof AppAdminGlassRoute
+  '/admin/grout': typeof AppAdminGroutRoute
   '/admin/price-groups': typeof AppAdminPriceGroupsRoute
   '/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/projects/create-project': typeof AppProjectsCreateProjectRoute
@@ -254,6 +270,8 @@ export interface FileRoutesById {
   '/_app/support': typeof AppSupportRoute
   '/_app/admin/catalog': typeof AppAdminCatalogRoute
   '/_app/admin/dealerships': typeof AppAdminDealershipsRoute
+  '/_app/admin/glass': typeof AppAdminGlassRoute
+  '/_app/admin/grout': typeof AppAdminGroutRoute
   '/_app/admin/price-groups': typeof AppAdminPriceGroupsRoute
   '/_app/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/_app/projects_/create-project': typeof AppProjectsCreateProjectRoute
@@ -285,6 +303,8 @@ export interface FileRouteTypes {
     | '/support'
     | '/admin/catalog'
     | '/admin/dealerships'
+    | '/admin/glass'
+    | '/admin/grout'
     | '/admin/price-groups'
     | '/dealership/$id'
     | '/projects/create-project'
@@ -314,6 +334,8 @@ export interface FileRouteTypes {
     | '/support'
     | '/admin/catalog'
     | '/admin/dealerships'
+    | '/admin/glass'
+    | '/admin/grout'
     | '/admin/price-groups'
     | '/dealership/$id'
     | '/projects/create-project'
@@ -344,6 +366,8 @@ export interface FileRouteTypes {
     | '/_app/support'
     | '/_app/admin/catalog'
     | '/_app/admin/dealerships'
+    | '/_app/admin/glass'
+    | '/_app/admin/grout'
     | '/_app/admin/price-groups'
     | '/_app/dealership/$id'
     | '/_app/projects_/create-project'
@@ -468,6 +492,20 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AppAdminPriceGroupsRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/admin/grout': {
+      id: '/_app/admin/grout'
+      path: '/grout'
+      fullPath: '/admin/grout'
+      preLoaderRoute: typeof AppAdminGroutRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/glass': {
+      id: '/_app/admin/glass'
+      path: '/glass'
+      fullPath: '/admin/glass'
+      preLoaderRoute: typeof AppAdminGlassRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/admin/dealerships': {
       id: '/_app/admin/dealerships'
       path: '/dealerships'
@@ -572,6 +610,8 @@ declare module '@tanstack/solid-router' {
 interface AppAdminRouteChildren {
   AppAdminCatalogRoute: typeof AppAdminCatalogRoute
   AppAdminDealershipsRoute: typeof AppAdminDealershipsRoute
+  AppAdminGlassRoute: typeof AppAdminGlassRoute
+  AppAdminGroutRoute: typeof AppAdminGroutRoute
   AppAdminPriceGroupsRoute: typeof AppAdminPriceGroupsRoute
   AppAdminCatalogUuidRoute: typeof AppAdminCatalogUuidRoute
   AppAdminCatalogCreateRoute: typeof AppAdminCatalogCreateRoute
@@ -583,6 +623,8 @@ interface AppAdminRouteChildren {
 const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminCatalogRoute: AppAdminCatalogRoute,
   AppAdminDealershipsRoute: AppAdminDealershipsRoute,
+  AppAdminGlassRoute: AppAdminGlassRoute,
+  AppAdminGroutRoute: AppAdminGroutRoute,
   AppAdminPriceGroupsRoute: AppAdminPriceGroupsRoute,
   AppAdminCatalogUuidRoute: AppAdminCatalogUuidRoute,
   AppAdminCatalogCreateRoute: AppAdminCatalogCreateRoute,

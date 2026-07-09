@@ -142,13 +142,23 @@ func GetRoutes(app *app.Application) http.Handler {
 	customizerModule := customizer.NewCustomizerModule(app)
 	mux.Handle("POST /api/catalog/{uuid}/bake", protected.ThenFunc(customizerModule.HandleBake))
 
+	canManageMaterials := alice.New(app.Authenticate, app.RequirePermission(data.ActionManageMaterials))
+
 	glassColorModule := glasscolor.NewGlassColorModule(app)
 	mux.Handle("GET /api/glass-colors", protected.ThenFunc(glassColorModule.HandleGetGlassColors))
+	mux.Handle("GET /api/glass-colors/all", canManageMaterials.ThenFunc(glassColorModule.HandleGetGlassColorsAdmin))
 	mux.Handle("GET /api/glass-colors/{uuid}", protected.ThenFunc(glassColorModule.HandleGetGlassColor))
+	mux.Handle("POST /api/glass-colors", canManageMaterials.ThenFunc(glassColorModule.HandlePostGlassColor))
+	mux.Handle("PATCH /api/glass-colors/{uuid}", canManageMaterials.ThenFunc(glassColorModule.HandlePatchGlassColor))
+	mux.Handle("DELETE /api/glass-colors/{uuid}", canManageMaterials.ThenFunc(glassColorModule.HandleDeleteGlassColor))
 
 	groutModule := grout.NewGroutModule(app)
 	mux.Handle("GET /api/grouts", protected.ThenFunc(groutModule.HandleGetGrouts))
+	mux.Handle("GET /api/grouts/all", canManageMaterials.ThenFunc(groutModule.HandleGetGroutsAdmin))
 	mux.Handle("GET /api/grouts/{uuid}", protected.ThenFunc(groutModule.HandleGetGrout))
+	mux.Handle("POST /api/grouts", canManageMaterials.ThenFunc(groutModule.HandlePostGrout))
+	mux.Handle("PATCH /api/grouts/{uuid}", canManageMaterials.ThenFunc(groutModule.HandlePatchGrout))
+	mux.Handle("DELETE /api/grouts/{uuid}", canManageMaterials.ThenFunc(groutModule.HandleDeleteGrout))
 
 	priceGroupModule := pricegroup.NewPriceGroupModule(app)
 	mux.Handle("GET /api/price-groups", canManagePriceGroups.ThenFunc(priceGroupModule.HandleGetPriceGroups))
