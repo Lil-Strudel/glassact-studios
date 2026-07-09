@@ -397,6 +397,8 @@ func (u *InternalUser) Can(action string) bool {
 			u.Role == InternalUserRoles.Admin
 	case ActionManageDealerships:
 		return u.Role == InternalUserRoles.Admin
+	case ActionManageSupport:
+		return u.Role == InternalUserRoles.Admin
 	case ActionAccessAdmin:
 		return true
 	case ActionManageProject:

@@ -8,8 +8,6 @@ Video / Support page/ knolege base (include PG)
 
 Catalog click image to fullscreen
 
-Better dealership creation
-
 Make notifications bring them where they need to go
 
 Time estimates on projects

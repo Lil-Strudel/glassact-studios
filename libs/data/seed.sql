@@ -129,3 +129,42 @@ INSERT INTO grouts (name, hex, sort_order) VALUES
   ('Tan Granite', '#c9b79c', 70),
   ('Green Granite', '#2d3b33', 80)
 ON CONFLICT (hex) DO NOTHING;
+
+-- Support / knowledge-base content shown on the Support page.
+INSERT INTO support_articles (category, title, body, youtube_url, sort_order) VALUES
+  (
+    'installation',
+    'Installing a stained glass inlay',
+    E'Watch the walkthrough above, then follow these steps:\n\n1. **Clean the recess** thoroughly and let it dry.\n2. Dry-fit the inlay to confirm the depth and orientation.\n3. Apply a bead of the recommended **adhesive** around the perimeter.\n4. Seat the inlay, press evenly, and wipe away any squeeze-out.\n5. Let it cure undisturbed for **24 hours** before handling.',
+    'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    10
+  ),
+  (
+    'installation',
+    'Cold-weather installation tips',
+    E'Adhesives cure slowly below 50°F. When installing in cold conditions:\n\n- Store the adhesive at room temperature overnight before use.\n- Warm the stone surface with a heat lamp if possible.\n- Allow extra cure time — up to **48 hours**.',
+    NULL,
+    20
+  ),
+  (
+    'ordering',
+    'How to place an order',
+    E'1. Create a **project** from the Projects page.\n2. Add one or more **inlays** — pick a catalog design or request a custom piece.\n3. For catalog items you can customize colors and sizing in the customizer.\n4. Once every inlay is marked **ready**, open the cart and select the inlays to include.\n5. Click **Place Order** — pricing is locked in at this point.',
+    NULL,
+    10
+  ),
+  (
+    'pricing',
+    'How pricing works',
+    E'Every inlay is priced by its **price group**. A catalog item has a default price group, and our designers may adjust it based on custom sizing, added colors, or special materials.\n\nThe price is locked when you place your order, so later catalog changes never affect an existing order. See the current price groups below.',
+    NULL,
+    10
+  ),
+  (
+    'contact',
+    'Get in touch',
+    E'Still have questions? We are happy to help.\n\n- **Email:** support@glassactstudios.com\n- **Phone:** (555) 123-4567, Mon–Fri 8am–5pm ET\n\nFor order-specific questions, include your project name or reference number so we can look it up quickly.',
+    NULL,
+    10
+  )
+ON CONFLICT DO NOTHING;

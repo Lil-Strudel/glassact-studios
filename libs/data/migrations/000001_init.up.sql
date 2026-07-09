@@ -510,3 +510,25 @@ CREATE TABLE internal_user_notification_prefs (
     email_enabled BOOLEAN NOT NULL DEFAULT true,
     UNIQUE(internal_user_id, event_type)
 );
+
+--------------------------------------------------------------------------------
+-- SUPPORT / KNOWLEDGE BASE
+--------------------------------------------------------------------------------
+
+-- Knowledge-base entries shown on the Support page. Readable by all authenticated
+-- users; only internal admins may write. A "video" is an entry with youtube_url
+-- set; a "tip"/how-to is an entry whose body holds Markdown. category maps the
+-- entry to a fixed page section.
+CREATE TABLE support_articles (
+    id SERIAL PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    category VARCHAR(255) NOT NULL CHECK (category IN ('installation', 'ordering', 'pricing', 'contact', 'general')),
+    title TEXT NOT NULL,
+    body TEXT NOT NULL DEFAULT '',
+    youtube_url TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_published BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    version INTEGER NOT NULL DEFAULT 1
+);

@@ -241,11 +241,23 @@ CREATE TRIGGER increment_project_chats_version
 -- INVOICES
 --------------------------------------------------------------------------------
 
-CREATE TRIGGER update_invoices_updated_at 
-    BEFORE UPDATE ON invoices 
+CREATE TRIGGER update_invoices_updated_at
+    BEFORE UPDATE ON invoices
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER increment_invoices_version 
-    BEFORE UPDATE ON invoices 
+CREATE TRIGGER increment_invoices_version
+    BEFORE UPDATE ON invoices
+    FOR EACH ROW EXECUTE FUNCTION increment_version_column();
+
+--------------------------------------------------------------------------------
+-- SUPPORT ARTICLES
+--------------------------------------------------------------------------------
+
+CREATE TRIGGER update_support_articles_updated_at
+    BEFORE UPDATE ON support_articles
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER increment_support_articles_version
+    BEFORE UPDATE ON support_articles
     FOR EACH ROW EXECUTE FUNCTION increment_version_column();
 

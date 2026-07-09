@@ -15,6 +15,7 @@ export const PERMISSION_ACTIONS = {
   CREATE_INVOICE: "create_invoice",
   MANAGE_INTERNAL_USERS: "manage_internal_users",
   MANAGE_DEALERSHIPS: "manage_dealerships",
+  MANAGE_SUPPORT: "manage_support",
   ACCESS_ADMIN: "access_admin",
   VIEW_ALL: "view_all",
 } as const;

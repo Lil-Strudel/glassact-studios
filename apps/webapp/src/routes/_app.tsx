@@ -49,6 +49,7 @@ const navigation = [
     to: "/inlays",
     permission: PERMISSION_ACTIONS.MANAGE_KANBAN,
   },
+  { name: "Support", to: "/support" },
   { name: "Admin", to: "/admin", permission: PERMISSION_ACTIONS.ACCESS_ADMIN },
 ];
 const userNavigation = [

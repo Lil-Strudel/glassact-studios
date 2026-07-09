@@ -153,6 +153,7 @@ func cleanupTables(t *testing.T) {
 		projects,
 		catalog_item_tags,
 		catalog_items,
+		support_articles,
 		price_groups,
 		glass_colors,
 		grouts,

@@ -1,5 +1,9 @@
 -- GlassAct Studios - Drop Triggers
 
+-- Support Articles
+DROP TRIGGER IF EXISTS update_support_articles_updated_at ON support_articles;
+DROP TRIGGER IF EXISTS increment_support_articles_version ON support_articles;
+
 -- Invoices
 DROP TRIGGER IF EXISTS update_invoices_updated_at ON invoices;
 DROP TRIGGER IF EXISTS increment_invoices_version ON invoices;

@@ -19,7 +19,9 @@
     "@tanstack/solid-router": "catalog:",
     "@tanstack/solid-table": "^8.21.3",
     "axios": "^1.13.6",
+    "dompurify": "^3.4.11",
     "immer": "^11.1.4",
+    "marked": "^18.0.5",
     "solid-icons": "^1.2.0",
     "solid-js": "catalog:solid",
     "zod": "^4.3.6"

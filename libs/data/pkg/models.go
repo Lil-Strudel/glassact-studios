@@ -30,6 +30,7 @@ type Models struct {
 	PriceGroups             PriceGroupModel
 	ProjectChats            ProjectChatModel
 	Projects                ProjectModel
+	SupportArticles         SupportArticleModel
 	Pool                    *pgxpool.Pool
 	STDB                    *sql.DB
 }
@@ -59,6 +60,7 @@ func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 		PriceGroups:             PriceGroupModel{DB: db, STDB: stdb},
 		ProjectChats:            ProjectChatModel{DB: db, STDB: stdb},
 		Projects:                ProjectModel{DB: db, STDB: stdb},
+		SupportArticles:         SupportArticleModel{DB: db, STDB: stdb},
 		Pool:                    db,
 		STDB:                    stdb,
 	}

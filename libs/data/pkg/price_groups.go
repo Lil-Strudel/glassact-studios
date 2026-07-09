@@ -191,6 +191,35 @@ func (m PriceGroupModel) GetAll() ([]*PriceGroup, error) {
 	return priceGroups, nil
 }
 
+func (m PriceGroupModel) GetAllActive() ([]*PriceGroup, error) {
+	query := postgres.SELECT(
+		table.PriceGroups.AllColumns,
+	).FROM(
+		table.PriceGroups,
+	).WHERE(
+		table.PriceGroups.IsActive.EQ(postgres.Bool(true)),
+	).ORDER_BY(
+		table.PriceGroups.BasePriceCents.ASC(),
+		table.PriceGroups.Name.ASC(),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest []model.PriceGroups
+	err := query.QueryContext(ctx, m.STDB, &dest)
+	if err != nil {
+		return nil, err
+	}
+
+	priceGroups := make([]*PriceGroup, len(dest))
+	for i, d := range dest {
+		priceGroups[i] = priceGroupFromGen(d)
+	}
+
+	return priceGroups, nil
+}
+
 func (m PriceGroupModel) Update(priceGroup *PriceGroup) error {
 	genPriceGroup, err := priceGroupToGen(priceGroup)
 	if err != nil {

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSupportRouteImport } from './routes/_app/support'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppReviewQueueRouteImport } from './routes/_app/review-queue'
 import { Route as AppProjectsRouteImport } from './routes/_app/projects'
@@ -50,6 +51,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSupportRoute = AppSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/projects': typeof AppProjectsRoute
   '/review-queue': typeof AppReviewQueueRoute
   '/settings': typeof AppSettingsRoute
+  '/support': typeof AppSupportRoute
   '/admin/catalog': typeof AppAdminCatalogRoute
   '/admin/dealerships': typeof AppAdminDealershipsRoute
   '/admin/price-groups': typeof AppAdminPriceGroupsRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/projects': typeof AppProjectsRoute
   '/review-queue': typeof AppReviewQueueRoute
   '/settings': typeof AppSettingsRoute
+  '/support': typeof AppSupportRoute
   '/admin/catalog': typeof AppAdminCatalogRoute
   '/admin/dealerships': typeof AppAdminDealershipsRoute
   '/admin/price-groups': typeof AppAdminPriceGroupsRoute
@@ -243,6 +251,7 @@ export interface FileRoutesById {
   '/_app/projects': typeof AppProjectsRoute
   '/_app/review-queue': typeof AppReviewQueueRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/support': typeof AppSupportRoute
   '/_app/admin/catalog': typeof AppAdminCatalogRoute
   '/_app/admin/dealerships': typeof AppAdminDealershipsRoute
   '/_app/admin/price-groups': typeof AppAdminPriceGroupsRoute
@@ -273,6 +282,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/review-queue'
     | '/settings'
+    | '/support'
     | '/admin/catalog'
     | '/admin/dealerships'
     | '/admin/price-groups'
@@ -301,6 +311,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/review-queue'
     | '/settings'
+    | '/support'
     | '/admin/catalog'
     | '/admin/dealerships'
     | '/admin/price-groups'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/_app/projects'
     | '/_app/review-queue'
     | '/_app/settings'
+    | '/_app/support'
     | '/_app/admin/catalog'
     | '/_app/admin/dealerships'
     | '/_app/admin/price-groups'
@@ -378,6 +390,13 @@ declare module '@tanstack/solid-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/support': {
+      id: '/_app/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof AppSupportRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/settings': {
       id: '/_app/settings'
@@ -597,6 +616,7 @@ interface AppRouteChildren {
   AppProjectsRoute: typeof AppProjectsRoute
   AppReviewQueueRoute: typeof AppReviewQueueRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppSupportRoute: typeof AppSupportRoute
   AppDealershipIdRoute: typeof AppDealershipIdRouteWithChildren
   AppProjectsCreateProjectRoute: typeof AppProjectsCreateProjectRoute
   AppCatalogIndexRoute: typeof AppCatalogIndexRoute
@@ -614,6 +634,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProjectsRoute: AppProjectsRoute,
   AppReviewQueueRoute: AppReviewQueueRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppSupportRoute: AppSupportRoute,
   AppDealershipIdRoute: AppDealershipIdRouteWithChildren,
   AppProjectsCreateProjectRoute: AppProjectsCreateProjectRoute,
   AppCatalogIndexRoute: AppCatalogIndexRoute,

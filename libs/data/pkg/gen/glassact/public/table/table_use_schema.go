@@ -39,4 +39,5 @@ func UseSchema(schema string) {
 	Projects = Projects.FromSchema(schema)
 	SchemaMigrations = SchemaMigrations.FromSchema(schema)
 	SpatialRefSys = SpatialRefSys.FromSchema(schema)
+	SupportArticles = SupportArticles.FromSchema(schema)
 }
