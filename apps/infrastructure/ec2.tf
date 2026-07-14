@@ -121,6 +121,9 @@ data "aws_iam_policy_document" "ec2_api" {
     effect  = "Allow"
     actions = ["ssm:GetParameter", "ssm:GetParameters", "ssm:GetParametersByPath"]
     resources = [
+      # GetParametersByPath authorizes against the path itself, not just
+      # children matched by the wildcard - both forms are required.
+      "arn:aws:ssm:us-west-2:${data.aws_caller_identity.current.account_id}:parameter/glassact/api",
       "arn:aws:ssm:us-west-2:${data.aws_caller_identity.current.account_id}:parameter/glassact/api/*",
     ]
   }

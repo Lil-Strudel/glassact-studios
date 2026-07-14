@@ -63,11 +63,14 @@ jobs:
 
       - name: Deploy via SSM
         run: |
+          CMD="aws s3 cp s3://${{ secrets.BACKUPS_BUCKET }}/deploy/deploy.sh - | bash -s -- ${{ env.API_IMAGE }} ${{ env.MIGRATE_IMAGE }} ${{ secrets.BACKUPS_BUCKET }}"
+          PARAMS=$(jq -n --arg cmd "$CMD" '{commands: [$cmd]}')
+
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "${{ secrets.INSTANCE_ID }}" \
             --document-name "AWS-RunShellScript" \
             --comment "deploy glassact-api ${{ github.sha }}" \
-            --parameters "commands=aws s3 cp s3://${{ secrets.BACKUPS_BUCKET }}/deploy/deploy.sh - | bash -s -- '${{ env.API_IMAGE }}' '${{ env.MIGRATE_IMAGE }}' '${{ secrets.BACKUPS_BUCKET }}'" \
+            --parameters "$PARAMS" \
             --query 'Command.CommandId' --output text)
 
           aws ssm wait command-executed \
