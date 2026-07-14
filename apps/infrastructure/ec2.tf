@@ -196,7 +196,7 @@ resource "aws_eip" "api" {
 # ---- ECR repositories ----
 resource "aws_ecr_repository" "api" {
   name                 = "glassact-api"
-  image_tag_mutability = "IMMUTABLE"
+  image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {
     scan_on_push = true
@@ -205,7 +205,7 @@ resource "aws_ecr_repository" "api" {
 
 resource "aws_ecr_repository" "migrate" {
   name                 = "glassact-migrate"
-  image_tag_mutability = "IMMUTABLE"
+  image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {
     scan_on_push = true
