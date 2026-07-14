@@ -21,6 +21,7 @@ type Inlays struct {
 	IsCustomized      bool
 	InstallationKit   bool
 	PreviewURL        string
+	SandblastFileURL  *string
 	ApprovedProofID   *int32
 	ManufacturingStep *string
 	CreatedAt         time.Time

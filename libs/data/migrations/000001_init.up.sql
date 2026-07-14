@@ -233,6 +233,7 @@ CREATE TABLE inlays (
     is_customized BOOLEAN NOT NULL DEFAULT false,
     installation_kit BOOLEAN NOT NULL DEFAULT false,
     preview_url TEXT NOT NULL DEFAULT '',
+    sandblast_file_url TEXT,
     approved_proof_id INTEGER,
     manufacturing_step VARCHAR(255) CHECK (manufacturing_step IS NULL OR manufacturing_step IN (
         'ordered', 'materials-prep', 'cutting', 'fire-polish', 'packaging', 'ready-to-ship'

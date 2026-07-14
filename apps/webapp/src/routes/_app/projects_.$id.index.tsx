@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  FileUpload,
   showToast,
 } from "@glassact/ui";
 import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js";
@@ -28,7 +29,10 @@ import {
   getInlaysByProjectOpts,
   deleteInlayOpts,
   patchInlayOpts,
+  getSandblastDownloadUrl,
+  postSandblastFileOpts,
 } from "../../queries/inlay";
+import { postUploadOpts } from "../../queries/upload";
 import {
   getProjectInvoiceOpts,
   postProjectInvoiceOpts,
@@ -52,6 +56,8 @@ import {
   IoTrashOutline,
   IoAddCircleOutline,
   IoPencilOutline,
+  IoDownloadOutline,
+  IoCloudUploadOutline,
 } from "solid-icons/io";
 import { ManufacturingTracker } from "../../components/manufacturing/manufacturing-tracker";
 
@@ -812,6 +818,70 @@ function InlayCard(props: InlayCardProps) {
       props.inlay.has_pending_proof === true,
   );
 
+  const userContext = useUserContext();
+  const queryClient = useQueryClient();
+
+  const hasSandblast = () => !!props.inlay.sandblast_file_url;
+  const canUploadSandblast = () =>
+    props.projectStatus !== "draft" &&
+    userContext.can(PERMISSION_ACTIONS.MANAGE_KANBAN);
+
+  const uploadMutation = useMutation(() => postUploadOpts());
+  const sandblastMutation = useMutation(() => postSandblastFileOpts());
+
+  const [isDownloadingSandblast, setIsDownloadingSandblast] =
+    createSignal(false);
+  const [sandblastDialogOpen, setSandblastDialogOpen] = createSignal(false);
+
+  async function handleDownloadSandblast() {
+    setIsDownloadingSandblast(true);
+    try {
+      const { url } = await getSandblastDownloadUrl(props.inlay.uuid);
+      window.location.href = url;
+    } catch (error) {
+      showToast({
+        title: "Failed to download sandblast file",
+        description:
+          error instanceof Error && isApiError(error)
+            ? (error.data?.error ?? "Unknown error")
+            : "Unknown error",
+        variant: "error",
+      });
+    } finally {
+      setIsDownloadingSandblast(false);
+    }
+  }
+
+  function handleSandblastUploaded(url: string | null | string[]) {
+    const finalUrl = Array.isArray(url) ? url[0] : url;
+    if (!finalUrl) return;
+    sandblastMutation.mutate(
+      { uuid: props.inlay.uuid, body: { sandblast_file_url: finalUrl } },
+      {
+        onSuccess() {
+          queryClient.invalidateQueries({
+            queryKey: ["project", props.projectId, "inlays"],
+          });
+          showToast({
+            title: "Sandblast file uploaded",
+            description: `Attached to ${props.inlay.name}.`,
+            variant: "success",
+          });
+          setSandblastDialogOpen(false);
+        },
+        onError(error) {
+          showToast({
+            title: "Failed to attach sandblast file",
+            description: isApiError(error)
+              ? (error?.data?.error ?? "Unknown error")
+              : "Unknown error",
+            variant: "error",
+          });
+        },
+      },
+    );
+  }
+
   return (
     <Card class="overflow-hidden">
       <Link
@@ -883,8 +953,61 @@ function InlayCard(props: InlayCardProps) {
           </Show>
         </CardHeader>
       </Link>
-      <Show when={props.canDelete || showInternalApprove() || props.canEditKit}>
+      <Show
+        when={
+          props.canDelete ||
+          showInternalApprove() ||
+          props.canEditKit ||
+          hasSandblast() ||
+          canUploadSandblast()
+        }
+      >
         <div class="px-6 pb-4 flex flex-col gap-2">
+          <Show when={hasSandblast()}>
+            <Button
+              variant="outline"
+              size="sm"
+              class="w-full"
+              disabled={isDownloadingSandblast()}
+              onClick={handleDownloadSandblast}
+            >
+              <IoDownloadOutline size={16} class="mr-1" />
+              {isDownloadingSandblast()
+                ? "Preparing..."
+                : "Download Sandblast File"}
+            </Button>
+          </Show>
+          <Show when={canUploadSandblast()}>
+            <Dialog
+              open={sandblastDialogOpen()}
+              onOpenChange={setSandblastDialogOpen}
+            >
+              <DialogTrigger as={Button} variant="ghost" size="sm" class="w-full">
+                <IoCloudUploadOutline size={16} class="mr-1" />
+                {hasSandblast() ? "Replace Sandblast File" : "Upload Sandblast File"}
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {hasSandblast() ? "Replace" : "Upload"} Sandblast File
+                  </DialogTitle>
+                </DialogHeader>
+                <p class="text-sm text-gray-600">
+                  Upload the sandblasting file for{" "}
+                  <span class="font-semibold">{props.inlay.name}</span>. The
+                  dealership will be able to download it from this project.
+                </p>
+                <div class="mt-4">
+                  <FileUpload
+                    uploadPath="sandblast"
+                    accept=".svg,.dxf,.ai,.eps,.pdf,.png,.jpg,.jpeg"
+                    uploadFn={uploadMutation.mutateAsync}
+                    onUrlChange={handleSandblastUploaded}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+          </Show>
           <Show when={props.canEditKit}>
             <button
               type="button"

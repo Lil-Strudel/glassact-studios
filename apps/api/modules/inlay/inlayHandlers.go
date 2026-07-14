@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/upload"
 	data "github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
 	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/model"
 	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/table"
@@ -919,4 +922,147 @@ func (m InlayModule) HandlePostInlayUpdate(w http.ResponseWriter, r *http.Reques
 	)
 
 	m.WriteJSON(w, r, http.StatusCreated, update)
+}
+
+// HandlePostSandblastFile attaches an already-uploaded sandblast file (the raw
+// bytes go through POST /api/upload first) to an inlay. Production/admin only;
+// only permitted once the project has left draft.
+func (m InlayModule) HandlePostSandblastFile(w http.ResponseWriter, r *http.Request) {
+	inlayUUID := r.PathValue("uuid")
+
+	err := m.Validate.Var(inlayUUID, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	var body struct {
+		SandblastFileURL string `json:"sandblast_file_url" validate:"required"`
+	}
+
+	err = m.ReadJSONBody(w, r, &body)
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	inlay, found, err := m.Db.Inlays.GetByUUID(inlayUUID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	project, ok := m.validateInlayOwnership(w, r, inlay)
+	if !ok {
+		return
+	}
+
+	if project.Status == data.ProjectStatuses.Draft {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("cannot upload a sandblast file before the project is ordered"))
+		return
+	}
+
+	inlay.SandblastFileURL = &body.SandblastFileURL
+
+	err = m.Db.Inlays.UpdateSandblastFile(inlay)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to attach sandblast file to inlay %d: %w", inlay.ID, err))
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, inlay)
+}
+
+// HandleGetSandblastFile returns a short-lived presigned URL for the inlay's
+// sandblast file. The URL forces a download under a friendly, inlay-specific
+// filename. Any user who can see the project (dealership owner or internal) may
+// download; ownership scoping is enforced by validateInlayOwnership.
+func (m InlayModule) HandleGetSandblastFile(w http.ResponseWriter, r *http.Request) {
+	inlayUUID := r.PathValue("uuid")
+
+	err := m.Validate.Var(inlayUUID, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	inlay, found, err := m.Db.Inlays.GetByUUID(inlayUUID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	project, ok := m.validateInlayOwnership(w, r, inlay)
+	if !ok {
+		return
+	}
+
+	if inlay.SandblastFileURL == nil || *inlay.SandblastFileURL == "" {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	filename := buildSandblastFilename(project, inlay)
+	key := strings.TrimPrefix(*inlay.SandblastFileURL, "/")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	url, err := upload.GenerateSignedDownloadURL(ctx, m.S3, m.Cfg, key, filename, 15*time.Minute)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, map[string]string{"url": url})
+}
+
+// buildSandblastFilename produces a unique, human-readable download name so the
+// dealership can tell which inlay a sandblast file belongs to, e.g.
+// "Smith-Memorial_Dove_a1b2.svg". The short id fragment keeps it unique even
+// when two inlays on a project share a name.
+func buildSandblastFilename(project *data.Project, inlay *data.Inlay) string {
+	ext := ".bin"
+	if inlay.SandblastFileURL != nil {
+		if e := filepath.Ext(*inlay.SandblastFileURL); e != "" {
+			ext = e
+		}
+	}
+
+	shortID := strings.ReplaceAll(inlay.UUID, "-", "")
+	if len(shortID) > 4 {
+		shortID = shortID[:4]
+	}
+
+	return fmt.Sprintf("%s_%s_%s%s", sanitizeFilenamePart(project.Name), sanitizeFilenamePart(inlay.Name), shortID, ext)
+}
+
+// sanitizeFilenamePart collapses any run of non-alphanumeric characters into a
+// single dash so a name is safe to embed in a download filename.
+func sanitizeFilenamePart(s string) string {
+	var b strings.Builder
+	lastDash := false
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			lastDash = false
+		} else if !lastDash {
+			b.WriteByte('-')
+			lastDash = true
+		}
+	}
+
+	part := strings.Trim(b.String(), "-")
+	if part == "" {
+		return "inlay"
+	}
+	return part
 }

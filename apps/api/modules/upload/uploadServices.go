@@ -144,3 +144,48 @@ func GenerateSignedURL(
 
 	return presignedURL.URL, nil
 }
+
+// GenerateSignedDownloadURL is like GenerateSignedURL but forces the browser to
+// download the object as an attachment named downloadFilename, via S3's
+// response-content-disposition override. Use this when serving a stored file
+// under a friendly, human-readable name distinct from its opaque S3 key.
+func GenerateSignedDownloadURL(
+	ctx context.Context,
+	s3Client *s3.Client,
+	cfg *config.Config,
+	key string,
+	downloadFilename string,
+	expirationDuration time.Duration,
+) (string, error) {
+	if s3Client == nil {
+		return "", fmt.Errorf("S3 client not initialized")
+	}
+
+	if key == "" {
+		return "", fmt.Errorf("S3 key cannot be empty")
+	}
+
+	if expirationDuration == 0 {
+		expirationDuration = 15 * time.Minute
+	}
+
+	contentDisposition := fmt.Sprintf("attachment; filename=%q", downloadFilename)
+
+	getObjectInput := &s3.GetObjectInput{
+		Bucket:                     aws.String(cfg.S3.Bucket),
+		Key:                        aws.String(key),
+		ResponseContentDisposition: aws.String(contentDisposition),
+	}
+
+	presignClient := s3.NewPresignClient(s3Client)
+	presignedURL, err := presignClient.PresignGetObject(ctx, getObjectInput,
+		func(opts *s3.PresignOptions) {
+			opts.Expires = expirationDuration
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned download URL: %w", err)
+	}
+
+	return presignedURL.URL, nil
+}

@@ -49,6 +49,7 @@ type Inlay struct {
 	IsCustomized      bool              `json:"is_customized"`
 	InstallationKit   bool              `json:"installation_kit"`
 	PreviewURL        string            `json:"preview_url"`
+	SandblastFileURL  *string           `json:"sandblast_file_url"`
 	ApprovedProofID   *int              `json:"approved_proof_id,omitempty"`
 	ManufacturingStep *string           `json:"manufacturing_step,omitempty"`
 	CatalogInfo       *InlayCatalogInfo `json:"catalog_info,omitempty"`
@@ -84,6 +85,10 @@ func inlayFromGen(genInlay model.Inlays, genCatalogInfo *model.InlayCatalogInfos
 
 	if genInlay.ManufacturingStep != nil {
 		inlay.ManufacturingStep = genInlay.ManufacturingStep
+	}
+
+	if genInlay.SandblastFileURL != nil {
+		inlay.SandblastFileURL = genInlay.SandblastFileURL
 	}
 
 	if genCatalogInfo != nil {
@@ -152,6 +157,10 @@ func inlayToGen(in *Inlay) (*model.Inlays, error) {
 
 	if in.ManufacturingStep != nil {
 		genInlay.ManufacturingStep = in.ManufacturingStep
+	}
+
+	if in.SandblastFileURL != nil {
+		genInlay.SandblastFileURL = in.SandblastFileURL
 	}
 
 	return &genInlay, nil
@@ -755,6 +764,42 @@ func (m InlayModel) TxUpdateFields(tx *sql.Tx, inlay *Inlay) error {
 
 	var dest model.Inlays
 	err = query.QueryContext(ctx, tx, &dest)
+	if err != nil {
+		return err
+	}
+
+	inlay.UpdatedAt = dest.UpdatedAt
+	inlay.Version = int(dest.Version)
+
+	return nil
+}
+
+func (m InlayModel) UpdateSandblastFile(inlay *Inlay) error {
+	genInlay, err := inlayToGen(inlay)
+	if err != nil {
+		return err
+	}
+
+	query := table.Inlays.UPDATE(
+		table.Inlays.SandblastFileURL,
+		table.Inlays.Version,
+	).MODEL(
+		genInlay,
+	).WHERE(
+		postgres.AND(
+			table.Inlays.ID.EQ(postgres.Int(int64(inlay.ID))),
+			table.Inlays.Version.EQ(postgres.Int(int64(inlay.Version))),
+		),
+	).RETURNING(
+		table.Inlays.UpdatedAt,
+		table.Inlays.Version,
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest model.Inlays
+	err = query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		return err
 	}

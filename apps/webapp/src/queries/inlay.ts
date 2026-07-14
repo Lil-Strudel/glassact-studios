@@ -109,3 +109,24 @@ export function deleteInlayOpts() {
     mutationFn: deleteInlay,
   });
 }
+
+export async function getSandblastDownloadUrl(
+  uuid: string,
+): Promise<{ url: string }> {
+  const res = await api.get(`/inlay/${uuid}/sandblast`);
+  return res.data;
+}
+
+export async function postSandblastFile(params: {
+  uuid: string;
+  body: { sandblast_file_url: string };
+}): Promise<InlayWithInfo> {
+  const res = await api.post(`/inlay/${params.uuid}/sandblast`, params.body);
+  return res.data;
+}
+
+export function postSandblastFileOpts() {
+  return mutationOptions({
+    mutationFn: postSandblastFile,
+  });
+}
