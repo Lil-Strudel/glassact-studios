@@ -31,12 +31,14 @@ aws ecr get-login-password --region "${AWS_REGION}" | docker login --username AW
 
 cd /opt/glassact
 
-API_IMAGE="${API_IMAGE}" docker compose up -d postgres
+export API_IMAGE MIGRATE_IMAGE
+
+docker compose up -d postgres
 
 docker pull "${MIGRATE_IMAGE}"
-MIGRATE_IMAGE="${MIGRATE_IMAGE}" docker compose run --rm migrate
+docker compose run --rm migrate
 
 docker pull "${API_IMAGE}"
-API_IMAGE="${API_IMAGE}" docker compose up -d api
+docker compose up -d api
 
 docker image prune -f
