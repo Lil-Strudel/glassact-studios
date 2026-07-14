@@ -2,7 +2,7 @@ name: glassact
 
 services:
   postgres:
-    image: postgis/postgis:18-3.6
+    image: imresamu/postgis:18-3.6-bookworm
     restart: unless-stopped
     environment:
       POSTGRES_USER: glassact
