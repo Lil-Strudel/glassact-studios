@@ -12,12 +12,14 @@ which tunnels through to that loopback port.
 - The Session Manager plugin installed locally (needed for `start-session`,
   not just `send-command`):
   https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
+- Everything is in `us-west-2` (passed explicitly on each command below).
 
 ## 1. Open the tunnel
 
 ```bash
 cd apps/infrastructure
 aws ssm start-session \
+  --region us-west-2 \
   --target "$(terraform output -raw api_instance_id)" \
   --document-name AWS-StartPortForwardingSession \
   --parameters '{"portNumber":["5432"],"localPortNumber":["5432"]}'
@@ -32,7 +34,7 @@ container). Ctrl+C closes it.
 The Postgres password lives in SSM Parameter Store, not in Terraform state:
 
 ```bash
-aws ssm get-parameter --name /glassact/api/POSTGRES_PASSWORD \
+aws ssm get-parameter --region us-west-2 --name /glassact/api/POSTGRES_PASSWORD \
   --with-decryption --query Parameter.Value --output text
 ```
 
