@@ -38,59 +38,6 @@ resource "aws_s3_bucket_policy" "webapp" {
   })
 }
 
-resource "aws_lambda_function" "api" {
-  function_name = "glassact-api"
-  role          = aws_iam_role.lambda_exec.arn
-  runtime       = "provided.al2023"
-  architectures = ["arm64"]
-  handler       = "bootstrap"
-  filename      = "${path.module}/lambda_placeholder.zip"
-
-  environment {
-    variables = {
-      ENV            = "production"
-      BASE_URL       = "https://${var.webapp_domain}"
-      S3_BUCKET_NAME = aws_s3_bucket.file_bucket.bucket
-    }
-  }
-
-  lifecycle {
-    ignore_changes = [filename, source_code_hash, environment]
-  }
-}
-
-resource "aws_apigatewayv2_api" "api" {
-  name          = "glassact-api"
-  protocol_type = "HTTP"
-}
-
-resource "aws_apigatewayv2_integration" "api" {
-  api_id                 = aws_apigatewayv2_api.api.id
-  integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.api.invoke_arn
-  payload_format_version = "2.0"
-}
-
-resource "aws_apigatewayv2_route" "api" {
-  api_id    = aws_apigatewayv2_api.api.id
-  route_key = "$default"
-  target    = "integrations/${aws_apigatewayv2_integration.api.id}"
-}
-
-resource "aws_apigatewayv2_stage" "api" {
-  api_id      = aws_apigatewayv2_api.api.id
-  name        = "$default"
-  auto_deploy = true
-}
-
-resource "aws_lambda_permission" "api_gateway" {
-  statement_id  = "AllowAPIGatewayInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.api.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.api.execution_arn}/*/*"
-}
-
 resource "aws_cloudfront_origin_request_policy" "api" {
   name = "glassact-api-passthrough"
 
@@ -134,13 +81,13 @@ resource "aws_cloudfront_distribution" "webapp" {
   }
 
   origin {
-    domain_name = "${aws_apigatewayv2_api.api.id}.execute-api.us-west-2.amazonaws.com"
-    origin_id   = "api-gateway"
+    domain_name = aws_eip.api.public_dns
+    origin_id   = "api-ec2"
 
     custom_origin_config {
-      http_port              = 80
+      http_port              = 8080
       https_port             = 443
-      origin_protocol_policy = "https-only"
+      origin_protocol_policy = "http-only"
       origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
@@ -185,7 +132,7 @@ resource "aws_cloudfront_distribution" "webapp" {
 
   ordered_cache_behavior {
     path_pattern           = "/api/*"
-    target_origin_id       = "api-gateway"
+    target_origin_id       = "api-ec2"
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
@@ -197,7 +144,7 @@ resource "aws_cloudfront_distribution" "webapp" {
 
   ordered_cache_behavior {
     path_pattern           = "/file/*"
-    target_origin_id       = "api-gateway"
+    target_origin_id       = "api-ec2"
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]

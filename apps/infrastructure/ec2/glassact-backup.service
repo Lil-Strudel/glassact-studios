@@ -1,0 +1,9 @@
+[Unit]
+Description=GlassAct nightly Postgres backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/opt/glassact/backup.env
+ExecStart=/opt/glassact/backup.sh

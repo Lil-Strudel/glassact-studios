@@ -1,7 +1,8 @@
 # Required GitHub Secrets:
-#   AWS_ROLE_ARN          - IAM role ARN for OIDC (from terraform output cicd_role_arn)
-#   AWS_REGION            - us-west-2
-#   LAMBDA_FUNCTION_NAME  - glassact-api
+#   AWS_ROLE_ARN     - IAM role ARN for OIDC (terraform output cicd_role_arn)
+#   AWS_REGION       - us-west-2
+#   INSTANCE_ID      - terraform output api_instance_id
+#   BACKUPS_BUCKET   - terraform output backups_bucket_name
 
 name: Deploy API
 
@@ -12,6 +13,8 @@ on:
       - main
     paths:
       - apps/api/**
+      - libs/data/migrations/**
+      - apps/infrastructure/ec2/**
 
 permissions:
   id-token: write
@@ -25,24 +28,61 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
 
-      - uses: actions/setup-go@v6.4.0
-        with:
-          go-version: '1.24.5'
-          cache: true
-
-      - name: Build Lambda binary
-        run: |
-          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o bootstrap ./apps/api/cmd/lambda/
-          zip lambda.zip bootstrap
-
       - uses: aws-actions/configure-aws-credentials@v6.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Update Lambda function code
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and push API image
         run: |
-          aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
-            --zip-file fileb://lambda.zip \
-            --architectures arm64
+          IMAGE="${{ steps.ecr.outputs.registry }}/glassact-api:${{ github.sha }}"
+          docker buildx build --platform linux/arm64 \
+            -f apps/api/Dockerfile -t "$IMAGE" --push .
+          echo "API_IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Build and push migrate image
+        run: |
+          IMAGE="${{ steps.ecr.outputs.registry }}/glassact-migrate:${{ github.sha }}"
+          docker buildx build --platform linux/arm64 \
+            -f apps/api/Dockerfile.migrate -t "$IMAGE" --push .
+          echo "MIGRATE_IMAGE=$IMAGE" >> "$GITHUB_ENV"
+
+      - name: Sync deploy assets to S3
+        run: |
+          aws s3 cp apps/infrastructure/ec2/docker-compose.yml \
+            "s3://${{ secrets.BACKUPS_BUCKET }}/deploy/docker-compose.yml"
+          aws s3 cp apps/infrastructure/ec2/backup.sh \
+            "s3://${{ secrets.BACKUPS_BUCKET }}/deploy/backup.sh"
+          aws s3 cp apps/infrastructure/ec2/deploy.sh \
+            "s3://${{ secrets.BACKUPS_BUCKET }}/deploy/deploy.sh"
+
+      - name: Deploy via SSM
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "${{ secrets.INSTANCE_ID }}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "deploy glassact-api ${{ github.sha }}" \
+            --parameters "commands=aws s3 cp s3://${{ secrets.BACKUPS_BUCKET }}/deploy/deploy.sh - | bash -s -- '${{ env.API_IMAGE }}' '${{ env.MIGRATE_IMAGE }}' '${{ secrets.BACKUPS_BUCKET }}'" \
+            --query 'Command.CommandId' --output text)
+
+          aws ssm wait command-executed \
+            --command-id "$COMMAND_ID" --instance-id "${{ secrets.INSTANCE_ID }}" || true
+
+          STATUS=$(aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" --instance-id "${{ secrets.INSTANCE_ID }}" \
+            --query Status --output text)
+
+          echo "Deploy status: $STATUS"
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" --instance-id "${{ secrets.INSTANCE_ID }}" \
+            --query StandardOutputContent --output text
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" --instance-id "${{ secrets.INSTANCE_ID }}" \
+            --query StandardErrorContent --output text
+
+          [ "$STATUS" = "Success" ]

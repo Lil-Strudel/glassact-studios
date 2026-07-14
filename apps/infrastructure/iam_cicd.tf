@@ -51,8 +51,41 @@ data "aws_iam_policy_document" "cicd" {
   }
   statement {
     effect    = "Allow"
-    actions   = ["lambda:UpdateFunctionCode"]
-    resources = [aws_lambda_function.api.arn]
+    actions   = ["ecr:GetAuthorizationToken"]
+    resources = ["*"]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:PutImage",
+      "ecr:InitiateLayerUpload",
+      "ecr:UploadLayerPart",
+      "ecr:CompleteLayerUpload",
+      "ecr:BatchGetImage",
+    ]
+    resources = [aws_ecr_repository.api.arn, aws_ecr_repository.migrate.arn]
+  }
+  statement {
+    effect  = "Allow"
+    actions = ["ssm:SendCommand"]
+    resources = [
+      aws_instance.api.arn,
+      "arn:aws:ssm:us-west-2::document/AWS-RunShellScript",
+    ]
+  }
+  statement {
+    effect    = "Allow"
+    actions   = ["ssm:GetCommandInvocation", "ssm:ListCommandInvocations"]
+    resources = ["*"] # these calls don't support resource-level scoping
+  }
+  statement {
+    effect  = "Allow"
+    actions = ["s3:PutObject", "s3:GetObject", "s3:ListBucket"]
+    resources = [
+      aws_s3_bucket.backups.arn,
+      "${aws_s3_bucket.backups.arn}/deploy/*",
+    ]
   }
 }
 

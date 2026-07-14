@@ -1,0 +1,6 @@
+node_modules
+apps/webapp
+apps/landing
+libs/ui
+.git
+**/*.md

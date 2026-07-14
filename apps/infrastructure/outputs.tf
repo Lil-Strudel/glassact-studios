@@ -14,8 +14,20 @@ output "webapp_cloudfront_distribution_id" {
   value = aws_cloudfront_distribution.webapp.id
 }
 
-output "lambda_function_name" {
-  value = aws_lambda_function.api.function_name
+output "api_instance_id" {
+  value = aws_instance.api.id
+}
+
+output "api_ecr_repository_url" {
+  value = aws_ecr_repository.api.repository_url
+}
+
+output "migrate_ecr_repository_url" {
+  value = aws_ecr_repository.migrate.repository_url
+}
+
+output "backups_bucket_name" {
+  value = aws_s3_bucket.backups.bucket
 }
 
 output "cicd_role_arn" {

@@ -1,0 +1,44 @@
+#!/bin/bash
+set -euxo pipefail
+
+dnf install -y docker
+command -v aws >/dev/null 2>&1 || dnf install -y awscli
+systemctl enable --now docker
+usermod -aG docker ec2-user
+
+# docker compose v2 plugin (arm64)
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl -SL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-aarch64 \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+# Format/mount the attached Postgres data EBS volume (idempotent).
+# t4g/Nitro instances expose the attached volume as /dev/nvme1n1, not the
+# requested /dev/sdf device name.
+DEVICE=/dev/sdf
+[ -e /dev/nvme1n1 ] && DEVICE=/dev/nvme1n1
+until [ -e "$DEVICE" ]; do sleep 2; done
+if ! blkid "$DEVICE" >/dev/null 2>&1; then
+  mkfs -t xfs "$DEVICE"
+fi
+mkdir -p /data/postgres
+grep -q "$DEVICE" /etc/fstab || echo "$DEVICE /data/postgres xfs defaults,nofail 0 2" >> /etc/fstab
+mount -a
+
+mkdir -p /opt/glassact
+chown ec2-user:ec2-user /opt/glassact
+
+cat > /opt/glassact/backup.env <<EOF
+BACKUP_BUCKET=${backup_bucket}
+EOF
+
+cat > /etc/systemd/system/glassact-backup.service <<'UNIT'
+${backup_service_unit}
+UNIT
+
+cat > /etc/systemd/system/glassact-backup.timer <<'UNIT'
+${backup_timer_unit}
+UNIT
+
+systemctl daemon-reload
+systemctl enable --now glassact-backup.timer

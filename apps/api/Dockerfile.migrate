@@ -1,0 +1,5 @@
+# Build from repo root:
+#   docker build -f apps/api/Dockerfile.migrate -t glassact-migrate .
+
+FROM --platform=linux/arm64 migrate/migrate:v4.19.1
+COPY libs/data/migrations /migrations
