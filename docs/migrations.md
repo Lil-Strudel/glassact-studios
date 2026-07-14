@@ -29,29 +29,27 @@ running dev Postgres (`pnpm dev` / `pnpm dev:api` starts one via `mprocs`).
 
 ## Production (EC2)
 
-Migrations run automatically as part of every API deploy — no manual step
-needed for the normal case. `.github/workflows/deploy-api.yml` builds a
-`glassact-migrate` image (`apps/api/Dockerfile.migrate`, just the official
-`migrate/migrate` image with `libs/data/migrations` copied in) alongside the
-API image, and `apps/infrastructure/ec2/deploy.sh` runs it on the instance
-before starting the new API container:
+**Migrations do NOT run automatically.** CI/CD never touches the production
+schema — `.github/workflows/deploy-api.yml` only builds and deploys the API
+container; `apps/infrastructure/ec2/deploy.sh` starts `postgres` and `api` and
+does not invoke `migrate`. Applying a migration to prod is always a deliberate,
+manual step (see below), done whenever you're ready — not automatically when
+a migration file merges to `main`.
 
-```bash
-docker run --rm --network glassact_internal --env-file /opt/glassact/api.env \
-  "${MIGRATE_IMAGE}" -path /migrations -database "${DATABASE_DSN}" up
-```
-
-This is always `up` — it only applies whatever's new. The workflow is
-path-filtered on `libs/data/migrations/**`, so adding a migration and pushing
-to `main` is enough to get it applied.
+`.github/workflows/deploy-api.yml` still builds and pushes a `glassact-migrate`
+image (`apps/api/Dockerfile.migrate`, the official `migrate/migrate` image with
+`libs/data/migrations` copied in), and `docker-compose.yml` on the instance
+still has a `migrate` service defined. Neither runs on its own — they're there
+so you can, if you want, run the exact pinned version via
+`docker compose run --rm migrate` on the instance instead of the local-CLI
+approach below. Either way, running it is something you choose to do, not
+something a deploy does for you.
 
 ## Running migrations manually against prod
 
-For anything the automatic `up` doesn't cover — testing a migration before
-merging, `down`, `goto`, or `force` to fix a dirty state — open the SSM tunnel
-described in `docs/prod-database-access.md`, then run `migrate` from your
-laptop against it, using the same `migrate/migrate:v4.19.1` version pinned in
-`Dockerfile.migrate`:
+Open the SSM tunnel described in `docs/prod-database-access.md`, then run
+`migrate` from your laptop against it, using the same `migrate/migrate:v4.19.1`
+version pinned in `Dockerfile.migrate`:
 
 ```bash
 # 1. Open the tunnel (separate terminal, leave running):
@@ -85,4 +83,5 @@ applied and left the DB "dirty".
 - The migrate CLI version is pinned in two places that should stay in sync:
   `go.mod` (`github.com/golang-migrate/migrate/v4`, used by the app's Go code
   indirectly via `libs/data`) and `apps/api/Dockerfile.migrate`
-  (`migrate/migrate:v4.19.1`, the container CI/CD actually runs in prod).
+  (`migrate/migrate:v4.19.1`, the version the CI-built `glassact-migrate`
+  image uses, for whenever you run migrations manually against prod).

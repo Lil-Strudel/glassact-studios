@@ -35,12 +35,10 @@ export API_IMAGE MIGRATE_IMAGE
 
 docker compose up -d postgres
 
-docker pull "${MIGRATE_IMAGE}"
-# This script is streamed into `bash -s` via a pipe (see the header comment),
-# so bash is still reading the rest of this file from stdin. `docker compose
-# run` attaches to stdin by default and would otherwise drain the remainder
-# of the piped script as its own input, silently truncating everything below.
-docker compose run --rm migrate < /dev/null
+# Database migrations are applied manually, not as part of this deploy - see
+# docs/migrations.md. The `migrate` service in docker-compose.yml is still
+# available for `docker compose run --rm migrate` if you want to run it by
+# hand on the instance, but nothing here invokes it automatically.
 
 docker pull "${API_IMAGE}"
 docker compose up -d api

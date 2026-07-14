@@ -57,9 +57,10 @@ migrate -path libs/data/migrations -database "$DATABASE_DSN" up
 
 ## Notes
 
-- This is for manual/ad hoc access (debugging, one-off queries, testing a
-  migration before merging). Routine schema migrations already run
-  automatically on every deploy via `apps/infrastructure/ec2/deploy.sh`.
+- This is for manual/ad hoc access (debugging, one-off queries, running
+  migrations). Schema migrations are never applied automatically by CI/CD —
+  `apps/infrastructure/ec2/deploy.sh` only starts `postgres` and `api`. See
+  `docs/migrations.md` for the manual migration workflow that uses this tunnel.
 - Nightly backups land in the `glassact-backups-*` S3 bucket
   (`terraform output backups_bucket_name`), under the `postgres/` prefix,
   30-day retention.
