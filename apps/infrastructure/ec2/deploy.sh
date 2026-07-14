@@ -33,17 +33,8 @@ cd /opt/glassact
 
 API_IMAGE="${API_IMAGE}" docker compose up -d postgres
 
-echo "Waiting for postgres to be healthy..."
-for _ in $(seq 1 60); do
-  if docker compose exec -T postgres pg_isready -U glassact -d glassact >/dev/null 2>&1; then
-    break
-  fi
-  sleep 2
-done
-
 docker pull "${MIGRATE_IMAGE}"
-docker run --rm --network glassact_internal --env-file /opt/glassact/api.env \
-  "${MIGRATE_IMAGE}" -path /migrations -database "${DATABASE_DSN}" up
+MIGRATE_IMAGE="${MIGRATE_IMAGE}" docker compose run --rm migrate
 
 docker pull "${API_IMAGE}"
 API_IMAGE="${API_IMAGE}" docker compose up -d api

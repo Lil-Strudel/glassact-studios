@@ -19,6 +19,16 @@ services:
       timeout: 5s
       retries: 10
 
+  migrate:
+    image: ${MIGRATE_IMAGE}
+    env_file:
+      - /opt/glassact/api.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+    command: ["-path", "/migrations", "-database", "${DATABASE_DSN}", "up"]
+
   api:
     image: ${API_IMAGE}
     restart: unless-stopped
