@@ -416,10 +416,11 @@ func (m InlayModule) HandlePostCustomInlay(w http.ResponseWriter, r *http.Reques
 	}
 
 	var body struct {
-		Name            string  `json:"name" validate:"required"`
-		Description     string  `json:"description" validate:"required"`
-		RequestedWidth  float64 `json:"requested_width"`
-		RequestedHeight float64 `json:"requested_height"`
+		Name            string   `json:"name" validate:"required"`
+		Description     string   `json:"description" validate:"required"`
+		RequestedWidth  float64  `json:"requested_width"`
+		RequestedHeight float64  `json:"requested_height"`
+		ImageURLs       []string `json:"image_urls" validate:"omitempty,dive,required"`
 	}
 
 	err = m.ReadJSONBody(w, r, &body)
@@ -438,6 +439,11 @@ func (m InlayModule) HandlePostCustomInlay(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	referenceImages := make([]data.InlayCustomReferenceImage, len(body.ImageURLs))
+	for i, url := range body.ImageURLs {
+		referenceImages[i] = data.InlayCustomReferenceImage{ImageURL: url}
+	}
+
 	inlay := data.Inlay{
 		ProjectID:    project.ID,
 		Name:         body.Name,
@@ -448,6 +454,7 @@ func (m InlayModule) HandlePostCustomInlay(w http.ResponseWriter, r *http.Reques
 			Description:     body.Description,
 			RequestedWidth:  body.RequestedWidth,
 			RequestedHeight: body.RequestedHeight,
+			ReferenceImages: referenceImages,
 		},
 	}
 
@@ -477,8 +484,10 @@ func (m InlayModule) HandlePatchInlay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		Name            *string `json:"name"`
-		InstallationKit *bool   `json:"installation_kit"`
+		Name            *string   `json:"name"`
+		InstallationKit *bool     `json:"installation_kit"`
+		Description     *string   `json:"description"`
+		ImageURLs       *[]string `json:"image_urls" validate:"omitempty,dive,required"`
 	}
 
 	err = m.ReadJSONBody(w, r, &body)
@@ -507,6 +516,11 @@ func (m InlayModule) HandlePatchInlay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if (body.Description != nil || body.ImageURLs != nil) && inlay.CustomInfo == nil {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("description and reference images can only be set on custom inlays"))
+		return
+	}
+
 	if body.Name != nil {
 		inlay.Name = *body.Name
 	}
@@ -515,13 +529,35 @@ func (m InlayModule) HandlePatchInlay(w http.ResponseWriter, r *http.Request) {
 		inlay.InstallationKit = *body.InstallationKit
 	}
 
+	if body.Description != nil {
+		inlay.CustomInfo.Description = *body.Description
+	}
+
 	err = m.Db.Inlays.Update(inlay)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
-	m.WriteJSON(w, r, http.StatusOK, inlay)
+	if body.ImageURLs != nil {
+		err = m.Db.Inlays.ReplaceReferenceImages(inlay.CustomInfo.ID, *body.ImageURLs)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+	}
+
+	refreshed, found, err := m.Db.Inlays.GetByUUID(inlayUUID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if !found {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, refreshed)
 }
 
 func (m InlayModule) HandleDeleteInlay(w http.ResponseWriter, r *http.Request) {

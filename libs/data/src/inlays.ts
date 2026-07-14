@@ -17,11 +17,20 @@ export type InlayCatalogInfo = StandardTable<{
   customization_notes: string;
 }>;
 
+export type InlayCustomReferenceImage = {
+  id: number;
+  uuid: string;
+  inlay_custom_info_id: number;
+  image_url: string;
+  sort_order: number;
+};
+
 export type InlayCustomInfo = StandardTable<{
   inlay_id: number;
   description: string;
   requested_width: number;
   requested_height: number;
+  reference_images: InlayCustomReferenceImage[];
 }>;
 
 export type Inlay = StandardTable<{

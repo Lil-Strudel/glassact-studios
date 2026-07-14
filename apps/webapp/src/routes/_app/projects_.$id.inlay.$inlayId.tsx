@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { useQuery, useQueryClient } from "@tanstack/solid-query";
-import { Show, createMemo } from "solid-js";
+import { Show, For, createMemo, createSignal } from "solid-js";
 import { Badge, Breadcrumb, Button } from "@glassact/ui";
 import { IoDownloadOutline } from "solid-icons/io";
 import { getInlayOpts } from "../../queries/inlay";
 import { getProjectOpts } from "../../queries/project";
 import { getProofsByInlayOpts } from "../../queries/proof";
 import { Can } from "../../components/Can";
+import EditCustomInfoForm from "../../components/inlay/edit-custom-info-form";
 import ChatThread from "../../components/chat/chat-thread";
 import ChatInput from "../../components/chat/chat-input";
 import ProofHistory from "../../components/proof/proof-history";
@@ -26,6 +27,12 @@ function InlayDetailPage() {
   const projectQuery = useQuery(() => getProjectOpts(params().id));
   const inlayQuery = useQuery(() => getInlayOpts(params().inlayId));
   const proofsQuery = useQuery(() => getProofsByInlayOpts(params().inlayId));
+
+  const [isEditingCustom, setIsEditingCustom] = createSignal(false);
+
+  const isProjectDraft = createMemo(
+    () => projectQuery.isSuccess && projectQuery.data.status === "draft",
+  );
 
   const latestPendingProof = createMemo(() => {
     const proofs = proofsQuery.isSuccess ? proofsQuery.data : [];
@@ -100,20 +107,74 @@ function InlayDetailPage() {
 
                 <Show when={inlay().custom_info}>
                   {(customInfo) => (
-                    <div class="text-sm space-y-1">
-                      <p class="text-gray-600">{customInfo().description}</p>
-                      <Show
-                        when={
-                          customInfo().requested_width &&
-                          customInfo().requested_height
-                        }
-                      >
-                        <p class="text-gray-500">
-                          Requested: {customInfo().requested_width}" x{" "}
-                          {customInfo().requested_height}"
-                        </p>
-                      </Show>
-                    </div>
+                    <Show
+                      when={!isEditingCustom()}
+                      fallback={
+                        <EditCustomInfoForm
+                          inlayUuid={params().inlayId}
+                          description={customInfo().description}
+                          imageUrls={(customInfo().reference_images ?? []).map(
+                            (image) => image.image_url,
+                          )}
+                          onDone={() => setIsEditingCustom(false)}
+                        />
+                      }
+                    >
+                      <div class="text-sm space-y-2">
+                        <p class="text-gray-600">{customInfo().description}</p>
+                        <Show
+                          when={
+                            customInfo().requested_width &&
+                            customInfo().requested_height
+                          }
+                        >
+                          <p class="text-gray-500">
+                            Requested: {customInfo().requested_width}" x{" "}
+                            {customInfo().requested_height}"
+                          </p>
+                        </Show>
+
+                        <Show
+                          when={(customInfo().reference_images ?? []).length > 0}
+                        >
+                          <div>
+                            <p class="text-gray-500 font-medium mb-1">
+                              Reference pictures
+                            </p>
+                            <div class="grid grid-cols-3 gap-2">
+                              <For each={customInfo().reference_images}>
+                                {(image) => (
+                                  <a
+                                    href={image.image_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="block border rounded-md overflow-hidden bg-gray-50 aspect-square"
+                                  >
+                                    <img
+                                      src={image.image_url}
+                                      alt="Reference"
+                                      class="w-full h-full object-cover"
+                                    />
+                                  </a>
+                                )}
+                              </For>
+                            </div>
+                          </div>
+                        </Show>
+
+                        <Show when={isProjectDraft()}>
+                          <Can permission="manage_project">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setIsEditingCustom(true)}
+                            >
+                              Edit details
+                            </Button>
+                          </Can>
+                        </Show>
+                      </div>
+                    </Show>
                   )}
                 </Show>
 

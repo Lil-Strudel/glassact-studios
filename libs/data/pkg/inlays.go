@@ -33,12 +33,21 @@ type InlayCatalogInfo struct {
 	CustomizationNotes string `json:"customization_notes"`
 }
 
+type InlayCustomReferenceImage struct {
+	ID                int    `json:"id"`
+	UUID              string `json:"uuid"`
+	InlayCustomInfoID int    `json:"inlay_custom_info_id"`
+	ImageURL          string `json:"image_url"`
+	SortOrder         int    `json:"sort_order"`
+}
+
 type InlayCustomInfo struct {
 	StandardTable
-	InlayID         int     `json:"inlay_id"`
-	Description     string  `json:"description"`
-	RequestedWidth  float64 `json:"requested_width"`
-	RequestedHeight float64 `json:"requested_height"`
+	InlayID         int                         `json:"inlay_id"`
+	Description     string                      `json:"description"`
+	RequestedWidth  float64                     `json:"requested_width"`
+	RequestedHeight float64                     `json:"requested_height"`
+	ReferenceImages []InlayCustomReferenceImage `json:"reference_images"`
 }
 
 type Inlay struct {
@@ -217,6 +226,123 @@ func customInfoToGen(ci *InlayCustomInfo) (*model.InlayCustomInfos, error) {
 	return &genCustomInfo, nil
 }
 
+func referenceImageFromGen(gen *model.InlayCustomReferenceImages) *InlayCustomReferenceImage {
+	return &InlayCustomReferenceImage{
+		ID:                int(gen.ID),
+		UUID:              gen.UUID.String(),
+		InlayCustomInfoID: int(gen.InlayCustomInfoID),
+		ImageURL:          gen.ImageURL,
+		SortOrder:         int(gen.SortOrder),
+	}
+}
+
+// insertReferenceImages bulk-inserts reference images for a custom info,
+// assigning SortOrder from the slice index, and backfills the generated
+// ID/UUID onto each element of images.
+func (m InlayModel) insertReferenceImages(ctx context.Context, executor qrm.Queryable, customInfoID int, images []InlayCustomReferenceImage) error {
+	if len(images) == 0 {
+		return nil
+	}
+
+	genImages := make([]model.InlayCustomReferenceImages, len(images))
+	for i := range images {
+		genImages[i] = model.InlayCustomReferenceImages{
+			InlayCustomInfoID: int32(customInfoID),
+			ImageURL:          images[i].ImageURL,
+			SortOrder:         int32(i),
+		}
+	}
+
+	query := table.InlayCustomReferenceImages.INSERT(
+		table.InlayCustomReferenceImages.InlayCustomInfoID,
+		table.InlayCustomReferenceImages.ImageURL,
+		table.InlayCustomReferenceImages.SortOrder,
+	).MODELS(
+		genImages,
+	).RETURNING(
+		table.InlayCustomReferenceImages.AllColumns,
+	)
+
+	var dest []model.InlayCustomReferenceImages
+	err := query.QueryContext(ctx, executor, &dest)
+	if err != nil {
+		return err
+	}
+
+	for i := range dest {
+		order := int(dest[i].SortOrder)
+		if order >= 0 && order < len(images) {
+			images[order] = *referenceImageFromGen(&dest[i])
+		}
+	}
+
+	return nil
+}
+
+// getReferenceImages loads all reference images for a custom info, ordered by
+// sort_order. Returns an empty (non-nil) slice when none exist.
+func (m InlayModel) getReferenceImages(ctx context.Context, customInfoID int) ([]InlayCustomReferenceImage, error) {
+	query := postgres.SELECT(
+		table.InlayCustomReferenceImages.AllColumns,
+	).FROM(
+		table.InlayCustomReferenceImages,
+	).WHERE(
+		table.InlayCustomReferenceImages.InlayCustomInfoID.EQ(postgres.Int(int64(customInfoID))),
+	).ORDER_BY(
+		table.InlayCustomReferenceImages.SortOrder.ASC(),
+	)
+
+	var dest []model.InlayCustomReferenceImages
+	err := query.QueryContext(ctx, m.STDB, &dest)
+	if err != nil {
+		return nil, err
+	}
+
+	images := make([]InlayCustomReferenceImage, len(dest))
+	for i := range dest {
+		images[i] = *referenceImageFromGen(&dest[i])
+	}
+
+	return images, nil
+}
+
+// ReplaceReferenceImages atomically replaces the full set of reference images
+// for a custom info with the given ordered list of URLs. Used when a dealership
+// edits a draft custom inlay. The image files already live in S3; only the
+// pointer rows are rewritten.
+func (m InlayModel) ReplaceReferenceImages(customInfoID int, urls []string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	tx, err := m.STDB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	delQuery := table.InlayCustomReferenceImages.DELETE().WHERE(
+		table.InlayCustomReferenceImages.InlayCustomInfoID.EQ(postgres.Int(int64(customInfoID))),
+	)
+	_, err = delQuery.ExecContext(ctx, tx)
+	if err != nil {
+		return err
+	}
+
+	if len(urls) > 0 {
+		images := make([]InlayCustomReferenceImage, len(urls))
+		for i, url := range urls {
+			images[i] = InlayCustomReferenceImage{ImageURL: url}
+		}
+
+		err = m.insertReferenceImages(ctx, tx, customInfoID, images)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
 func (m InlayModel) insertInlaySubtypes(ctx context.Context, executor qrm.Queryable, inlay *Inlay) error {
 	if inlay.Type == InlayTypes.Catalog {
 		if inlay.CatalogInfo == nil {
@@ -293,6 +419,11 @@ func (m InlayModel) insertInlaySubtypes(ctx context.Context, executor qrm.Querya
 		inlay.CustomInfo.CreatedAt = customDest.CreatedAt
 		inlay.CustomInfo.UpdatedAt = customDest.UpdatedAt
 		inlay.CustomInfo.Version = int(customDest.Version)
+
+		err = m.insertReferenceImages(ctx, executor, inlay.CustomInfo.ID, inlay.CustomInfo.ReferenceImages)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -430,7 +561,17 @@ func (m InlayModel) GetByID(id int) (*Inlay, bool, error) {
 		}
 	}
 
-	return inlayFromGen(dest.Inlays, dest.InlayCatalogInfos, dest.InlayCustomInfos), true, nil
+	inlay := inlayFromGen(dest.Inlays, dest.InlayCatalogInfos, dest.InlayCustomInfos)
+
+	if inlay.CustomInfo != nil {
+		images, err := m.getReferenceImages(ctx, inlay.CustomInfo.ID)
+		if err != nil {
+			return nil, false, err
+		}
+		inlay.CustomInfo.ReferenceImages = images
+	}
+
+	return inlay, true, nil
 }
 
 func (m InlayModel) GetByUUID(uuidStr string) (*Inlay, bool, error) {
@@ -469,7 +610,17 @@ func (m InlayModel) GetByUUID(uuidStr string) (*Inlay, bool, error) {
 		}
 	}
 
-	return inlayFromGen(dest.Inlays, dest.InlayCatalogInfos, dest.InlayCustomInfos), true, nil
+	inlay := inlayFromGen(dest.Inlays, dest.InlayCatalogInfos, dest.InlayCustomInfos)
+
+	if inlay.CustomInfo != nil {
+		images, err := m.getReferenceImages(ctx, inlay.CustomInfo.ID)
+		if err != nil {
+			return nil, false, err
+		}
+		inlay.CustomInfo.ReferenceImages = images
+	}
+
+	return inlay, true, nil
 }
 
 func (m InlayModel) GetAll() ([]*Inlay, error) {

@@ -72,6 +72,132 @@ func TestInlay_InsertCustom(t *testing.T) {
 	}
 }
 
+func TestInlay_InsertCustom_WithReferenceImages_ReturnsThemOrdered(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+
+	inlay := &Inlay{
+		ProjectID:  project.ID,
+		Name:       "Test Custom Inlay",
+		Type:       InlayTypes.Custom,
+		PreviewURL: "",
+		CustomInfo: &InlayCustomInfo{
+			Description:     "Custom inlay description",
+			RequestedWidth:  100.0,
+			RequestedHeight: 150.0,
+			ReferenceImages: []InlayCustomReferenceImage{
+				{ImageURL: "/file/inlay-references/first.png"},
+				{ImageURL: "/file/inlay-references/second.png"},
+				{ImageURL: "/file/inlay-references/third.png"},
+			},
+		},
+	}
+
+	err := models.Inlays.Insert(inlay)
+	if err != nil {
+		t.Fatalf("Failed to insert inlay: %v", err)
+	}
+
+	retrieved, found, err := models.Inlays.GetByUUID(inlay.UUID)
+	if err != nil {
+		t.Fatalf("Failed to get inlay by UUID: %v", err)
+	}
+	if !found {
+		t.Fatalf("Expected inlay to be found")
+	}
+	if retrieved.CustomInfo == nil {
+		t.Fatalf("Expected custom info to be present")
+	}
+
+	images := retrieved.CustomInfo.ReferenceImages
+	if len(images) != 3 {
+		t.Fatalf("Expected 3 reference images, got %d", len(images))
+	}
+
+	expected := []string{
+		"/file/inlay-references/first.png",
+		"/file/inlay-references/second.png",
+		"/file/inlay-references/third.png",
+	}
+	for i, want := range expected {
+		if images[i].ImageURL != want {
+			t.Errorf("Expected image %d URL %q, got %q", i, want, images[i].ImageURL)
+		}
+		if images[i].SortOrder != i {
+			t.Errorf("Expected image %d SortOrder %d, got %d", i, i, images[i].SortOrder)
+		}
+		if images[i].ID == 0 {
+			t.Errorf("Expected image %d to have a non-zero ID", i)
+		}
+	}
+}
+
+func TestInlay_ReplaceReferenceImages_RewritesFullSet(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+
+	inlay := &Inlay{
+		ProjectID:  project.ID,
+		Name:       "Test Custom Inlay",
+		Type:       InlayTypes.Custom,
+		PreviewURL: "",
+		CustomInfo: &InlayCustomInfo{
+			Description:     "Custom inlay description",
+			RequestedWidth:  100.0,
+			RequestedHeight: 150.0,
+			ReferenceImages: []InlayCustomReferenceImage{
+				{ImageURL: "/file/inlay-references/old-1.png"},
+				{ImageURL: "/file/inlay-references/old-2.png"},
+			},
+		},
+	}
+
+	err := models.Inlays.Insert(inlay)
+	if err != nil {
+		t.Fatalf("Failed to insert inlay: %v", err)
+	}
+
+	err = models.Inlays.ReplaceReferenceImages(inlay.CustomInfo.ID, []string{
+		"/file/inlay-references/new-1.png",
+	})
+	if err != nil {
+		t.Fatalf("Failed to replace reference images: %v", err)
+	}
+
+	retrieved, _, err := models.Inlays.GetByID(inlay.ID)
+	if err != nil {
+		t.Fatalf("Failed to get inlay: %v", err)
+	}
+
+	images := retrieved.CustomInfo.ReferenceImages
+	if len(images) != 1 {
+		t.Fatalf("Expected 1 reference image after replace, got %d", len(images))
+	}
+	if images[0].ImageURL != "/file/inlay-references/new-1.png" {
+		t.Errorf("Expected replaced image URL, got %q", images[0].ImageURL)
+	}
+
+	// Replacing with an empty set clears all images.
+	err = models.Inlays.ReplaceReferenceImages(inlay.CustomInfo.ID, []string{})
+	if err != nil {
+		t.Fatalf("Failed to clear reference images: %v", err)
+	}
+
+	cleared, _, err := models.Inlays.GetByID(inlay.ID)
+	if err != nil {
+		t.Fatalf("Failed to get inlay: %v", err)
+	}
+	if len(cleared.CustomInfo.ReferenceImages) != 0 {
+		t.Errorf("Expected 0 reference images after clearing, got %d", len(cleared.CustomInfo.ReferenceImages))
+	}
+}
+
 func TestInlay_GetByID(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 

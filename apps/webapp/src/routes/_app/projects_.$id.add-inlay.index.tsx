@@ -21,6 +21,7 @@ import { browseCatalogOpts } from "../../queries/catalog-browse";
 import { useDebounce } from "../../hooks/use-debounce";
 import { FilterSidebar } from "../../components/catalog/filter-sidebar";
 import { postCatalogInlayOpts, postCustomInlayOpts } from "../../queries/inlay";
+import { postUploadOpts } from "../../queries/upload";
 import { getProjectOpts } from "../../queries/project";
 import { isApiError } from "../../utils/is-api-error";
 
@@ -273,6 +274,7 @@ interface CustomInlayFormProps {
 
 function CustomInlayForm(props: CustomInlayFormProps) {
   const postCustomInlay = useMutation(postCustomInlayOpts);
+  const uploadMutation = useMutation(postUploadOpts);
 
   const customForm = createForm(() => ({
     defaultValues: {
@@ -280,6 +282,7 @@ function CustomInlayForm(props: CustomInlayFormProps) {
       description: "",
       width: "",
       height: "",
+      image_urls: [] as string[],
     },
     validators: {
       onChange: z.object({
@@ -293,6 +296,7 @@ function CustomInlayForm(props: CustomInlayFormProps) {
           .string()
           .min(1, "Height is required")
           .refine(...zodStringNumber),
+        image_urls: z.array(z.string()),
       }),
     },
     onSubmit: async ({ value }) => {
@@ -304,6 +308,7 @@ function CustomInlayForm(props: CustomInlayFormProps) {
             description: value.description,
             requested_width: parseFloat(value.width),
             requested_height: parseFloat(value.height),
+            image_urls: value.image_urls,
           },
         },
         {
@@ -379,6 +384,21 @@ function CustomInlayForm(props: CustomInlayFormProps) {
               />
             </div>
           </div>
+          <customForm.Field
+            name="image_urls"
+            children={(field) => (
+              <Form.FileUpload
+                field={field}
+                label="Reference pictures (optional)"
+                multiple
+                uploadPath="inlay-references"
+                accept=".png,.jpg,.jpeg,.gif,.webp"
+                fileTypeLabel="image"
+                description="Upload pictures showing what you want the inlay to look like."
+                uploadFn={uploadMutation.mutateAsync}
+              />
+            )}
+          />
           <div class="mx-auto flex gap-4">
             <Button
               variant="outline"

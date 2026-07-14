@@ -66,6 +66,7 @@ export interface PostCustomInlayRequest {
   description: string;
   requested_width?: number;
   requested_height?: number;
+  image_urls?: string[];
 }
 
 export async function postCustomInlay(params: {
@@ -87,7 +88,12 @@ export function postCustomInlayOpts() {
 
 export async function patchInlay(params: {
   uuid: string;
-  body: { name?: string; installation_kit?: boolean };
+  body: {
+    name?: string;
+    installation_kit?: boolean;
+    description?: string;
+    image_urls?: string[];
+  };
 }): Promise<InlayWithInfo> {
   const res = await api.patch(`/inlay/${params.uuid}`, params.body);
   return res.data;
