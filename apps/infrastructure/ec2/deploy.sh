@@ -36,7 +36,11 @@ export API_IMAGE MIGRATE_IMAGE
 docker compose up -d postgres
 
 docker pull "${MIGRATE_IMAGE}"
-docker compose run --rm migrate
+# This script is streamed into `bash -s` via a pipe (see the header comment),
+# so bash is still reading the rest of this file from stdin. `docker compose
+# run` attaches to stdin by default and would otherwise drain the remainder
+# of the piped script as its own input, silently truncating everything below.
+docker compose run --rm migrate < /dev/null
 
 docker pull "${API_IMAGE}"
 docker compose up -d api
