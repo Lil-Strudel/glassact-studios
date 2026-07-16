@@ -20,6 +20,8 @@
     "db:migrate/force": "pnpm --filter @glassact/data migrate/force",
     "db:psql": "pnpm --filter @glassact/data psql",
     "db:seed": "pnpm --filter @glassact/data seed",
+    "db:catalog/dump": "pnpm --filter @glassact/data catalog/dump",
+    "db:catalog/restore": "pnpm --filter @glassact/data catalog/restore",
     "db:test": "pnpm --filter @glassact/data test",
     "db:test:coverage": "pnpm --filter @glassact/data test:coverage",
     "libs:build": "pnpm --filter './libs/**' build",
