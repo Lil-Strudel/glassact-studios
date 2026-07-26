@@ -11,6 +11,7 @@ import type {
 import { mutationOptions } from "../utils/mutation-options";
 
 export type KanbanInlay = GET<InlayWithInfo> & {
+  project_uuid: string;
   project_name: string;
   dealership_name: string;
 };

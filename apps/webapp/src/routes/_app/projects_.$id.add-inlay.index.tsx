@@ -36,11 +36,17 @@ function RouteComponent() {
   const navigate = useNavigate();
 
   const queryClient = useQueryClient();
-  function handleSuccess() {
+  // Land on the inlay just created, not back on the project — the user's next
+  // move is almost always about that inlay (check the proof, adjust the design,
+  // add the installation kit).
+  function handleSuccess(inlayUuid: string) {
     queryClient.invalidateQueries({
       queryKey: ["project", params().id, "inlays"],
     });
-    navigate({ to: `/projects/${params().id}` });
+    navigate({
+      to: "/projects/$id/inlay/$inlayId",
+      params: { id: params().id, inlayId: inlayUuid },
+    });
   }
 
   return (
@@ -90,7 +96,7 @@ function RouteComponent() {
 
 interface CatalogSelectorProps {
   projectUuid: string;
-  onSuccess: () => void;
+  onSuccess: (inlayUuid: string) => void;
 }
 
 function CatalogSelector(props: CatalogSelectorProps) {
@@ -124,13 +130,13 @@ function CatalogSelector(props: CatalogSelectorProps) {
         },
       },
       {
-        onSuccess() {
+        onSuccess(inlay) {
           showToast({
             title: "Inlay added",
             description: `${item.name} has been added to the project.`,
             variant: "success",
           });
-          props.onSuccess();
+          props.onSuccess(inlay.uuid);
         },
         onError(error) {
           if (isApiError(error)) {
@@ -269,7 +275,7 @@ function CatalogSelector(props: CatalogSelectorProps) {
 
 interface CustomInlayFormProps {
   projectUuid: string;
-  onSuccess: () => void;
+  onSuccess: (inlayUuid: string) => void;
 }
 
 function CustomInlayForm(props: CustomInlayFormProps) {
@@ -312,13 +318,13 @@ function CustomInlayForm(props: CustomInlayFormProps) {
           },
         },
         {
-          onSuccess() {
+          onSuccess(inlay) {
             showToast({
               title: "Inlay added",
               description: `${value.name} has been added to the project.`,
               variant: "success",
             });
-            props.onSuccess();
+            props.onSuccess(inlay.uuid);
           },
           onError(error) {
             if (isApiError(error)) {

@@ -8,6 +8,8 @@ import {
 } from "@glassact/ui";
 import { IoNotificationsOutline } from "solid-icons/io";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
+import { useNavigate } from "@tanstack/solid-router";
+import type { GET, Notification } from "@glassact/data";
 import {
   getUnreadCountOpts,
   getNotificationsOpts,
@@ -29,6 +31,7 @@ function formatRelativeTime(dateStr: string): string {
 
 export function NotificationBell() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const unreadCount = useQuery(() => getUnreadCountOpts());
   const notifications = useQuery(() => getNotificationsOpts());
 
@@ -48,6 +51,34 @@ export function NotificationBell() {
         });
       },
     });
+  }
+
+  // Every notification is about a project or one of its inlays, so selecting one
+  // should take the user to the thing it is telling them about.
+  function navigateToSubject(notification: GET<Notification>) {
+    if (notification.inlay_uuid && notification.project_uuid) {
+      navigate({
+        to: "/projects/$id/inlay/$inlayId",
+        params: {
+          id: notification.project_uuid,
+          inlayId: notification.inlay_uuid,
+        },
+      });
+      return;
+    }
+    if (notification.project_uuid) {
+      navigate({
+        to: "/projects/$id",
+        params: { id: notification.project_uuid },
+      });
+    }
+  }
+
+  function handleSelect(notification: GET<Notification>) {
+    if (!notification.read_at) {
+      handleMarkRead(notification.uuid);
+    }
+    navigateToSubject(notification);
   }
 
   function handleMarkAllRead() {
@@ -98,7 +129,7 @@ export function NotificationBell() {
             {(notification) => (
               <DropdownMenuItem
                 class="flex flex-col items-start gap-0.5 px-3 py-2 cursor-pointer"
-                onSelect={() => handleMarkRead(notification.uuid)}
+                onSelect={() => handleSelect(notification)}
               >
                 <div class="flex w-full items-start gap-2">
                   <Show when={!notification.read_at}>

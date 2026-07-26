@@ -83,6 +83,10 @@ export type Notification = StandardTable<{
   body: string;
   project_id: number | null;
   inlay_id: number | null;
+  // Resolved by the list endpoints so the client can build routes, which
+  // address projects and inlays by UUID.
+  project_uuid: string | null;
+  inlay_uuid: string | null;
   read_at: string | null;
   email_sent_at: string | null;
 }>;

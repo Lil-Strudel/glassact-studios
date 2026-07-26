@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
-import type { ColorOverrides, InlayWithInfo } from "@glassact/data";
+import type { ColorOverrides, InlayDetail, InlayWithInfo } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
 export async function getInlaysByProject(
@@ -17,7 +17,7 @@ export function getInlaysByProjectOpts(projectUuid: string) {
   });
 }
 
-export async function getInlay(uuid: string): Promise<InlayWithInfo> {
+export async function getInlay(uuid: string): Promise<InlayDetail> {
   const res = await api.get(`/inlay/${uuid}`);
   return res.data;
 }
@@ -58,6 +58,20 @@ export async function postCatalogInlay(params: {
 export function postCatalogInlayOpts() {
   return mutationOptions({
     mutationFn: postCatalogInlay,
+  });
+}
+
+export async function postRecustomizeInlay(params: {
+  uuid: string;
+  body: PostCatalogInlayCustomization;
+}): Promise<InlayDetail> {
+  const res = await api.post(`/inlay/${params.uuid}/recustomize`, params.body);
+  return res.data;
+}
+
+export function postRecustomizeInlayOpts() {
+  return mutationOptions({
+    mutationFn: postRecustomizeInlay,
   });
 }
 

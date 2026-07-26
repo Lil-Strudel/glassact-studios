@@ -60,6 +60,8 @@ type Notification struct {
 	Body             string                `json:"body"`
 	ProjectID        *int                  `json:"project_id"`
 	InlayID          *int                  `json:"inlay_id"`
+	ProjectUUID      *string               `json:"project_uuid"`
+	InlayUUID        *string               `json:"inlay_uuid"`
 	ReadAt           *time.Time            `json:"read_at"`
 	EmailSentAt      *time.Time            `json:"email_sent_at"`
 	CreatedAt        time.Time             `json:"created_at"`
@@ -261,13 +263,20 @@ func (m NotificationModel) GetByUUID(uuidStr string) (*Notification, bool, error
 	return notificationFromGen(dest), true, nil
 }
 
-func (m NotificationModel) GetForDealershipUser(dealershipUserID int) ([]*Notification, error) {
+// queryNotificationsWithRefs resolves each notification's project/inlay UUIDs
+// alongside the row, so callers can build links without a second round-trip
+// (routes address projects and inlays by UUID, the rows store integer ids).
+func (m NotificationModel) queryNotificationsWithRefs(where postgres.BoolExpression) ([]*Notification, error) {
 	query := postgres.SELECT(
 		table.Notifications.AllColumns,
+		table.Projects.UUID.AS("project_uuid"),
+		table.Inlays.UUID.AS("inlay_uuid"),
 	).FROM(
-		table.Notifications,
+		table.Notifications.
+			LEFT_JOIN(table.Projects, table.Projects.ID.EQ(table.Notifications.ProjectID)).
+			LEFT_JOIN(table.Inlays, table.Inlays.ID.EQ(table.Notifications.InlayID)),
 	).WHERE(
-		table.Notifications.DealershipUserID.EQ(postgres.Int(int64(dealershipUserID))),
+		where,
 	).ORDER_BY(
 		table.Notifications.CreatedAt.DESC(),
 	)
@@ -275,7 +284,11 @@ func (m NotificationModel) GetForDealershipUser(dealershipUserID int) ([]*Notifi
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	var dest []model.Notifications
+	var dest []struct {
+		model.Notifications
+		ProjectUUID *uuid.UUID `alias:"project_uuid"`
+		InlayUUID   *uuid.UUID `alias:"inlay_uuid"`
+	}
 	err := query.QueryContext(ctx, m.STDB, &dest)
 	if err != nil {
 		return nil, err
@@ -283,38 +296,31 @@ func (m NotificationModel) GetForDealershipUser(dealershipUserID int) ([]*Notifi
 
 	notifs := make([]*Notification, len(dest))
 	for i, d := range dest {
-		notifs[i] = notificationFromGen(d)
+		notif := notificationFromGen(d.Notifications)
+		if d.ProjectUUID != nil {
+			projectUUID := d.ProjectUUID.String()
+			notif.ProjectUUID = &projectUUID
+		}
+		if d.InlayUUID != nil {
+			inlayUUID := d.InlayUUID.String()
+			notif.InlayUUID = &inlayUUID
+		}
+		notifs[i] = notif
 	}
 
 	return notifs, nil
 }
 
-func (m NotificationModel) GetForInternalUser(internalUserID int) ([]*Notification, error) {
-	query := postgres.SELECT(
-		table.Notifications.AllColumns,
-	).FROM(
-		table.Notifications,
-	).WHERE(
-		table.Notifications.InternalUserID.EQ(postgres.Int(int64(internalUserID))),
-	).ORDER_BY(
-		table.Notifications.CreatedAt.DESC(),
+func (m NotificationModel) GetForDealershipUser(dealershipUserID int) ([]*Notification, error) {
+	return m.queryNotificationsWithRefs(
+		table.Notifications.DealershipUserID.EQ(postgres.Int(int64(dealershipUserID))),
 	)
+}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	var dest []model.Notifications
-	err := query.QueryContext(ctx, m.STDB, &dest)
-	if err != nil {
-		return nil, err
-	}
-
-	notifs := make([]*Notification, len(dest))
-	for i, d := range dest {
-		notifs[i] = notificationFromGen(d)
-	}
-
-	return notifs, nil
+func (m NotificationModel) GetForInternalUser(internalUserID int) ([]*Notification, error) {
+	return m.queryNotificationsWithRefs(
+		table.Notifications.InternalUserID.EQ(postgres.Int(int64(internalUserID))),
+	)
 }
 
 func (m NotificationModel) GetUnreadForDealershipUser(dealershipUserID int) ([]*Notification, error) {

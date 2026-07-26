@@ -1,5 +1,11 @@
 import type { GET, StandardTable } from "./helpers";
-import type { PriceAdjustmentType, ProofStatus } from "./inlay-proofs";
+import type { Manifest } from "./customizer";
+import type {
+  InlayProof,
+  PriceAdjustmentType,
+  ProofStatus,
+} from "./inlay-proofs";
+import type { OrderSnapshot } from "./order-snapshots";
 
 export type InlayType = "catalog" | "custom";
 
@@ -56,4 +62,27 @@ export type InlayWithInfo = GET<Inlay> & {
   price_cents: number | null;
   price_adjustment_type: PriceAdjustmentType;
   price_adjustment_value: number;
+};
+
+// The slice of a catalog item the inlay page needs: enough to identify the
+// design to a human, link to it, and resolve color overrides against its
+// manifest.
+export type InlayCatalogItemRef = {
+  uuid: string;
+  catalog_code: string;
+  name: string;
+  category: string;
+  svg_url: string;
+  manifest?: Manifest;
+  default_width: number;
+  default_height: number;
+};
+
+// Response shape of GET /inlay/:uuid — the list shape plus everything the inlay
+// detail page renders without further round-trips.
+export type InlayDetail = InlayWithInfo & {
+  catalog_item: InlayCatalogItemRef | null;
+  approved_proof: GET<InlayProof> | null;
+  latest_proof: GET<InlayProof> | null;
+  order_snapshot: GET<OrderSnapshot> | null;
 };

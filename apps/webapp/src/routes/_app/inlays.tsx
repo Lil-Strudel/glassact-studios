@@ -7,7 +7,7 @@ import {
   Button,
   showToast,
 } from "@glassact/ui";
-import { createFileRoute } from "@tanstack/solid-router";
+import { createFileRoute, Link } from "@tanstack/solid-router";
 import {
   createMemo,
   createSignal,
@@ -87,7 +87,15 @@ function InlayCard(props: InlayCardProps) {
   return (
     <Card ref={ref} class={cn("w-full touch-none", dragging() && "opacity-30")}>
       <CardHeader class="flex-row justify-between items-start gap-2">
-        <div class="flex items-start gap-2 min-w-0">
+        <Link
+          to="/projects/$id/inlay/$inlayId"
+          params={{
+            id: props.inlay.project_uuid,
+            inlayId: props.inlay.uuid,
+          }}
+          class="flex items-start gap-2 min-w-0 hover:underline"
+          draggable={false}
+        >
           <Show
             when={props.inlay.preview_url}
             fallback={
@@ -108,7 +116,7 @@ function InlayCard(props: InlayCardProps) {
               {props.inlay.dealership_name} — {props.inlay.project_name}
             </CardDescription>
           </div>
-        </div>
+        </Link>
         <Can permission="create_inlay_update">
           <AddInlayUpdateDialog
             inlayUuid={props.inlay.uuid}

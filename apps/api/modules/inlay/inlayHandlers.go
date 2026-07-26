@@ -14,6 +14,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/model"
 	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/table"
 	"github.com/go-jet/jet/v2/postgres"
+	"github.com/google/uuid"
 )
 
 type InlayModule struct {
@@ -209,33 +210,12 @@ func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Req
 
 	result := make([]InlayWithProofStatus, len(inlays))
 	for i, inlay := range inlays {
-		result[i] = InlayWithProofStatus{
-			Inlay:   inlay,
-			IsReady: inlayIsReady(inlay),
-		}
-
-		latestProof, found, err := m.Db.InlayProofs.GetLatestByInlayID(inlay.ID)
+		withStatus, _, err := m.buildInlayWithProofStatus(inlay)
 		if err != nil {
 			m.WriteError(w, r, m.Err.ServerError, err)
 			return
 		}
-
-		if found {
-			status := string(latestProof.Status)
-			result[i].LatestProofStatus = &status
-			result[i].HasPendingProof = latestProof.Status == data.ProofStatuses.Pending
-		}
-
-		pricing, err := m.buildInlayPricing(inlay)
-		if err != nil {
-			m.WriteError(w, r, m.Err.ServerError, err)
-			return
-		}
-		result[i].PriceGroupID = pricing.PriceGroupID
-		result[i].PriceGroupName = pricing.PriceGroupName
-		result[i].PriceCents = pricing.PriceCents
-		result[i].PriceAdjustmentType = pricing.AdjustmentType
-		result[i].PriceAdjustmentValue = pricing.AdjustmentValue
+		result[i] = withStatus
 	}
 
 	m.WriteJSON(w, r, http.StatusOK, result)
@@ -264,7 +244,13 @@ func (m InlayModule) HandleGetInlayByUUID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	m.WriteJSON(w, r, http.StatusOK, inlay)
+	detail, err := m.buildInlayDetail(inlay)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, detail)
 }
 
 func (m InlayModule) HandlePostCatalogInlay(w http.ResponseWriter, r *http.Request) {
@@ -618,6 +604,7 @@ func manufacturingStepIndex(step data.ManufacturingStep) int {
 
 type KanbanInlay struct {
 	*data.Inlay
+	ProjectUUID    string `json:"project_uuid"`
 	ProjectName    string `json:"project_name"`
 	DealershipName string `json:"dealership_name"`
 }
@@ -625,6 +612,7 @@ type KanbanInlay struct {
 func (m InlayModule) HandleGetKanbanInlays(w http.ResponseWriter, r *http.Request) {
 	query := postgres.SELECT(
 		table.Inlays.AllColumns,
+		table.Projects.UUID.AS("project_uuid"),
 		table.Projects.Name.AS("project_name"),
 		table.Dealerships.Name.AS("dealership_name"),
 	).FROM(
@@ -640,8 +628,9 @@ func (m InlayModule) HandleGetKanbanInlays(w http.ResponseWriter, r *http.Reques
 
 	var dest []struct {
 		model.Inlays
-		ProjectName    string `alias:"project_name"`
-		DealershipName string `alias:"dealership_name"`
+		ProjectUUID    uuid.UUID `alias:"project_uuid"`
+		ProjectName    string    `alias:"project_name"`
+		DealershipName string    `alias:"dealership_name"`
 	}
 	err := query.QueryContext(ctx, m.Db.STDB, &dest)
 	if err != nil {
@@ -674,6 +663,7 @@ func (m InlayModule) HandleGetKanbanInlays(w http.ResponseWriter, r *http.Reques
 
 		result[i] = KanbanInlay{
 			Inlay:          &inlay,
+			ProjectUUID:    d.ProjectUUID.String(),
 			ProjectName:    d.ProjectName,
 			DealershipName: d.DealershipName,
 		}

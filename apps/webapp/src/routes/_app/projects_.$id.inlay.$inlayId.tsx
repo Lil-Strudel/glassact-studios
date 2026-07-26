@@ -1,24 +1,35 @@
-import { createFileRoute } from "@tanstack/solid-router";
+import { createFileRoute, Link } from "@tanstack/solid-router";
 import { useQuery, useQueryClient } from "@tanstack/solid-query";
-import { Show, For, createMemo, createSignal } from "solid-js";
+import { For, Match, Show, Switch, createMemo, createSignal } from "solid-js";
 import { Badge, Breadcrumb, Button } from "@glassact/ui";
-import { IoDownloadOutline } from "solid-icons/io";
+import type { InlayDetail, ManufacturingStep } from "@glassact/data";
+import { PERMISSION_ACTIONS } from "@glassact/data";
 import { getInlayOpts } from "../../queries/inlay";
 import { getProjectOpts } from "../../queries/project";
-import { getProofsByInlayOpts } from "../../queries/proof";
 import { Can } from "../../components/Can";
 import EditCustomInfoForm from "../../components/inlay/edit-custom-info-form";
-import ChatThread from "../../components/chat/chat-thread";
-import ChatInput from "../../components/chat/chat-input";
-import ProofHistory from "../../components/proof/proof-history";
+import { InlayIdentityRail } from "../../components/inlay/inlay-identity-rail";
+import { InlayDiscussion } from "../../components/inlay/inlay-discussion";
+import { DesignHistory } from "../../components/inlay/design-history";
+import { ProofReviewPanel } from "../../components/inlay/proof-review-panel";
+import { SandblastFileCard } from "../../components/inlay/sandblast-file-card";
 import { InlayTimeline } from "../../components/manufacturing/inlay-timeline";
-import ProofActions from "../../components/proof/proof-actions";
+import { ManufacturingTracker } from "../../components/manufacturing/manufacturing-tracker";
 import CreateProofDialog from "../../components/proof/create-proof-dialog";
-import { ProofStatusBadge } from "../../components/proof/proof-status-badge";
+import { deriveInlayPhase } from "../../components/inlay/inlay-phase";
 
 export const Route = createFileRoute("/_app/projects_/$id/inlay/$inlayId")({
   component: InlayDetailPage,
 });
+
+const STEP_LABELS: Record<ManufacturingStep, string> = {
+  ordered: "Ordered",
+  "materials-prep": "Prepping Materials",
+  cutting: "Cutting",
+  "fire-polish": "Fire Polish",
+  packaging: "Packaging",
+  "ready-to-ship": "Ready to Ship",
+};
 
 function InlayDetailPage() {
   const params = Route.useParams();
@@ -26,26 +37,33 @@ function InlayDetailPage() {
 
   const projectQuery = useQuery(() => getProjectOpts(params().id));
   const inlayQuery = useQuery(() => getInlayOpts(params().inlayId));
-  const proofsQuery = useQuery(() => getProofsByInlayOpts(params().inlayId));
 
-  const [isEditingCustom, setIsEditingCustom] = createSignal(false);
+  const inlay = () => (inlayQuery.isSuccess ? inlayQuery.data : null);
+  const project = () => (projectQuery.isSuccess ? projectQuery.data : null);
 
-  const isProjectDraft = createMemo(
-    () => projectQuery.isSuccess && projectQuery.data.status === "draft",
-  );
-
-  const latestPendingProof = createMemo(() => {
-    const proofs = proofsQuery.isSuccess ? proofsQuery.data : [];
-    const pending = proofs.filter((p) => p.status === "pending");
-    return pending.length > 0 ? pending[pending.length - 1] : null;
+  const phase = createMemo(() => {
+    const loadedInlay = inlay();
+    const loadedProject = project();
+    if (!loadedInlay || !loadedProject) return null;
+    return deriveInlayPhase(loadedInlay, loadedProject.status);
   });
 
-  const handleProofCreated = () => {
+  const pendingProof = createMemo(() => {
+    const latest = inlay()?.latest_proof;
+    return latest?.status === "pending" ? latest : null;
+  });
+
+  const isInShop = createMemo(
+    () => phase() === "in-production" || phase() === "complete",
+  );
+
+  function invalidateInlay() {
     queryClient.invalidateQueries({ queryKey: ["inlay", params().inlayId] });
     queryClient.invalidateQueries({ queryKey: ["project", params().id] });
-  };
-
-  const inlay = () => inlayQuery.isSuccess && inlayQuery.data;
+    queryClient.invalidateQueries({
+      queryKey: ["project", params().id, "inlays"],
+    });
+  }
 
   return (
     <div class="space-y-6">
@@ -53,223 +71,296 @@ function InlayDetailPage() {
         crumbs={[
           { title: "Projects", to: "/projects" },
           {
-            title: projectQuery.isSuccess ? projectQuery.data.name : "Project",
+            title: project()?.name ?? "Project",
             to: `/projects/${params().id}`,
           },
           {
-            title: inlayQuery.isSuccess ? inlayQuery.data.name : "Inlay",
+            title: inlay()?.name ?? "Inlay",
             to: `/projects/${params().id}/inlay/${params().inlayId}`,
           },
         ]}
       />
 
-      <Show
-        when={inlay()}
-        fallback={
-          <div class="text-gray-500">
-            {inlayQuery.isLoading ? "Loading..." : "Inlay not found"}
+      <Switch>
+        <Match when={inlayQuery.isLoading || projectQuery.isLoading}>
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+            <div class="h-96 animate-pulse rounded-lg bg-gray-200" />
+            <div class="h-96 animate-pulse rounded-lg bg-gray-200" />
           </div>
-        }
-      >
-        {(inlay) => (
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-1 space-y-6">
-              <div class="border rounded-lg p-4 space-y-4">
-                <div class="flex items-center justify-between">
-                  <h1 class="text-xl font-semibold">{inlay().name}</h1>
-                  <Badge variant="outline">{inlay().type}</Badge>
-                </div>
+        </Match>
 
-                <Show when={inlay().preview_url}>
-                  <div class="border rounded-lg overflow-hidden bg-gray-50 p-2">
-                    <img
-                      src={inlay().preview_url}
-                      alt={inlay().name}
-                      class="w-full h-auto max-h-48 object-contain"
-                    />
+        <Match when={inlayQuery.isError || projectQuery.isError}>
+          <div class="rounded-xl border-2 border-dashed border-red-300 p-8 text-center">
+            <p class="font-medium text-red-600">Failed to load inlay</p>
+            <Button
+              variant="outline"
+              class="mt-4"
+              onClick={() => {
+                inlayQuery.refetch();
+                projectQuery.refetch();
+              }}
+            >
+              Retry
+            </Button>
+          </div>
+        </Match>
+
+        <Match when={inlay() && project() && phase()}>
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+            <div class="space-y-4">
+              <InlayIdentityRail inlay={inlay()!} phase={phase()!} />
+            </div>
+
+            <div class="space-y-6">
+              <Switch>
+                <Match when={phase() === "awaiting-approval"}>
+                  <Show when={pendingProof()}>
+                    {(proof) => (
+                      <ProofReviewPanel
+                        proof={proof()}
+                        inlayUuid={params().inlayId}
+                      />
+                    )}
+                  </Show>
+                </Match>
+
+                <Match when={isInShop()}>
+                  <ManufacturingPanel inlay={inlay()!} />
+                </Match>
+
+                <Match when={phase() === "configuring"}>
+                  <ConfiguringPanel
+                    inlay={inlay()!}
+                    inlayUuid={params().inlayId}
+                    isDraft={project()!.status === "draft"}
+                    onChanged={invalidateInlay}
+                  />
+                </Match>
+
+                <Match when={phase() === "ready"}>
+                  <ReadyPanel
+                    inlay={inlay()!}
+                    projectUuid={params().id}
+                    inlayUuid={params().inlayId}
+                  />
+                </Match>
+
+                <Match when={phase() === "cancelled"}>
+                  <div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
+                    This project was cancelled, so this inlay will not be
+                    manufactured.
                   </div>
-                </Show>
+                </Match>
+              </Switch>
 
-                <Show when={inlay().catalog_info}>
-                  {(catalogInfo) => (
-                    <div class="text-sm space-y-1">
-                      <p class="text-gray-500">
-                        Catalog Item ID: {catalogInfo().catalog_item_id}
-                      </p>
-                      <Show when={catalogInfo().customization_notes}>
-                        <p class="text-gray-600">
-                          Notes: {catalogInfo().customization_notes}
-                        </p>
-                      </Show>
-                    </div>
-                  )}
-                </Show>
-
-                <Show when={inlay().custom_info}>
-                  {(customInfo) => (
-                    <Show
-                      when={!isEditingCustom()}
-                      fallback={
-                        <EditCustomInfoForm
-                          inlayUuid={params().inlayId}
-                          description={customInfo().description}
-                          imageUrls={(customInfo().reference_images ?? []).map(
-                            (image) => image.image_url,
-                          )}
-                          onDone={() => setIsEditingCustom(false)}
-                        />
-                      }
-                    >
-                      <div class="text-sm space-y-2">
-                        <p class="text-gray-600">{customInfo().description}</p>
-                        <Show
-                          when={
-                            customInfo().requested_width &&
-                            customInfo().requested_height
-                          }
-                        >
-                          <p class="text-gray-500">
-                            Requested: {customInfo().requested_width}" x{" "}
-                            {customInfo().requested_height}"
-                          </p>
-                        </Show>
-
-                        <Show
-                          when={(customInfo().reference_images ?? []).length > 0}
-                        >
-                          <div>
-                            <p class="text-gray-500 font-medium mb-1">
-                              Reference pictures
-                            </p>
-                            <div class="grid grid-cols-3 gap-2">
-                              <For each={customInfo().reference_images}>
-                                {(image) => (
-                                  <a
-                                    href={image.image_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="block border rounded-md overflow-hidden bg-gray-50 aspect-square"
-                                  >
-                                    <img
-                                      src={image.image_url}
-                                      alt="Reference"
-                                      class="w-full h-full object-cover"
-                                    />
-                                  </a>
-                                )}
-                              </For>
-                            </div>
-                          </div>
-                        </Show>
-
-                        <Show when={isProjectDraft()}>
-                          <Can permission="manage_project">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setIsEditingCustom(true)}
-                            >
-                              Edit details
-                            </Button>
-                          </Can>
-                        </Show>
-                      </div>
-                    </Show>
-                  )}
-                </Show>
-
-                <Show when={inlay().approved_proof_id}>
-                  <ProofStatusBadge status="approved" />
-                </Show>
-              </div>
-
-              <Show when={latestPendingProof()}>
-                {(proof) => (
-                  <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
-                    <Show when={proof().design_asset_url}>
-                      <div class="bg-gray-50 p-4 flex items-center justify-center border-b">
-                        <img
-                          src={proof().design_asset_url}
-                          alt={`Proof v${proof().version_number}`}
-                          class="max-w-full max-h-48 object-contain rounded"
-                        />
-                      </div>
-                    </Show>
-                    <div class="p-4 space-y-3">
-                      <div class="flex items-center justify-between">
-                        <h3 class="text-sm font-semibold text-gray-900">
-                          Pending Proof (v{proof().version_number})
-                        </h3>
-                        <ProofStatusBadge status="pending" />
-                      </div>
-                      <p class="text-sm text-gray-600">
-                        {proof().width}" x {proof().height}"
-                      </p>
-                      <Show when={proof().design_asset_url}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          as="a"
-                          href={proof().design_asset_url}
-                          download
-                          class="w-full"
-                        >
-                          <IoDownloadOutline class="mr-2" size={16} />
-                          Download Design
-                        </Button>
-                      </Show>
-                      <Show
-                        when={proof().approval_authority === "internal"}
-                        fallback={
-                          <Can permission="approve_proof">
-                            <ProofActions
-                              proof={proof()}
-                              inlayUuid={params().inlayId}
-                            />
-                          </Can>
-                        }
-                      >
-                        <Can permission="internal_approve_proof">
-                          <ProofActions
-                            proof={proof()}
-                            inlayUuid={params().inlayId}
-                          />
-                        </Can>
-                      </Show>
-                    </div>
-                  </div>
-                )}
+              <Show when={isInShop()}>
+                <SandblastFileCard
+                  inlayUuid={params().inlayId}
+                  inlayName={inlay()!.name}
+                  sandblastFileUrl={inlay()!.sandblast_file_url}
+                  projectStatus={project()!.status}
+                  onUploaded={invalidateInlay}
+                  layout="card"
+                />
               </Show>
 
-              <ProofHistory inlayUuid={params().inlayId} />
-
-              <InlayTimeline inlayUuid={params().inlayId} />
-            </div>
-
-            <div
-              class="lg:col-span-2 border rounded-lg flex flex-col"
-              style={{ "min-height": "500px" }}
-            >
-              <div class="flex items-center justify-between p-4 border-b">
-                <h2 class="text-lg font-semibold">Chat</h2>
-                <Can permission="create_proof">
-                  <CreateProofDialog
-                    inlayUuid={params().inlayId}
-                    onProofCreated={handleProofCreated}
-                  />
-                </Can>
-              </div>
-
-              <ChatThread
+              <DesignHistory
                 inlayUuid={params().inlayId}
-                projectUuid={params().id}
+                excludeProofId={pendingProof()?.id}
               />
 
-              <ChatInput inlayUuid={params().inlayId} />
+              <InlayDiscussion
+                inlayUuid={params().inlayId}
+                projectUuid={params().id}
+                expandByDefault={
+                  pendingProof()?.approval_authority === "dealership"
+                }
+              />
             </div>
+          </div>
+        </Match>
+
+        <Match when={!inlay()}>
+          <div class="rounded-xl border-2 border-dashed border-gray-300 p-8 text-center">
+            <p class="text-gray-400">Inlay not found</p>
+          </div>
+        </Match>
+      </Switch>
+    </div>
+  );
+}
+
+function ManufacturingPanel(props: { inlay: InlayDetail }) {
+  const step = createMemo(
+    () => props.inlay.manufacturing_step as ManufacturingStep | null,
+  );
+
+  return (
+    <div class="space-y-6">
+      <Show when={step()}>
+        {(currentStep) => (
+          <div class="space-y-3 rounded-lg border p-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-base font-semibold text-gray-900">
+                {STEP_LABELS[currentStep()]}
+              </h2>
+              <Badge variant="secondary">In Production</Badge>
+            </div>
+            <ManufacturingTracker currentStep={currentStep()} />
           </div>
         )}
       </Show>
+
+      <InlayTimeline inlayUuid={props.inlay.uuid} />
+    </div>
+  );
+}
+
+function ConfiguringPanel(props: {
+  inlay: InlayDetail;
+  inlayUuid: string;
+  isDraft: boolean;
+  onChanged: () => void;
+}) {
+  const [isEditing, setIsEditing] = createSignal(false);
+  const customInfo = createMemo(() => props.inlay.custom_info);
+
+  return (
+    <div class="space-y-6">
+      <Show when={customInfo()}>
+        {(info) => (
+          <div class="space-y-4 rounded-lg border p-4">
+            <div class="flex items-start justify-between gap-2">
+              <h2 class="text-base font-semibold text-gray-900">
+                Design request
+              </h2>
+              <Show when={props.isDraft && !isEditing()}>
+                <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    Edit details
+                  </Button>
+                </Can>
+              </Show>
+            </div>
+
+            <Show
+              when={!isEditing()}
+              fallback={
+                <EditCustomInfoForm
+                  inlayUuid={props.inlayUuid}
+                  description={info().description}
+                  imageUrls={(info().reference_images ?? []).map(
+                    (image) => image.image_url,
+                  )}
+                  onDone={() => {
+                    setIsEditing(false);
+                    props.onChanged();
+                  }}
+                />
+              }
+            >
+              <div class="space-y-3">
+                <p class="text-sm text-gray-700">{info().description}</p>
+                <Show
+                  when={info().requested_width && info().requested_height}
+                >
+                  <p class="text-sm text-gray-500">
+                    Requested: {info().requested_width}" &times;{" "}
+                    {info().requested_height}"
+                  </p>
+                </Show>
+
+                <Show when={(info().reference_images ?? []).length > 0}>
+                  <div class="space-y-1.5">
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">
+                      Reference pictures
+                    </p>
+                    <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                      <For each={info().reference_images}>
+                        {(image) => (
+                          <a
+                            href={image.image_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="block aspect-square overflow-hidden rounded-md border bg-gray-50"
+                          >
+                            <img
+                              src={image.image_url}
+                              alt="Reference"
+                              class="h-full w-full object-cover"
+                            />
+                          </a>
+                        )}
+                      </For>
+                    </div>
+                  </div>
+                </Show>
+              </div>
+            </Show>
+          </div>
+        )}
+      </Show>
+
+      <div class="rounded-lg border border-dashed border-gray-300 p-6 text-center">
+        <p class="text-sm font-medium text-gray-500">
+          Waiting on a proof from GlassAct
+        </p>
+        <p class="mt-1 text-sm text-gray-400">
+          A designer will send a proof for approval.
+        </p>
+        <Can permission={PERMISSION_ACTIONS.CREATE_PROOF}>
+          <div class="mt-4 flex justify-center">
+            <CreateProofDialog
+              inlayUuid={props.inlayUuid}
+              onProofCreated={props.onChanged}
+            />
+          </div>
+        </Can>
+      </div>
+    </div>
+  );
+}
+
+function ReadyPanel(props: {
+  inlay: InlayDetail;
+  projectUuid: string;
+  inlayUuid: string;
+}) {
+  const canRecustomize = createMemo(
+    () => props.inlay.type === "catalog" && props.inlay.is_customized,
+  );
+
+  return (
+    <div class="space-y-4 rounded-lg border p-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-base font-semibold text-gray-900">Ready to order</h2>
+        <Badge>Ready</Badge>
+      </div>
+      <p class="text-sm text-gray-600">
+        This inlay is approved and will be included when the order is placed
+        from the project page.
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <Button as={Link} to="/projects/$id" params={{ id: props.projectUuid }} variant="outline" size="sm">
+          Back to project
+        </Button>
+        <Show when={canRecustomize()}>
+          <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
+            <Button
+              as={Link}
+              to="/projects/$id/inlay/$inlayId/recustomize"
+              params={{ id: props.projectUuid, inlayId: props.inlayUuid }}
+              size="sm"
+            >
+              Adjust design
+            </Button>
+          </Can>
+        </Show>
+      </div>
     </div>
   );
 }

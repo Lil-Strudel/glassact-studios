@@ -35,6 +35,14 @@ interface CustomizerProps {
   glassColors: GET<GlassColor>[];
   grouts: GET<Grout>[];
   onBakeComplete?: (result: BakeResult) => void;
+  // Where to resume from when there is no saved draft. Re-customizing an
+  // existing inlay starts from that inlay's current coloring, not the catalog
+  // defaults.
+  initialState?: PersistedState;
+  // Distinguishes concurrent sessions on the same catalog design (adding a new
+  // inlay vs. adjusting an existing one) so their drafts don't overwrite
+  // each other.
+  storageScope?: string;
 }
 
 interface PersistedState {
@@ -43,7 +51,7 @@ interface PersistedState {
 }
 
 export function Customizer(props: CustomizerProps) {
-  const storageKey = `gac:customizer:${props.item.uuid}`;
+  const storageKey = `gac:customizer:${props.item.uuid}${props.storageScope ? `:${props.storageScope}` : ""}`;
   const aspect = props.item.default_height / props.item.default_width;
   const minWidth = Math.max(
     props.item.min_width,
@@ -57,7 +65,9 @@ export function Customizer(props: CustomizerProps) {
     } catch {
       /* ignore */
     }
-    return { overrides: {}, width: props.item.default_width };
+    return (
+      props.initialState ?? { overrides: {}, width: props.item.default_width }
+    );
   };
   const persisted = loadPersisted();
 
