@@ -100,6 +100,21 @@ const defaultColumns: ColumnDef<GET<CatalogItem>>[] = [
     cell: (info) => info.getValue(),
   },
   {
+    accessorKey: "display_order",
+    header: "Rank",
+    cell: (info) => {
+      const rank = info.getValue() as number | null;
+      return (
+        <Show
+          when={rank != null}
+          fallback={<span class="text-xs text-gray-400">Unranked</span>}
+        >
+          <Badge variant="default">#{rank}</Badge>
+        </Show>
+      );
+    },
+  },
+  {
     accessorKey: "is_active",
     header: "Active",
     cell: (info) => {
@@ -169,9 +184,14 @@ function RouteComponent() {
           </label>
         </div>
 
-        <Button as={Link} to="/admin/catalog/create">
-          Create new catalog item
-        </Button>
+        <div class="flex items-center gap-2">
+          <Button variant="outline" as={Link} to="/admin/catalog/order">
+            Edit best sellers
+          </Button>
+          <Button as={Link} to="/admin/catalog/create">
+            Create new catalog item
+          </Button>
+        </div>
       </div>
 
       <div class="rounded-md border">

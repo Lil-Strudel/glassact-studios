@@ -35,6 +35,7 @@ import { Route as AppDealershipIdSettingsRouteImport } from './routes/_app/deale
 import { Route as AppCatalogUuidCustomizeRouteImport } from './routes/_app/catalog_.$uuid.customize'
 import { Route as AppAdminUsersInternalRouteImport } from './routes/_app/admin.users.internal'
 import { Route as AppAdminUsersDealershipRouteImport } from './routes/_app/admin.users.dealership'
+import { Route as AppAdminCatalogOrderRouteImport } from './routes/_app/admin.catalog_.order'
 import { Route as AppAdminCatalogCreateRouteImport } from './routes/_app/admin.catalog_.create'
 import { Route as AppAdminCatalogUuidRouteImport } from './routes/_app/admin.catalog_.$uuid'
 import { Route as AppProjectsIdAddInlayIndexRouteImport } from './routes/_app/projects_.$id.add-inlay.index'
@@ -172,6 +173,11 @@ const AppAdminUsersDealershipRoute = AppAdminUsersDealershipRouteImport.update({
   path: '/users/dealership',
   getParentRoute: () => AppAdminRoute,
 } as any)
+const AppAdminCatalogOrderRoute = AppAdminCatalogOrderRouteImport.update({
+  id: '/catalog_/order',
+  path: '/catalog/order',
+  getParentRoute: () => AppAdminRoute,
+} as any)
 const AppAdminCatalogCreateRoute = AppAdminCatalogCreateRouteImport.update({
   id: '/catalog_/create',
   path: '/catalog/create',
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/dealership/': typeof AppDealershipIndexRoute
   '/admin/catalog/$uuid': typeof AppAdminCatalogUuidRoute
   '/admin/catalog/create': typeof AppAdminCatalogCreateRoute
+  '/admin/catalog/order': typeof AppAdminCatalogOrderRoute
   '/admin/users/dealership': typeof AppAdminUsersDealershipRoute
   '/admin/users/internal': typeof AppAdminUsersInternalRoute
   '/catalog/$uuid/customize': typeof AppCatalogUuidCustomizeRoute
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/dealership': typeof AppDealershipIndexRoute
   '/admin/catalog/$uuid': typeof AppAdminCatalogUuidRoute
   '/admin/catalog/create': typeof AppAdminCatalogCreateRoute
+  '/admin/catalog/order': typeof AppAdminCatalogOrderRoute
   '/admin/users/dealership': typeof AppAdminUsersDealershipRoute
   '/admin/users/internal': typeof AppAdminUsersInternalRoute
   '/catalog/$uuid/customize': typeof AppCatalogUuidCustomizeRoute
@@ -296,6 +304,7 @@ export interface FileRoutesById {
   '/_app/dealership/': typeof AppDealershipIndexRoute
   '/_app/admin/catalog_/$uuid': typeof AppAdminCatalogUuidRoute
   '/_app/admin/catalog_/create': typeof AppAdminCatalogCreateRoute
+  '/_app/admin/catalog_/order': typeof AppAdminCatalogOrderRoute
   '/_app/admin/users/dealership': typeof AppAdminUsersDealershipRoute
   '/_app/admin/users/internal': typeof AppAdminUsersInternalRoute
   '/_app/catalog_/$uuid/customize': typeof AppCatalogUuidCustomizeRoute
@@ -331,6 +340,7 @@ export interface FileRouteTypes {
     | '/dealership/'
     | '/admin/catalog/$uuid'
     | '/admin/catalog/create'
+    | '/admin/catalog/order'
     | '/admin/users/dealership'
     | '/admin/users/internal'
     | '/catalog/$uuid/customize'
@@ -364,6 +374,7 @@ export interface FileRouteTypes {
     | '/dealership'
     | '/admin/catalog/$uuid'
     | '/admin/catalog/create'
+    | '/admin/catalog/order'
     | '/admin/users/dealership'
     | '/admin/users/internal'
     | '/catalog/$uuid/customize'
@@ -398,6 +409,7 @@ export interface FileRouteTypes {
     | '/_app/dealership/'
     | '/_app/admin/catalog_/$uuid'
     | '/_app/admin/catalog_/create'
+    | '/_app/admin/catalog_/order'
     | '/_app/admin/users/dealership'
     | '/_app/admin/users/internal'
     | '/_app/catalog_/$uuid/customize'
@@ -601,6 +613,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AppAdminUsersDealershipRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/admin/catalog_/order': {
+      id: '/_app/admin/catalog_/order'
+      path: '/catalog/order'
+      fullPath: '/admin/catalog/order'
+      preLoaderRoute: typeof AppAdminCatalogOrderRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/admin/catalog_/create': {
       id: '/_app/admin/catalog_/create'
       path: '/catalog/create'
@@ -654,6 +673,7 @@ interface AppAdminRouteChildren {
   AppAdminPriceGroupsRoute: typeof AppAdminPriceGroupsRoute
   AppAdminCatalogUuidRoute: typeof AppAdminCatalogUuidRoute
   AppAdminCatalogCreateRoute: typeof AppAdminCatalogCreateRoute
+  AppAdminCatalogOrderRoute: typeof AppAdminCatalogOrderRoute
   AppAdminUsersDealershipRoute: typeof AppAdminUsersDealershipRoute
   AppAdminUsersInternalRoute: typeof AppAdminUsersInternalRoute
   AppAdminUsersIndexRoute: typeof AppAdminUsersIndexRoute
@@ -667,6 +687,7 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminPriceGroupsRoute: AppAdminPriceGroupsRoute,
   AppAdminCatalogUuidRoute: AppAdminCatalogUuidRoute,
   AppAdminCatalogCreateRoute: AppAdminCatalogCreateRoute,
+  AppAdminCatalogOrderRoute: AppAdminCatalogOrderRoute,
   AppAdminUsersDealershipRoute: AppAdminUsersDealershipRoute,
   AppAdminUsersInternalRoute: AppAdminUsersInternalRoute,
   AppAdminUsersIndexRoute: AppAdminUsersIndexRoute,

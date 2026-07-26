@@ -1,5 +1,5 @@
 import { Show, createMemo } from "solid-js";
-import { Badge } from "@glassact/ui";
+import { Badge, ImageLightbox } from "@glassact/ui";
 import type { ColorOverrides, InlayDetail } from "@glassact/data";
 import { INSTALLATION_KIT_PRICE_CENTS } from "@glassact/data";
 import { formatMoney } from "../../utils/format-money";
@@ -84,18 +84,16 @@ export function InlayIdentityRail(props: InlayIdentityRailProps) {
           </div>
         }
       >
-        <a
-          href={previewUrl()}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="block overflow-hidden rounded-lg border bg-gray-50 p-2"
+        <ImageLightbox
+          images={[{ src: previewUrl(), alt: props.inlay.name }]}
+          triggerClass="block w-full overflow-hidden rounded-lg border bg-gray-50 p-2"
         >
           <img
             src={previewUrl()}
             alt={props.inlay.name}
             class="mx-auto max-h-56 w-full object-contain"
           />
-        </a>
+        </ImageLightbox>
       </Show>
 
       <div class="space-y-2">

@@ -39,6 +39,10 @@ import {
 import { isApiError } from "../../utils/is-api-error";
 import { Can } from "../../components/Can";
 import { AddInlayUpdateDialog } from "../../components/manufacturing/add-inlay-update-dialog";
+import {
+  STEP_LABELS,
+  STEP_ORDER,
+} from "../../components/manufacturing/steps";
 
 export const Route = createFileRoute("/_app/inlays")({
   component: RouteComponent,
@@ -49,14 +53,10 @@ interface StepColumn {
   title: string;
 }
 
-const STEP_COLUMNS: StepColumn[] = [
-  { id: "ordered", title: "Ordered" },
-  { id: "materials-prep", title: "Prepping Materials" },
-  { id: "cutting", title: "Cutting" },
-  { id: "fire-polish", title: "Fire Polish" },
-  { id: "packaging", title: "Packaging" },
-  { id: "ready-to-ship", title: "Ready to Ship" },
-];
+const STEP_COLUMNS: StepColumn[] = STEP_ORDER.map((id) => ({
+  id,
+  title: STEP_LABELS[id],
+}));
 
 interface InlayCardProps {
   inlay: KanbanInlay;

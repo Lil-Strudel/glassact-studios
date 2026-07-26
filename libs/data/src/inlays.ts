@@ -51,12 +51,26 @@ export type Inlay = StandardTable<{
   manufacturing_step: ManufacturingStep | null;
 }>;
 
+// Kinds of dependent record that make an inlay undeletable, mirroring the
+// ON DELETE RESTRICT foreign keys pointing at inlays. Chat messages cascade and
+// never block.
+export type InlayDeleteBlocker = "proof" | "milestone" | "update" | "order";
+
+export const INLAY_DELETE_BLOCKERS: InlayDeleteBlocker[] = [
+  "proof",
+  "milestone",
+  "update",
+  "order",
+];
+
 export type InlayWithInfo = GET<Inlay> & {
   catalog_info?: GET<InlayCatalogInfo> | null;
   custom_info?: GET<InlayCustomInfo> | null;
   has_pending_proof?: boolean;
   latest_proof_status?: ProofStatus | null;
   is_ready: boolean;
+  can_delete: boolean;
+  delete_blockers: InlayDeleteBlocker[];
   price_group_id: number | null;
   price_group_name: string | null;
   price_cents: number | null;

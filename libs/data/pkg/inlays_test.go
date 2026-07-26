@@ -1,6 +1,7 @@
 package data
 
 import (
+	"slices"
 	"testing"
 )
 
@@ -411,5 +412,121 @@ func TestInlay_Delete(t *testing.T) {
 
 	if found {
 		t.Errorf("Expected inlay to be deleted")
+	}
+}
+
+func TestInlay_GetDeleteBlockers_WithNoDependents_ReportsDeletable(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
+
+	blockers, err := models.Inlays.GetDeleteBlockers([]int{inlay.ID})
+	if err != nil {
+		t.Fatalf("Failed to get delete blockers: %v", err)
+	}
+
+	found, ok := blockers[inlay.ID]
+	if !ok {
+		t.Fatalf("Expected inlay %d to be present in the blocker map", inlay.ID)
+	}
+	if len(found) != 0 {
+		t.Errorf("Expected no blockers for a bare inlay, got %v", found)
+	}
+}
+
+func TestInlay_GetDeleteBlockers_WithProof_ReportsProofBlocker(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	priceGroup := createTestPriceGroup(t, models)
+	inlay := createTestInlay(t, models, project.ID)
+	createTestInlayProof(t, models, inlay.ID, priceGroup.ID)
+
+	blockers, err := models.Inlays.GetDeleteBlockers([]int{inlay.ID})
+	if err != nil {
+		t.Fatalf("Failed to get delete blockers: %v", err)
+	}
+
+	found := blockers[inlay.ID]
+	if !slices.Contains(found, InlayDeleteBlockers.Proof) {
+		t.Errorf("Expected a proof blocker, got %v", found)
+	}
+
+	// A chat message accompanies the proof but cascades, so it must not appear.
+	if slices.Contains(found, InlayDeleteBlockers.Milestone) ||
+		slices.Contains(found, InlayDeleteBlockers.Order) {
+		t.Errorf("Expected only a proof blocker, got %v", found)
+	}
+}
+
+// The proof is exactly what makes a customized inlay undeletable, so confirm
+// the RESTRICT actually fires and the pre-flight check agrees with it.
+func TestInlay_Delete_WithExistingProof_IsRejectedByDatabase(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	priceGroup := createTestPriceGroup(t, models)
+	inlay := createTestInlay(t, models, project.ID)
+	createTestInlayProof(t, models, inlay.ID, priceGroup.ID)
+
+	blockers, err := models.Inlays.GetDeleteBlockers([]int{inlay.ID})
+	if err != nil {
+		t.Fatalf("Failed to get delete blockers: %v", err)
+	}
+	if len(blockers[inlay.ID]) == 0 {
+		t.Fatal("Expected the proof to be reported as a delete blocker")
+	}
+
+	if err := models.Inlays.Delete(inlay.ID); err == nil {
+		t.Error("Expected the database to reject deleting an inlay that has a proof")
+	}
+}
+
+func TestInlay_GetDeleteBlockers_BatchesMultipleInlays(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	priceGroup := createTestPriceGroup(t, models)
+
+	blocked := createTestInlay(t, models, project.ID)
+	createTestInlayProof(t, models, blocked.ID, priceGroup.ID)
+	free := createTestInlay(t, models, project.ID)
+
+	blockers, err := models.Inlays.GetDeleteBlockers([]int{blocked.ID, free.ID})
+	if err != nil {
+		t.Fatalf("Failed to get delete blockers: %v", err)
+	}
+
+	if len(blockers) != 2 {
+		t.Fatalf("Expected results for 2 inlays, got %d", len(blockers))
+	}
+	if len(blockers[blocked.ID]) == 0 {
+		t.Errorf("Expected blockers for the inlay with a proof")
+	}
+	if len(blockers[free.ID]) != 0 {
+		t.Errorf("Expected no blockers for the bare inlay, got %v", blockers[free.ID])
+	}
+}
+
+func TestInlay_GetDeleteBlockers_WithEmptyInput_ReturnsEmptyMap(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+
+	blockers, err := models.Inlays.GetDeleteBlockers(nil)
+	if err != nil {
+		t.Fatalf("Expected no error for an empty request, got %v", err)
+	}
+	if len(blockers) != 0 {
+		t.Errorf("Expected an empty map, got %v", blockers)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/model"
@@ -982,6 +983,89 @@ func (m InlayModel) CountByProjectID(projectID int) (int, error) {
 	}
 
 	return int(dest.Count), nil
+}
+
+// InlayDeleteBlocker names a kind of dependent record that makes an inlay
+// undeletable. These mirror the ON DELETE RESTRICT foreign keys pointing at
+// inlays; inlay_chats and the catalog/custom info rows CASCADE and never block.
+type InlayDeleteBlocker string
+
+type inlayDeleteBlockers struct {
+	Proof     InlayDeleteBlocker
+	Milestone InlayDeleteBlocker
+	Update    InlayDeleteBlocker
+	Order     InlayDeleteBlocker
+}
+
+var InlayDeleteBlockers = inlayDeleteBlockers{
+	Proof:     InlayDeleteBlocker("proof"),
+	Milestone: InlayDeleteBlocker("milestone"),
+	Update:    InlayDeleteBlocker("update"),
+	Order:     InlayDeleteBlocker("order"),
+}
+
+// GetDeleteBlockers reports, for each requested inlay, which kinds of dependent
+// records would make a DELETE fail. One grouped query covers every inlay so the
+// project inlay list does not turn into an N+1.
+//
+// Inlays with no blockers are present in the map with an empty slice, so a
+// missing key means the id was not found.
+func (m InlayModel) GetDeleteBlockers(inlayIDs []int) (map[int][]InlayDeleteBlocker, error) {
+	blockers := make(map[int][]InlayDeleteBlocker, len(inlayIDs))
+	if len(inlayIDs) == 0 {
+		return blockers, nil
+	}
+
+	ids := make([]int64, len(inlayIDs))
+	for i, id := range inlayIDs {
+		ids[i] = int64(id)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := m.STDB.QueryContext(ctx, `
+		SELECT i.id,
+		       EXISTS (SELECT 1 FROM inlay_proofs     WHERE inlay_id = i.id) AS has_proof,
+		       EXISTS (SELECT 1 FROM inlay_milestones WHERE inlay_id = i.id) AS has_milestone,
+		       EXISTS (SELECT 1 FROM inlay_updates    WHERE inlay_id = i.id) AS has_update,
+		       EXISTS (SELECT 1 FROM order_snapshots  WHERE inlay_id = i.id) AS has_order
+		FROM inlays i
+		WHERE i.id = ANY($1::bigint[])
+	`, ids)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query inlay delete blockers: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var hasProof, hasMilestone, hasUpdate, hasOrder bool
+		if err := rows.Scan(&id, &hasProof, &hasMilestone, &hasUpdate, &hasOrder); err != nil {
+			return nil, fmt.Errorf("failed to scan inlay delete blockers: %w", err)
+		}
+
+		found := []InlayDeleteBlocker{}
+		if hasProof {
+			found = append(found, InlayDeleteBlockers.Proof)
+		}
+		if hasMilestone {
+			found = append(found, InlayDeleteBlockers.Milestone)
+		}
+		if hasUpdate {
+			found = append(found, InlayDeleteBlockers.Update)
+		}
+		if hasOrder {
+			found = append(found, InlayDeleteBlockers.Order)
+		}
+		blockers[id] = found
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to read inlay delete blockers: %w", err)
+	}
+
+	return blockers, nil
 }
 
 func (m InlayModel) Delete(id int) error {

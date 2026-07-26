@@ -1,6 +1,7 @@
 import { CatalogItem, GET } from "@glassact/data";
 import {
   Button,
+  ImageLightbox,
   Pagination,
   PaginationEllipsis,
   PaginationItem,
@@ -40,13 +41,16 @@ export function CatalogGrid(props: CatalogGridProps) {
           <For each={props.items}>
             {(item) => (
               <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                <div class="bg-gray-50 p-4 flex items-center justify-center h-64 overflow-hidden">
+                <ImageLightbox
+                  images={[{ src: item.svg_url, alt: item.name }]}
+                  triggerClass="block w-full bg-gray-50 p-4 h-64 overflow-hidden"
+                >
                   <img
                     src={item.svg_url}
                     alt={item.name}
-                    class="max-w-full max-h-full object-contain"
+                    class="w-full h-full object-contain"
                   />
-                </div>
+                </ImageLightbox>
 
                 <div class="p-4 flex flex-col gap-3">
                   <div>

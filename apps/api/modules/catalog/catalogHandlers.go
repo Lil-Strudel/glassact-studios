@@ -92,6 +92,10 @@ type catalogWriteRequest struct {
 	Tags                []string        `json:"tags"`
 }
 
+// display_order is deliberately absent from the write request: the best-seller
+// ranking is owned solely by PUT /api/catalog/display-order. Editing an item
+// round-trips its existing rank untouched.
+
 func (m *CatalogModule) HandlePostCatalog(w http.ResponseWriter, r *http.Request) {
 	var body catalogWriteRequest
 
@@ -446,7 +450,6 @@ func (m *CatalogModule) HandlePatchCatalog(w http.ResponseWriter, r *http.Reques
 	if body.IsActive != nil {
 		item.IsActive = *body.IsActive
 	}
-
 	if item.DefaultWidth < item.MinWidth || item.DefaultHeight < item.MinHeight {
 		m.WriteError(w, r, m.Err.BadRequest, errors.New("default dimensions must be >= minimum dimensions"))
 		return
@@ -483,6 +486,54 @@ func (m *CatalogModule) HandleDeleteCatalog(w http.ResponseWriter, r *http.Reque
 	}
 
 	m.WriteJSON(w, r, http.StatusOK, map[string]bool{"success": true})
+}
+
+// HandleGetRankedCatalog returns only the manually ranked items, in rank order.
+// Backs the best-seller reorder page, which manages the ranked set rather than
+// the whole catalog.
+func (m *CatalogModule) HandleGetRankedCatalog(w http.ResponseWriter, r *http.Request) {
+	items, err := m.Db.CatalogItems.GetRanked()
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, items)
+}
+
+// HandlePutDisplayOrder replaces the entire best-seller ranking. Any item not
+// present in ordered_uuids becomes unranked.
+func (m *CatalogModule) HandlePutDisplayOrder(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		OrderedUUIDs []string `json:"ordered_uuids" validate:"dive,uuid4"`
+	}
+
+	if err := m.ReadJSONBody(w, r, &body); err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	seen := make(map[string]struct{}, len(body.OrderedUUIDs))
+	for _, u := range body.OrderedUUIDs {
+		if _, duplicate := seen[u]; duplicate {
+			m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("catalog item %s listed more than once", u))
+			return
+		}
+		seen[u] = struct{}{}
+	}
+
+	if err := m.Db.CatalogItems.SetDisplayOrder(body.OrderedUUIDs); err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	items, err := m.Db.CatalogItems.GetRanked()
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, items)
 }
 
 func (m *CatalogModule) HandleGetTags(w http.ResponseWriter, r *http.Request) {

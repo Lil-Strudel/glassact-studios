@@ -7,6 +7,7 @@ import {
   DialogTrigger,
   DialogFooter,
   Button,
+  ImageLightbox,
 } from "@glassact/ui";
 import { Link } from "@tanstack/solid-router";
 import { ParentProps, Show } from "solid-js";
@@ -29,13 +30,16 @@ export function ItemDetailModal(props: ParentProps<ItemDetailModalProps>) {
         </DialogHeader>
 
         <div class="flex flex-col gap-6">
-          <div class="bg-gray-50 rounded-md p-4 flex items-center justify-center min-h-[400px]">
+          <ImageLightbox
+            images={[{ src: props.item.svg_url, alt: props.item.name }]}
+            triggerClass="bg-gray-50 rounded-md p-4 flex items-center justify-center min-h-[400px]"
+          >
             <img
               src={props.item.svg_url}
               alt={props.item.name}
               class="max-w-full max-h-[400px] object-contain"
             />
-          </div>
+          </ImageLightbox>
 
           <div class="grid grid-cols-2 gap-4">
             <div>

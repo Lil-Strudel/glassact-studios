@@ -5,34 +5,17 @@ import {
   IoAlertCircleOutline,
   IoInformationCircleOutline,
 } from "solid-icons/io";
-import type {
-  GET,
-  InlayMilestone,
-  InlayUpdate,
-  ManufacturingStep,
-} from "@glassact/data";
+import type { GET, InlayMilestone, InlayUpdate } from "@glassact/data";
 import {
   getInlayMilestonesOpts,
   getInlayUpdatesOpts,
 } from "../../queries/manufacturing";
+import { stepLabel } from "./steps";
 import { Can } from "../Can";
 import { AddInlayUpdateForm } from "./add-inlay-update-form";
 
 interface InlayTimelineProps {
   inlayUuid: string;
-}
-
-const STEP_LABELS: Record<ManufacturingStep, string> = {
-  ordered: "Ordered",
-  "materials-prep": "Prepping Materials",
-  cutting: "Cutting",
-  "fire-polish": "Fire Polish",
-  packaging: "Packaging",
-  "ready-to-ship": "Ready to Ship",
-};
-
-function stepLabel(step: string) {
-  return STEP_LABELS[step as ManufacturingStep] ?? step;
 }
 
 type TimelineItem =

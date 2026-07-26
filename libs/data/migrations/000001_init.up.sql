@@ -172,6 +172,7 @@ CREATE TABLE catalog_items (
     svg_url TEXT NOT NULL,
     manifest JSONB NOT NULL DEFAULT '{}',
     is_active BOOLEAN NOT NULL DEFAULT true,
+    display_order INTEGER,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     version INTEGER NOT NULL DEFAULT 1
@@ -179,6 +180,7 @@ CREATE TABLE catalog_items (
 
 CREATE INDEX idx_catalog_items_category ON catalog_items(category);
 CREATE INDEX idx_catalog_items_active ON catalog_items(is_active) WHERE is_active = true;
+CREATE INDEX idx_catalog_items_display_order ON catalog_items(display_order NULLS LAST);
 
 CREATE TABLE catalog_item_tags (
     id SERIAL PRIMARY KEY,

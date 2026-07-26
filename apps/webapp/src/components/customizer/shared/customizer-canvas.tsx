@@ -1,5 +1,5 @@
 import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
-import { Button } from "@glassact/ui";
+import { Button, createPanZoom } from "@glassact/ui";
 
 interface CustomizerCanvasProps {
   svgText: string;
@@ -30,15 +30,8 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
   const pieceEls = new Map<string, SVGElement>();
   const groutEls = new Map<string, SVGElement>();
 
-  const [scale, setScale] = createSignal(1);
-  const [tx, setTx] = createSignal(0);
-  const [ty, setTy] = createSignal(0);
+  const panZoom = createPanZoom();
 
-  let viewport!: HTMLDivElement;
-  let dragging = false;
-  let moved = false;
-  let startX = 0;
-  let startY = 0;
   let pressedPiece: string | null = null;
 
   onMount(() => {
@@ -99,9 +92,6 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
     }
   });
 
-  const transform = () =>
-    `translate(${tx()}px, ${ty()}px) scale(${scale()})`;
-
   function pieceAt(target: EventTarget | null): string | null {
     const el = target as Element | null;
     if (!el || !el.id) return null;
@@ -109,23 +99,14 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
   }
 
   function onPointerDown(e: PointerEvent) {
-    dragging = true;
-    moved = false;
-    startX = e.clientX;
-    startY = e.clientY;
+    panZoom.beginPan(e);
     pressedPiece = pieceAt(e.target);
     host.setPointerCapture(e.pointerId);
   }
 
   function onPointerMove(e: PointerEvent) {
-    if (dragging) {
-      if (Math.abs(e.clientX - startX) + Math.abs(e.clientY - startY) > 4) {
-        moved = true;
-      }
-      if (moved) {
-        setTx(tx() + e.movementX);
-        setTy(ty() + e.movementY);
-      }
+    if (panZoom.isPanning()) {
+      panZoom.updatePan(e);
       return;
     }
     const id = pieceAt(e.target);
@@ -133,32 +114,13 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
   }
 
   function onPointerUp(e: PointerEvent) {
-    if (dragging && !moved && pressedPiece) {
+    // A press that never moved is a piece selection, not a pan.
+    if (panZoom.isPanning() && !panZoom.didPan() && pressedPiece) {
       props.onPieceClick(pressedPiece, props.pieceSource.get(pressedPiece)!);
     }
-    dragging = false;
+    panZoom.endPan();
     pressedPiece = null;
     host.releasePointerCapture?.(e.pointerId);
-  }
-
-  function onWheel(e: WheelEvent) {
-    e.preventDefault();
-    const factor = e.deltaY < 0 ? 1.12 : 0.89;
-    const s = scale();
-    const newScale = Math.min(8, Math.max(0.4, s * factor));
-    const rect = viewport.getBoundingClientRect();
-    // Cursor position relative to the transform-origin (center of the viewport).
-    const mx = e.clientX - rect.left - rect.width / 2;
-    const my = e.clientY - rect.top - rect.height / 2;
-    setTx(mx - (mx - tx()) * (newScale / s));
-    setTy(my - (my - ty()) * (newScale / s));
-    setScale(newScale);
-  }
-
-  function reset() {
-    setScale(1);
-    setTx(0);
-    setTy(0);
   }
 
   onCleanup(() => { pieceEls.clear(); groutEls.clear(); });
@@ -167,18 +129,21 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
     <div class="relative flex h-full w-full flex-col">
       <style>{HIGHLIGHT_CSS}</style>
       <div
-        ref={viewport}
+        ref={panZoom.setViewport}
         class="gac-canvas relative flex-1 overflow-hidden rounded-lg border border-gray-200"
         style={{ "background-color": "#f3f4f6" }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerLeave={() => props.onPieceHover(null, null)}
-        onWheel={onWheel}
+        onWheel={(e) => panZoom.onWheel(e)}
       >
         <div
           class="absolute inset-0 flex items-center justify-center p-6"
-          style={{ transform: transform(), "transform-origin": "center" }}
+          style={{
+            transform: panZoom.transform(),
+            "transform-origin": "center",
+          }}
         >
           <div ref={host} class="h-full w-full" />
         </div>
@@ -189,19 +154,19 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
           variant="ghost"
           size="icon"
           class="pointer-events-auto h-7 w-7 rounded-full text-lg leading-none"
-          onClick={() => setScale(Math.max(0.4, scale() * 0.89))}
+          onClick={panZoom.zoomOut}
           aria-label="Zoom out"
         >
           −
         </Button>
         <span class="w-12 text-center text-xs tabular-nums text-gray-500">
-          {Math.round(scale() * 100)}%
+          {Math.round(panZoom.scale() * 100)}%
         </span>
         <Button
           variant="ghost"
           size="icon"
           class="pointer-events-auto h-7 w-7 rounded-full text-lg leading-none"
-          onClick={() => setScale(Math.min(8, scale() * 1.12))}
+          onClick={panZoom.zoomIn}
           aria-label="Zoom in"
         >
           +
@@ -210,7 +175,7 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
           variant="ghost"
           size="sm"
           class="pointer-events-auto ml-1 rounded-full px-2 py-0.5 text-xs"
-          onClick={reset}
+          onClick={panZoom.reset}
         >
           Reset
         </Button>

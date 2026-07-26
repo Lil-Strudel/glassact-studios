@@ -32,6 +32,16 @@ type InlayDetail struct {
 	OrderSnapshot *data.OrderSnapshot  `json:"order_snapshot"`
 }
 
+// applyDeleteBlockers records which dependent rows block deletion. Callers that
+// already have a batched lookup pass its result in; nil means nothing blocks.
+func (i *InlayWithProofStatus) applyDeleteBlockers(blockers []data.InlayDeleteBlocker) {
+	if blockers == nil {
+		blockers = []data.InlayDeleteBlocker{}
+	}
+	i.DeleteBlockers = blockers
+	i.CanDelete = len(blockers) == 0
+}
+
 // buildInlayWithProofStatus resolves the readiness and pricing fields shared by
 // the list and detail endpoints.
 func (m InlayModule) buildInlayWithProofStatus(inlay *data.Inlay) (InlayWithProofStatus, *data.InlayProof, error) {
@@ -71,6 +81,12 @@ func (m InlayModule) buildInlayDetail(inlay *data.Inlay) (*InlayDetail, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	blockers, err := m.Db.Inlays.GetDeleteBlockers([]int{inlay.ID})
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve delete blockers for inlay %d: %w", inlay.ID, err)
+	}
+	base.applyDeleteBlockers(blockers[inlay.ID])
 
 	detail := InlayDetail{
 		InlayWithProofStatus: base,

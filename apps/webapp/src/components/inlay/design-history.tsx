@@ -1,5 +1,5 @@
 import { For, Show, createMemo, createSignal } from "solid-js";
-import { Button } from "@glassact/ui";
+import { Button, ImageLightbox } from "@glassact/ui";
 import { useQuery } from "@tanstack/solid-query";
 import { IoChevronDown, IoChevronForward, IoDownloadOutline } from "solid-icons/io";
 import type { GET, InlayProof } from "@glassact/data";
@@ -38,13 +38,23 @@ function ProofRow(props: { proof: GET<InlayProof>; defaultOpen: boolean }) {
       <Show when={isOpen()}>
         <div class="space-y-3 border-t p-3">
           <Show when={props.proof.design_asset_url}>
-            <div class="flex items-center justify-center rounded bg-gray-50 p-3">
-              <img
-                src={props.proof.design_asset_url}
-                alt={`Proof v${props.proof.version_number}`}
-                class="max-h-40 max-w-full rounded object-contain"
-              />
-            </div>
+            {(assetUrl) => (
+              <ImageLightbox
+                images={[
+                  {
+                    src: assetUrl(),
+                    alt: `Proof v${props.proof.version_number}`,
+                  },
+                ]}
+                triggerClass="flex w-full items-center justify-center rounded bg-gray-50 p-3"
+              >
+                <img
+                  src={assetUrl()}
+                  alt={`Proof v${props.proof.version_number}`}
+                  class="max-h-40 max-w-full rounded object-contain"
+                />
+              </ImageLightbox>
+            )}
           </Show>
 
           <div class="space-y-1 text-xs text-gray-600">

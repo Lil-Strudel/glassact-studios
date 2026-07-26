@@ -21,4 +21,7 @@ export type CatalogItem = StandardTable<{
   // (not part of create/update request bodies — those carry the manifest instead).
   manifest?: Manifest;
   is_active: boolean;
+  // Manual best-seller rank. null means unranked, which sorts after every
+  // ranked item.
+  display_order: number | null;
 }>;

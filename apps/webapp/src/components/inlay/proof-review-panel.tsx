@@ -1,5 +1,5 @@
 import { Show } from "solid-js";
-import { Button } from "@glassact/ui";
+import { Button, ImageLightbox } from "@glassact/ui";
 import { IoDownloadOutline } from "solid-icons/io";
 import type { GET, InlayProof } from "@glassact/data";
 import { PERMISSION_ACTIONS } from "@glassact/data";
@@ -35,13 +35,23 @@ export function ProofReviewPanel(props: ProofReviewPanelProps) {
       </div>
 
       <Show when={props.proof.design_asset_url}>
-        <div class="flex items-center justify-center border-b bg-gray-50 p-6">
-          <img
-            src={props.proof.design_asset_url}
-            alt={`Proof v${props.proof.version_number}`}
-            class="max-h-96 max-w-full rounded object-contain"
-          />
-        </div>
+        {(assetUrl) => (
+          <ImageLightbox
+            images={[
+              {
+                src: assetUrl(),
+                alt: `Proof v${props.proof.version_number}`,
+              },
+            ]}
+            triggerClass="flex w-full items-center justify-center border-b bg-gray-50 p-6"
+          >
+            <img
+              src={assetUrl()}
+              alt={`Proof v${props.proof.version_number}`}
+              class="max-h-96 max-w-full rounded object-contain"
+            />
+          </ImageLightbox>
+        )}
       </Show>
 
       <div class="space-y-4 p-4">

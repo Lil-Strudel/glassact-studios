@@ -2,9 +2,11 @@ package inlay
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -86,6 +88,11 @@ type InlayWithProofStatus struct {
 	PriceCents           *int                     `json:"price_cents"`
 	PriceAdjustmentType  data.PriceAdjustmentType `json:"price_adjustment_type"`
 	PriceAdjustmentValue float64                  `json:"price_adjustment_value"`
+	// CanDelete is false when dependent records (a proof, milestones, updates or
+	// an order snapshot) would make the DELETE fail. The frontend disables the
+	// remove control rather than letting the user hit a guaranteed error.
+	CanDelete      bool                      `json:"can_delete"`
+	DeleteBlockers []data.InlayDeleteBlocker `json:"delete_blockers"`
 }
 
 // inlayPricing carries the resolved pricing for an inlay: which price group
@@ -208,6 +215,18 @@ func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	inlayIDs := make([]int, len(inlays))
+	for i, inlay := range inlays {
+		inlayIDs[i] = inlay.ID
+	}
+
+	// One grouped query for the whole project rather than a lookup per inlay.
+	blockers, err := m.Db.Inlays.GetDeleteBlockers(inlayIDs)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
 	result := make([]InlayWithProofStatus, len(inlays))
 	for i, inlay := range inlays {
 		withStatus, _, err := m.buildInlayWithProofStatus(inlay)
@@ -215,6 +234,7 @@ func (m InlayModule) HandleGetInlaysByProject(w http.ResponseWriter, r *http.Req
 			m.WriteError(w, r, m.Err.ServerError, err)
 			return
 		}
+		withStatus.applyDeleteBlockers(blockers[inlay.ID])
 		result[i] = withStatus
 	}
 
@@ -575,6 +595,19 @@ func (m InlayModule) HandleDeleteInlay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Pre-flight the RESTRICT foreign keys. Without this the DELETE raises a raw
+	// FK violation that surfaces to the dealership as a 500 full of Postgres
+	// internals.
+	blockers, err := m.Db.Inlays.GetDeleteBlockers([]int{inlay.ID})
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if found := blockers[inlay.ID]; len(found) > 0 {
+		m.WriteError(w, r, m.Err.Conflict, errors.New(inlayDeleteBlockedMessage(found)))
+		return
+	}
+
 	err = m.Db.Inlays.Delete(inlay.ID)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
@@ -582,6 +615,24 @@ func (m InlayModule) HandleDeleteInlay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	m.WriteJSON(w, r, http.StatusOK, map[string]bool{"success": true})
+}
+
+// inlayDeleteBlockedMessage explains an undeletable inlay in dealership terms:
+// what already happened to it, and the alternative (leave it out of the order).
+func inlayDeleteBlockedMessage(blockers []data.InlayDeleteBlocker) string {
+	has := func(b data.InlayDeleteBlocker) bool {
+		return slices.Contains(blockers, b)
+	}
+
+	switch {
+	case has(data.InlayDeleteBlockers.Order):
+		return "This inlay is part of an order that has already been placed, so it can't be removed."
+	case has(data.InlayDeleteBlockers.Milestone) || has(data.InlayDeleteBlockers.Update):
+		return "This inlay is already in production, so it can't be removed."
+	default:
+		return "We've already started design work on this inlay, so it can't be removed. " +
+			"You can leave it out of your order instead — just don't select it when you place the order."
+	}
 }
 
 var manufacturingStepOrder = []data.ManufacturingStep{

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg/gen/glassact/public/model"
@@ -29,6 +30,7 @@ type CatalogItem struct {
 	SvgURL              string                 `json:"svg_url"`
 	Manifest            map[string]interface{} `json:"manifest"`
 	IsActive            bool                   `json:"is_active"`
+	DisplayOrder        *int                   `json:"display_order"`
 	Tags                []string               `json:"tags,omitempty"`
 }
 
@@ -70,6 +72,11 @@ func catalogItemFromGen(genCatalogItem model.CatalogItems) *CatalogItem {
 		SvgURL:              genCatalogItem.SvgURL,
 		Manifest:            manifest,
 		IsActive:            genCatalogItem.IsActive,
+	}
+
+	if genCatalogItem.DisplayOrder != nil {
+		displayOrder := int(*genCatalogItem.DisplayOrder)
+		catalogItem.DisplayOrder = &displayOrder
 	}
 
 	return &catalogItem
@@ -115,6 +122,11 @@ func catalogItemToGen(ci *CatalogItem) (*model.CatalogItems, error) {
 		Version:             int32(ci.Version),
 	}
 
+	if ci.DisplayOrder != nil {
+		displayOrder := int32(*ci.DisplayOrder)
+		genCatalogItem.DisplayOrder = &displayOrder
+	}
+
 	return &genCatalogItem, nil
 }
 
@@ -146,6 +158,7 @@ func (m CatalogItemModel) Insert(catalogItem *CatalogItem) error {
 		table.CatalogItems.SvgURL,
 		table.CatalogItems.Manifest,
 		table.CatalogItems.IsActive,
+		table.CatalogItems.DisplayOrder,
 	).MODEL(
 		genCatalogItem,
 	).RETURNING(
@@ -332,6 +345,7 @@ func (m CatalogItemModel) Update(catalogItem *CatalogItem) error {
 		table.CatalogItems.SvgURL,
 		table.CatalogItems.Manifest,
 		table.CatalogItems.IsActive,
+		table.CatalogItems.DisplayOrder,
 		table.CatalogItems.Version,
 	).MODEL(
 		genCatalogItem,
@@ -374,6 +388,93 @@ func (m CatalogItemModel) Delete(id int) error {
 	}
 
 	return nil
+}
+
+// SetDisplayOrder replaces the entire best-seller ranking: every item not named
+// in orderedUUIDs becomes unranked, and the named ones take positions 1..N.
+//
+// Written as raw SQL rather than per-row Update() calls because position is not
+// state worth optimistic-locking on, and the version-bump trigger would make N
+// round-trips both slow and spuriously conflict-prone.
+func (m CatalogItemModel) SetDisplayOrder(orderedUUIDs []string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tx, err := m.STDB.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin display order transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.ExecContext(ctx,
+		"UPDATE catalog_items SET display_order = NULL WHERE display_order IS NOT NULL",
+	); err != nil {
+		return fmt.Errorf("failed to clear existing display order: %w", err)
+	}
+
+	if len(orderedUUIDs) > 0 {
+		for i, u := range orderedUUIDs {
+			if _, err := uuid.Parse(u); err != nil {
+				return fmt.Errorf("invalid catalog item uuid %q at position %d: %w", u, i, err)
+			}
+		}
+
+		res, err := tx.ExecContext(ctx, `
+			UPDATE catalog_items
+			SET display_order = ranked.position
+			FROM (
+				SELECT ci.id, t.position
+				FROM unnest($1::text[]) WITH ORDINALITY AS t(item_uuid, position)
+				JOIN catalog_items ci ON ci.uuid = t.item_uuid::uuid
+			) AS ranked
+			WHERE catalog_items.id = ranked.id
+		`, orderedUUIDs)
+		if err != nil {
+			return fmt.Errorf("failed to assign display order: %w", err)
+		}
+
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("failed to read display order update count: %w", err)
+		}
+		if int(affected) != len(orderedUUIDs) {
+			return fmt.Errorf("expected to rank %d catalog items but matched %d", len(orderedUUIDs), affected)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit display order: %w", err)
+	}
+
+	return nil
+}
+
+// GetRanked returns the items with a display_order set, in rank order.
+func (m CatalogItemModel) GetRanked() ([]*CatalogItem, error) {
+	query := postgres.SELECT(
+		table.CatalogItems.AllColumns,
+	).FROM(
+		table.CatalogItems,
+	).WHERE(
+		table.CatalogItems.DisplayOrder.IS_NOT_NULL(),
+	).ORDER_BY(
+		table.CatalogItems.DisplayOrder.ASC(),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest []model.CatalogItems
+	if err := query.QueryContext(ctx, m.STDB, &dest); err != nil {
+		return nil, err
+	}
+
+	catalogItems := make([]*CatalogItem, len(dest))
+	for i, d := range dest {
+		catalogItems[i] = catalogItemFromGen(d)
+	}
+
+	return catalogItems, nil
 }
 
 func (m CatalogItemModel) AddTag(catalogItemID int, tag string) error {
@@ -512,7 +613,8 @@ func (m CatalogItemModel) GetAllActive() ([]*CatalogItem, error) {
 	).WHERE(
 		table.CatalogItems.IsActive.EQ(postgres.Bool(true)),
 	).ORDER_BY(
-		table.CatalogItems.CreatedAt.DESC(),
+		table.CatalogItems.DisplayOrder.ASC().NULLS_LAST(),
+		table.CatalogItems.Name.ASC(),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -547,7 +649,9 @@ func (m CatalogItemModel) GetCategories() ([]string, error) {
 		table.CatalogItems,
 	).WHERE(
 		table.CatalogItems.IsActive.EQ(postgres.Bool(true)),
-	).DISTINCT()
+	).DISTINCT().ORDER_BY(
+		table.CatalogItems.Category.ASC(),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

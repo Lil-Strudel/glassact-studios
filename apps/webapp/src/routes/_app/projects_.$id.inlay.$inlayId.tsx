@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { useQuery, useQueryClient } from "@tanstack/solid-query";
 import { For, Match, Show, Switch, createMemo, createSignal } from "solid-js";
-import { Badge, Breadcrumb, Button } from "@glassact/ui";
+import { Badge, Breadcrumb, Button, ImageLightbox } from "@glassact/ui";
 import type { InlayDetail, ManufacturingStep } from "@glassact/data";
 import { PERMISSION_ACTIONS } from "@glassact/data";
 import { getInlayOpts } from "../../queries/inlay";
@@ -15,21 +15,13 @@ import { ProofReviewPanel } from "../../components/inlay/proof-review-panel";
 import { SandblastFileCard } from "../../components/inlay/sandblast-file-card";
 import { InlayTimeline } from "../../components/manufacturing/inlay-timeline";
 import { ManufacturingTracker } from "../../components/manufacturing/manufacturing-tracker";
+import { STEP_LABELS } from "../../components/manufacturing/steps";
 import CreateProofDialog from "../../components/proof/create-proof-dialog";
 import { deriveInlayPhase } from "../../components/inlay/inlay-phase";
 
 export const Route = createFileRoute("/_app/projects_/$id/inlay/$inlayId")({
   component: InlayDetailPage,
 });
-
-const STEP_LABELS: Record<ManufacturingStep, string> = {
-  ordered: "Ordered",
-  "materials-prep": "Prepping Materials",
-  cutting: "Cutting",
-  "fire-polish": "Fire Polish",
-  packaging: "Packaging",
-  "ready-to-ship": "Ready to Ship",
-};
 
 function InlayDetailPage() {
   const params = Route.useParams();
@@ -281,19 +273,21 @@ function ConfiguringPanel(props: {
                     </p>
                     <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
                       <For each={info().reference_images}>
-                        {(image) => (
-                          <a
-                            href={image.image_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="block aspect-square overflow-hidden rounded-md border bg-gray-50"
+                        {(image, imageIndex) => (
+                          <ImageLightbox
+                            images={info().reference_images.map((ref, i) => ({
+                              src: ref.image_url,
+                              alt: `Reference picture ${i + 1}`,
+                            }))}
+                            index={imageIndex()}
+                            triggerClass="block aspect-square w-full overflow-hidden rounded-md border bg-gray-50"
                           >
                             <img
                               src={image.image_url}
-                              alt="Reference"
+                              alt={`Reference picture ${imageIndex() + 1}`}
                               class="h-full w-full object-cover"
                             />
-                          </a>
+                          </ImageLightbox>
                         )}
                       </For>
                     </div>

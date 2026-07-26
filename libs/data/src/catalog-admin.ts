@@ -60,3 +60,9 @@ export interface CatalogWriteRequest {
   is_active: boolean;
   tags: string[];
 }
+
+// PUT /api/catalog/display-order — replaces the whole best-seller ranking.
+// Items absent from the list become unranked.
+export interface CatalogDisplayOrderRequest {
+  ordered_uuids: string[];
+}

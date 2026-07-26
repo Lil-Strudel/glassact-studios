@@ -13,6 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
   showToast,
 } from "@glassact/ui";
 import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js";
@@ -42,6 +45,7 @@ import type {
 } from "@glassact/data";
 import { PERMISSION_ACTIONS, INSTALLATION_KIT_PRICE_CENTS } from "@glassact/data";
 import { ProjectStatusBadge } from "../../components/project/status-badge";
+import { inlayDeleteBlockedMessage } from "../../utils/inlay-delete";
 import { Can } from "../../components/Can";
 import { useUserContext } from "../../providers/user";
 import { isApiError } from "../../utils/is-api-error";
@@ -940,47 +944,79 @@ function InlayCard(props: InlayCardProps) {
             </Can>
           </Show>
           <Show when={props.canDelete}>
-            <Dialog>
-              <DialogTrigger
-                as={Button}
-                variant="ghost"
-                size="sm"
-                class="text-red-600 hover:text-red-700 hover:bg-red-50 w-full"
-              >
-                <IoTrashOutline size={16} class="mr-1" />
-                Remove
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Remove Inlay</DialogTitle>
-                </DialogHeader>
-                <p class="text-sm text-gray-600">
-                  Are you sure you want to remove{" "}
-                  <span class="font-semibold">{props.inlay.name}</span> from
-                  this project?
-                </p>
-                <div class="flex justify-end gap-3 mt-4">
-                  <DialogClose
-                    as={Button}
-                    variant="outline"
-                    disabled={props.isDeleting}
-                  >
-                    Close
-                  </DialogClose>
-                  <Button
-                    variant="destructive"
-                    onClick={props.onDelete}
-                    disabled={props.isDeleting}
-                  >
-                    {props.isDeleting ? "Removing..." : "Remove Inlay"}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Show
+              when={props.inlay.can_delete}
+              fallback={<BlockedRemoveButton inlay={props.inlay} />}
+            >
+              <Dialog>
+                <DialogTrigger
+                  as={Button}
+                  variant="ghost"
+                  size="sm"
+                  class="text-red-600 hover:text-red-700 hover:bg-red-50 w-full"
+                >
+                  <IoTrashOutline size={16} class="mr-1" />
+                  Remove
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Remove Inlay</DialogTitle>
+                  </DialogHeader>
+                  <p class="text-sm text-gray-600">
+                    Are you sure you want to remove{" "}
+                    <span class="font-semibold">{props.inlay.name}</span> from
+                    this project?
+                  </p>
+                  <div class="flex justify-end gap-3 mt-4">
+                    <DialogClose
+                      as={Button}
+                      variant="outline"
+                      disabled={props.isDeleting}
+                    >
+                      Close
+                    </DialogClose>
+                    <Button
+                      variant="destructive"
+                      onClick={props.onDelete}
+                      disabled={props.isDeleting}
+                    >
+                      {props.isDeleting ? "Removing..." : "Remove Inlay"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </Show>
           </Show>
         </div>
       </Show>
     </Card>
+  );
+}
+
+// A disabled Remove control for inlays the API reports as undeletable. The
+// button is wrapped in a span because a disabled button emits no pointer
+// events, which would otherwise swallow the tooltip that explains why.
+function BlockedRemoveButton(props: { inlay: InlayWithInfo }) {
+  const message = createMemo(() =>
+    inlayDeleteBlockedMessage(props.inlay.delete_blockers ?? []),
+  );
+
+  return (
+    <Tooltip>
+      <TooltipTrigger as="span" class="w-full">
+        <Button
+          variant="ghost"
+          size="sm"
+          class="w-full"
+          disabled
+          aria-label={`Cannot remove ${props.inlay.name}`}
+        >
+          <IoTrashOutline size={16} class="mr-1" />
+          Remove
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent class="max-w-xs text-left">{message()}</TooltipContent>
+    </Tooltip>
   );
 }
 

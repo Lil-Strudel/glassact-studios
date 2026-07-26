@@ -7,6 +7,7 @@ import type {
   AnalyzeRequest,
   AnalyzeResponse,
   CatalogWriteRequest,
+  CatalogDisplayOrderRequest,
 } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
@@ -125,6 +126,31 @@ export async function deleteCatalog(
 export function deleteCatalogOpts() {
   return mutationOptions({
     mutationFn: deleteCatalog,
+  });
+}
+
+export async function getRankedCatalog(): Promise<GET<CatalogItem>[]> {
+  const res = await api.get("/catalog/ranked");
+  return res.data;
+}
+
+export function getRankedCatalogOpts() {
+  return queryOptions({
+    queryKey: ["catalog", "ranked"],
+    queryFn: getRankedCatalog,
+  });
+}
+
+export async function putCatalogDisplayOrder(
+  body: CatalogDisplayOrderRequest,
+): Promise<GET<CatalogItem>[]> {
+  const res = await api.put("/catalog/display-order", body);
+  return res.data;
+}
+
+export function putCatalogDisplayOrderOpts() {
+  return mutationOptions({
+    mutationFn: putCatalogDisplayOrder,
   });
 }
 

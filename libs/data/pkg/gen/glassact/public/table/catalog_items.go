@@ -34,6 +34,7 @@ type catalogItemsTable struct {
 	CreatedAt           postgres.ColumnTimestampz
 	UpdatedAt           postgres.ColumnTimestampz
 	Version             postgres.ColumnInteger
+	DisplayOrder        postgres.ColumnInteger
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -92,8 +93,9 @@ func newCatalogItemsTableImpl(schemaName, tableName, alias string) catalogItemsT
 		CreatedAtColumn           = postgres.TimestampzColumn("created_at")
 		UpdatedAtColumn           = postgres.TimestampzColumn("updated_at")
 		VersionColumn             = postgres.IntegerColumn("version")
-		allColumns                = postgres.ColumnList{IDColumn, UUIDColumn, CatalogCodeColumn, NameColumn, DescriptionColumn, CategoryColumn, DefaultWidthColumn, DefaultHeightColumn, MinWidthColumn, MinHeightColumn, DefaultPriceGroupIDColumn, SvgURLColumn, ManifestColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns            = postgres.ColumnList{UUIDColumn, CatalogCodeColumn, NameColumn, DescriptionColumn, CategoryColumn, DefaultWidthColumn, DefaultHeightColumn, MinWidthColumn, MinHeightColumn, DefaultPriceGroupIDColumn, SvgURLColumn, ManifestColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		DisplayOrderColumn        = postgres.IntegerColumn("display_order")
+		allColumns                = postgres.ColumnList{IDColumn, UUIDColumn, CatalogCodeColumn, NameColumn, DescriptionColumn, CategoryColumn, DefaultWidthColumn, DefaultHeightColumn, MinWidthColumn, MinHeightColumn, DefaultPriceGroupIDColumn, SvgURLColumn, ManifestColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn, DisplayOrderColumn}
+		mutableColumns            = postgres.ColumnList{UUIDColumn, CatalogCodeColumn, NameColumn, DescriptionColumn, CategoryColumn, DefaultWidthColumn, DefaultHeightColumn, MinWidthColumn, MinHeightColumn, DefaultPriceGroupIDColumn, SvgURLColumn, ManifestColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn, DisplayOrderColumn}
 		defaultColumns            = postgres.ColumnList{IDColumn, UUIDColumn, ManifestColumn, IsActiveColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
@@ -118,6 +120,7 @@ func newCatalogItemsTableImpl(schemaName, tableName, alias string) catalogItemsT
 		CreatedAt:           CreatedAtColumn,
 		UpdatedAt:           UpdatedAtColumn,
 		Version:             VersionColumn,
+		DisplayOrder:        DisplayOrderColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

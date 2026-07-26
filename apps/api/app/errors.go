@@ -15,6 +15,7 @@ type appError struct {
 	BadRequest          ErrorType
 	MissingRefreshToken ErrorType
 	AccountNotFound     ErrorType
+	Conflict            ErrorType
 }
 
 var AppError = appError{
@@ -26,6 +27,7 @@ var AppError = appError{
 	BadRequest:          ErrorType("bad-request"),
 	MissingRefreshToken: ErrorType("missing-refresh-token"),
 	AccountNotFound:     ErrorType("account-not-found"),
+	Conflict:            ErrorType("conflict"),
 }
 
 type ErrorConfig struct {
@@ -73,6 +75,11 @@ var ErrorMap = map[ErrorType]ErrorConfig{
 	AppError.AccountNotFound: {
 		Status:   http.StatusUnauthorized,
 		Message:  `An account was not found for you.`,
+		Expected: true,
+	},
+	AppError.Conflict: {
+		Status:   http.StatusConflict,
+		Message:  `This action conflicts with the current state of the resource.`,
 		Expected: true,
 	},
 }

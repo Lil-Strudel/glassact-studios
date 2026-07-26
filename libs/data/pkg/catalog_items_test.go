@@ -1,6 +1,8 @@
 package data
 
 import (
+	"fmt"
+	"slices"
 	"testing"
 )
 
@@ -458,5 +460,169 @@ func TestCatalogItem_GetAll(t *testing.T) {
 	}
 	if len(items) < 2 {
 		t.Errorf("Expected at least 2 items, got %d", len(items))
+	}
+}
+
+// newTestCatalogItem builds a valid catalog item so ordering/ranking tests can
+// stay focused on the fields they actually exercise.
+func newTestCatalogItem(code, name, category string, priceGroupID int) *CatalogItem {
+	return &CatalogItem{
+		CatalogCode:         code,
+		Name:                name,
+		Category:            category,
+		DefaultWidth:        100.0,
+		DefaultHeight:       200.0,
+		MinWidth:            50.0,
+		MinHeight:           100.0,
+		DefaultPriceGroupID: priceGroupID,
+		SvgURL:              "https://example.com/item.svg",
+		IsActive:            true,
+	}
+}
+
+func TestCatalogItem_GetCategories_ReturnsSortedCategories(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
+
+	// Inserted deliberately out of order.
+	for i, category := range []string{"D-FLOWERS", "A-ANIMALS", "SB-BACKGROUNDS", "B-OUTDOORS"} {
+		item := newTestCatalogItem(fmt.Sprintf("SORT-CAT-%d", i), "Item", category, priceGroup.ID)
+		if err := models.CatalogItems.Insert(item); err != nil {
+			t.Fatalf("Failed to insert item: %v", err)
+		}
+	}
+
+	categories, err := models.CatalogItems.GetCategories()
+	if err != nil {
+		t.Fatalf("Failed to get categories: %v", err)
+	}
+
+	want := []string{"A-ANIMALS", "B-OUTDOORS", "D-FLOWERS", "SB-BACKGROUNDS"}
+	if !slices.Equal(categories, want) {
+		t.Errorf("Expected categories %v, got %v", want, categories)
+	}
+}
+
+func TestCatalogItem_GetAllActive_OrdersByDisplayOrderThenName(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
+
+	// Names chosen so alphabetical order differs from insertion order.
+	zebra := newTestCatalogItem("ORD-1", "Zebra", "A-ANIMALS", priceGroup.ID)
+	apple := newTestCatalogItem("ORD-2", "Apple", "A-ANIMALS", priceGroup.ID)
+	mango := newTestCatalogItem("ORD-3", "Mango", "A-ANIMALS", priceGroup.ID)
+
+	for _, item := range []*CatalogItem{zebra, apple, mango} {
+		if err := models.CatalogItems.Insert(item); err != nil {
+			t.Fatalf("Failed to insert %s: %v", item.Name, err)
+		}
+	}
+
+	// Rank Zebra first; Apple and Mango stay unranked and should follow by name.
+	if err := models.CatalogItems.SetDisplayOrder([]string{zebra.UUID}); err != nil {
+		t.Fatalf("Failed to set display order: %v", err)
+	}
+
+	items, err := models.CatalogItems.GetAllActive()
+	if err != nil {
+		t.Fatalf("Failed to get active items: %v", err)
+	}
+
+	got := make([]string, len(items))
+	for i, item := range items {
+		got[i] = item.Name
+	}
+
+	want := []string{"Zebra", "Apple", "Mango"}
+	if !slices.Equal(got, want) {
+		t.Errorf("Expected order %v, got %v", want, got)
+	}
+}
+
+func TestCatalogItem_SetDisplayOrder_ReplacesPreviousRanking(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
+
+	first := newTestCatalogItem("RANK-1", "First", "A-ANIMALS", priceGroup.ID)
+	second := newTestCatalogItem("RANK-2", "Second", "A-ANIMALS", priceGroup.ID)
+
+	for _, item := range []*CatalogItem{first, second} {
+		if err := models.CatalogItems.Insert(item); err != nil {
+			t.Fatalf("Failed to insert %s: %v", item.Name, err)
+		}
+	}
+
+	if err := models.CatalogItems.SetDisplayOrder([]string{first.UUID, second.UUID}); err != nil {
+		t.Fatalf("Failed to set initial display order: %v", err)
+	}
+
+	ranked, err := models.CatalogItems.GetRanked()
+	if err != nil {
+		t.Fatalf("Failed to get ranked: %v", err)
+	}
+	if len(ranked) != 2 {
+		t.Fatalf("Expected 2 ranked items, got %d", len(ranked))
+	}
+	if ranked[0].DisplayOrder == nil || *ranked[0].DisplayOrder != 1 {
+		t.Errorf("Expected first item at position 1, got %v", ranked[0].DisplayOrder)
+	}
+
+	// Re-ranking with only the second item must unrank the first.
+	if err := models.CatalogItems.SetDisplayOrder([]string{second.UUID}); err != nil {
+		t.Fatalf("Failed to replace display order: %v", err)
+	}
+
+	ranked, err = models.CatalogItems.GetRanked()
+	if err != nil {
+		t.Fatalf("Failed to get ranked after replace: %v", err)
+	}
+	if len(ranked) != 1 {
+		t.Fatalf("Expected 1 ranked item after replace, got %d", len(ranked))
+	}
+	if ranked[0].Name != "Second" {
+		t.Errorf("Expected Second to be the only ranked item, got %s", ranked[0].Name)
+	}
+}
+
+func TestCatalogItem_Update_PreservesDisplayOrder(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
+
+	item := newTestCatalogItem("KEEP-1", "Keeper", "A-ANIMALS", priceGroup.ID)
+	if err := models.CatalogItems.Insert(item); err != nil {
+		t.Fatalf("Failed to insert item: %v", err)
+	}
+
+	if err := models.CatalogItems.SetDisplayOrder([]string{item.UUID}); err != nil {
+		t.Fatalf("Failed to set display order: %v", err)
+	}
+
+	// Simulate an admin editing the item: re-read, change a field, write back.
+	fetched, found, err := models.CatalogItems.GetByID(item.ID)
+	if err != nil || !found {
+		t.Fatalf("Failed to re-read item: %v (found=%v)", err, found)
+	}
+	fetched.Name = "Renamed"
+	if err := models.CatalogItems.Update(fetched); err != nil {
+		t.Fatalf("Failed to update item: %v", err)
+	}
+
+	after, found, err := models.CatalogItems.GetByID(item.ID)
+	if err != nil || !found {
+		t.Fatalf("Failed to read item after update: %v (found=%v)", err, found)
+	}
+	if after.DisplayOrder == nil {
+		t.Fatal("Editing a catalog item wiped its best-seller rank")
+	}
+	if *after.DisplayOrder != 1 {
+		t.Errorf("Expected rank 1 preserved, got %d", *after.DisplayOrder)
 	}
 }

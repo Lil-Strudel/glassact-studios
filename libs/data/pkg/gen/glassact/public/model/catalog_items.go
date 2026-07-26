@@ -30,4 +30,5 @@ type CatalogItems struct {
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 	Version             int32
+	DisplayOrder        *int32
 }

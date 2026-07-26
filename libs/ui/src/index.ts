@@ -29,6 +29,10 @@ export * from "./file-upload";
 
 export * from "./form";
 
+export * from "./create-pan-zoom";
+
+export * from "./image-lightbox";
+
 export * from "./pagination";
 
 export * from "./select";

@@ -8,6 +8,7 @@ import {
   Button,
   Breadcrumb,
   Form,
+  ImageLightbox,
   textfieldLabel,
   showToast,
 } from "@glassact/ui";
@@ -186,13 +187,16 @@ function CatalogSelector(props: CatalogSelectorProps) {
               <For each={query.data?.items ?? []}>
                 {(item) => (
                   <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
-                    <div class="bg-gray-50 p-4 flex items-center justify-center h-48 overflow-hidden">
+                    <ImageLightbox
+                      images={[{ src: item.svg_url, alt: item.name }]}
+                      triggerClass="block w-full bg-gray-50 p-4 h-48 overflow-hidden"
+                    >
                       <img
                         src={item.svg_url}
                         alt={item.name}
-                        class="max-w-full max-h-full object-contain"
+                        class="w-full h-full object-contain"
                       />
-                    </div>
+                    </ImageLightbox>
                     <div class="p-4 flex flex-col gap-2 flex-1">
                       <code class="text-xs font-mono bg-gray-100 px-2 py-1 rounded w-fit">
                         {item.catalog_code}
