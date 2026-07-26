@@ -6,6 +6,7 @@ export const PERMISSION_ACTIONS = {
   PLACE_ORDER: "place_order",
   PAY_INVOICE: "pay_invoice",
   MANAGE_DEALERSHIP_USERS: "manage_dealership_users",
+  MANAGE_DEALERSHIP: "manage_dealership",
   VIEW_PROJECTS: "view_projects",
   VIEW_INVOICES: "view_invoices",
   CREATE_PROOF: "create_proof",

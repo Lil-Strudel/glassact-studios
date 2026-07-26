@@ -19,6 +19,7 @@ import { Route as AppProjectsRouteImport } from './routes/_app/projects'
 import { Route as AppInlaysRouteImport } from './routes/_app/inlays'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppAdminRouteImport } from './routes/_app/admin'
+import { Route as AppDealershipIndexRouteImport } from './routes/_app/dealership.index'
 import { Route as AppCatalogIndexRouteImport } from './routes/_app/catalog.index'
 import { Route as AppProjectsCreateProjectRouteImport } from './routes/_app/projects_.create-project'
 import { Route as AppDealershipIdRouteImport } from './routes/_app/dealership.$id'
@@ -87,6 +88,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
 const AppAdminRoute = AppAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDealershipIndexRoute = AppDealershipIndexRouteImport.update({
+  id: '/dealership/',
+  path: '/dealership/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCatalogIndexRoute = AppCatalogIndexRouteImport.update({
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/projects/create-project': typeof AppProjectsCreateProjectRoute
   '/catalog/': typeof AppCatalogIndexRoute
+  '/dealership/': typeof AppDealershipIndexRoute
   '/admin/catalog/$uuid': typeof AppAdminCatalogUuidRoute
   '/admin/catalog/create': typeof AppAdminCatalogCreateRoute
   '/admin/users/dealership': typeof AppAdminUsersDealershipRoute
@@ -243,6 +250,7 @@ export interface FileRoutesByTo {
   '/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/projects/create-project': typeof AppProjectsCreateProjectRoute
   '/catalog': typeof AppCatalogIndexRoute
+  '/dealership': typeof AppDealershipIndexRoute
   '/admin/catalog/$uuid': typeof AppAdminCatalogUuidRoute
   '/admin/catalog/create': typeof AppAdminCatalogCreateRoute
   '/admin/users/dealership': typeof AppAdminUsersDealershipRoute
@@ -276,6 +284,7 @@ export interface FileRoutesById {
   '/_app/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/_app/projects_/create-project': typeof AppProjectsCreateProjectRoute
   '/_app/catalog/': typeof AppCatalogIndexRoute
+  '/_app/dealership/': typeof AppDealershipIndexRoute
   '/_app/admin/catalog_/$uuid': typeof AppAdminCatalogUuidRoute
   '/_app/admin/catalog_/create': typeof AppAdminCatalogCreateRoute
   '/_app/admin/users/dealership': typeof AppAdminUsersDealershipRoute
@@ -309,6 +318,7 @@ export interface FileRouteTypes {
     | '/dealership/$id'
     | '/projects/create-project'
     | '/catalog/'
+    | '/dealership/'
     | '/admin/catalog/$uuid'
     | '/admin/catalog/create'
     | '/admin/users/dealership'
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/dealership/$id'
     | '/projects/create-project'
     | '/catalog'
+    | '/dealership'
     | '/admin/catalog/$uuid'
     | '/admin/catalog/create'
     | '/admin/users/dealership'
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
     | '/_app/dealership/$id'
     | '/_app/projects_/create-project'
     | '/_app/catalog/'
+    | '/_app/dealership/'
     | '/_app/admin/catalog_/$uuid'
     | '/_app/admin/catalog_/create'
     | '/_app/admin/users/dealership'
@@ -462,6 +474,13 @@ declare module '@tanstack/solid-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dealership/': {
+      id: '/_app/dealership/'
+      path: '/dealership'
+      fullPath: '/dealership/'
+      preLoaderRoute: typeof AppDealershipIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/catalog/': {
@@ -662,6 +681,7 @@ interface AppRouteChildren {
   AppDealershipIdRoute: typeof AppDealershipIdRouteWithChildren
   AppProjectsCreateProjectRoute: typeof AppProjectsCreateProjectRoute
   AppCatalogIndexRoute: typeof AppCatalogIndexRoute
+  AppDealershipIndexRoute: typeof AppDealershipIndexRoute
   AppCatalogUuidCustomizeRoute: typeof AppCatalogUuidCustomizeRoute
   AppProjectsIdIndexRoute: typeof AppProjectsIdIndexRoute
   AppProjectsIdInlayInlayIdRoute: typeof AppProjectsIdInlayInlayIdRoute
@@ -680,6 +700,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDealershipIdRoute: AppDealershipIdRouteWithChildren,
   AppProjectsCreateProjectRoute: AppProjectsCreateProjectRoute,
   AppCatalogIndexRoute: AppCatalogIndexRoute,
+  AppDealershipIndexRoute: AppDealershipIndexRoute,
   AppCatalogUuidCustomizeRoute: AppCatalogUuidCustomizeRoute,
   AppProjectsIdIndexRoute: AppProjectsIdIndexRoute,
   AppProjectsIdInlayInlayIdRoute: AppProjectsIdInlayInlayIdRoute,

@@ -3,6 +3,7 @@ package user
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 	"github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
@@ -25,6 +26,45 @@ func (m *UserModule) HandleGetUserSelf(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *UserModule) HandleGetUsers(w http.ResponseWriter, r *http.Request) {
+	requester := m.ContextGetUser(r)
+
+	// Dealership users are confined to their own dealership; never trust a
+	// client-supplied dealership_id for them. Internal users may optionally scope
+	// the list to a specific dealership via the dealership_id query param.
+	if requester.IsDealership() {
+		id := requester.GetDealershipID()
+		if id == nil {
+			m.WriteError(w, r, m.Err.Forbidden, nil)
+			return
+		}
+
+		users, err := m.Db.DealershipUsers.GetByDealershipID(*id)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+
+		m.WriteJSON(w, r, http.StatusOK, users)
+		return
+	}
+
+	if raw := r.URL.Query().Get("dealership_id"); raw != "" {
+		dealershipID, err := strconv.Atoi(raw)
+		if err != nil {
+			m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("invalid dealership_id: %w", err))
+			return
+		}
+
+		users, err := m.Db.DealershipUsers.GetByDealershipID(dealershipID)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+
+		m.WriteJSON(w, r, http.StatusOK, users)
+		return
+	}
+
 	users, err := m.Db.DealershipUsers.GetAll()
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)

@@ -6,6 +6,7 @@ const (
 	ActionPlaceOrder            = "place_order"
 	ActionPayInvoice            = "pay_invoice"
 	ActionManageDealershipUsers = "manage_dealership_users"
+	ActionManageDealership      = "manage_dealership"
 	ActionViewProjects          = "view_projects"
 	ActionViewInvoices          = "view_invoices"
 	ActionManageProject         = "manage_project"

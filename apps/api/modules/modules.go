@@ -47,12 +47,15 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/auth/logout", unprotected.ThenFunc(authModule.HandleGetLogout))
 
 	canManageDealerships := alice.New(app.Authenticate, app.RequirePermission(data.ActionManageDealerships))
+	canManageDealership := alice.New(app.Authenticate, app.RequirePermission(data.ActionManageDealership))
 	canAccessAdmin := alice.New(app.Authenticate, app.RequirePermission(data.ActionAccessAdmin))
 
 	dealershipModule := dealership.NewDealershipModule(app)
 	mux.Handle("GET /api/dealership", canAccessAdmin.ThenFunc(dealershipModule.HandleGetDealerships))
-	mux.Handle("GET /api/dealership/{uuid}", canAccessAdmin.ThenFunc(dealershipModule.HandleGetDealershipByUUID))
+	mux.Handle("GET /api/dealership/self", protected.ThenFunc(dealershipModule.HandleGetDealershipSelf))
+	mux.Handle("GET /api/dealership/{uuid}", protected.ThenFunc(dealershipModule.HandleGetDealershipByUUID))
 	mux.Handle("POST /api/dealership", canManageDealerships.ThenFunc(dealershipModule.HandlePostDealership))
+	mux.Handle("PATCH /api/dealership/{uuid}", canManageDealership.ThenFunc(dealershipModule.HandlePatchDealership))
 
 	canCreateProject := alice.New(app.Authenticate, app.RequirePermission(data.ActionCreateProject))
 	canManageProject := alice.New(app.Authenticate, app.RequirePermission(data.ActionManageProject))
@@ -108,7 +111,7 @@ func GetRoutes(app *app.Application) http.Handler {
 
 	userModule := user.NewUserModule(app)
 	mux.Handle("GET /api/user/self", protected.ThenFunc(userModule.HandleGetUserSelf))
-	mux.Handle("GET /api/dealership-user", canAccessAdmin.ThenFunc(userModule.HandleGetUsers))
+	mux.Handle("GET /api/dealership-user", protected.ThenFunc(userModule.HandleGetUsers))
 	mux.Handle("GET /api/dealership-user/{uuid}", canAccessAdmin.ThenFunc(userModule.HandleGetUserByUUID))
 	mux.Handle("POST /api/dealership-user", canManageDealershipUsers.ThenFunc(userModule.HandleCreateDealershipUser))
 	mux.Handle("PATCH /api/dealership-user/{uuid}", canManageDealershipUsers.ThenFunc(userModule.HandleUpdateDealershipUser))

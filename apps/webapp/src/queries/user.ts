@@ -1,7 +1,13 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
 
-import type { GET, POST, DealershipUser, InternalUser } from "@glassact/data";
+import type {
+  GET,
+  POST,
+  PATCH,
+  DealershipUser,
+  InternalUser,
+} from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
 export async function getUserSelf(): Promise<
@@ -18,15 +24,22 @@ export function getUserSelfOpts() {
   });
 }
 
-export async function getDealershipUsers(): Promise<GET<DealershipUser>[]> {
-  const res = await api.get("/dealership-user");
+export async function getDealershipUsers(
+  dealershipId?: number,
+): Promise<GET<DealershipUser>[]> {
+  const res = await api.get("/dealership-user", {
+    params: dealershipId ? { dealership_id: dealershipId } : undefined,
+  });
   return res.data;
 }
 
-export function getDealershipUsersOpts() {
+export function getDealershipUsersOpts(dealershipId?: number) {
   return queryOptions({
-    queryKey: ["dealership-user"],
-    queryFn: getDealershipUsers,
+    queryKey:
+      dealershipId !== undefined
+        ? ["dealership-user", { dealership_id: dealershipId }]
+        : ["dealership-user"],
+    queryFn: () => getDealershipUsers(dealershipId),
   });
 }
 
@@ -54,6 +67,33 @@ export async function postDealershipUser(
 export function postDealershipUserOpts() {
   return mutationOptions({
     mutationFn: postDealershipUser,
+  });
+}
+
+export async function patchDealershipUser(args: {
+  uuid: string;
+  body: PATCH<DealershipUser>;
+}): Promise<GET<DealershipUser>> {
+  const res = await api.patch(`/dealership-user/${args.uuid}`, args.body);
+  return res.data;
+}
+
+export function patchDealershipUserOpts() {
+  return mutationOptions({
+    mutationFn: patchDealershipUser,
+  });
+}
+
+export async function deleteDealershipUser(
+  uuid: string,
+): Promise<GET<DealershipUser>> {
+  const res = await api.delete(`/dealership-user/${uuid}`);
+  return res.data;
+}
+
+export function deleteDealershipUserOpts() {
+  return mutationOptions({
+    mutationFn: deleteDealershipUser,
   });
 }
 

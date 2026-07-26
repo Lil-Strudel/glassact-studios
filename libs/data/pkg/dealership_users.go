@@ -420,6 +420,8 @@ func (u *DealershipUser) Can(action string) bool {
 		return u.Role == DealershipUserRoles.Admin
 	case ActionManageDealershipUsers:
 		return u.Role == DealershipUserRoles.Admin
+	case ActionManageDealership:
+		return u.Role == DealershipUserRoles.Admin
 	case ActionViewProjects:
 		return true
 	case ActionViewInvoices:

@@ -53,6 +53,12 @@ const navigation = [
   { name: "Admin", to: "/admin", permission: PERMISSION_ACTIONS.ACCESS_ADMIN },
 ];
 const userNavigation = [
+  {
+    component: Link,
+    name: "My Dealership",
+    props: { to: "/dealership" },
+    permission: PERMISSION_ACTIONS.MANAGE_DEALERSHIP_USERS,
+  },
   { component: Link, name: "Settings", props: { to: "/settings" } },
   {
     component: "a",
@@ -67,6 +73,10 @@ function RouteComponent() {
 
   const filteredNavigation = createMemo(() =>
     navigation.filter((item) => !item.permission || can(item.permission)),
+  );
+
+  const filteredUserNavigation = createMemo(() =>
+    userNavigation.filter((item) => !item.permission || can(item.permission)),
   );
 
   function toggleOpen() {
@@ -119,7 +129,7 @@ function RouteComponent() {
                         />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <For each={userNavigation}>
+                        <For each={filteredUserNavigation()}>
                           {(item) => (
                             <DropdownMenuItem
                               as={item.component}
@@ -186,7 +196,7 @@ function RouteComponent() {
                         </div>
                       </div>
                       <div class="mt-3 space-y-1">
-                        <For each={userNavigation}>
+                        <For each={filteredUserNavigation()}>
                           {(item) =>
                             item.component === "a" ? (
                               <a
