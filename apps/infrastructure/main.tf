@@ -4,6 +4,7 @@ terraform {
     key          = "terraform.tfstate"
     region       = "us-west-2"
     use_lockfile = true
+    profile      = "glassact-studios"
   }
 
   required_providers {
@@ -19,7 +20,8 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-west-2"
+  region  = "us-west-2"
+  profile = "glassact-studios"
 }
 
 resource "aws_s3_bucket" "state_bucket" {
@@ -62,8 +64,9 @@ resource "aws_iam_user_policy" "t8_dev_s3" {
 }
 
 provider "aws" {
-  alias  = "us_east_1"
-  region = "us-east-1"
+  alias   = "us_east_1"
+  region  = "us-east-1"
+  profile = "glassact-studios"
 }
 
 resource "random_id" "landing_bucket_suffix" {
