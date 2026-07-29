@@ -1,6 +1,6 @@
 INSERT INTO dealerships (name, street, street_ext, city, state, postal_code, country, location)
 VALUES (
-    'Fake Dealership',
+    'GlassAct Test Dealership',
     '540 S Commerce Rd',
     '',
     'Orem',
@@ -19,9 +19,9 @@ VALUES (
 
 INSERT INTO internal_users (name, email, avatar, role)
 VALUES (
-    'T8 Storey',
-    't8storey@protonmail.com',
-    'https://ui-avatars.com/api/?name=T8+Storey&background=BAFFC9',
+    'Roy Santo',
+    'roy@glassactstudios.com',
+    'https://ui-avatars.com/api/?name=Roy+Santo&background=BAFFC9',
     'admin'
 );
 
@@ -34,13 +34,22 @@ VALUES (
     'admin'
 ) ON CONFLICT DO NOTHING;
 
+INSERT INTO dealership_users (dealership_id, name, email, avatar, role)
+VALUES (
+    1,
+    'Roy Santo',
+    'roysanto@yahoo.com',
+    'https://ui-avatars.com/api/?name=Roy+Santo&background=BAFFC9',
+    'admin'
+) ON CONFLICT DO NOTHING;
+
 INSERT INTO price_groups (id, uuid, name, base_price_cents, description, is_active)
 VALUES (
     1,
     'a9fc472f-f3c7-4957-afa8-fe5f9f85a669',
     'PG-1',
     10000,
-    '',
+    'Standard pricing for smaller, simpler designs.',
     true
 ) ON CONFLICT DO NOTHING;
 
@@ -49,8 +58,8 @@ VALUES (
     2,
     '1bb163a1-7818-4e76-84eb-944701df5f61',
     'PG-2',
-    15000,
-    '',
+    18500,
+    'Pricing for moderately sized or detailed designs.',
     true
 ) ON CONFLICT DO NOTHING;
 
@@ -59,8 +68,8 @@ VALUES (
     3,
     '3a050196-1a60-4a0c-97c9-883df0e792c4',
     'PG-3',
-    20000,
-    '',
+    29000,
+    'Pricing for larger or more elaborate designs.',
     true
 ) ON CONFLICT DO NOTHING;
 
@@ -69,8 +78,8 @@ VALUES (
     4,
     '1ec26898-feea-43f8-a1ae-d62984a6eec1',
     'PG-4',
-    25000,
-    '',
+    60000,
+    'Pricing for our largest and most complex designs.',
     true
 ) ON CONFLICT DO NOTHING;
 
@@ -118,53 +127,12 @@ INSERT INTO glass_colors (name, hex, family, sort_order) VALUES
   ('Pink', '#e09090', 'red', 400)
 ON CONFLICT (hex) DO NOTHING;
 
--- Initial grout (background) set — placeholder granite tones, refine later.
+-- Grout (background) colors GlassAct offers.
 INSERT INTO grouts (name, hex, sort_order) VALUES
-  ('Black Granite', '#1c1c1c', 10),
-  ('Dark Grey Granite', '#3b3e40', 20),
-  ('Grey Granite', '#8a8d8f', 30),
-  ('Light Grey Granite', '#c7c9c8', 40),
-  ('Mahogany Granite', '#4a1f1a', 50),
-  ('Rose Granite', '#b58a86', 60),
-  ('Tan Granite', '#c9b79c', 70),
-  ('Green Granite', '#2d3b33', 80)
+  ('Raven', '#1a1a1a', 10),
+  ('Summer Wheat', '#5f4d40', 20),
+  ('DeLorean Gray', '#92918a', 30),
+  ('Light Chocolate', '#9e7d62', 40),
+  ('Light Buff', '#bdac9f', 50),
+  ('White', '#e2e0df', 60)
 ON CONFLICT (hex) DO NOTHING;
-
--- Support / knowledge-base content shown on the Support page.
-INSERT INTO support_articles (category, title, body, youtube_url, sort_order) VALUES
-  (
-    'installation',
-    'Installing a stained glass inlay',
-    E'Watch the walkthrough above, then follow these steps:\n\n1. **Clean the recess** thoroughly and let it dry.\n2. Dry-fit the inlay to confirm the depth and orientation.\n3. Apply a bead of the recommended **adhesive** around the perimeter.\n4. Seat the inlay, press evenly, and wipe away any squeeze-out.\n5. Let it cure undisturbed for **24 hours** before handling.',
-    'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    10
-  ),
-  (
-    'installation',
-    'Cold-weather installation tips',
-    E'Adhesives cure slowly below 50°F. When installing in cold conditions:\n\n- Store the adhesive at room temperature overnight before use.\n- Warm the stone surface with a heat lamp if possible.\n- Allow extra cure time — up to **48 hours**.',
-    NULL,
-    20
-  ),
-  (
-    'ordering',
-    'How to place an order',
-    E'1. Create a **project** from the Projects page.\n2. Add one or more **inlays** — pick a catalog design or request a custom piece.\n3. For catalog items you can customize colors and sizing in the customizer.\n4. Once every inlay is marked **ready**, open the cart and select the inlays to include.\n5. Click **Place Order** — pricing is locked in at this point.',
-    NULL,
-    10
-  ),
-  (
-    'pricing',
-    'How pricing works',
-    E'Every inlay is priced by its **price group**. A catalog item has a default price group, and our designers may adjust it based on custom sizing, added colors, or special materials.\n\nThe price is locked when you place your order, so later catalog changes never affect an existing order. See the current price groups below.',
-    NULL,
-    10
-  ),
-  (
-    'contact',
-    'Get in touch',
-    E'Still have questions? We are happy to help.\n\n- **Email:** support@glassactstudios.com\n- **Phone:** (555) 123-4567, Mon–Fri 8am–5pm ET\n\nFor order-specific questions, include your project name or reference number so we can look it up quickly.',
-    NULL,
-    10
-  )
-ON CONFLICT DO NOTHING;
