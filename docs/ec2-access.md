@@ -26,7 +26,7 @@ For a Postgres tunnel specifically (port-forwarding, not a shell), see
 
 ```bash
 cd apps/infrastructure
-aws ssm start-session --region us-west-2 --target "$(terraform output -raw api_instance_id)"
+aws ssm start-session --region us-west-2 --target "$(terraform output -raw api_instance_id)" --profile glassact-studios
 ```
 
 This drops you in as `ssm-user`. Become root with `sudo su -`. The API and
@@ -45,7 +45,7 @@ SSM, which the egress-all rule permits):
 
 ```bash
 aws ssm describe-instance-information --region us-west-2 \
-  --query "InstanceInformationList[?InstanceId=='$(cd apps/infrastructure && terraform output -raw api_instance_id)']"
+  --query "InstanceInformationList[?InstanceId=='$(cd apps/infrastructure && terraform output -raw api_instance_id)']" --profile glassact-studios
 ```
 
 ## Running a one-off command without a session
@@ -58,6 +58,7 @@ aws ssm send-command --region us-west-2 \
   --instance-ids "$(cd apps/infrastructure && terraform output -raw api_instance_id)" \
   --document-name AWS-RunShellScript \
   --parameters 'commands=["docker ps"]'
+  --profile glassact-studios
 ```
 
 ## SSH-over-SSM (optional)

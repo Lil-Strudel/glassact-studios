@@ -57,12 +57,13 @@ aws ssm start-session \
   --target "$(cd apps/infrastructure && terraform output -raw api_instance_id)" \
   --document-name AWS-StartPortForwardingSession \
   --parameters '{"portNumber":["5432"],"localPortNumber":["5432"]}'
+  --profile glassact-studios
 
 # 2. Get the password and build a percent-encoded DSN (migrate needs a
 #    postgres:// URI, so special characters in the password must be encoded -
 #    see docs/prod-database-access.md for why):
 PASSWORD=$(aws ssm get-parameter --name /glassact/api/POSTGRES_PASSWORD \
-  --with-decryption --query Parameter.Value --output text)
+  --with-decryption --query Parameter.Value --output text --profile glassact-studios)
 ENCODED_PASSWORD=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$PASSWORD")
 DATABASE_DSN="postgresql://glassact:${ENCODED_PASSWORD}@localhost:5432/glassact?sslmode=disable"
 
