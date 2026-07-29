@@ -177,7 +177,6 @@ function RouteComponent() {
                 glassColors={glassQuery.data!}
                 grouts={groutsQuery.data!}
                 initialState={initialState()}
-                storageScope={`inlay:${params().inlayId}`}
                 onBakeComplete={handleBakeComplete}
               />
             )}

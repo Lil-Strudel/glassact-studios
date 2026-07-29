@@ -1,5 +1,11 @@
-import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 import { Button, createPanZoom } from "@glassact/ui";
+import {
+  GRANITE_PRESETS,
+  graniteBackgroundStyle,
+  graniteSwatchStyle,
+  type GranitePreset,
+} from "./granite";
 
 interface CustomizerCanvasProps {
   svgText: string;
@@ -14,8 +20,15 @@ interface CustomizerCanvasProps {
   selectedPieceId: string | null;
   // Group key whose pieces should be region-highlighted (e.g. on hover).
   highlightedRegion: string | null;
+  // Granite backdrop the inlay is previewed against. Optional: when omitted (e.g.
+  // the admin manifest editor) the canvas shows a plain backdrop and no picker.
+  granite?: GranitePreset;
+  graniteKey?: string;
+  onSelectGranite?: (key: string) => void;
   onPieceClick: (pieceId: string, groupKey: string) => void;
   onPieceHover: (pieceId: string | null, groupKey: string | null) => void;
+  // Fired when the user clicks empty backdrop (not a piece, not a pan).
+  onDeselect?: () => void;
 }
 
 const HIGHLIGHT_CSS = `
@@ -114,9 +127,14 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
   }
 
   function onPointerUp(e: PointerEvent) {
-    // A press that never moved is a piece selection, not a pan.
-    if (panZoom.isPanning() && !panZoom.didPan() && pressedPiece) {
-      props.onPieceClick(pressedPiece, props.pieceSource.get(pressedPiece)!);
+    // A press that never moved is a click, not a pan: on a piece it selects it,
+    // on empty backdrop it deselects.
+    if (panZoom.isPanning() && !panZoom.didPan()) {
+      if (pressedPiece) {
+        props.onPieceClick(pressedPiece, props.pieceSource.get(pressedPiece)!);
+      } else {
+        props.onDeselect?.();
+      }
     }
     panZoom.endPan();
     pressedPiece = null;
@@ -131,7 +149,11 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
       <div
         ref={panZoom.setViewport}
         class="gac-canvas relative flex-1 overflow-hidden rounded-lg border border-gray-200"
-        style={{ "background-color": "#f3f4f6" }}
+        style={
+          props.granite
+            ? graniteBackgroundStyle(props.granite)
+            : { "background-color": "#f3f4f6" }
+        }
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -148,6 +170,30 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
           <div ref={host} class="h-full w-full" />
         </div>
       </div>
+
+      <Show when={props.granite && props.onSelectGranite}>
+        <div class="pointer-events-none absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-1 rounded-full border border-gray-200 bg-white/90 px-2 py-1 shadow-sm">
+          <span class="px-1 text-[11px] font-medium text-gray-500">Granite</span>
+          <For each={GRANITE_PRESETS}>
+            {(preset) => (
+              <button
+                type="button"
+                title={preset.name}
+                aria-label={`${preset.name} background`}
+                onClick={() => props.onSelectGranite?.(preset.key)}
+                class="pointer-events-auto h-6 w-6 rounded-full border transition"
+                classList={{
+                  "border-blue-600 ring-2 ring-blue-500/40":
+                    props.graniteKey === preset.key,
+                  "border-black/15 hover:border-gray-500":
+                    props.graniteKey !== preset.key,
+                }}
+                style={graniteSwatchStyle(preset)}
+              />
+            )}
+          </For>
+        </div>
+      </Show>
 
       <div class="pointer-events-none absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-gray-200 bg-white/90 px-2 py-1 shadow-sm">
         <Button

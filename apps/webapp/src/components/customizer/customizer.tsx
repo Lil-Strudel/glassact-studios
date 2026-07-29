@@ -22,6 +22,8 @@ import {
   CustomizerCanvas,
   buildGroutPieceIds,
   buildPieceSourceMap,
+  DEFAULT_GRANITE_KEY,
+  graniteByKey,
   groupGlassId,
   resolvePieceHex,
   totalCustomPieces,
@@ -35,44 +37,31 @@ interface CustomizerProps {
   glassColors: GET<GlassColor>[];
   grouts: GET<Grout>[];
   onBakeComplete?: (result: BakeResult) => void;
-  // Where to resume from when there is no saved draft. Re-customizing an
-  // existing inlay starts from that inlay's current coloring, not the catalog
-  // defaults.
-  initialState?: PersistedState;
-  // Distinguishes concurrent sessions on the same catalog design (adding a new
-  // inlay vs. adjusting an existing one) so their drafts don't overwrite
-  // each other.
-  storageScope?: string;
+  // Where to start. Re-customizing an existing inlay seeds from that inlay's
+  // current coloring; otherwise the catalog defaults are used.
+  initialState?: InitialState;
 }
 
-interface PersistedState {
+interface InitialState {
   overrides: ColorOverrides;
   width: number;
 }
 
 export function Customizer(props: CustomizerProps) {
-  const storageKey = `gac:customizer:${props.item.uuid}${props.storageScope ? `:${props.storageScope}` : ""}`;
   const aspect = props.item.default_height / props.item.default_width;
   const minWidth = Math.max(
     props.item.min_width,
     props.item.min_height / aspect,
   );
 
-  const loadPersisted = (): PersistedState => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) return JSON.parse(raw) as PersistedState;
-    } catch {
-      /* ignore */
-    }
-    return (
-      props.initialState ?? { overrides: {}, width: props.item.default_width }
-    );
-  };
-  const persisted = loadPersisted();
+  // Where to start: a re-customize session seeds from the inlay's current
+  // coloring (props.initialState); otherwise from catalog defaults. Nothing is
+  // persisted between sessions.
+  const initial: InitialState =
+    props.initialState ?? { overrides: {}, width: props.item.default_width };
 
   const [overrides, setOverrides] = createSignal<ColorOverrides>(
-    persisted.overrides ?? {},
+    initial.overrides ?? {},
   );
   const [past, setPast] = createSignal<ColorOverrides[]>([]);
   const [future, setFuture] = createSignal<ColorOverrides[]>([]);
@@ -85,8 +74,14 @@ export function Customizer(props: CustomizerProps) {
   const [hoverGlassId, setHoverGlassId] = createSignal<number | null>(null);
   const [hoveredRegion, setHoveredRegion] = createSignal<string | null>(null);
 
-  const [width, setWidth] = createSignal(persisted.width ?? props.item.default_width);
+  const [width, setWidth] = createSignal(initial.width ?? props.item.default_width);
   const height = createMemo(() => width() * aspect);
+
+  // The granite backdrop (the "stone" the inlay sits on) is a purely in-memory
+  // viewing preference, independent of the saved/baked coloring. It always
+  // starts on gray.
+  const [graniteKey, setGraniteKey] = createSignal(DEFAULT_GRANITE_KEY);
+  const granite = createMemo(() => graniteByKey(graniteKey()));
 
   const manifest = createMemo(
     () =>
@@ -106,14 +101,6 @@ export function Customizer(props: CustomizerProps) {
     const id = overrides().background?.grout_id;
     if (id == null) return null;
     return props.grouts.find((g) => g.id === id)?.hex ?? null;
-  });
-
-  const usedGlassIds = createMemo(() => {
-    const o = overrides();
-    const ids = new Set<number>();
-    for (const g of Object.values(o.groups ?? {})) ids.add(g.glass_color_id);
-    for (const p of Object.values(o.pieces ?? {})) ids.add(p.glass_color_id);
-    return [...ids];
   });
 
   const selectedGlassId = createMemo<number | null>(() => {
@@ -178,16 +165,32 @@ export function Customizer(props: CustomizerProps) {
     setMode(next);
   }
 
+  // Selecting the already-selected group/piece toggles it back off so the color
+  // grid collapses ("clicking no color deselects").
   function selectGroup(groupKey: string) {
+    const sel = selection();
+    if (sel?.type === "group" && sel.groupKey === groupKey) {
+      setSelection(null);
+      return;
+    }
     setSelection({ type: "group", groupKey });
   }
 
   function onPieceClick(pieceId: string, groupKey: string) {
     if (mode() === "piece") {
+      const sel = selection();
+      if (sel?.type === "piece" && sel.pieceId === pieceId) {
+        setSelection(null);
+        return;
+      }
       setSelection({ type: "piece", pieceId, groupKey });
     } else {
-      setSelection({ type: "group", groupKey });
+      selectGroup(groupKey);
     }
+  }
+
+  function deselect() {
+    setSelection(null);
   }
 
   function assignGlass(glassId: number) {
@@ -235,17 +238,7 @@ export function Customizer(props: CustomizerProps) {
       width() !== props.item.default_width,
   );
 
-  // Autosave to localStorage so a refresh/navigation doesn't lose work.
-  createEffect(() => {
-    const state: PersistedState = { overrides: overrides(), width: width() };
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(state));
-    } catch {
-      /* ignore quota errors */
-    }
-  });
-
-  // Warn before leaving with unsaved changes.
+  // Warn before leaving with unsaved changes (work is kept only in memory).
   createEffect(() => {
     const dirty = isDirty();
     const handler = (e: BeforeUnloadEvent) => {
@@ -372,8 +365,12 @@ export function Customizer(props: CustomizerProps) {
                 : null
             }
             highlightedRegion={hoveredRegion()}
+            granite={granite()}
+            graniteKey={graniteKey()}
+            onSelectGranite={setGraniteKey}
             onPieceClick={onPieceClick}
             onPieceHover={(_, groupKey) => setHoveredRegion(groupKey)}
+            onDeselect={deselect}
           />
         </div>
 
@@ -388,7 +385,6 @@ export function Customizer(props: CustomizerProps) {
             overrides={overrides()}
             selection={selection()}
             selectedGlassId={selectedGlassId()}
-            usedGlassIds={usedGlassIds()}
             width={width()}
             height={height()}
             minWidth={minWidth}

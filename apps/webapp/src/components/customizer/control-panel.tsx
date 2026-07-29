@@ -30,7 +30,6 @@ interface ControlPanelProps {
   overrides: ColorOverrides;
   selection: Selection | null;
   selectedGlassId: number | null;
-  usedGlassIds: number[];
   width: number;
   height: number;
   minWidth: number;
@@ -125,10 +124,8 @@ export function ControlPanel(props: ControlPanelProps) {
           <SwatchPicker
             swatches={glassSwatches()}
             selectedId={props.selectedGlassId}
-            usedIds={props.usedGlassIds}
             onSelect={props.onAssignGlass}
             onHoverChange={props.onHoverGlass}
-            searchPlaceholder="Search glass colors..."
           />
         </Show>
       </div>
@@ -154,6 +151,7 @@ export function ControlPanel(props: ControlPanelProps) {
               return (
                 <button
                   type="button"
+                  title={glass()?.name ?? "Original color"}
                   onClick={() => props.onSelectGroup(groupKey)}
                   onMouseEnter={() => props.onRegionHover(groupKey)}
                   onMouseLeave={() => props.onRegionHover(null)}
@@ -172,14 +170,9 @@ export function ControlPanel(props: ControlPanelProps) {
                       }}
                     />
                   </span>
-                  <span class="min-w-0 flex-1">
-                    <span class="block truncate text-xs font-medium text-gray-800">
-                      {glass()?.name ?? "Original color"}
-                    </span>
-                    <span class="block text-[11px] text-gray-500">
-                      {region.count} piece
-                      {region.count === 1 ? "" : "s"}
-                    </span>
+                  <span class="min-w-0 flex-1 text-[11px] text-gray-500">
+                    {region.count} piece
+                    {region.count === 1 ? "" : "s"}
                   </span>
                   <Show when={custom() > 0}>
                     <Badge variant="warning" class="shrink-0 rounded-full px-1.5 py-0.5 text-[10px]">
@@ -204,7 +197,6 @@ export function ControlPanel(props: ControlPanelProps) {
             props.manifest.grout_region.grout_id
           }
           onSelect={props.onSelectGrout}
-          searchPlaceholder="Search grout..."
         />
       </div>
 
