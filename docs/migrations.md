@@ -54,9 +54,10 @@ version pinned in `Dockerfile.migrate`:
 ```bash
 # 1. Open the tunnel (separate terminal, leave running):
 aws ssm start-session \
+  --region us-west-2 \
   --target "$(cd apps/infrastructure && terraform output -raw api_instance_id)" \
   --document-name AWS-StartPortForwardingSession \
-  --parameters '{"portNumber":["5432"],"localPortNumber":["5432"]}'
+  --parameters '{"portNumber":["5432"],"localPortNumber":["5432"]}' \
   --profile glassact-studios
 
 # 2. Get the password and build a percent-encoded DSN (migrate needs a

@@ -22,7 +22,8 @@ aws ssm start-session \
   --region us-west-2 \
   --target "$(terraform output -raw api_instance_id)" \
   --document-name AWS-StartPortForwardingSession \
-  --parameters '{"portNumber":["5432"],"localPortNumber":["5432"]}'
+  --parameters '{"portNumber":["5432"],"localPortNumber":["5432"]}' \
+  --profile glassact-studios
 ```
 
 Leave this running in its own terminal. It forwards `localhost:5432` on your
@@ -35,7 +36,7 @@ The Postgres password lives in SSM Parameter Store, not in Terraform state:
 
 ```bash
 aws ssm get-parameter --region us-west-2 --name /glassact/api/POSTGRES_PASSWORD \
-  --with-decryption --query Parameter.Value --output text
+  --with-decryption --query Parameter.Value --output text --profile glassact-studios
 ```
 
 ## 3. Connect

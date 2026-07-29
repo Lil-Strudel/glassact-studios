@@ -57,7 +57,7 @@ session (this does not need the Session Manager plugin):
 aws ssm send-command --region us-west-2 \
   --instance-ids "$(cd apps/infrastructure && terraform output -raw api_instance_id)" \
   --document-name AWS-RunShellScript \
-  --parameters 'commands=["docker ps"]'
+  --parameters 'commands=["docker ps"]' \
   --profile glassact-studios
 ```
 
@@ -68,7 +68,7 @@ as the transport by adding this to `~/.ssh/config`:
 
 ```
 host i-* mi-*
-    ProxyCommand sh -c "aws ssm start-session --region us-west-2 --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p"
+    ProxyCommand sh -c "aws ssm start-session --region us-west-2 --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p --profile glassact-studios"
 ```
 
 Then `ssh ssm-user@<instance-id>` works. This still requires a public key in
