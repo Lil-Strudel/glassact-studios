@@ -21,8 +21,11 @@ data "aws_ami" "al2023_arm64" {
   owners      = ["amazon"]
 
   filter {
+    # "al2023-ami-2023.*" (not "al2023-ami-minimal-*" or "al2023-ami-ecs-hvm-*") -
+    # those variants match the looser "al2023-ami-*-kernel-*-arm64" pattern too,
+    # but lack a preinstalled/running amazon-ssm-agent, which breaks SSM deploys.
     name   = "name"
-    values = ["al2023-ami-*-kernel-*-arm64"]
+    values = ["al2023-ami-2023.*-kernel-*-arm64"]
   }
   filter {
     name   = "architecture"
