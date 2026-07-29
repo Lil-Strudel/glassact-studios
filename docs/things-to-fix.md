@@ -3,7 +3,7 @@
 ~Re seed database with correct grout~
 ~Backup prod for seed~
 Add granite colors to calaog Fullscreen
-Used in this design + color groups confusing in customizer. To many scroll bars. Name is secondary to color
+~Used in this design + color groups confusing in customizer. To many scroll bars. Name is secondary to color~
 Cannot recustomize is not an option
 ~Installation kit price $95~
 Remove button should never be disabled
