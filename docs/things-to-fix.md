@@ -35,4 +35,3 @@ Navigate from inlay to inlay in inlay page
 Dealership should not see when payment is required options
 Make notifications only go to the people involved
 Catalog admin page only paginates first api response
-Dealerships should have navbar button for dealership

@@ -49,16 +49,15 @@ const navigation = [
     to: "/inlays",
     permission: PERMISSION_ACTIONS.MANAGE_KANBAN,
   },
+  {
+    name: "My Dealership",
+    to: "/dealership",
+    permission: PERMISSION_ACTIONS.MANAGE_DEALERSHIP_USERS,
+  },
   { name: "Support", to: "/support" },
   { name: "Admin", to: "/admin", permission: PERMISSION_ACTIONS.ACCESS_ADMIN },
 ];
 const userNavigation = [
-  {
-    component: Link,
-    name: "My Dealership",
-    props: { to: "/dealership" },
-    permission: PERMISSION_ACTIONS.MANAGE_DEALERSHIP_USERS,
-  },
   { component: Link, name: "Settings", props: { to: "/settings" } },
   {
     component: "a",
