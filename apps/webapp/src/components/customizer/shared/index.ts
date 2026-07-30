@@ -11,6 +11,8 @@
 export { CustomizerCanvas } from "./customizer-canvas";
 export type { CustomizerCanvasProps } from "./customizer-canvas";
 
+export { SvgPreview } from "./svg-preview";
+
 export { SwatchPicker } from "./swatch-picker";
 export type { Swatch } from "./swatch-picker";
 

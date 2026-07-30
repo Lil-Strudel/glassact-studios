@@ -12,23 +12,18 @@ import {
   AlertDescription,
   ComboboxFree,
   ComboboxFreeMulti,
-  FileUpload,
 } from "@glassact/ui";
 import { createForm } from "@tanstack/solid-form";
 import { useMutation, useQuery } from "@tanstack/solid-query";
 import { z } from "zod";
-import { createMemo, createSignal, Show } from "solid-js";
+import { createMemo, createSignal, onMount, Show } from "solid-js";
 import { getCatalogAllTagsOpts } from "../../queries/catalog-browse";
-import { postCatalogAnalyzeOpts } from "../../queries/catalog";
 import { getGlassColorsOpts } from "../../queries/glass-colors";
 import { getGroutsOpts } from "../../queries/grouts";
 import { postUploadOpts, type UploadResponse } from "../../queries/upload";
 import PriceGroupCombobox from "../price-group-combobox";
-import {
-  ManifestEditor,
-  useContentBBox,
-  isManifestComplete,
-} from "./manifest-editor";
+import { ArtworkPanel, type CatalogArtwork } from "./artwork";
+import { useContentBBox, isManifestComplete } from "./manifest-editor";
 
 // Pre-loaded editor state for the edit flow: the stored item already has a baked
 // SVG (fetched as text) and a finalized manifest.
@@ -50,8 +45,6 @@ const metadataSchema = z.object({
   name: z.string().min(1).max(255),
   description: z.string().max(2000),
   category: z.string().min(1).max(255),
-  default_width: z.number().positive(),
-  default_height: z.number().positive(),
   min_width: z.number().positive(),
   min_height: z.number().positive(),
   default_price_group_id: z.number().int().positive(),
@@ -60,7 +53,6 @@ const metadataSchema = z.object({
 
 export function CatalogForm(props: CatalogFormProps) {
   const uploadMutation = useMutation(postUploadOpts);
-  const analyzeMutation = useMutation(postCatalogAnalyzeOpts);
 
   const tagsQuery = useQuery(() => getCatalogAllTagsOpts());
   const glassQuery = useQuery(() => getGlassColorsOpts());
@@ -68,48 +60,53 @@ export function CatalogForm(props: CatalogFormProps) {
 
   const measureBBox = useContentBBox();
 
-  // The working structure SVG and manifest. Seeded from analyze (create) or from
-  // the stored item (edit).
-  const [structureSvg, setStructureSvg] = createSignal<string | null>(
-    props.edit?.svgText ?? null,
-  );
-  const [manifest, setManifest] = createSignal<Manifest | null>(
-    props.edit?.manifest ?? null,
-  );
-  const [warnings, setWarnings] = createSignal<string[]>([]);
+  // The SVG, its manifest and the default size, all edited through the artwork
+  // dialogs. Seeded from the stored item on edit.
+  const [artwork, setArtwork] = createSignal<CatalogArtwork | null>(null);
   const [category, setCategory] = createSignal(props.edit?.item.category ?? "");
   const [tags, setTags] = createSignal<string[]>(props.edit?.tags ?? []);
 
   const categoryOptions = createMemo(() => [...CATALOG_CATEGORIES]);
   const tagOptions = createMemo(() => tagsQuery.data ?? []);
 
+  // Measuring needs the hook's offscreen container, which only exists after
+  // mount — hence seeding the stored artwork here rather than at signal init.
+  onMount(() => {
+    const edit = props.edit;
+    if (!edit) return;
+
+    setArtwork({
+      structureSvg: edit.svgText,
+      manifest: edit.manifest,
+      warnings: [],
+      contentBBox: measureBBox(edit.svgText),
+      defaultWidth: edit.item.default_width,
+      defaultHeight: edit.item.default_height,
+    });
+  });
+
   const form = createForm(() => ({
     defaultValues: {
       catalog_code: props.edit?.item.catalog_code ?? "",
       name: props.edit?.item.name ?? "",
       description: props.edit?.item.description ?? "",
-      default_width:
-        props.edit?.item.default_width ?? ("" as unknown as number),
-      default_height:
-        props.edit?.item.default_height ?? ("" as unknown as number),
       min_width: props.edit?.item.min_width ?? ("" as unknown as number),
       min_height: props.edit?.item.min_height ?? ("" as unknown as number),
       default_price_group_id: props.edit?.item.default_price_group_id ?? 0,
       is_active: props.edit?.item.is_active ?? true,
     },
     onSubmit: async ({ value }) => {
-      const svg = structureSvg();
-      const m = manifest();
-      if (!svg || !m) return;
+      const art = artwork();
+      if (!art) return;
 
-      const bbox = measureBBox(svg);
+      const bbox = art.contentBBox ?? measureBBox(art.structureSvg);
       if (!bbox) {
         throw new Error("Could not measure SVG content bounds.");
       }
 
       // Re-upload the working structure SVG to obtain a fresh svg_url; the server
       // bakes it (viewBox from dims at 300 u/in, fit+center, bake colors) on save.
-      const file = new File([svg], "structure.svg", {
+      const file = new File([art.structureSvg], "structure.svg", {
         type: "image/svg+xml",
       });
       const uploaded: UploadResponse = await uploadMutation.mutateAsync({
@@ -122,13 +119,13 @@ export function CatalogForm(props: CatalogFormProps) {
         name: value.name,
         description: value.description ? value.description : null,
         category: category(),
-        default_width: value.default_width,
-        default_height: value.default_height,
+        default_width: art.defaultWidth,
+        default_height: art.defaultHeight,
         min_width: value.min_width,
         min_height: value.min_height,
         default_price_group_id: value.default_price_group_id,
         svg_url: uploaded.url,
-        manifest: m,
+        manifest: art.manifest,
         content_bbox: bbox,
         is_active: value.is_active,
         tags: tags(),
@@ -138,27 +135,41 @@ export function CatalogForm(props: CatalogFormProps) {
     },
   }));
 
-  async function handleAnalyze(svgUrl: string) {
-    try {
-      const result = await analyzeMutation.mutateAsync({ svg_url: svgUrl });
-      setStructureSvg(result.structure_svg);
-      setManifest(result.manifest);
-      setWarnings(result.warnings ?? []);
-    } catch {
-      // analyzeMutation.isError surfaces the message below.
+  // The minimum size follows the default size: any change to the default resets
+  // it. Editing a minimum afterwards is preserved until the default moves again.
+  function handleArtworkChange(next: CatalogArtwork) {
+    const prev = artwork();
+    setArtwork(next);
+
+    const sizeChanged =
+      prev == null ||
+      prev.defaultWidth !== next.defaultWidth ||
+      prev.defaultHeight !== next.defaultHeight;
+
+    if (sizeChanged) {
+      form.setFieldValue("min_width", next.defaultWidth);
+      form.setFieldValue("min_height", next.defaultHeight);
     }
   }
 
-  const editorReady = createMemo(
-    () => structureSvg() != null && manifest() != null,
-  );
   const palettesReady = createMemo(
     () => glassQuery.data != null && groutsQuery.data != null,
   );
   const manifestComplete = createMemo(() => {
-    const m = manifest();
-    return m != null && isManifestComplete(m);
+    const art = artwork();
+    return art != null && isManifestComplete(art.manifest);
   });
+
+  // The server rejects a minimum larger than the default (400); catch it here so
+  // it shows up next to the fields instead of after a round trip.
+  function exceedsDefault(minWidth: unknown, minHeight: unknown): boolean {
+    const art = artwork();
+    if (!art) return false;
+    return (
+      (typeof minWidth === "number" && minWidth > art.defaultWidth) ||
+      (typeof minHeight === "number" && minHeight > art.defaultHeight)
+    );
+  }
 
   return (
     <form
@@ -215,38 +226,26 @@ export function CatalogForm(props: CatalogFormProps) {
         description="Pick a suggested category or type a custom one."
       />
 
+      <Show when={palettesReady()}>
+        <ArtworkPanel
+          value={artwork()}
+          measureBBox={measureBBox}
+          glassColors={glassQuery.data!}
+          grouts={groutsQuery.data!}
+          onChange={handleArtworkChange}
+        />
+      </Show>
+
       <div class="border-t pt-4">
-        <h3 class="mb-4 text-sm font-medium text-gray-900">Dimensions (in)</h3>
+        <h3 class="mb-1 text-sm font-medium text-gray-900">
+          Minimum size (in)
+        </h3>
+        <p class="mb-4 text-xs text-gray-500">
+          Defaults to the artwork's default size. Lower it only when the design
+          can be ordered smaller.
+        </p>
 
         <div class="grid grid-cols-2 gap-4">
-          <form.Field
-            name="default_width"
-            validators={{ onChange: metadataSchema.shape.default_width }}
-            children={(field) => (
-              <Form.NumberField
-                field={field}
-                label="Default Width"
-                decimalPlaces={2}
-                placeholder="e.g., 3.00"
-              />
-            )}
-          />
-
-          <form.Field
-            name="default_height"
-            validators={{ onChange: metadataSchema.shape.default_height }}
-            children={(field) => (
-              <Form.NumberField
-                field={field}
-                label="Default Height"
-                decimalPlaces={2}
-                placeholder="e.g., 3.00"
-              />
-            )}
-          />
-        </div>
-
-        <div class="mt-4 grid grid-cols-2 gap-4">
           <form.Field
             name="min_width"
             validators={{ onChange: metadataSchema.shape.min_width }}
@@ -294,74 +293,36 @@ export function CatalogForm(props: CatalogFormProps) {
         children={(field) => <Form.Checkbox field={field} label="Active" />}
       />
 
-      <div class="border-t pt-4">
-        <h3 class="mb-1 text-sm font-medium text-gray-900">Artwork</h3>
-        <p class="mb-4 text-xs text-gray-500">
-          Upload the raw SVG, then assign every glass group and the grout color
-          in the editor below.
-        </p>
+      <form.Subscribe selector={(state) => state.values}>
+        {(values) => (
+          <>
+            <Show
+              when={exceedsDefault(values().min_width, values().min_height)}
+            >
+              <Alert variant="destructive">
+                <AlertDescription>
+                  The minimum size cannot be larger than the default size (
+                  {artwork()!.defaultWidth.toFixed(2)}" ×{" "}
+                  {artwork()!.defaultHeight.toFixed(2)}").
+                </AlertDescription>
+              </Alert>
+            </Show>
 
-        <FileUpload
-          label="SVG File"
-          uploadPath="catalog-items"
-          accept=".svg"
-          fileTypeLabel="SVG"
-          description="Upload the raw SVG; it will be analyzed into editable color groups."
-          multiple={false}
-          uploadFn={uploadMutation.mutateAsync}
-          onUrlChange={(url) => {
-            if (typeof url === "string" && url) handleAnalyze(url);
-          }}
-        />
-
-        <Show when={analyzeMutation.isPending}>
-          <p class="mt-2 text-sm text-gray-600">Analyzing SVG...</p>
-        </Show>
-
-        <Show when={analyzeMutation.isError}>
-          <Alert variant="destructive" class="mt-2">
-            <AlertDescription>
-              {analyzeMutation.error instanceof Error
-                ? analyzeMutation.error.message
-                : "Failed to analyze SVG."}
-            </AlertDescription>
-          </Alert>
-        </Show>
-      </div>
-
-      <Show when={editorReady() && palettesReady()}>
-        <div class="border-t pt-4">
-          <ManifestEditor
-            structureSvg={structureSvg()!}
-            manifest={manifest()!}
-            warnings={warnings()}
-            glassColors={glassQuery.data!}
-            grouts={groutsQuery.data!}
-            onManifestChange={setManifest}
-          />
-        </div>
-      </Show>
-
-      <Show when={editorReady() && !manifestComplete()}>
-        <Alert variant="destructive">
-          <AlertDescription>
-            Every glass group and the grout region must have a color assigned
-            before saving.
-          </AlertDescription>
-        </Alert>
-      </Show>
-
-      <Button
-        type="submit"
-        disabled={
-          props.isLoading ||
-          !editorReady() ||
-          !manifestComplete() ||
-          uploadMutation.isPending
-        }
-      >
-        {props.isLoading ? "Saving..." : "Save"}
-      </Button>
+            <Button
+              type="submit"
+              disabled={
+                props.isLoading ||
+                artwork() == null ||
+                !manifestComplete() ||
+                exceedsDefault(values().min_width, values().min_height) ||
+                uploadMutation.isPending
+              }
+            >
+              {props.isLoading ? "Saving..." : "Save"}
+            </Button>
+          </>
+        )}
+      </form.Subscribe>
     </form>
   );
 }
