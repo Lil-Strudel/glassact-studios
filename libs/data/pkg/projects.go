@@ -260,6 +260,8 @@ func (m ProjectModel) GetByDealershipID(dealershipID int) ([]*Project, error) {
 		table.Projects,
 	).WHERE(
 		table.Projects.DealershipID.EQ(postgres.Int(int64(dealershipID))),
+	).ORDER_BY(
+		table.Projects.CreatedAt.DESC(),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -284,6 +286,8 @@ func (m ProjectModel) GetAll() ([]*Project, error) {
 		table.Projects.AllColumns,
 	).FROM(
 		table.Projects,
+	).ORDER_BY(
+		table.Projects.CreatedAt.DESC(),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
