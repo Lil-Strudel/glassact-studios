@@ -1,4 +1,5 @@
 Add granite colors to calaog Fullscreen
+Remove button should never be disabled
 Installation kits are per project not per inlay.
 The customer pays for shipping
 Merge cutting + firepolish into manufacturing
