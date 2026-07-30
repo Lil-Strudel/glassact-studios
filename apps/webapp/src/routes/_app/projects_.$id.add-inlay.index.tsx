@@ -37,17 +37,11 @@ function RouteComponent() {
   const navigate = useNavigate();
 
   const queryClient = useQueryClient();
-  // Land on the inlay just created, not back on the project — the user's next
-  // move is almost always about that inlay (check the proof, adjust the design,
-  // add the installation kit).
-  function handleSuccess(inlayUuid: string) {
+  function handleSuccess() {
     queryClient.invalidateQueries({
       queryKey: ["project", params().id, "inlays"],
     });
-    navigate({
-      to: "/projects/$id/inlay/$inlayId",
-      params: { id: params().id, inlayId: inlayUuid },
-    });
+    navigate({ to: "/projects/$id", params: { id: params().id } });
   }
 
   return (

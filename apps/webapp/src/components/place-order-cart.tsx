@@ -5,6 +5,7 @@ import {
   Button,
   Checkbox,
   CheckboxControl,
+  CheckboxLabel,
   Dialog,
   DialogClose,
   DialogContent,
@@ -109,6 +110,15 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
     if (next) {
       initializeSelection();
       setOrderSuccess(false);
+      return;
+    }
+
+    // Refetching the project flips it out of "draft", and the project page
+    // only renders this component while the project is a draft — so
+    // invalidating any earlier unmounts the dialog on top of the user,
+    // including the confirmation they just placed an order.
+    if (orderSuccess()) {
+      queryClient.invalidateQueries({ queryKey: ["project"] });
     }
   }
 
@@ -121,10 +131,6 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
       {
         onSuccess() {
           setOrderSuccess(true);
-          queryClient.invalidateQueries({ queryKey: ["project"] });
-          queryClient.invalidateQueries({
-            queryKey: ["project", props.project.uuid, "inlays"],
-          });
         },
         onError(error) {
           if (isApiError(error)) {
@@ -205,47 +211,54 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                       onChange={() => toggleInlay(inlay.uuid)}
                       class="w-full"
                     >
-                      <label class="p-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50 w-full">
-                        <CheckboxControl />
-                        <Show
-                          when={inlay.preview_url}
-                          fallback={
-                            <div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs shrink-0">
-                              N/A
+                      {/* The install-kit button sits outside the label: an
+                          interactive element nested in a <label> is invalid
+                          HTML and swallows clicks meant for the checkbox. */}
+                      <div class="p-3 flex items-center gap-3 w-full hover:bg-gray-50">
+                        <CheckboxLabel class="flex flex-1 min-w-0 items-center gap-3 cursor-pointer">
+                          <CheckboxControl />
+                          <Show
+                            when={inlay.preview_url}
+                            fallback={
+                              <div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs shrink-0">
+                                N/A
+                              </div>
+                            }
+                          >
+                            <img
+                              src={inlay.preview_url}
+                              alt={inlay.name}
+                              class="w-10 h-10 object-contain rounded shrink-0"
+                              draggable={false}
+                            />
+                          </Show>
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <p class="text-sm font-medium truncate">
+                                {inlay.name}
+                              </p>
+                              <Show when={inlay.is_customized}>
+                                <Badge variant="warning" class="text-xs">
+                                  Customized
+                                </Badge>
+                              </Show>
+                              <Show when={!isCatalog()}>
+                                <Badge variant="outline" class="text-xs">
+                                  Custom
+                                </Badge>
+                              </Show>
                             </div>
-                          }
-                        >
-                          <img
-                            src={inlay.preview_url}
-                            alt={inlay.name}
-                            class="w-10 h-10 object-contain rounded shrink-0"
-                          />
-                        </Show>
-                        <div class="flex-1 min-w-0">
-                          <div class="flex items-center gap-2 flex-wrap">
-                            <p class="text-sm font-medium truncate">
-                              {inlay.name}
-                            </p>
-                            <Show when={inlay.is_customized}>
-                              <Badge variant="warning" class="text-xs">
-                                Customized
-                              </Badge>
-                            </Show>
-                            <Show when={!isCatalog()}>
-                              <Badge variant="outline" class="text-xs">
-                                Custom
-                              </Badge>
-                            </Show>
+                            <div class="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                              <Show when={catalogCode()}>
+                                <span>{catalogCode()}</span>
+                              </Show>
+                              <Show when={dims()}>
+                                <span>{dims()}</span>
+                              </Show>
+                            </div>
                           </div>
-                          <div class="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
-                            <Show when={catalogCode()}>
-                              <span>{catalogCode()}</span>
-                            </Show>
-                            <Show when={dims()}>
-                              <span>{dims()}</span>
-                            </Show>
-                          </div>
-                        </div>
+                        </CheckboxLabel>
+
                         <div class="flex flex-col items-end shrink-0 text-sm gap-1">
                           <Show when={priceFormula()}>
                             <span class="text-gray-500 text-xs">
@@ -258,11 +271,9 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                           <button
                             type="button"
                             disabled={patchInlay.isPending}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleToggleKit(inlay, !inlay.installation_kit);
-                            }}
+                            onClick={() =>
+                              handleToggleKit(inlay, !inlay.installation_kit)
+                            }
                             class={`text-xs rounded px-2 py-0.5 border transition-colors ${
                               inlay.installation_kit
                                 ? "border-green-600 bg-green-50 text-green-700"
@@ -273,7 +284,7 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                             Install kit ({formatMoney(kitPriceDollars)})
                           </button>
                         </div>
-                      </label>
+                      </div>
                     </Checkbox>
                   );
                 }}

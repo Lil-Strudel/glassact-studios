@@ -102,6 +102,7 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/inlay/{uuid}/proofs", protected.ThenFunc(proofModule.HandleGetProofsByInlay))
 	mux.Handle("POST /api/inlay/{uuid}/proofs", canCreateProof.ThenFunc(proofModule.HandleCreateProof))
 	mux.Handle("GET /api/proof/{uuid}", protected.ThenFunc(proofModule.HandleGetProof))
+	mux.Handle("GET /api/proof/{uuid}/design/download", protected.ThenFunc(proofModule.HandleGetProofDesignDownload))
 	// approve/decline branch on proof.approval_authority and check the right
 	// permission inside the handler, so the middleware just authenticates.
 	mux.Handle("POST /api/proof/{uuid}/approve", protected.ThenFunc(proofModule.HandleApproveProof))

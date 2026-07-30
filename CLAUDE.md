@@ -144,9 +144,9 @@ GlassAct Studios manufactures custom stained glass inlays for gravestones. The p
 ### Project Status Flow
 
 ```
-┌───────┐    ┌─────────┐    ┌───────────────┐    ┌─────────┐    ┌───────────┐    ┌──────────┐    ┌───────────┐
-│ draft │───►│ ordered │───►│ in-production │───►│ shipped │───►│ delivered │───►│ invoiced │───►│ completed │
-└───────┘    └─────────┘    └───────────────┘    └─────────┘    └───────────┘    └──────────┘    └───────────┘
+┌───────┐    ┌─────────┐    ┌───────────────┐    ┌─────────┐    ┌──────────┐    ┌───────────┐
+│ draft │───►│ ordered │───►│ in-production │───►│ shipped │───►│ invoiced │───►│ completed │
+└───────┘    └─────────┘    └───────────────┘    └─────────┘    └──────────┘    └───────────┘
 
 draft │ ordered ───► cancelled   (in-production onwards cannot be cancelled)
 ```
@@ -158,8 +158,7 @@ The project itself only has two pre-order states: `draft` (project exists, build
 | draft         | Project is being built / inlays added  | Add/remove inlays, customize, edit name/internal_reference, cancel, place order    |
 | ordered       | Order placed, queued for production    | Cancel (only here and in `draft`)                                                  |
 | in-production | Manufacturing in progress              | Track milestones                                                                   |
-| shipped       | All inlays shipped                     | Track delivery                                                                     |
-| delivered     | Delivery confirmed                     | Create invoice                                                                     |
+| shipped       | All inlays shipped                     | Mark delivered — moves to `invoiced`, or straight to `completed` if already paid   |
 | invoiced      | Invoice sent                           | Pay                                                                                |
 | completed     | Payment received                       | -                                                                                  |
 | cancelled     | Project cancelled                      | - (terminal)                                                                       |
@@ -205,9 +204,10 @@ Place Order is enabled only when **every** inlay on the project is "ready". An i
 ### Manufacturing Steps
 
 ```
-ordered → materials-prep → cutting → fire-polish → packaging → shipped → delivered
+ordered → materials-prep → cutting → fire-polish → packaging → ready-to-ship
 ```
 
+- The ladder stops at `ready-to-ship`. Shipping and delivery are recorded on the **project**, not the inlay — there is no `shipped` or `delivered` manufacturing step.
 - Steps can move backward (via "revert" milestone events).
 - Each transition creates an `inlay_milestone` record.
 - Progress is event-based, not a single status field.
@@ -302,21 +302,28 @@ Each update carries a free-text `message` and a `step` (the inlay's manufacturin
 
 ### Notifications
 
-| Event              | Recipients                         | Description                  |
-| ------------------ | ---------------------------------- | ---------------------------- |
-| proof_ready        | Dealership users (approver+)       | New proof available          |
-| proof_approved     | Internal designers                 | Proof was approved           |
-| proof_declined     | Internal designers                 | Proof was declined           |
-| order_placed       | Internal production                | New order in queue           |
-| inlay_step_changed | Dealership users                   | Inlay moved in manufacturing |
-| inlay_update       | Dealership users                   | New update posted on inlay   |
-| project_shipped    | Dealership users                   | Project shipped              |
-| project_delivered  | Dealership users, internal billing | Ready for invoice            |
-| invoice_sent       | Dealership users (admin)           | Invoice available            |
-| payment_received   | Dealership users                   | Payment confirmed            |
-| chat_message       | Other party in chat                | New message                  |
+The full set is `NotificationEventTypes` in `libs/data/pkg/notifications.go`.
+
+| Event                    | Recipients                         | Description                                     |
+| ------------------------ | ---------------------------------- | ----------------------------------------------- |
+| proof_ready              | Dealership users (approver+)       | New proof available                             |
+| proof_approved           | Internal designers                 | Proof was approved                              |
+| proof_declined           | Internal designers                 | Proof was declined                              |
+| internal_review_required | Internal designers                 | A customizer-baked proof needs internal pricing |
+| custom_inlay_submitted   | Internal designers                 | A custom inlay needs a proof                    |
+| order_placed             | Internal production                | New order in queue                              |
+| inlay_step_changed       | Dealership users                   | Inlay moved in manufacturing                    |
+| inlay_update             | Dealership users                   | New update posted on inlay                      |
+| project_shipped          | Dealership users                   | Project shipped                                 |
+| project_delivered        | Dealership users, internal billing | Delivery confirmed; project moved to invoiced   |
+| invoice_sent             | Dealership users (admin)           | Invoice available                               |
+| invoice_voided           | Dealership users                   | Invoice was voided                              |
+| payment_received         | Dealership users                   | Payment confirmed                               |
+| chat_message             | Other party in chat                | New message                                     |
 
 Users can disable specific notification types; disabled notifications still appear in-app, just no email is sent.
+
+**Known gap:** the "Recipients" column above describes intent, not what the code does. Every send today goes through `SendNotificationToAllInternalUsers` or `SendNotificationToAllDealershipUsersForProject`, which fan out to *everyone* on that side regardless of role or involvement — including the person who triggered the event. See "Make notifications only go to the people involved" in `docs/things-to-fix.md`.
 
 ## Catalog
 

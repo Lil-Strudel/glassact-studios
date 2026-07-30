@@ -4,7 +4,8 @@ import { For, Match, Show, Switch, createMemo, createSignal } from "solid-js";
 import { Badge, Breadcrumb, Button, ImageLightbox } from "@glassact/ui";
 import type { InlayDetail, ManufacturingStep } from "@glassact/data";
 import { PERMISSION_ACTIONS } from "@glassact/data";
-import { getInlayOpts } from "../../queries/inlay";
+import { IoChevronBack, IoChevronForward } from "solid-icons/io";
+import { getInlayOpts, getInlaysByProjectOpts } from "../../queries/inlay";
 import { getProjectOpts } from "../../queries/project";
 import { Can } from "../../components/Can";
 import EditCustomInfoForm from "../../components/inlay/edit-custom-info-form";
@@ -29,9 +30,26 @@ function InlayDetailPage() {
 
   const projectQuery = useQuery(() => getProjectOpts(params().id));
   const inlayQuery = useQuery(() => getInlayOpts(params().inlayId));
+  const siblingsQuery = useQuery(() => getInlaysByProjectOpts(params().id));
 
   const inlay = () => (inlayQuery.isSuccess ? inlayQuery.data : null);
   const project = () => (projectQuery.isSuccess ? projectQuery.data : null);
+
+  // Projects routinely carry a dozen inlays and reviewing them one by one via
+  // the project page means a round trip per inlay.
+  const siblings = createMemo(() => siblingsQuery.data ?? []);
+  const currentIndex = createMemo(() =>
+    siblings().findIndex((s) => s.uuid === params().inlayId),
+  );
+  const previousInlay = createMemo(() =>
+    currentIndex() > 0 ? siblings()[currentIndex() - 1] : null,
+  );
+  const nextInlay = createMemo(() => {
+    const index = currentIndex();
+    return index >= 0 && index < siblings().length - 1
+      ? siblings()[index + 1]
+      : null;
+  });
 
   const phase = createMemo(() => {
     const loadedInlay = inlay();
@@ -49,6 +67,12 @@ function InlayDetailPage() {
     () => phase() === "in-production" || phase() === "complete",
   );
 
+  // Any catalog inlay can be (re)coloured right up until the order is placed,
+  // whatever phase it is in — doing so resets it to awaiting internal pricing.
+  const canCustomize = createMemo(
+    () => inlay()?.type === "catalog" && project()?.status === "draft",
+  );
+
   function invalidateInlay() {
     queryClient.invalidateQueries({ queryKey: ["inlay", params().inlayId] });
     queryClient.invalidateQueries({ queryKey: ["project", params().id] });
@@ -59,19 +83,98 @@ function InlayDetailPage() {
 
   return (
     <div class="space-y-6">
-      <Breadcrumb
-        crumbs={[
-          { title: "Projects", to: "/projects" },
-          {
-            title: project()?.name ?? "Project",
-            to: `/projects/${params().id}`,
-          },
-          {
-            title: inlay()?.name ?? "Inlay",
-            to: `/projects/${params().id}/inlay/${params().inlayId}`,
-          },
-        ]}
-      />
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <Breadcrumb
+          crumbs={[
+            { title: "Projects", to: "/projects" },
+            {
+              title: project()?.name ?? "Project",
+              to: `/projects/${params().id}`,
+            },
+            {
+              title: inlay()?.name ?? "Inlay",
+              to: `/projects/${params().id}/inlay/${params().inlayId}`,
+            },
+          ]}
+        />
+
+        <div class="flex items-center gap-2">
+          <Show when={siblings().length > 1}>
+            {/* Rendered as a plain disabled button at the ends — an anchor
+                ignores `disabled` and would still navigate. */}
+            <Show
+              when={previousInlay()}
+              fallback={
+                <Button variant="outline" size="sm" disabled>
+                  <IoChevronBack size={16} />
+                </Button>
+              }
+            >
+              {(previous) => (
+                <Button
+                  as={Link}
+                  to="/projects/$id/inlay/$inlayId"
+                  params={{ id: params().id, inlayId: previous().uuid }}
+                  variant="outline"
+                  size="sm"
+                  aria-label="Previous inlay"
+                >
+                  <IoChevronBack size={16} />
+                </Button>
+              )}
+            </Show>
+
+            <span class="text-sm text-gray-500">
+              {currentIndex() + 1} of {siblings().length}
+            </span>
+
+            <Show
+              when={nextInlay()}
+              fallback={
+                <Button variant="outline" size="sm" disabled>
+                  <IoChevronForward size={16} />
+                </Button>
+              }
+            >
+              {(next) => (
+                <Button
+                  as={Link}
+                  to="/projects/$id/inlay/$inlayId"
+                  params={{ id: params().id, inlayId: next().uuid }}
+                  variant="outline"
+                  size="sm"
+                  aria-label="Next inlay"
+                >
+                  <IoChevronForward size={16} />
+                </Button>
+              )}
+            </Show>
+          </Show>
+
+          <Show when={canCustomize()}>
+            <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
+              <Button
+                as={Link}
+                to="/projects/$id/inlay/$inlayId/recustomize"
+                params={{ id: params().id, inlayId: params().inlayId }}
+                size="sm"
+              >
+                {inlay()?.is_customized ? "Adjust design" : "Customize design"}
+              </Button>
+            </Can>
+          </Show>
+
+          <Button
+            as={Link}
+            to="/projects/$id"
+            params={{ id: params().id }}
+            variant="outline"
+            size="sm"
+          >
+            Back to project
+          </Button>
+        </div>
+      </div>
 
       <Switch>
         <Match when={inlayQuery.isLoading || projectQuery.isLoading}>
@@ -117,7 +220,10 @@ function InlayDetailPage() {
                 </Match>
 
                 <Match when={isInShop()}>
-                  <ManufacturingPanel inlay={inlay()!} />
+                  <ManufacturingPanel
+                    inlay={inlay()!}
+                    orderedAt={project()?.ordered_at ?? null}
+                  />
                 </Match>
 
                 <Match when={phase() === "configuring"}>
@@ -130,11 +236,7 @@ function InlayDetailPage() {
                 </Match>
 
                 <Match when={phase() === "ready"}>
-                  <ReadyPanel
-                    inlay={inlay()!}
-                    projectUuid={params().id}
-                    inlayUuid={params().inlayId}
-                  />
+                  <ReadyPanel />
                 </Match>
 
                 <Match when={phase() === "cancelled"}>
@@ -182,7 +284,10 @@ function InlayDetailPage() {
   );
 }
 
-function ManufacturingPanel(props: { inlay: InlayDetail }) {
+function ManufacturingPanel(props: {
+  inlay: InlayDetail;
+  orderedAt: string | null;
+}) {
   const step = createMemo(
     () => props.inlay.manufacturing_step as ManufacturingStep | null,
   );
@@ -198,7 +303,10 @@ function ManufacturingPanel(props: { inlay: InlayDetail }) {
               </h2>
               <Badge variant="secondary">In Production</Badge>
             </div>
-            <ManufacturingTracker currentStep={currentStep()} />
+            <ManufacturingTracker
+              currentStep={currentStep()}
+              orderedAt={props.orderedAt}
+            />
           </div>
         )}
       </Show>
@@ -310,6 +418,8 @@ function ConfiguringPanel(props: {
           <div class="mt-4 flex justify-center">
             <CreateProofDialog
               inlayUuid={props.inlayUuid}
+              requestedWidth={props.inlay.custom_info?.requested_width}
+              requestedHeight={props.inlay.custom_info?.requested_height}
               onProofCreated={props.onChanged}
             />
           </div>
@@ -319,15 +429,7 @@ function ConfiguringPanel(props: {
   );
 }
 
-function ReadyPanel(props: {
-  inlay: InlayDetail;
-  projectUuid: string;
-  inlayUuid: string;
-}) {
-  const canRecustomize = createMemo(
-    () => props.inlay.type === "catalog" && props.inlay.is_customized,
-  );
-
+function ReadyPanel() {
   return (
     <div class="space-y-4 rounded-lg border p-4">
       <div class="flex items-center justify-between">
@@ -338,23 +440,6 @@ function ReadyPanel(props: {
         This inlay is approved and will be included when the order is placed
         from the project page.
       </p>
-      <div class="flex flex-wrap gap-2">
-        <Button as={Link} to="/projects/$id" params={{ id: props.projectUuid }} variant="outline" size="sm">
-          Back to project
-        </Button>
-        <Show when={canRecustomize()}>
-          <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
-            <Button
-              as={Link}
-              to="/projects/$id/inlay/$inlayId/recustomize"
-              params={{ id: props.projectUuid, inlayId: props.inlayUuid }}
-              size="sm"
-            >
-              Adjust design
-            </Button>
-          </Can>
-        </Show>
-      </div>
     </div>
   );
 }

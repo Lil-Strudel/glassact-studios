@@ -24,7 +24,7 @@ export default function FaqsContent() {
     {
       question: "How expensive are the glass inlays?",
       answer:
-        "We work in 4 different price groups, starting at $80 and up. We also sell the special glue, grout, and other consumables in an install kit.  Even shipping and handling is part of the package deal. We ask our installers to keystone pricing. Our product is a value added product. You will be able to upcharge your client and therefore, are able to earn higher profits.",
+        "We work in 4 different price groups, starting at $80 and up. We also sell the special glue, grout, and other consumables in an install kit. We ask our installers to keystone pricing. Our product is a value added product. You will be able to upcharge your client and therefore, are able to earn higher profits.",
     },
     {
       question: "How many different colors do you work with?",

@@ -29,6 +29,13 @@ export function getProofOpts(uuid: string) {
   });
 }
 
+export async function getProofDesignDownloadUrl(
+  uuid: string,
+): Promise<{ url: string }> {
+  const res = await api.get(`/proof/${uuid}/design/download`);
+  return res.data;
+}
+
 export interface CreateProofRequest {
   design_asset_url: string;
   width: number;

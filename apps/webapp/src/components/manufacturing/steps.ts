@@ -33,26 +33,14 @@ export function stepLabel(step: string): string {
 }
 
 /**
- * PLACEHOLDER TIMELINES — these are not measured, they are guesses.
+ * How long a whole order takes, from the day it is placed to the day it is
+ * ready to ship. Business days — weekends are skipped when projecting dates.
  *
- * This map is the single source for every duration and date estimate shown to
- * dealerships. Replace these numbers with the real ones and every tooltip,
- * duration phrase and projected date range updates with them. Nothing else
- * needs editing.
- *
- * Values are business days (weekends are skipped when projecting dates).
+ * Deliberately a single number for the whole job rather than a per-step
+ * breakdown: individual steps vary far too much to quote, and a dealership
+ * only ever needs to answer "when will it get here?".
  */
-export const STEP_DURATIONS: Record<
-  ManufacturingStep,
-  { minDays: number; maxDays: number }
-> = {
-  ordered: { minDays: 1, maxDays: 2 },
-  "materials-prep": { minDays: 2, maxDays: 4 },
-  cutting: { minDays: 3, maxDays: 5 },
-  "fire-polish": { minDays: 2, maxDays: 3 },
-  packaging: { minDays: 1, maxDays: 2 },
-  "ready-to-ship": { minDays: 1, maxDays: 2 },
-};
+export const PROJECT_DURATION = { minDays: 14, maxDays: 18 };
 
 export function addBusinessDays(from: Date, days: number): Date {
   const result = new Date(from.getTime());
@@ -69,7 +57,7 @@ export function addBusinessDays(from: Date, days: number): Date {
   return result;
 }
 
-export interface StepEstimate {
+export interface ProjectEstimate {
   minDays: number;
   maxDays: number;
   minDate: Date;
@@ -77,41 +65,25 @@ export interface StepEstimate {
 }
 
 /**
- * Projects how long it takes to finish `throughStep`, counting from the start of
- * `fromStep`. Anchored at `today` rather than at the milestone entry time — the
- * tracker only knows the current step, and "from now" is the honest reading for
- * someone answering a customer's question.
+ * Projects when an order will be ready to ship, counting from the day it was
+ * placed. Returns null for an order with no placed date — an unordered project
+ * has no clock to run.
  */
-export function estimateCompletionRange(
-  fromStep: ManufacturingStep,
-  throughStep: ManufacturingStep,
-  today: Date = new Date(),
-): StepEstimate | null {
-  const start = STEP_ORDER.indexOf(fromStep);
-  const end = STEP_ORDER.indexOf(throughStep);
-  if (start === -1 || end === -1 || end < start) return null;
+export function estimateProjectCompletion(
+  orderedAt: string | null,
+): ProjectEstimate | null {
+  if (!orderedAt) return null;
 
-  let minDays = 0;
-  let maxDays = 0;
-  for (const step of STEP_ORDER.slice(start, end + 1)) {
-    minDays += STEP_DURATIONS[step].minDays;
-    maxDays += STEP_DURATIONS[step].maxDays;
-  }
+  const start = new Date(orderedAt);
+  if (Number.isNaN(start.getTime())) return null;
 
+  const { minDays, maxDays } = PROJECT_DURATION;
   return {
     minDays,
     maxDays,
-    minDate: addBusinessDays(today, minDays),
-    maxDate: addBusinessDays(today, maxDays),
+    minDate: addBusinessDays(start, minDays),
+    maxDate: addBusinessDays(start, maxDays),
   };
-}
-
-export function formatStepDuration(step: ManufacturingStep): string {
-  const { minDays, maxDays } = STEP_DURATIONS[step];
-  if (minDays === maxDays) {
-    return `typically ${minDays} business day${minDays === 1 ? "" : "s"}`;
-  }
-  return `typically ${minDays}–${maxDays} business days`;
 }
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -120,26 +92,15 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
 });
 
 /**
- * Renders an estimate as a rough span plus the concrete dates it lands on,
- * e.g. "2–3 weeks (May 20 – Jun 3)". Short estimates read better in days.
+ * Renders an estimate as a business-day span plus the dates it lands on,
+ * e.g. "14–18 business days (May 20 – May 26)".
  */
-export function formatEstimate(estimate: StepEstimate): string {
+export function formatEstimate(estimate: ProjectEstimate): string {
   const dates = `${dateFormatter.format(estimate.minDate)} – ${dateFormatter.format(estimate.maxDate)}`;
+  const days =
+    estimate.minDays === estimate.maxDays
+      ? `${estimate.minDays} business day${estimate.minDays === 1 ? "" : "s"}`
+      : `${estimate.minDays}–${estimate.maxDays} business days`;
 
-  if (estimate.maxDays < 10) {
-    const days =
-      estimate.minDays === estimate.maxDays
-        ? `${estimate.minDays} business day${estimate.minDays === 1 ? "" : "s"}`
-        : `${estimate.minDays}–${estimate.maxDays} business days`;
-    return `${days} (${dates})`;
-  }
-
-  const minWeeks = Math.max(1, Math.round(estimate.minDays / 5));
-  const maxWeeks = Math.max(minWeeks, Math.round(estimate.maxDays / 5));
-  const weeks =
-    minWeeks === maxWeeks
-      ? `${minWeeks} week${minWeeks === 1 ? "" : "s"}`
-      : `${minWeeks}–${maxWeeks} weeks`;
-
-  return `${weeks} (${dates})`;
+  return `${days} (${dates})`;
 }

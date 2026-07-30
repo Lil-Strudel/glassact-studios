@@ -14,6 +14,7 @@ export function getInlaysByProjectOpts(projectUuid: string) {
   return queryOptions({
     queryKey: ["project", projectUuid, "inlays"],
     queryFn: () => getInlaysByProject(projectUuid),
+    refetchInterval: 60_000,
   });
 }
 

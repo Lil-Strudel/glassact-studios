@@ -25,6 +25,12 @@ import PriceGroupCombobox from "../price-group-combobox";
 
 interface CreateProofDialogProps {
   inlayUuid: string;
+  /**
+   * The dimensions the dealership asked for. Pre-filled so the designer
+   * confirms them rather than re-reading and retyping the request.
+   */
+  requestedWidth?: number | null;
+  requestedHeight?: number | null;
   onProofCreated?: () => void;
 }
 
@@ -47,8 +53,8 @@ export default function CreateProofDialog(props: CreateProofDialogProps) {
   const form = createForm(() => ({
     defaultValues: {
       design_asset_url: "",
-      width: "" as unknown as number,
-      height: "" as unknown as number,
+      width: props.requestedWidth ?? ("" as unknown as number),
+      height: props.requestedHeight ?? ("" as unknown as number),
       price_group_id: undefined,
       price_adjustment_type: "none",
       price_adjustment_value: undefined,

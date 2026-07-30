@@ -10,7 +10,16 @@ export interface RouterContext {
   auth: AuthState;
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      // Polling is opted into per query (see the live views in queries/), not
+      // set globally — the catalog and admin tables have no reason to poll.
+      refetchIntervalInBackground: false,
+    },
+  },
+});
 const router = createRouter({
   routeTree,
   context: {

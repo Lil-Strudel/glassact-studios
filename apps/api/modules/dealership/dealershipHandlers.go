@@ -173,8 +173,13 @@ func (m DealershipModule) HandlePatchDealership(w http.ResponseWriter, r *http.R
 	}
 
 	dealership.Name = body.Name
-	dealership.RequiresPaymentBeforeShipping = body.RequiresPaymentBeforeShipping
 	dealership.Address = data.Address(body.Address)
+
+	// Payment terms are GlassAct's call. A dealership admin holds
+	// manage_dealership and would otherwise be able to clear their own.
+	if m.ContextGetUser(r).IsInternal() {
+		dealership.RequiresPaymentBeforeShipping = body.RequiresPaymentBeforeShipping
+	}
 
 	err = m.Db.Dealerships.Update(dealership)
 	if err != nil {

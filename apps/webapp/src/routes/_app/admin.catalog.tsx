@@ -17,8 +17,6 @@ import {
   flexRender,
   getCoreRowModel,
   ColumnDef,
-  getPaginationRowModel,
-  getFilteredRowModel,
 } from "@tanstack/solid-table";
 import { CatalogItem, GET } from "@glassact/data";
 import { IoPencilOutline, IoTrashOutline } from "solid-icons/io";
@@ -128,21 +126,43 @@ const defaultColumns: ColumnDef<GET<CatalogItem>>[] = [
   },
 ];
 
+const PAGE_SIZE = 50;
+
 function RouteComponent() {
   const [filterValue, setFilterValue] = createSignal("");
   const [showInactive, setShowInactive] = createSignal(false);
+  const [page, setPage] = createSignal(1);
 
   const debouncedFilterValue = useDebounce(filterValue, 300);
 
   const query = useQuery(() =>
     getCatalogListOpts({
       search: debouncedFilterValue(),
-      isActive: !showInactive(),
-      limit: 50,
-      offset: 0,
+      // Omitting the filter returns both; the server treats a present
+      // is_active as strict equality, so passing false would hide the
+      // active items instead of adding the inactive ones.
+      isActive: showInactive() ? undefined : true,
+      limit: PAGE_SIZE,
+      offset: (page() - 1) * PAGE_SIZE,
     }),
   );
 
+  const totalPages = createMemo(() =>
+    Math.max(1, Math.ceil((query.data?.total ?? 0) / PAGE_SIZE)),
+  );
+
+  // Narrowing the result set can leave you past the end of it.
+  function handleSearchChange(value: string) {
+    setFilterValue(value);
+    setPage(1);
+  }
+
+  function handleShowInactiveChange(value: boolean) {
+    setShowInactive(value);
+    setPage(1);
+  }
+
+  // Paging is server-side, so the table renders exactly the rows it is given.
   const table = createMemo(() =>
     createSolidTable({
       get data() {
@@ -150,12 +170,6 @@ function RouteComponent() {
       },
       columns: defaultColumns,
       getCoreRowModel: getCoreRowModel(),
-      getPaginationRowModel: getPaginationRowModel(),
-      getFilteredRowModel: getFilteredRowModel(),
-      state: {
-        globalFilter: filterValue(),
-      },
-      onGlobalFilterChange: setFilterValue,
     }),
   );
 
@@ -163,10 +177,7 @@ function RouteComponent() {
     <div>
       <div class="flex items-center justify-between py-4 gap-4">
         <div class="flex items-center gap-4">
-          <TextFieldRoot
-            value={filterValue()}
-            onChange={(value) => setFilterValue(value)}
-          >
+          <TextFieldRoot value={filterValue()} onChange={handleSearchChange}>
             <TextField
               placeholder="Search by code or name..."
               class="max-w-sm"
@@ -177,7 +188,7 @@ function RouteComponent() {
             <input
               type="checkbox"
               checked={showInactive()}
-              onChange={(e) => setShowInactive(e.currentTarget.checked)}
+              onChange={(e) => handleShowInactiveChange(e.currentTarget.checked)}
               class="rounded border-gray-300"
             />
             Include inactive
@@ -253,23 +264,30 @@ function RouteComponent() {
         </Table>
       </div>
 
-      <div class="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table().previousPage()}
-          disabled={!table().getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table().nextPage()}
-          disabled={!table().getCanNextPage()}
-        >
-          Next
-        </Button>
+      <div class="flex items-center justify-end gap-4 py-4">
+        <span class="text-sm text-gray-500">
+          Page {page()} of {totalPages()} ({query.data?.total ?? 0} items)
+        </span>
+        <div class="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            disabled={page() <= 1}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setPage((current) => Math.min(totalPages(), current + 1))
+            }
+            disabled={page() >= totalPages()}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );

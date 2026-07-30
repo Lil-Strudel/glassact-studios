@@ -1,11 +1,11 @@
 import { Show } from "solid-js";
-import { Button, ImageLightbox } from "@glassact/ui";
-import { IoDownloadOutline } from "solid-icons/io";
+import { ImageLightbox } from "@glassact/ui";
 import type { GET, InlayProof } from "@glassact/data";
 import { PERMISSION_ACTIONS } from "@glassact/data";
 import { Can } from "../Can";
 import ProofActions from "../proof/proof-actions";
 import { ProofStatusBadge } from "../proof/proof-status-badge";
+import { DownloadDesignButton } from "../proof/download-design-button";
 
 interface ProofReviewPanelProps {
   proof: GET<InlayProof>;
@@ -60,16 +60,7 @@ export function ProofReviewPanel(props: ProofReviewPanelProps) {
         </p>
 
         <Show when={props.proof.design_asset_url}>
-          <Button
-            variant="outline"
-            size="sm"
-            as="a"
-            href={props.proof.design_asset_url}
-            download
-          >
-            <IoDownloadOutline class="mr-2" size={16} />
-            Download Design
-          </Button>
+          <DownloadDesignButton proofUuid={props.proof.uuid} />
         </Show>
 
         <Show

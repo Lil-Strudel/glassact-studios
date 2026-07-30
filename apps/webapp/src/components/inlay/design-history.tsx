@@ -1,10 +1,11 @@
 import { For, Show, createMemo, createSignal } from "solid-js";
-import { Button, ImageLightbox } from "@glassact/ui";
+import { ImageLightbox } from "@glassact/ui";
 import { useQuery } from "@tanstack/solid-query";
-import { IoChevronDown, IoChevronForward, IoDownloadOutline } from "solid-icons/io";
+import { IoChevronDown, IoChevronForward } from "solid-icons/io";
 import type { GET, InlayProof } from "@glassact/data";
 import { getProofsByInlayOpts } from "../../queries/proof";
 import { ProofStatusBadge } from "../proof/proof-status-badge";
+import { DownloadDesignButton } from "../proof/download-design-button";
 
 interface DesignHistoryProps {
   inlayUuid: string;
@@ -82,16 +83,7 @@ function ProofRow(props: { proof: GET<InlayProof>; defaultOpen: boolean }) {
           </div>
 
           <Show when={props.proof.design_asset_url}>
-            <Button
-              variant="outline"
-              size="sm"
-              as="a"
-              href={props.proof.design_asset_url}
-              download
-            >
-              <IoDownloadOutline class="mr-2" size={16} />
-              Download Design
-            </Button>
+            <DownloadDesignButton proofUuid={props.proof.uuid} />
           </Show>
         </div>
       </Show>

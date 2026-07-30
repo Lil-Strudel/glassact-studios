@@ -37,18 +37,15 @@ import {
   patchPriceGroupOpts,
   deletePriceGroupOpts,
 } from "../../queries/price-group";
-import { zodStringNumber } from "../../utils/zod-string-number";
 
 export const Route = createFileRoute("/_app/admin/price-groups")({
   component: RouteComponent,
 });
 
+// Prices are entered and shown in dollars; the API and database keep cents.
 const formSchema = z.object({
   name: z.string().min(1).max(255),
-  base_price_cents: z
-    .string()
-    .min(1)
-    .refine(...zodStringNumber),
+  base_price_dollars: z.number().nonnegative("Price cannot be negative"),
   description: z.string().max(1000).optional().or(z.literal("")),
   is_active: z.boolean(),
 });
@@ -64,12 +61,14 @@ interface PriceGroupFormProps {
 
 function PriceGroupForm(props: PriceGroupFormProps) {
   const form = createForm(() => ({
-    defaultValues: props.defaultValues ?? {
-      name: "",
-      base_price_cents: "",
-      description: "",
-      is_active: true,
-    },
+    defaultValues:
+      props.defaultValues ??
+      ({
+        name: "",
+        base_price_dollars: "" as unknown as number,
+        description: "",
+        is_active: true,
+      } as FormSchema),
     validators: {
       onBlur: formSchema,
     },
@@ -99,9 +98,14 @@ function PriceGroupForm(props: PriceGroupFormProps) {
       />
 
       <form.Field
-        name="base_price_cents"
+        name="base_price_dollars"
         children={(field) => (
-          <Form.TextField field={field} label="Base Price (cents)" />
+          <Form.NumberField
+            field={field}
+            label="Base Price ($)"
+            placeholder="e.g., 125.00"
+            decimalPlaces={2}
+          />
         )}
       />
 
@@ -221,7 +225,7 @@ function EditButton(props: EditButtonProps) {
     patchMutation.mutate(
       {
         name: data.name,
-        base_price_cents: Number(data.base_price_cents),
+        base_price_cents: Math.round(data.base_price_dollars * 100),
         description: (data.description as string) || null,
         is_active: data.is_active,
       },
@@ -246,7 +250,7 @@ function EditButton(props: EditButtonProps) {
         <PriceGroupForm
           defaultValues={{
             name: props.item.name,
-            base_price_cents: String(props.item.base_price_cents),
+            base_price_dollars: props.item.base_price_cents / 100,
             description: props.item.description ?? "",
             is_active: props.item.is_active,
           }}
@@ -286,7 +290,7 @@ function RouteComponent() {
     postMutation.mutate(
       {
         name: data.name,
-        base_price_cents: Number(data.base_price_cents),
+        base_price_cents: Math.round(data.base_price_dollars * 100),
         description: (data.description as string) || null,
         is_active: data.is_active,
       },

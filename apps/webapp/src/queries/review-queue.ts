@@ -11,5 +11,6 @@ export function getReviewQueueOpts() {
   return queryOptions({
     queryKey: ["review-queue"],
     queryFn: getReviewQueue,
+    refetchInterval: 60_000,
   });
 }

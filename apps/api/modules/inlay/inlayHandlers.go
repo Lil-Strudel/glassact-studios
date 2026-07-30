@@ -671,7 +671,17 @@ func (m InlayModule) HandleGetKanbanInlays(w http.ResponseWriter, r *http.Reques
 			INNER_JOIN(table.Projects, table.Projects.ID.EQ(table.Inlays.ProjectID)).
 			INNER_JOIN(table.Dealerships, table.Dealerships.ID.EQ(table.Projects.DealershipID)),
 	).WHERE(
-		table.Inlays.ManufacturingStep.IS_NOT_NULL(),
+		postgres.AND(
+			table.Inlays.ManufacturingStep.IS_NOT_NULL(),
+			// An inlay's step tops out at ready-to-ship and shipping happens at
+			// the project level, so without this the board never empties.
+			table.Projects.Status.NOT_IN(
+				postgres.String(string(data.ProjectStatuses.Shipped)),
+				postgres.String(string(data.ProjectStatuses.Invoiced)),
+				postgres.String(string(data.ProjectStatuses.Completed)),
+				postgres.String(string(data.ProjectStatuses.Cancelled)),
+			),
+		),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -1119,27 +1129,8 @@ func buildSandblastFilename(project *data.Project, inlay *data.Inlay) string {
 		shortID = shortID[:4]
 	}
 
-	return fmt.Sprintf("%s_%s_%s%s", sanitizeFilenamePart(project.Name), sanitizeFilenamePart(inlay.Name), shortID, ext)
-}
-
-// sanitizeFilenamePart collapses any run of non-alphanumeric characters into a
-// single dash so a name is safe to embed in a download filename.
-func sanitizeFilenamePart(s string) string {
-	var b strings.Builder
-	lastDash := false
-	for _, r := range s {
-		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
-			b.WriteRune(r)
-			lastDash = false
-		} else if !lastDash {
-			b.WriteByte('-')
-			lastDash = true
-		}
-	}
-
-	part := strings.Trim(b.String(), "-")
-	if part == "" {
-		return "inlay"
-	}
-	return part
+	return fmt.Sprintf("%s_%s_%s%s",
+		upload.SanitizeFilenamePart(project.Name, "project"),
+		upload.SanitizeFilenamePart(inlay.Name, "inlay"),
+		shortID, ext)
 }

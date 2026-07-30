@@ -108,6 +108,7 @@ function InlayCard(props: InlayCardProps) {
               alt={props.inlay.name}
               src={props.inlay.preview_url}
               class="w-[50px] h-[50px] flex-shrink-0 object-contain rounded"
+              draggable={false}
             />
           </Show>
           <div class="flex flex-col space-y-1 min-w-0">
