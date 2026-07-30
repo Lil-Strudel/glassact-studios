@@ -198,6 +198,8 @@ function NeedsProofCard(props: { item: ReviewQueueItem }) {
         </Show>
         <CreateProofDialog
           inlayUuid={props.item.inlay.uuid}
+          requestedWidth={props.item.inlay.custom_info?.requested_width}
+          requestedHeight={props.item.inlay.custom_info?.requested_height}
           onProofCreated={() =>
             queryClient.invalidateQueries({ queryKey: ["review-queue"] })
           }

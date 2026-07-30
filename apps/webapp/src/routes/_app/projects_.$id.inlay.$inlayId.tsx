@@ -331,6 +331,8 @@ function ConfiguringPanel(props: {
           <div class="mt-4 flex justify-center">
             <CreateProofDialog
               inlayUuid={props.inlayUuid}
+              requestedWidth={props.inlay.custom_info?.requested_width}
+              requestedHeight={props.inlay.custom_info?.requested_height}
               onProofCreated={props.onChanged}
             />
           </div>
