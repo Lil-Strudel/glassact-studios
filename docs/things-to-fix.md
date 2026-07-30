@@ -19,4 +19,3 @@ Grout size does not scale linearly with glass
 Make loading states better
 Texts are per project not per inlay
 Make notifications only go to the people involved
-Catalog admin page only paginates first api response
