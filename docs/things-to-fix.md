@@ -1,7 +1,6 @@
 Add granite colors to calaog Fullscreen
 Cannot recustomize is not an option
 Remove button should never be disabled
-After inlay add bring to project page
 Download design brings to svg not downloads
 On proof upload use width and height from request
 Installation kits are per project not per inlay.

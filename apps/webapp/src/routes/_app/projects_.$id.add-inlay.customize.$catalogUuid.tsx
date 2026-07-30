@@ -63,7 +63,7 @@ function RouteComponent() {
         },
       },
       {
-        onSuccess(inlay) {
+        onSuccess() {
           showToast({
             title: "Customized inlay added",
             description: `${item.name} has been added to the project for internal review.`,
@@ -72,10 +72,7 @@ function RouteComponent() {
           queryClient.invalidateQueries({
             queryKey: ["project", params().id, "inlays"],
           });
-          navigate({
-            to: "/projects/$id/inlay/$inlayId",
-            params: { id: params().id, inlayId: inlay.uuid },
-          });
+          navigate({ to: "/projects/$id", params: { id: params().id } });
         },
         onError(error) {
           if (isApiError(error)) {
