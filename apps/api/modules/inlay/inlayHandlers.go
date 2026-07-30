@@ -595,26 +595,41 @@ func (m InlayModule) HandleDeleteInlay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Pre-flight the RESTRICT foreign keys. Without this the DELETE raises a raw
-	// FK violation that surfaces to the dealership as a 500 full of Postgres
-	// internals.
+	// Pre-flight the RESTRICT foreign keys that genuinely put an inlay beyond
+	// removal. A proof is not one of them — DeleteWithProofs clears those — but
+	// milestones, updates and order snapshots cannot exist on a draft project,
+	// so finding one means the state is inconsistent and a raw FK violation
+	// would otherwise surface as a 500 full of Postgres internals.
 	blockers, err := m.Db.Inlays.GetDeleteBlockers([]int{inlay.ID})
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
-	if found := blockers[inlay.ID]; len(found) > 0 {
+	if found := hardDeleteBlockers(blockers[inlay.ID]); len(found) > 0 {
 		m.WriteError(w, r, m.Err.Conflict, errors.New(inlayDeleteBlockedMessage(found)))
 		return
 	}
 
-	err = m.Db.Inlays.Delete(inlay.ID)
+	err = m.Db.Inlays.DeleteWithProofs(inlay.ID)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
 	m.WriteJSON(w, r, http.StatusOK, map[string]bool{"success": true})
+}
+
+// hardDeleteBlockers filters out the blockers a delete can clear on its own.
+// Proofs are removed along with the inlay, so having one no longer stops a
+// dealership from changing its mind before ordering.
+func hardDeleteBlockers(blockers []data.InlayDeleteBlocker) []data.InlayDeleteBlocker {
+	hard := make([]data.InlayDeleteBlocker, 0, len(blockers))
+	for _, b := range blockers {
+		if b != data.InlayDeleteBlockers.Proof {
+			hard = append(hard, b)
+		}
+	}
+	return hard
 }
 
 // inlayDeleteBlockedMessage explains an undeletable inlay in dealership terms:
@@ -627,11 +642,8 @@ func inlayDeleteBlockedMessage(blockers []data.InlayDeleteBlocker) string {
 	switch {
 	case has(data.InlayDeleteBlockers.Order):
 		return "This inlay is part of an order that has already been placed, so it can't be removed."
-	case has(data.InlayDeleteBlockers.Milestone) || has(data.InlayDeleteBlockers.Update):
-		return "This inlay is already in production, so it can't be removed."
 	default:
-		return "We've already started design work on this inlay, so it can't be removed. " +
-			"You can leave it out of your order instead — just don't select it when you place the order."
+		return "This inlay is already in production, so it can't be removed."
 	}
 }
 

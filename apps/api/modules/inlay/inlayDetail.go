@@ -34,12 +34,16 @@ type InlayDetail struct {
 
 // applyDeleteBlockers records which dependent rows block deletion. Callers that
 // already have a batched lookup pass its result in; nil means nothing blocks.
+//
+// A proof is reported but does not clear CanDelete — the delete removes proofs
+// along with the inlay, so design work having started is no longer a reason to
+// refuse.
 func (i *InlayWithProofStatus) applyDeleteBlockers(blockers []data.InlayDeleteBlocker) {
 	if blockers == nil {
 		blockers = []data.InlayDeleteBlocker{}
 	}
 	i.DeleteBlockers = blockers
-	i.CanDelete = len(blockers) == 0
+	i.CanDelete = len(hardDeleteBlockers(blockers)) == 0
 }
 
 // buildInlayWithProofStatus resolves the readiness and pricing fields shared by

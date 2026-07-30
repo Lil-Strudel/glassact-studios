@@ -1083,3 +1083,57 @@ func (m InlayModel) Delete(id int) error {
 
 	return nil
 }
+
+// DeleteWithProofs removes an inlay along with the design work attached to it.
+//
+// inlay_proofs is ON DELETE RESTRICT, so a plain Delete fails once a designer
+// has sent anything. Removing an inlay from a draft project is the dealership
+// changing its mind before ordering, and the proofs have no meaning without
+// the inlay, so they go too. Chats and the catalog/custom info rows CASCADE.
+//
+// Callers must have already established that the project is still a draft —
+// milestones, updates and order snapshots also RESTRICT and are not cleared
+// here, because their existence means the inlay is past the point of removal.
+func (m InlayModel) DeleteWithProofs(id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	tx, err := m.STDB.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin delete of inlay %d: %w", id, err)
+	}
+	defer tx.Rollback()
+
+	// approved_proof_id has no foreign key, so it would otherwise be left
+	// pointing at a deleted proof for the moment before the inlay row goes.
+	clearApproved := table.Inlays.UPDATE(
+		table.Inlays.ApprovedProofID,
+	).SET(
+		postgres.NULL,
+	).WHERE(
+		table.Inlays.ID.EQ(postgres.Int(int64(id))),
+	)
+	if _, err := clearApproved.ExecContext(ctx, tx); err != nil {
+		return fmt.Errorf("failed to clear approved proof on inlay %d: %w", id, err)
+	}
+
+	deleteProofs := table.InlayProofs.DELETE().WHERE(
+		table.InlayProofs.InlayID.EQ(postgres.Int(int64(id))),
+	)
+	if _, err := deleteProofs.ExecContext(ctx, tx); err != nil {
+		return fmt.Errorf("failed to delete proofs for inlay %d: %w", id, err)
+	}
+
+	deleteInlay := table.Inlays.DELETE().WHERE(
+		table.Inlays.ID.EQ(postgres.Int(int64(id))),
+	)
+	if _, err := deleteInlay.ExecContext(ctx, tx); err != nil {
+		return fmt.Errorf("failed to delete inlay %d: %w", id, err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit delete of inlay %d: %w", id, err)
+	}
+
+	return nil
+}

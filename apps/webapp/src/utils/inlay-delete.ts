@@ -10,9 +10,5 @@ export function inlayDeleteBlockedMessage(
     return "This inlay is part of an order you've already placed, so it can't be removed.";
   }
 
-  if (blockers.includes("milestone") || blockers.includes("update")) {
-    return "This inlay is already in production, so it can't be removed.";
-  }
-
-  return "We've already started design work on this inlay, so it can't be removed. You can still leave it out of your order — just don't select it when you place the order.";
+  return "This inlay is already in production, so it can't be removed.";
 }
