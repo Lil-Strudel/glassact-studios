@@ -10,7 +10,6 @@ Merge cutting + firepolish into manufacturing
 Dealership pay before manufacturing as well
 Dealer preference on how they want their sandblasting file
 Dealership phone number
-Address search is broken in prod
 Make catalog item insertion easier
 Add users in dealer page
 Write up what roles can do
