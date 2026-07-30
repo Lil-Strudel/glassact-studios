@@ -20,7 +20,6 @@ When placing order is auto closes
 Projects in most recent order in production
 Fix get in touch text
 Address search is broken in prod
-Remove catalog customize button outside of project
 Make catalog item insertion easier
 Add users in dealer page
 Write up what roles can do

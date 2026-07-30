@@ -74,10 +74,6 @@ function RouteComponent() {
     navigation.filter((item) => !item.permission || can(item.permission)),
   );
 
-  const filteredUserNavigation = createMemo(() =>
-    userNavigation.filter((item) => !item.permission || can(item.permission)),
-  );
-
   function toggleOpen() {
     setOpen((open) => !open);
   }
@@ -128,7 +124,7 @@ function RouteComponent() {
                         />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <For each={filteredUserNavigation()}>
+                        <For each={userNavigation}>
                           {(item) => (
                             <DropdownMenuItem
                               as={item.component}
@@ -195,7 +191,7 @@ function RouteComponent() {
                         </div>
                       </div>
                       <div class="mt-3 space-y-1">
-                        <For each={filteredUserNavigation()}>
+                        <For each={userNavigation}>
                           {(item) =>
                             item.component === "a" ? (
                               <a
