@@ -4,7 +4,6 @@ Remove button should never be disabled
 Download design brings to svg not downloads
 Installation kits are per project not per inlay.
 The customer pays for shipping
-Order dialog checkbox has no hitbox
 Merge cutting + firepolish into manufacturing
 Dealership pay before manufacturing as well
 Dealer preference on how they want their sandblasting file
