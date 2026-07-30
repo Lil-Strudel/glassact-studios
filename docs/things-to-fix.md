@@ -1,17 +1,14 @@
 Add granite colors to calaog Fullscreen
 Cannot recustomize is not an option
 Remove button should never be disabled
-Customizer did not clear state after saving it
-After customized inlay bring to project page
+After inlay add bring to project page
 Download design brings to svg not downloads
 Price mods don't live update on proof accept screen
 On proof upload use width and height from request
 Installation kits are per project not per inlay.
 The customer pays for shipping
 Order dialog checkbox has no hitbox
-Materials 1-2 business days
-Cut
-Total is 2 weeks
+Time estimate should not be per step just entire project. Total time is 14-18 days.
 Inlay tracker image is not dragable
 Merge cutting + firepolish into manufacturing
 Dealership pay before manufacturing as well
