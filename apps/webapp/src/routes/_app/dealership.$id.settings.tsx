@@ -10,6 +10,7 @@ import {
   patchDealershipOpts,
 } from "../../queries/dealership";
 import { useUserContext } from "../../providers/user";
+import { Can } from "../../components/Can";
 import { isApiError } from "../../utils/is-api-error";
 
 export const Route = createFileRoute("/_app/dealership/$id/settings")({
@@ -70,14 +71,16 @@ function ReadOnlyView(props: { dealership: GET<Dealership> }) {
         <dt class="text-sm font-medium text-gray-500">Name</dt>
         <dd class="text-gray-900">{props.dealership.name}</dd>
       </div>
-      <div>
-        <dt class="text-sm font-medium text-gray-500">
-          Requires payment before shipping
-        </dt>
-        <dd class="text-gray-900">
-          {props.dealership.requires_payment_before_shipping ? "Yes" : "No"}
-        </dd>
-      </div>
+      <Can permission={PERMISSION_ACTIONS.MANAGE_DEALERSHIPS}>
+        <div>
+          <dt class="text-sm font-medium text-gray-500">
+            Requires payment before shipping
+          </dt>
+          <dd class="text-gray-900">
+            {props.dealership.requires_payment_before_shipping ? "Yes" : "No"}
+          </dd>
+        </div>
+      </Can>
       <div>
         <dt class="text-sm font-medium text-gray-500">Address</dt>
         <dd class="text-gray-900">
@@ -156,16 +159,18 @@ function SettingsForm(props: { dealership: GET<Dealership>; uuid: string }) {
         children={(field) => <Form.TextField field={field} label="Name" />}
       />
 
-      <form.Field
-        name="requires_payment_before_shipping"
-        children={(field) => (
-          <Form.Checkbox
-            field={field}
-            label="Require payment before shipping"
-            description="Projects for this dealership show a notice that they will not ship until the invoice is paid. This does not block shipping."
-          />
-        )}
-      />
+      <Can permission={PERMISSION_ACTIONS.MANAGE_DEALERSHIPS}>
+        <form.Field
+          name="requires_payment_before_shipping"
+          children={(field) => (
+            <Form.Checkbox
+              field={field}
+              label="Require payment before shipping"
+              description="Projects for this dealership show a notice that they will not ship until the invoice is paid. This does not block shipping."
+            />
+          )}
+        />
+      </Can>
 
       <div class="border-t pt-4">
         <h3 class="mb-3 text-sm font-medium text-gray-900">Address</h3>
