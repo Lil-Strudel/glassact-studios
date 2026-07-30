@@ -236,7 +236,7 @@ function InlayDetailPage() {
                 </Match>
 
                 <Match when={phase() === "ready"}>
-                  <ReadyPanel inlay={inlay()!} />
+                  <ReadyPanel />
                 </Match>
 
                 <Match when={phase() === "cancelled"}>
@@ -429,7 +429,7 @@ function ConfiguringPanel(props: {
   );
 }
 
-function ReadyPanel(props: { inlay: InlayDetail }) {
+function ReadyPanel() {
   return (
     <div class="space-y-4 rounded-lg border p-4">
       <div class="flex items-center justify-between">
