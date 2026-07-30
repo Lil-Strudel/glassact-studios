@@ -129,12 +129,16 @@ export default function InternalApproveProof(props: InternalApproveProofProps) {
                 )}
               />
             </Show>
-            <PricePreview
-              priceGroupId={form.state.values.price_group_id}
-              adjustmentType={typeField().state.value}
-              adjustmentValue={form.state.values.price_adjustment_value}
-              priceGroups={priceGroupsQuery.data?.items ?? []}
-            />
+            <form.Subscribe selector={(state) => state.values}>
+              {(values) => (
+                <PricePreview
+                  priceGroupId={values().price_group_id}
+                  adjustmentType={values().price_adjustment_type}
+                  adjustmentValue={values().price_adjustment_value}
+                  priceGroups={priceGroupsQuery.data?.items ?? []}
+                />
+              )}
+            </form.Subscribe>
           </div>
         )}
       />

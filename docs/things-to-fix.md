@@ -3,7 +3,6 @@ Cannot recustomize is not an option
 Remove button should never be disabled
 After inlay add bring to project page
 Download design brings to svg not downloads
-Price mods don't live update on proof accept screen
 On proof upload use width and height from request
 Installation kits are per project not per inlay.
 The customer pays for shipping
