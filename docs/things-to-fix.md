@@ -15,7 +15,6 @@ Address search is broken in prod
 Make catalog item insertion easier
 Add users in dealer page
 Write up what roles can do
-Price group should be real money field not cents
 Make invoice more obvious
 Make sure disabling and enabling works across catalog items, glass, and grout
 Mirroring/flipping designs
