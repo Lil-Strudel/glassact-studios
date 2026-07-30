@@ -129,7 +129,10 @@ function InlayDetailPage() {
                 </Match>
 
                 <Match when={isInShop()}>
-                  <ManufacturingPanel inlay={inlay()!} />
+                  <ManufacturingPanel
+                    inlay={inlay()!}
+                    orderedAt={project()?.ordered_at ?? null}
+                  />
                 </Match>
 
                 <Match when={phase() === "configuring"}>
@@ -194,7 +197,10 @@ function InlayDetailPage() {
   );
 }
 
-function ManufacturingPanel(props: { inlay: InlayDetail }) {
+function ManufacturingPanel(props: {
+  inlay: InlayDetail;
+  orderedAt: string | null;
+}) {
   const step = createMemo(
     () => props.inlay.manufacturing_step as ManufacturingStep | null,
   );
@@ -210,7 +216,10 @@ function ManufacturingPanel(props: { inlay: InlayDetail }) {
               </h2>
               <Badge variant="secondary">In Production</Badge>
             </div>
-            <ManufacturingTracker currentStep={currentStep()} />
+            <ManufacturingTracker
+              currentStep={currentStep()}
+              orderedAt={props.orderedAt}
+            />
           </div>
         )}
       </Show>

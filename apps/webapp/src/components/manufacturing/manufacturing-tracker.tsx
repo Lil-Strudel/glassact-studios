@@ -4,34 +4,33 @@ import type { ManufacturingStep } from "@glassact/data";
 import {
   STEP_ORDER,
   STEP_SHORT_LABELS,
-  estimateCompletionRange,
+  estimateProjectCompletion,
   formatEstimate,
-  formatStepDuration,
 } from "./steps";
 
 interface ManufacturingTrackerProps {
   currentStep: ManufacturingStep;
+  /**
+   * When the order was placed. Supplying it renders the whole-order completion
+   * estimate under the dots; the compact card version leaves it off.
+   */
+  orderedAt?: string | null;
 }
 
 export function ManufacturingTracker(props: ManufacturingTrackerProps) {
   const currentIdx = createMemo(() => STEP_ORDER.indexOf(props.currentStep));
+  const estimate = createMemo(() =>
+    estimateProjectCompletion(props.orderedAt ?? null),
+  );
 
   return (
-    <div class="flex items-center gap-0.5 w-full">
+    <div class="w-full space-y-1.5">
+      <div class="flex items-center gap-0.5 w-full">
       <For each={STEP_ORDER}>
         {(step, index) => {
           const isComplete = () => index() < currentIdx();
           const isCurrent = () => index() === currentIdx();
           const isFuture = () => index() > currentIdx();
-
-          // Cumulative estimate to finish this step, counting from the step the
-          // inlay is on now. Past steps have already happened, so they get no
-          // projection.
-          const estimate = createMemo(() =>
-            isComplete()
-              ? null
-              : estimateCompletionRange(props.currentStep, step),
-          );
 
           return (
             <div class="flex items-center flex-1 min-w-0">
@@ -66,26 +65,27 @@ export function ManufacturingTracker(props: ManufacturingTrackerProps) {
                 <TooltipContent class="max-w-xs text-left">
                   <p class="font-medium">{STEP_SHORT_LABELS[step]}</p>
                   <p class="text-primary-foreground/80">
-                    {formatStepDuration(step)}
+                    {isComplete()
+                      ? "Completed"
+                      : isCurrent()
+                        ? "In progress"
+                        : "Not started"}
                   </p>
-                  <Show
-                    when={estimate()}
-                    fallback={
-                      <p class="text-primary-foreground/80">Completed</p>
-                    }
-                  >
-                    {(range) => (
-                      <p class="text-primary-foreground/80">
-                        Est. done in {formatEstimate(range())}
-                      </p>
-                    )}
-                  </Show>
                 </TooltipContent>
               </Tooltip>
             </div>
           );
         }}
       </For>
+      </div>
+
+      <Show when={estimate()}>
+        {(range) => (
+          <p class="text-xs text-gray-500">
+            Estimated ready to ship: {formatEstimate(range())}
+          </p>
+        )}
+      </Show>
     </div>
   );
 }
