@@ -9,7 +9,6 @@ Installation kits are per project not per inlay.
 The customer pays for shipping
 Order dialog checkbox has no hitbox
 Time estimate should not be per step just entire project. Total time is 14-18 days.
-Inlay tracker image is not dragable
 Merge cutting + firepolish into manufacturing
 Dealership pay before manufacturing as well
 Dealer preference on how they want their sandblasting file
