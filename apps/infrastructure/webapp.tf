@@ -69,6 +69,21 @@ resource "aws_cloudfront_response_headers_policy" "no_cache" {
   }
 }
 
+resource "aws_cloudfront_function" "webapp_spa_rewrite" {
+  name    = "glassact-webapp-spa-rewrite"
+  runtime = "cloudfront-js-2.0"
+  publish = true
+  code    = <<-EOF
+    function handler(event) {
+      var uri = event.request.uri;
+      if (!uri.includes(".")) {
+        event.request.uri = "/index.html";
+      }
+      return event.request;
+    }
+  EOF
+}
+
 resource "aws_cloudfront_distribution" "webapp" {
   enabled             = true
   aliases             = [var.webapp_domain]
@@ -98,8 +113,35 @@ resource "aws_cloudfront_distribution" "webapp" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    default_ttl            = 300
-    max_ttl                = 900
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.no_cache.id
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.webapp_spa_rewrite.arn
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/assets/*"
+    target_origin_id       = "webapp-s3"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+    min_ttl                = 0
+    default_ttl            = 86400
+    max_ttl                = 31536000
 
     forwarded_values {
       query_string = false
@@ -152,20 +194,6 @@ resource "aws_cloudfront_distribution" "webapp" {
 
     cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
     origin_request_policy_id = aws_cloudfront_origin_request_policy.api.id
-  }
-
-  custom_error_response {
-    error_code            = 403
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 0
-  }
-
-  custom_error_response {
-    error_code            = 404
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 0
   }
 
   restrictions {
