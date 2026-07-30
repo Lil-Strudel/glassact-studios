@@ -17,7 +17,6 @@ Button on inlay page to go back to project
 Inlays should be removed when project is shipped
 Auto refresh queries
 When placing order is auto closes
-Fix get in touch text
 Address search is broken in prod
 Make catalog item insertion easier
 Add users in dealer page
