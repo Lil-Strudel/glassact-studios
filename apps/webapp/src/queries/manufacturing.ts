@@ -25,6 +25,7 @@ export function getKanbanInlaysOpts() {
   return queryOptions({
     queryKey: ["kanban-inlays"],
     queryFn: () => getKanbanInlays(),
+    refetchInterval: 60_000,
   });
 }
 

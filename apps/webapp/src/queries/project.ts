@@ -25,6 +25,7 @@ export function getProjectOpts(uuid: string) {
   return queryOptions({
     queryKey: ["project", uuid],
     queryFn: () => getProject(uuid),
+    refetchInterval: 60_000,
   });
 }
 
