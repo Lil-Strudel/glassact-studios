@@ -671,7 +671,17 @@ func (m InlayModule) HandleGetKanbanInlays(w http.ResponseWriter, r *http.Reques
 			INNER_JOIN(table.Projects, table.Projects.ID.EQ(table.Inlays.ProjectID)).
 			INNER_JOIN(table.Dealerships, table.Dealerships.ID.EQ(table.Projects.DealershipID)),
 	).WHERE(
-		table.Inlays.ManufacturingStep.IS_NOT_NULL(),
+		postgres.AND(
+			table.Inlays.ManufacturingStep.IS_NOT_NULL(),
+			// An inlay's step tops out at ready-to-ship and shipping happens at
+			// the project level, so without this the board never empties.
+			table.Projects.Status.NOT_IN(
+				postgres.String(string(data.ProjectStatuses.Shipped)),
+				postgres.String(string(data.ProjectStatuses.Invoiced)),
+				postgres.String(string(data.ProjectStatuses.Completed)),
+				postgres.String(string(data.ProjectStatuses.Cancelled)),
+			),
+		),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
