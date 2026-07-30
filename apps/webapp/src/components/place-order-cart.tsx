@@ -109,6 +109,15 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
     if (next) {
       initializeSelection();
       setOrderSuccess(false);
+      return;
+    }
+
+    // Refetching the project flips it out of "draft", and the project page
+    // only renders this component while the project is a draft — so
+    // invalidating any earlier unmounts the dialog on top of the user,
+    // including the confirmation they just placed an order.
+    if (orderSuccess()) {
+      queryClient.invalidateQueries({ queryKey: ["project"] });
     }
   }
 
@@ -121,10 +130,6 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
       {
         onSuccess() {
           setOrderSuccess(true);
-          queryClient.invalidateQueries({ queryKey: ["project"] });
-          queryClient.invalidateQueries({
-            queryKey: ["project", props.project.uuid, "inlays"],
-          });
         },
         onError(error) {
           if (isApiError(error)) {
