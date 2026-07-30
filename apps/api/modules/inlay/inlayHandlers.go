@@ -1129,27 +1129,8 @@ func buildSandblastFilename(project *data.Project, inlay *data.Inlay) string {
 		shortID = shortID[:4]
 	}
 
-	return fmt.Sprintf("%s_%s_%s%s", sanitizeFilenamePart(project.Name), sanitizeFilenamePart(inlay.Name), shortID, ext)
-}
-
-// sanitizeFilenamePart collapses any run of non-alphanumeric characters into a
-// single dash so a name is safe to embed in a download filename.
-func sanitizeFilenamePart(s string) string {
-	var b strings.Builder
-	lastDash := false
-	for _, r := range s {
-		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
-			b.WriteRune(r)
-			lastDash = false
-		} else if !lastDash {
-			b.WriteByte('-')
-			lastDash = true
-		}
-	}
-
-	part := strings.Trim(b.String(), "-")
-	if part == "" {
-		return "inlay"
-	}
-	return part
+	return fmt.Sprintf("%s_%s_%s%s",
+		upload.SanitizeFilenamePart(project.Name, "project"),
+		upload.SanitizeFilenamePart(inlay.Name, "inlay"),
+		shortID, ext)
 }

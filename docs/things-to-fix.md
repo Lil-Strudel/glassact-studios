@@ -1,7 +1,6 @@
 Add granite colors to calaog Fullscreen
 Cannot recustomize is not an option
 Remove button should never be disabled
-Download design brings to svg not downloads
 Installation kits are per project not per inlay.
 The customer pays for shipping
 Merge cutting + firepolish into manufacturing
