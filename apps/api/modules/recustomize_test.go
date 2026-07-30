@@ -169,7 +169,10 @@ func TestRecustomizeInlay_RejectedWhenProjectNotDraft(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.statusCode, string(resp.body))
 }
 
-func TestRecustomizeInlay_RejectedForStockCatalogInlay(t *testing.T) {
+// Customizing a stock inlay makes it customized, which drops it out of "ready"
+// until internal prices the coloring — otherwise inlayIsReady would keep
+// treating it as an uncustomized catalog item and let it be ordered unpriced.
+func TestRecustomizeInlay_OnStockCatalogInlay_MarksCustomizedAndNotReady(t *testing.T) {
 	ctx, teardown := setupTestApp(t)
 	defer teardown()
 
@@ -179,6 +182,45 @@ func TestRecustomizeInlay_RejectedForStockCatalogInlay(t *testing.T) {
 	project := seedDraftProject(t, ctx, dealershipUser.DealershipID, "Stock Project")
 
 	inlay := seedDraftCatalogInlay(t, ctx, project.ID, item.ID, "Stock Dove")
+
+	resp := ctx.request(testRequest{
+		method: http.MethodPost,
+		path:   fmt.Sprintf("/api/inlay/%s/recustomize", inlay.UUID),
+		token:  dealershipToken,
+		body:   recustomizeBody(),
+	})
+	require.Equal(t, http.StatusCreated, resp.statusCode, string(resp.body))
+
+	updated, found, err := ctx.db.Inlays.GetByUUID(inlay.UUID)
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.True(t, updated.IsCustomized)
+	assert.Nil(t, updated.ApprovedProofID)
+
+	proofs, err := ctx.db.InlayProofs.GetByInlayID(inlay.ID)
+	require.NoError(t, err)
+	require.Len(t, proofs, 1, "first customization starts proof versioning at v1")
+	assert.Equal(t, 1, proofs[0].VersionNumber)
+	assert.Equal(t, data.ProofStatuses.Pending, proofs[0].Status)
+	assert.Equal(t, data.ProofApprovalAuthorities.Internal, proofs[0].ApprovalAuthority)
+}
+
+func TestRecustomizeInlay_RejectedForCustomInlay(t *testing.T) {
+	ctx, teardown := setupTestApp(t)
+	defer teardown()
+
+	dealershipUser, dealershipToken, _, _ := seedTestData(t, ctx)
+	project := seedDraftProject(t, ctx, dealershipUser.DealershipID, "Custom Project")
+
+	inlay := &data.Inlay{
+		ProjectID: project.ID,
+		Name:      "Hand-drawn Rose",
+		Type:      data.InlayTypes.Custom,
+		CustomInfo: &data.InlayCustomInfo{
+			Description: "A rose, from the sketch attached.",
+		},
+	}
+	require.NoError(t, ctx.db.Inlays.Insert(inlay))
 
 	resp := ctx.request(testRequest{
 		method: http.MethodPost,

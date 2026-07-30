@@ -67,6 +67,12 @@ function InlayDetailPage() {
     () => phase() === "in-production" || phase() === "complete",
   );
 
+  // Any catalog inlay can be (re)coloured right up until the order is placed,
+  // whatever phase it is in — doing so resets it to awaiting internal pricing.
+  const canCustomize = createMemo(
+    () => inlay()?.type === "catalog" && project()?.status === "draft",
+  );
+
   function invalidateInlay() {
     queryClient.invalidateQueries({ queryKey: ["inlay", params().inlayId] });
     queryClient.invalidateQueries({ queryKey: ["project", params().id] });
@@ -145,6 +151,19 @@ function InlayDetailPage() {
             </Show>
           </Show>
 
+          <Show when={canCustomize()}>
+            <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
+              <Button
+                as={Link}
+                to="/projects/$id/inlay/$inlayId/recustomize"
+                params={{ id: params().id, inlayId: params().inlayId }}
+                size="sm"
+              >
+                {inlay()?.is_customized ? "Adjust design" : "Customize design"}
+              </Button>
+            </Can>
+          </Show>
+
           <Button
             as={Link}
             to="/projects/$id"
@@ -217,11 +236,7 @@ function InlayDetailPage() {
                 </Match>
 
                 <Match when={phase() === "ready"}>
-                  <ReadyPanel
-                    inlay={inlay()!}
-                    projectUuid={params().id}
-                    inlayUuid={params().inlayId}
-                  />
+                  <ReadyPanel inlay={inlay()!} />
                 </Match>
 
                 <Match when={phase() === "cancelled"}>
@@ -414,15 +429,7 @@ function ConfiguringPanel(props: {
   );
 }
 
-function ReadyPanel(props: {
-  inlay: InlayDetail;
-  projectUuid: string;
-  inlayUuid: string;
-}) {
-  const canRecustomize = createMemo(
-    () => props.inlay.type === "catalog" && props.inlay.is_customized,
-  );
-
+function ReadyPanel(props: { inlay: InlayDetail }) {
   return (
     <div class="space-y-4 rounded-lg border p-4">
       <div class="flex items-center justify-between">
@@ -433,20 +440,6 @@ function ReadyPanel(props: {
         This inlay is approved and will be included when the order is placed
         from the project page.
       </p>
-      <div class="flex flex-wrap gap-2">
-        <Show when={canRecustomize()}>
-          <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
-            <Button
-              as={Link}
-              to="/projects/$id/inlay/$inlayId/recustomize"
-              params={{ id: props.projectUuid, inlayId: props.inlayUuid }}
-              size="sm"
-            >
-              Adjust design
-            </Button>
-          </Can>
-        </Show>
-      </div>
     </div>
   );
 }

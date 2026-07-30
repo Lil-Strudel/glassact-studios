@@ -57,11 +57,13 @@ function RouteComponent() {
 
   const isRecustomizable = createMemo(() => {
     const inlay = inlayQuery.data;
-    return !!inlay && inlay.type === "catalog" && inlay.is_customized;
+    return !!inlay && inlay.type === "catalog";
   });
 
   // Resume from the inlay's current coloring rather than the catalog defaults —
-  // the point of adjusting is to tweak what's already there.
+  // the point of adjusting is to tweak what's already there. A stock inlay
+  // being customized for the first time has no proof, so it starts from the
+  // catalog defaults instead.
   const initialState = createMemo(() => {
     const proof = inlayQuery.data?.latest_proof ?? inlayQuery.data?.approved_proof;
     if (!proof) return undefined;
@@ -130,7 +132,9 @@ function RouteComponent() {
             to: `/projects/${params().id}/inlay/${params().inlayId}`,
           },
           {
-            title: "Adjust design",
+            title: inlayQuery.data?.is_customized
+              ? "Adjust design"
+              : "Customize design",
             to: `/projects/${params().id}/inlay/${params().inlayId}/recustomize`,
           },
         ]}
@@ -152,8 +156,8 @@ function RouteComponent() {
 
         <Match when={!isRecustomizable()}>
           <Notice
-            title="This inlay can't be adjusted"
-            body="Only customized catalog inlays can be re-colored. Custom inlays go through a designer proof instead."
+            title="This inlay can't be customized"
+            body="Only catalog inlays can be re-colored. Custom inlays go through a designer proof instead."
           />
         </Match>
 

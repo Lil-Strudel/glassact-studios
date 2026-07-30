@@ -7,14 +7,16 @@ import (
 	data "github.com/Lil-Strudel/glassact-studios/libs/data/pkg"
 )
 
-// HandleRecustomizeInlay replaces the customization on an existing customized
-// catalog inlay: the dealership re-enters the customizer, re-bakes, and the
-// result becomes a new pending internal-authority proof. Without this the only
-// way to change your mind is to delete the inlay and add it again, losing the
-// installation-kit choice and the chat thread.
+// HandleRecustomizeInlay (re)customizes a catalog inlay: the dealership enters
+// the customizer, bakes, and the result becomes a new pending
+// internal-authority proof. Without this the only way to change your mind is to
+// delete the inlay and add it again, losing the installation-kit choice and the
+// chat thread.
 //
-// The previous approval is discarded — a new coloring needs its own pricing
-// review, so the inlay goes back to "not ready" until internal approves it.
+// Applies to any catalog inlay on a draft project, including one added as-is —
+// deciding to colour a stock design is the same operation as recolouring one.
+// Either way the previous approval is discarded and the inlay drops out of
+// "ready": a new coloring needs its own pricing review.
 func (m InlayModule) HandleRecustomizeInlay(w http.ResponseWriter, r *http.Request) {
 	inlayUUID := r.PathValue("uuid")
 
@@ -58,8 +60,8 @@ func (m InlayModule) HandleRecustomizeInlay(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if inlay.Type != data.InlayTypes.Catalog || !inlay.IsCustomized {
-		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("only customized catalog inlays can be re-customized"))
+	if inlay.Type != data.InlayTypes.Catalog {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("only catalog inlays can be customized"))
 		return
 	}
 
@@ -123,6 +125,10 @@ func (m InlayModule) HandleRecustomizeInlay(w http.ResponseWriter, r *http.Reque
 
 	inlay.PreviewURL = body.BakedDesignAssetURL
 	inlay.ApprovedProofID = nil
+	// A stock inlay being customized for the first time stops being stock:
+	// inlayIsReady treats uncustomized catalog inlays as always ready, which
+	// would let this one be ordered before anyone had priced the coloring.
+	inlay.IsCustomized = true
 	if err := m.Db.Inlays.TxUpdateFields(tx, inlay); err != nil {
 		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to reset inlay %d after re-customization: %w", inlay.ID, err))
 		return

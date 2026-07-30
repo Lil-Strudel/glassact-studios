@@ -1,5 +1,4 @@
 Add granite colors to calaog Fullscreen
-Cannot recustomize is not an option
 Installation kits are per project not per inlay.
 The customer pays for shipping
 Merge cutting + firepolish into manufacturing
