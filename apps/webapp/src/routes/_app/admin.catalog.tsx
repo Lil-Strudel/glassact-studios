@@ -137,7 +137,10 @@ function RouteComponent() {
   const query = useQuery(() =>
     getCatalogListOpts({
       search: debouncedFilterValue(),
-      isActive: !showInactive(),
+      // Omitting the filter returns both; the server treats a present
+      // is_active as strict equality, so passing false would hide the
+      // active items instead of adding the inactive ones.
+      isActive: showInactive() ? undefined : true,
       limit: 50,
       offset: 0,
     }),
