@@ -11,7 +11,6 @@ Merge cutting + firepolish into manufacturing
 Dealership pay before manufacturing as well
 Dealer preference on how they want their sandblasting file
 Dealership phone number
-Button on inlay page to go back to project
 Address search is broken in prod
 Make catalog item insertion easier
 Add users in dealer page

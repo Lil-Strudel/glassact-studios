@@ -59,19 +59,31 @@ function InlayDetailPage() {
 
   return (
     <div class="space-y-6">
-      <Breadcrumb
-        crumbs={[
-          { title: "Projects", to: "/projects" },
-          {
-            title: project()?.name ?? "Project",
-            to: `/projects/${params().id}`,
-          },
-          {
-            title: inlay()?.name ?? "Inlay",
-            to: `/projects/${params().id}/inlay/${params().inlayId}`,
-          },
-        ]}
-      />
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <Breadcrumb
+          crumbs={[
+            { title: "Projects", to: "/projects" },
+            {
+              title: project()?.name ?? "Project",
+              to: `/projects/${params().id}`,
+            },
+            {
+              title: inlay()?.name ?? "Inlay",
+              to: `/projects/${params().id}/inlay/${params().inlayId}`,
+            },
+          ]}
+        />
+
+        <Button
+          as={Link}
+          to="/projects/$id"
+          params={{ id: params().id }}
+          variant="outline"
+          size="sm"
+        >
+          Back to project
+        </Button>
+      </div>
 
       <Switch>
         <Match when={inlayQuery.isLoading || projectQuery.isLoading}>
@@ -339,9 +351,6 @@ function ReadyPanel(props: {
         from the project page.
       </p>
       <div class="flex flex-wrap gap-2">
-        <Button as={Link} to="/projects/$id" params={{ id: props.projectUuid }} variant="outline" size="sm">
-          Back to project
-        </Button>
         <Show when={canRecustomize()}>
           <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
             <Button
