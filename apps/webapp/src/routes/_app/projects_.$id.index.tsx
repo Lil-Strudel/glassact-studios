@@ -327,8 +327,8 @@ function RouteComponent() {
       </Match>
 
       <Match when={projectQuery.isSuccess}>
-        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-          <div class="min-w-0">
+        <div class="grid gap-6 lg:h-[var(--app-pane-height)] lg:grid-cols-[minmax(0,1fr)_380px] lg:overflow-hidden">
+          <div class="min-w-0 lg:overflow-y-auto lg:pr-2">
           <Breadcrumb
             crumbs={[
               { title: "Projects", to: "/projects" },
@@ -654,11 +654,12 @@ function RouteComponent() {
           </Show>
           </div>
 
-          {/* The conversation stays in view while you work down the inlay list;
-              on narrow screens it stacks underneath instead. */}
+          {/* Pinned pane: the conversation fills the window and never moves
+              while you scroll the inlay list. On narrow screens it stacks
+              underneath instead. */}
           <ProjectDiscussion
             projectUuid={params().id}
-            class="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)]"
+            class="min-h-[24rem] lg:h-full lg:min-h-0"
           />
         </div>
       </Match>

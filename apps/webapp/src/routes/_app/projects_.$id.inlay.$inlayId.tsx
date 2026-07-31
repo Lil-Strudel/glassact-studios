@@ -82,208 +82,206 @@ function InlayDetailPage() {
   }
 
   return (
-    <div class="space-y-6">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <Breadcrumb
-          crumbs={[
-            { title: "Projects", to: "/projects" },
-            {
-              title: project()?.name ?? "Project",
-              to: `/projects/${params().id}`,
-            },
-            {
-              title: inlay()?.name ?? "Inlay",
-              to: `/projects/${params().id}/inlay/${params().inlayId}`,
-            },
-          ]}
-        />
+    <div class="grid gap-6 lg:h-[var(--app-pane-height)] lg:grid-cols-[minmax(0,1fr)_380px] lg:overflow-hidden">
+      <div class="min-w-0 space-y-6 lg:overflow-y-auto lg:pr-2">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <Breadcrumb
+            crumbs={[
+              { title: "Projects", to: "/projects" },
+              {
+                title: project()?.name ?? "Project",
+                to: `/projects/${params().id}`,
+              },
+              {
+                title: inlay()?.name ?? "Inlay",
+                to: `/projects/${params().id}/inlay/${params().inlayId}`,
+              },
+            ]}
+          />
 
-        <div class="flex items-center gap-2">
-          <Show when={siblings().length > 1}>
-            {/* Rendered as a plain disabled button at the ends — an anchor
-                ignores `disabled` and would still navigate. */}
-            <Show
-              when={previousInlay()}
-              fallback={
-                <Button variant="outline" size="sm" disabled>
-                  <IoChevronBack size={16} />
-                </Button>
-              }
-            >
-              {(previous) => (
-                <Button
-                  as={Link}
-                  to="/projects/$id/inlay/$inlayId"
-                  params={{ id: params().id, inlayId: previous().uuid }}
-                  variant="outline"
-                  size="sm"
-                  aria-label="Previous inlay"
-                >
-                  <IoChevronBack size={16} />
-                </Button>
-              )}
-            </Show>
-
-            <span class="text-sm text-gray-500">
-              {currentIndex() + 1} of {siblings().length}
-            </span>
-
-            <Show
-              when={nextInlay()}
-              fallback={
-                <Button variant="outline" size="sm" disabled>
-                  <IoChevronForward size={16} />
-                </Button>
-              }
-            >
-              {(next) => (
-                <Button
-                  as={Link}
-                  to="/projects/$id/inlay/$inlayId"
-                  params={{ id: params().id, inlayId: next().uuid }}
-                  variant="outline"
-                  size="sm"
-                  aria-label="Next inlay"
-                >
-                  <IoChevronForward size={16} />
-                </Button>
-              )}
-            </Show>
-          </Show>
-
-          <Show when={canCustomize()}>
-            <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
-              <Button
-                as={Link}
-                to="/projects/$id/inlay/$inlayId/recustomize"
-                params={{ id: params().id, inlayId: params().inlayId }}
-                size="sm"
+          <div class="flex items-center gap-2">
+            <Show when={siblings().length > 1}>
+              {/* Rendered as a plain disabled button at the ends — an anchor
+                  ignores `disabled` and would still navigate. */}
+              <Show
+                when={previousInlay()}
+                fallback={
+                  <Button variant="outline" size="sm" disabled>
+                    <IoChevronBack size={16} />
+                  </Button>
+                }
               >
-                {inlay()?.is_customized ? "Adjust design" : "Customize design"}
-              </Button>
-            </Can>
-          </Show>
-
-          <Button
-            as={Link}
-            to="/projects/$id"
-            params={{ id: params().id }}
-            variant="outline"
-            size="sm"
-          >
-            Back to project
-          </Button>
-        </div>
-      </div>
-
-      <Switch>
-        <Match when={inlayQuery.isLoading || projectQuery.isLoading}>
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
-            <div class="h-96 animate-pulse rounded-lg bg-gray-200" />
-            <div class="h-96 animate-pulse rounded-lg bg-gray-200" />
-          </div>
-        </Match>
-
-        <Match when={inlayQuery.isError || projectQuery.isError}>
-          <div class="rounded-xl border-2 border-dashed border-red-300 p-8 text-center">
-            <p class="font-medium text-red-600">Failed to load inlay</p>
-            <Button
-              variant="outline"
-              class="mt-4"
-              onClick={() => {
-                inlayQuery.refetch();
-                projectQuery.refetch();
-              }}
-            >
-              Retry
-            </Button>
-          </div>
-        </Match>
-
-        <Match when={inlay() && project() && phase()}>
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
-            <div class="space-y-4">
-              <InlayIdentityRail inlay={inlay()!} phase={phase()!} />
-            </div>
-
-            <div class="space-y-6">
-              <Switch>
-                <Match when={phase() === "awaiting-approval"}>
-                  <Show when={pendingProof()}>
-                    {(proof) => (
-                      <ProofReviewPanel
-                        proof={proof()}
-                        inlayUuid={params().inlayId}
-                      />
-                    )}
-                  </Show>
-                </Match>
-
-                <Match when={isInShop()}>
-                  <ManufacturingPanel
-                    inlay={inlay()!}
-                    orderedAt={project()?.ordered_at ?? null}
-                  />
-                </Match>
-
-                <Match when={phase() === "configuring"}>
-                  <ConfiguringPanel
-                    inlay={inlay()!}
-                    inlayUuid={params().inlayId}
-                    isDraft={project()!.status === "draft"}
-                    onChanged={invalidateInlay}
-                  />
-                </Match>
-
-                <Match when={phase() === "ready"}>
-                  <ReadyPanel />
-                </Match>
-
-                <Match when={phase() === "cancelled"}>
-                  <div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
-                    This project was cancelled, so this inlay will not be
-                    manufactured.
-                  </div>
-                </Match>
-              </Switch>
-
-              <Show when={isInShop()}>
-                <SandblastFileCard
-                  inlayUuid={params().inlayId}
-                  inlayName={inlay()!.name}
-                  sandblastFileUrl={inlay()!.sandblast_file_url}
-                  projectStatus={project()!.status}
-                  onUploaded={invalidateInlay}
-                  layout="card"
-                />
+                {(previous) => (
+                  <Button
+                    as={Link}
+                    to="/projects/$id/inlay/$inlayId"
+                    params={{ id: params().id, inlayId: previous().uuid }}
+                    variant="outline"
+                    size="sm"
+                    aria-label="Previous inlay"
+                  >
+                    <IoChevronBack size={16} />
+                  </Button>
+                )}
               </Show>
 
-              <DesignHistory
-                inlayUuid={params().inlayId}
-                excludeProofId={pendingProof()?.id}
-              />
+              <span class="text-sm text-gray-500">
+                {currentIndex() + 1} of {siblings().length}
+              </span>
 
-              {/* The project's one thread, filtered to this inlay by default.
-                  Switching to "Whole project" shows the rest of the
-                  conversation without leaving the page. */}
-              <ProjectDiscussion
-                projectUuid={params().id}
-                focusInlayUuid={params().inlayId}
-                collapsible
-                expandByDefault={
-                  pendingProof()?.approval_authority === "dealership"
+              <Show
+                when={nextInlay()}
+                fallback={
+                  <Button variant="outline" size="sm" disabled>
+                    <IoChevronForward size={16} />
+                  </Button>
                 }
-              />
-            </div>
-          </div>
-        </Match>
+              >
+                {(next) => (
+                  <Button
+                    as={Link}
+                    to="/projects/$id/inlay/$inlayId"
+                    params={{ id: params().id, inlayId: next().uuid }}
+                    variant="outline"
+                    size="sm"
+                    aria-label="Next inlay"
+                  >
+                    <IoChevronForward size={16} />
+                  </Button>
+                )}
+              </Show>
+            </Show>
 
-        <Match when={!inlay()}>
-          <div class="rounded-xl border-2 border-dashed border-gray-300 p-8 text-center">
-            <p class="text-gray-400">Inlay not found</p>
+            <Show when={canCustomize()}>
+              <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
+                <Button
+                  as={Link}
+                  to="/projects/$id/inlay/$inlayId/recustomize"
+                  params={{ id: params().id, inlayId: params().inlayId }}
+                  size="sm"
+                >
+                  {inlay()?.is_customized ? "Adjust design" : "Customize design"}
+                </Button>
+              </Can>
+            </Show>
+
+            <Button
+              as={Link}
+              to="/projects/$id"
+              params={{ id: params().id }}
+              variant="outline"
+              size="sm"
+            >
+              Back to project
+            </Button>
           </div>
-        </Match>
-      </Switch>
+        </div>
+
+        <Switch>
+          <Match when={inlayQuery.isLoading || projectQuery.isLoading}>
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+              <div class="h-96 animate-pulse rounded-lg bg-gray-200" />
+              <div class="h-96 animate-pulse rounded-lg bg-gray-200" />
+            </div>
+          </Match>
+
+          <Match when={inlayQuery.isError || projectQuery.isError}>
+            <div class="rounded-xl border-2 border-dashed border-red-300 p-8 text-center">
+              <p class="font-medium text-red-600">Failed to load inlay</p>
+              <Button
+                variant="outline"
+                class="mt-4"
+                onClick={() => {
+                  inlayQuery.refetch();
+                  projectQuery.refetch();
+                }}
+              >
+                Retry
+              </Button>
+            </div>
+          </Match>
+
+          <Match when={inlay() && project() && phase()}>
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+              <div class="space-y-4">
+                <InlayIdentityRail inlay={inlay()!} phase={phase()!} />
+              </div>
+
+              <div class="space-y-6">
+                <Switch>
+                  <Match when={phase() === "awaiting-approval"}>
+                    <Show when={pendingProof()}>
+                      {(proof) => (
+                        <ProofReviewPanel
+                          proof={proof()}
+                          inlayUuid={params().inlayId}
+                        />
+                      )}
+                    </Show>
+                  </Match>
+
+                  <Match when={isInShop()}>
+                    <ManufacturingPanel
+                      inlay={inlay()!}
+                      orderedAt={project()?.ordered_at ?? null}
+                    />
+                  </Match>
+
+                  <Match when={phase() === "configuring"}>
+                    <ConfiguringPanel
+                      inlay={inlay()!}
+                      inlayUuid={params().inlayId}
+                      isDraft={project()!.status === "draft"}
+                      onChanged={invalidateInlay}
+                    />
+                  </Match>
+
+                  <Match when={phase() === "ready"}>
+                    <ReadyPanel />
+                  </Match>
+
+                  <Match when={phase() === "cancelled"}>
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
+                      This project was cancelled, so this inlay will not be
+                      manufactured.
+                    </div>
+                  </Match>
+                </Switch>
+
+                <Show when={isInShop()}>
+                  <SandblastFileCard
+                    inlayUuid={params().inlayId}
+                    inlayName={inlay()!.name}
+                    sandblastFileUrl={inlay()!.sandblast_file_url}
+                    projectStatus={project()!.status}
+                    onUploaded={invalidateInlay}
+                    layout="card"
+                  />
+                </Show>
+
+                <DesignHistory
+                  inlayUuid={params().inlayId}
+                  excludeProofId={pendingProof()?.id}
+                />
+              </div>
+            </div>
+          </Match>
+
+          <Match when={!inlay()}>
+            <div class="rounded-xl border-2 border-dashed border-gray-300 p-8 text-center">
+              <p class="text-gray-400">Inlay not found</p>
+            </div>
+          </Match>
+        </Switch>
+      </div>
+
+      {/* The project's one thread, in full. Messages sent from here are tagged
+          with this inlay; the tag on each message is what tells them apart. */}
+      <ProjectDiscussion
+        projectUuid={params().id}
+        tagInlayUuid={params().inlayId}
+        class="min-h-[24rem] lg:h-full lg:min-h-0"
+      />
     </div>
   );
 }

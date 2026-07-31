@@ -2,7 +2,14 @@ import { cn } from "@glassact/ui";
 import type { GET, ProjectChat, ChatMessageType } from "@glassact/data";
 import { useQuery } from "@tanstack/solid-query";
 import { Link } from "@tanstack/solid-router";
-import { createEffect, createMemo, For, Show, type Component } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  For,
+  onCleanup,
+  Show,
+  type Component,
+} from "solid-js";
 import { getProjectChatsOpts } from "../../queries/chat";
 import { getInlaysByProjectOpts } from "../../queries/inlay";
 import { useUserContext } from "../../providers/user";
@@ -10,10 +17,6 @@ import { ProofStatusBadge } from "../proof/proof-status-badge";
 
 interface ChatThreadProps {
   projectUuid: string;
-  // The inlay whose page we are on, if any. Only used for filtering — tags are
-  // shown on every message regardless.
-  focusInlayUuid?: string;
-  showOnlyFocused?: boolean;
 }
 
 const SYSTEM_TYPES: ChatMessageType[] = [
@@ -44,21 +47,7 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
     return map;
   });
 
-  const focusInlayId = createMemo(() => {
-    if (!props.focusInlayUuid) return null;
-    const match = (inlaysQuery.data ?? []).find(
-      (inlay) => inlay.uuid === props.focusInlayUuid,
-    );
-    return match ? match.id : null;
-  });
-
-  const messages = createMemo(() => {
-    const all = query.data ?? [];
-    if (!props.showOnlyFocused) return all;
-    const id = focusInlayId();
-    if (id === null) return all;
-    return all.filter((chat) => chat.inlay_id === id);
-  });
+  const messages = createMemo(() => query.data ?? []);
 
   const isSystemMessage = (chat: GET<ProjectChat>) =>
     SYSTEM_TYPES.includes(chat.message_type);
@@ -98,13 +87,28 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
     );
   };
 
-  createEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _ = messages().length; // Needed for reactivity with scroll
+  function scrollToNewest() {
     if (scrollRef) {
       scrollRef.scrollTop = scrollRef.scrollHeight;
     }
+  }
+
+  createEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _ = messages().length; // Needed for reactivity with scroll
+    scrollToNewest();
   });
+
+  // Navigating to a page whose chat is already cached renders the whole list
+  // before the pane has been laid out, so the effect above scrolls a box that
+  // is still zero-height — and the message count never changes to trigger a
+  // retry. Pinning on resize catches that first layout.
+  function attachScroller(el: HTMLDivElement) {
+    scrollRef = el;
+    const observer = new ResizeObserver(scrollToNewest);
+    observer.observe(el);
+    onCleanup(() => observer.disconnect());
+  }
 
   return (
     <Show
@@ -119,16 +123,11 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
         when={messages().length > 0}
         fallback={
           <div class="flex-1 flex items-center justify-center text-gray-500 text-sm text-center px-4">
-            <Show
-              when={props.showOnlyFocused}
-              fallback="No messages yet. Start the conversation!"
-            >
-              No messages about this inlay yet.
-            </Show>
+            No messages yet. Start the conversation!
           </div>
         }
       >
-        <div ref={scrollRef} class="flex-1 overflow-y-auto p-4 space-y-3">
+        <div ref={attachScroller} class="flex-1 overflow-y-auto p-4 space-y-3">
           <For each={messages()}>
             {(chat) => (
               <Show
