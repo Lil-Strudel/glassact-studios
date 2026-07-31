@@ -16,7 +16,7 @@ import {
 import { createForm } from "@tanstack/solid-form";
 import { useMutation, useQuery } from "@tanstack/solid-query";
 import { z } from "zod";
-import { createMemo, createSignal, onMount, Show } from "solid-js";
+import { createMemo, createSignal, onMount, Show, untrack } from "solid-js";
 import { getCatalogAllTagsOpts } from "../../queries/catalog-browse";
 import { getGlassColorsOpts } from "../../queries/glass-colors";
 import { getGroutsOpts } from "../../queries/grouts";
@@ -63,8 +63,12 @@ export function CatalogForm(props: CatalogFormProps) {
   // The SVG, its manifest and the default size, all edited through the artwork
   // dialogs. Seeded from the stored item on edit.
   const [artwork, setArtwork] = createSignal<CatalogArtwork | null>(null);
-  const [category, setCategory] = createSignal(props.edit?.item.category ?? "");
-  const [tags, setTags] = createSignal<string[]>(props.edit?.tags ?? []);
+  const [category, setCategory] = createSignal(
+    untrack(() => props.edit?.item.category ?? ""),
+  );
+  const [tags, setTags] = createSignal<string[]>(
+    untrack(() => props.edit?.tags ?? []),
+  );
 
   const categoryOptions = createMemo(() => [...CATALOG_CATEGORIES]);
   const tagOptions = createMemo(() => tagsQuery.data ?? []);

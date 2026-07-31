@@ -4,6 +4,7 @@ import {
   createSignal,
   onCleanup,
   Show,
+  untrack,
 } from "solid-js";
 import { useMutation } from "@tanstack/solid-query";
 import type {
@@ -48,17 +49,21 @@ interface InitialState {
 }
 
 export function Customizer(props: CustomizerProps) {
-  const aspect = props.item.default_height / props.item.default_width;
+  const aspect = untrack(
+    () => props.item.default_height / props.item.default_width,
+  );
   const minWidth = Math.max(
-    props.item.min_width,
-    props.item.min_height / aspect,
+    untrack(() => props.item.min_width),
+    untrack(() => props.item.min_height) / aspect,
   );
 
   // Where to start: a re-customize session seeds from the inlay's current
   // coloring (props.initialState); otherwise from catalog defaults. Nothing is
   // persisted between sessions.
-  const initial: InitialState =
-    props.initialState ?? { overrides: {}, width: props.item.default_width };
+  const initial: InitialState = untrack(
+    () =>
+      props.initialState ?? { overrides: {}, width: props.item.default_width },
+  );
 
   const [overrides, setOverrides] = createSignal<ColorOverrides>(
     initial.overrides ?? {},
@@ -74,7 +79,9 @@ export function Customizer(props: CustomizerProps) {
   const [hoverGlassId, setHoverGlassId] = createSignal<number | null>(null);
   const [hoveredRegion, setHoveredRegion] = createSignal<string | null>(null);
 
-  const [width, setWidth] = createSignal(initial.width ?? props.item.default_width);
+  const [width, setWidth] = createSignal(
+    initial.width ?? untrack(() => props.item.default_width),
+  );
   const height = createMemo(() => width() * aspect);
 
   // The granite backdrop (the "stone" the inlay sits on) is a purely in-memory

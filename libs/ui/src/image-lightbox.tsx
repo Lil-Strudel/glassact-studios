@@ -6,6 +6,7 @@ import {
   createMemo,
   createSignal,
   onCleanup,
+  untrack,
   type JSX,
 } from "solid-js";
 import { cn } from "./cn";
@@ -38,7 +39,9 @@ export interface ImageLightboxProps {
  */
 export function ImageLightbox(props: ImageLightboxProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = createSignal(false);
-  const [current, setCurrent] = createSignal(props.index ?? 0);
+  const [current, setCurrent] = createSignal(
+    untrack(() => props.index ?? 0),
+  );
 
   const isOpen = () => props.open ?? uncontrolledOpen();
 

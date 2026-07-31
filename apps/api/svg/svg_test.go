@@ -192,22 +192,22 @@ func TestBake_PieceOverrideWinsOverGroup(t *testing.T) {
 	assert.Contains(t, findByID(t, out, "p2").SelectAttrValue("style", ""), "fill:#0000ff")
 }
 
-func TestBake_GroutRectInsertedAndSizedToFitViewBox(t *testing.T) {
+func TestBake_GroutPiecesRecoloredWithResolvedGroutHex(t *testing.T) {
 	manifest, structureSVG := bakedManifest(t, svgMultiClass)
 	manifest.GroutRegion.GroutID = intPtr(3)
+	require.NotEmpty(t, manifest.GroutRegion.PieceIDs)
 
 	bbox := ContentBBox{X: 0, Y: 0, Width: 100, Height: 200}
 	out, err := Bake(structureSVG, *manifest, bbox, 3, 3, ColorOverrides{},
 		nil, map[int]string{3: "#cccccc"})
 	require.NoError(t, err)
 
-	grout := findByID(t, out, "glassact-grout")
-	require.NotNil(t, grout)
-	assert.Equal(t, "rect", grout.Tag)
-	assert.Contains(t, grout.SelectAttrValue("style", ""), "fill:#cccccc")
-	// 3in x 3in -> 900 x 900 viewBox.
-	assert.Equal(t, "900", grout.SelectAttrValue("width", ""))
-	assert.Equal(t, "900", grout.SelectAttrValue("height", ""))
+	for _, id := range manifest.GroutRegion.PieceIDs {
+		piece := findByID(t, out, id)
+		require.NotNil(t, piece)
+		assert.Contains(t, piece.SelectAttrValue("style", ""), "fill:#cccccc")
+		assert.Equal(t, "3", piece.SelectAttrValue("data-grout-id", ""))
+	}
 }
 
 func TestBake_StripsStyleAndSetsFitViewBox(t *testing.T) {
