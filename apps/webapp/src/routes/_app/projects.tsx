@@ -237,7 +237,7 @@ const ProjectCard: Component<ProjectCardProps> = (props) => {
                 when={
                   s().needs_internal_approval > 0 ||
                   s().needs_proof > 0 ||
-                  s().awaiting_reply > 0
+                  s().awaiting_reply
                 }
               >
                 <div class="flex items-center gap-1.5 flex-wrap">
@@ -251,9 +251,9 @@ const ProjectCard: Component<ProjectCardProps> = (props) => {
                       Needs proof · {s().needs_proof}
                     </Badge>
                   </Show>
-                  <Show when={s().awaiting_reply > 0}>
+                  <Show when={s().awaiting_reply}>
                     <Badge variant="secondary" class="text-xs">
-                      Awaiting reply · {s().awaiting_reply}
+                      Awaiting reply
                     </Badge>
                   </Show>
                 </div>

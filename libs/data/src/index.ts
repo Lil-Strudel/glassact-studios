@@ -9,7 +9,6 @@ export * from "./dealerships";
 export * from "./glass-colors";
 export * from "./grouts";
 export * from "./helpers";
-export * from "./inlay-chats";
 export * from "./inlay-milestones";
 export * from "./inlay-proofs";
 export * from "./inlay-updates";

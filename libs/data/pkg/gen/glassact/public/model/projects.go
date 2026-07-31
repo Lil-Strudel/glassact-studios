@@ -13,16 +13,18 @@ import (
 )
 
 type Projects struct {
-	ID                int32 `sql:"primary_key"`
-	UUID              uuid.UUID
-	DealershipID      int32
-	Name              string
-	InternalReference *string
-	Status            string
-	TrackingNumber    *string
-	OrderedAt         *time.Time
-	OrderedBy         *int32
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
-	Version           int32
+	ID                        int32 `sql:"primary_key"`
+	UUID                      uuid.UUID
+	DealershipID              int32
+	Name                      string
+	InternalReference         *string
+	Status                    string
+	TrackingNumber            *string
+	OrderedAt                 *time.Time
+	OrderedBy                 *int32
+	CreatedAt                 time.Time
+	UpdatedAt                 time.Time
+	Version                   int32
+	InstallationKit           bool
+	InstallationKitPriceCents *int32
 }

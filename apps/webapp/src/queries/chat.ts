@@ -1,42 +1,45 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
-import type { GET, InlayChat } from "@glassact/data";
+import type { GET, ProjectChat } from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
-export async function getInlayChats(
-  inlayUuid: string,
-): Promise<GET<InlayChat>[]> {
-  const res = await api.get(`/inlay/${inlayUuid}/chats`);
+export async function getProjectChats(
+  projectUuid: string,
+): Promise<GET<ProjectChat>[]> {
+  const res = await api.get(`/project/${projectUuid}/chats`);
   return res.data;
 }
 
-export function getInlayChatsOpts(inlayUuid: string) {
+export function getProjectChatsOpts(projectUuid: string) {
   return queryOptions({
-    queryKey: ["inlay", inlayUuid, "chats"],
-    queryFn: () => getInlayChats(inlayUuid),
+    queryKey: ["project", projectUuid, "chats"],
+    queryFn: () => getProjectChats(projectUuid),
     refetchInterval: 15000,
   });
 }
 
-export interface PostInlayChatRequest {
+export interface PostProjectChatRequest {
   message: string;
   message_type: "text" | "image";
   attachment_url?: string;
+  // Tags the message with the inlay it is about; the thread labels it and links
+  // there. Omit for a message about the project as a whole.
+  inlay_uuid?: string;
 }
 
-export async function postInlayChat(params: {
-  inlayUuid: string;
-  body: PostInlayChatRequest;
-}): Promise<GET<InlayChat>> {
+export async function postProjectChat(params: {
+  projectUuid: string;
+  body: PostProjectChatRequest;
+}): Promise<GET<ProjectChat>> {
   const res = await api.post(
-    `/inlay/${params.inlayUuid}/chats`,
+    `/project/${params.projectUuid}/chats`,
     params.body,
   );
   return res.data;
 }
 
-export function postInlayChatOpts() {
+export function postProjectChatOpts() {
   return mutationOptions({
-    mutationFn: postInlayChat,
+    mutationFn: postProjectChat,
   });
 }

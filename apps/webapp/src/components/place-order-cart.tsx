@@ -18,14 +18,15 @@ import {
 import type { InlayWithInfo } from "@glassact/data";
 import { INSTALLATION_KIT_PRICE_CENTS } from "@glassact/data";
 import { postPlaceOrderOpts } from "../queries/order";
-import { patchInlayOpts } from "../queries/inlay";
+import { patchProjectOpts } from "../queries/project";
 import { isApiError } from "../utils/is-api-error";
 import { formatMoney } from "../utils/format-money";
+import { PriceCaveat } from "./price-caveat";
 import { formatPriceFormula } from "../utils/format-price-formula";
 import { IoCheckmarkCircle } from "solid-icons/io";
 
 interface PlaceOrderCartProps {
-  project: { uuid: string; name: string };
+  project: { uuid: string; name: string; installation_kit: boolean };
   inlays: InlayWithInfo[];
   disabled?: boolean;
 }
@@ -33,7 +34,7 @@ interface PlaceOrderCartProps {
 export function PlaceOrderCart(props: PlaceOrderCartProps) {
   const queryClient = useQueryClient();
   const placeOrder = useMutation(() => postPlaceOrderOpts());
-  const patchInlay = useMutation(() => patchInlayOpts());
+  const patchProject = useMutation(() => patchProjectOpts());
 
   const kitPriceDollars = INSTALLATION_KIT_PRICE_CENTS / 100;
 
@@ -70,24 +71,21 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
       .reduce((sum, inlay) => sum + dollarsFromCents(inlay.price_cents), 0);
   });
 
-  const kitCount = createMemo(() => {
-    const sel = selected();
-    return readyInlays().filter(
-      (inlay) => sel.has(inlay.uuid) && inlay.installation_kit,
-    ).length;
-  });
-
-  const kitTotalDollars = createMemo(() => kitCount() * kitPriceDollars);
+  // One kit covers the whole project, so this is a flat charge, not a per-inlay
+  // multiple.
+  const kitTotalDollars = createMemo(() =>
+    props.project.installation_kit ? kitPriceDollars : 0,
+  );
 
   const totalDollars = createMemo(() => subtotalDollars() + kitTotalDollars());
 
-  function handleToggleKit(inlay: InlayWithInfo, next: boolean) {
-    patchInlay.mutate(
-      { uuid: inlay.uuid, body: { installation_kit: next } },
+  function handleToggleKit(next: boolean) {
+    patchProject.mutate(
+      { uuid: props.project.uuid, body: { installation_kit: next } },
       {
         onSuccess() {
           queryClient.invalidateQueries({
-            queryKey: ["project", props.project.uuid, "inlays"],
+            queryKey: ["project", props.project.uuid],
           });
         },
         onError(error) {
@@ -211,9 +209,6 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                       onChange={() => toggleInlay(inlay.uuid)}
                       class="w-full"
                     >
-                      {/* The install-kit button sits outside the label: an
-                          interactive element nested in a <label> is invalid
-                          HTML and swallows clicks meant for the checkbox. */}
                       <div class="p-3 flex items-center gap-3 w-full hover:bg-gray-50">
                         <CheckboxLabel class="flex flex-1 min-w-0 items-center gap-3 cursor-pointer">
                           <CheckboxControl />
@@ -268,21 +263,6 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                           <span class="font-semibold">
                             {formatMoney(unitDollars())}
                           </span>
-                          <button
-                            type="button"
-                            disabled={patchInlay.isPending}
-                            onClick={() =>
-                              handleToggleKit(inlay, !inlay.installation_kit)
-                            }
-                            class={`text-xs rounded px-2 py-0.5 border transition-colors ${
-                              inlay.installation_kit
-                                ? "border-green-600 bg-green-50 text-green-700"
-                                : "border-gray-300 text-gray-500 hover:bg-gray-50"
-                            }`}
-                          >
-                            {inlay.installation_kit ? "✓ " : "+ "}
-                            Install kit ({formatMoney(kitPriceDollars)})
-                          </button>
                         </div>
                       </div>
                     </Checkbox>
@@ -291,19 +271,43 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
               </For>
             </div>
 
+            <label class="mt-3 flex cursor-pointer items-center gap-3 rounded-lg border p-3 hover:bg-gray-50">
+              <input
+                type="checkbox"
+                class="h-4 w-4 shrink-0 accent-gray-900"
+                checked={props.project.installation_kit}
+                disabled={patchProject.isPending}
+                onChange={(e) => handleToggleKit(e.currentTarget.checked)}
+              />
+              <span class="flex-1 min-w-0">
+                <span class="block text-sm font-medium">
+                  Include an installation kit
+                </span>
+                <span class="block text-xs text-gray-500">
+                  Glue, grout and consumables for every inlay in this project.
+                </span>
+              </span>
+              <span class="shrink-0 text-sm font-semibold">
+                {formatMoney(kitPriceDollars)}
+              </span>
+            </label>
+
             <div class="border-t pt-3 mt-3 space-y-1 text-sm">
               <div class="flex justify-between text-gray-600">
                 <span>Subtotal ({selectedCount()} item{selectedCount() === 1 ? "" : "s"})</span>
                 <span>{formatMoney(subtotalDollars())}</span>
               </div>
-              <div class="flex justify-between text-gray-600">
-                <span>Installation kits ({kitCount()})</span>
-                <span>{formatMoney(kitTotalDollars())}</span>
-              </div>
+              <Show when={props.project.installation_kit}>
+                <div class="flex justify-between text-gray-600">
+                  <span>Installation kit</span>
+                  <span>{formatMoney(kitTotalDollars())}</span>
+                </div>
+              </Show>
               <div class="flex justify-between text-base font-semibold">
                 <span>Total</span>
                 <span>{formatMoney(totalDollars())}</span>
               </div>
+              <PriceCaveat class="pt-1 text-right" />
             </div>
           </Show>
 

@@ -57,6 +57,7 @@ export function postProjectOpts() {
 export interface PatchProjectRequest {
   name?: string;
   internal_reference?: string | null;
+  installation_kit?: boolean;
 }
 
 export async function patchProject(params: {

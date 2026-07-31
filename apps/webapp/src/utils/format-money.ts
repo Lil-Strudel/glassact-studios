@@ -1,3 +1,8 @@
+// Nothing in the platform prices tax or shipping yet, so every amount a
+// dealership sees is the product price alone. One shared string keeps that
+// caveat worded identically wherever a total is shown.
+export const PRICE_CAVEAT = "Before tax and shipping.";
+
 export function formatMoney(
   amount: number,
   options: {

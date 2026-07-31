@@ -10,7 +10,7 @@ import { getProjectOpts } from "../../queries/project";
 import { Can } from "../../components/Can";
 import EditCustomInfoForm from "../../components/inlay/edit-custom-info-form";
 import { InlayIdentityRail } from "../../components/inlay/inlay-identity-rail";
-import { InlayDiscussion } from "../../components/inlay/inlay-discussion";
+import { ProjectDiscussion } from "../../components/chat/project-discussion";
 import { DesignHistory } from "../../components/inlay/design-history";
 import { ProofReviewPanel } from "../../components/inlay/proof-review-panel";
 import { SandblastFileCard } from "../../components/inlay/sandblast-file-card";
@@ -263,9 +263,13 @@ function InlayDetailPage() {
                 excludeProofId={pendingProof()?.id}
               />
 
-              <InlayDiscussion
-                inlayUuid={params().inlayId}
+              {/* The project's one thread, filtered to this inlay by default.
+                  Switching to "Whole project" shows the rest of the
+                  conversation without leaving the page. */}
+              <ProjectDiscussion
                 projectUuid={params().id}
+                focusInlayUuid={params().inlayId}
+                collapsible
                 expandByDefault={
                   pendingProof()?.approval_authority === "dealership"
                 }

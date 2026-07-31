@@ -242,10 +242,15 @@ func (m DashboardModel) outstandingInvoicesByDealership(dealershipID int) (int64
 
 	var amount sql.NullInt64
 	err = m.STDB.QueryRowContext(ctx, `
-		SELECT COALESCE(SUM(order_snapshots.price_cents), 0) FROM order_snapshots
-		JOIN invoices ON invoices.project_id = order_snapshots.project_id
-		JOIN projects ON projects.id = invoices.project_id
-		WHERE invoices.status = $1 AND projects.dealership_id = $2
+		SELECT COALESCE(SUM(per_project.total), 0) FROM (
+			SELECT COALESCE(SUM(order_snapshots.price_cents), 0)
+			     + COALESCE(MAX(projects.installation_kit_price_cents), 0) AS total
+			FROM invoices
+			JOIN projects ON projects.id = invoices.project_id
+			LEFT JOIN order_snapshots ON order_snapshots.project_id = projects.id
+			WHERE invoices.status = $1 AND projects.dealership_id = $2
+			GROUP BY projects.id
+		) per_project
 	`, string(InvoiceStatuses.Sent), dealershipID).Scan(&amount)
 	if err != nil {
 		return 0, 0, err
@@ -268,9 +273,15 @@ func (m DashboardModel) outstandingInvoicesGlobal() (int64, int64, error) {
 
 	var amount sql.NullInt64
 	err = m.STDB.QueryRowContext(ctx, `
-		SELECT COALESCE(SUM(order_snapshots.price_cents), 0) FROM order_snapshots
-		JOIN invoices ON invoices.project_id = order_snapshots.project_id
-		WHERE invoices.status = $1
+		SELECT COALESCE(SUM(per_project.total), 0) FROM (
+			SELECT COALESCE(SUM(order_snapshots.price_cents), 0)
+			     + COALESCE(MAX(projects.installation_kit_price_cents), 0) AS total
+			FROM invoices
+			JOIN projects ON projects.id = invoices.project_id
+			LEFT JOIN order_snapshots ON order_snapshots.project_id = projects.id
+			WHERE invoices.status = $1
+			GROUP BY projects.id
+		) per_project
 	`, string(InvoiceStatuses.Sent)).Scan(&amount)
 	if err != nil {
 		return 0, 0, err

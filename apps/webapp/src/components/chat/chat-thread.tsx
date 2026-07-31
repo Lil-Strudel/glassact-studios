@@ -1,14 +1,19 @@
 import { cn } from "@glassact/ui";
-import type { GET, InlayChat, ChatMessageType } from "@glassact/data";
+import type { GET, ProjectChat, ChatMessageType } from "@glassact/data";
 import { useQuery } from "@tanstack/solid-query";
+import { Link } from "@tanstack/solid-router";
 import { createEffect, createMemo, For, Show, type Component } from "solid-js";
-import { getInlayChatsOpts } from "../../queries/chat";
+import { getProjectChatsOpts } from "../../queries/chat";
+import { getInlaysByProjectOpts } from "../../queries/inlay";
 import { useUserContext } from "../../providers/user";
 import { ProofStatusBadge } from "../proof/proof-status-badge";
 
 interface ChatThreadProps {
-  inlayUuid: string;
   projectUuid: string;
+  // The inlay whose page we are on, if any. Only used for filtering — tags are
+  // shown on every message regardless.
+  focusInlayUuid?: string;
+  showOnlyFocused?: boolean;
 }
 
 const SYSTEM_TYPES: ChatMessageType[] = [
@@ -26,18 +31,71 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
   let scrollRef: HTMLDivElement | undefined;
   const { isInternal } = useUserContext();
 
-  const query = useQuery(() => getInlayChatsOpts(props.inlayUuid));
+  const query = useQuery(() => getProjectChatsOpts(props.projectUuid));
+  // Messages carry inlay_id; routes need the uuid, so the whole inlay is needed
+  // to resolve a tag into a name and a link.
+  const inlaysQuery = useQuery(() => getInlaysByProjectOpts(props.projectUuid));
 
-  const messages = createMemo(() => query.data ?? []);
+  const inlaysById = createMemo(() => {
+    const map = new Map<number, { uuid: string; name: string }>();
+    for (const inlay of inlaysQuery.data ?? []) {
+      map.set(inlay.id, { uuid: inlay.uuid, name: inlay.name });
+    }
+    return map;
+  });
 
-  const isSystemMessage = (chat: GET<InlayChat>) =>
+  const focusInlayId = createMemo(() => {
+    if (!props.focusInlayUuid) return null;
+    const match = (inlaysQuery.data ?? []).find(
+      (inlay) => inlay.uuid === props.focusInlayUuid,
+    );
+    return match ? match.id : null;
+  });
+
+  const messages = createMemo(() => {
+    const all = query.data ?? [];
+    if (!props.showOnlyFocused) return all;
+    const id = focusInlayId();
+    if (id === null) return all;
+    return all.filter((chat) => chat.inlay_id === id);
+  });
+
+  const isSystemMessage = (chat: GET<ProjectChat>) =>
     SYSTEM_TYPES.includes(chat.message_type);
 
-  const isMyMessage = (chat: GET<InlayChat>) => {
+  const isMyMessage = (chat: GET<ProjectChat>) => {
     if (isInternal()) {
       return chat.internal_user_id !== null;
     }
     return chat.dealership_user_id !== null;
+  };
+
+  // Always rendered when a message is tagged: an untagged "this one is too dark"
+  // in a project-wide thread is unactionable without it.
+  const InlayTag: Component<{ chat: GET<ProjectChat>; onDark?: boolean }> = (
+    tagProps,
+  ) => {
+    const inlay = createMemo(() => {
+      const id = tagProps.chat.inlay_id;
+      return id === null ? undefined : inlaysById().get(id);
+    });
+
+    return (
+      <Show when={inlay()}>
+        {(found) => (
+          <Link
+            to="/projects/$id/inlay/$inlayId"
+            params={{ id: props.projectUuid, inlayId: found().uuid }}
+            class={cn(
+              "mb-1 inline-block max-w-full truncate text-[11px] font-medium not-italic hover:underline",
+              tagProps.onDark ? "text-blue-100" : "text-blue-600",
+            )}
+          >
+            {found().name}
+          </Link>
+        )}
+      </Show>
+    );
   };
 
   createEffect(() => {
@@ -60,8 +118,13 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
       <Show
         when={messages().length > 0}
         fallback={
-          <div class="flex-1 flex items-center justify-center text-gray-500">
-            No messages yet. Start the conversation!
+          <div class="flex-1 flex items-center justify-center text-gray-500 text-sm text-center px-4">
+            <Show
+              when={props.showOnlyFocused}
+              fallback="No messages yet. Start the conversation!"
+            >
+              No messages about this inlay yet.
+            </Show>
           </div>
         }
       >
@@ -85,6 +148,7 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
                           "bg-gray-50 text-gray-500",
                       )}
                     >
+                      <InlayTag chat={chat} />
                       <Show when={chat.message_type === "proof_sent"}>
                         <div class="flex flex-col items-center gap-2">
                           <ProofStatusBadge status="pending" />
@@ -137,6 +201,7 @@ const ChatThread: Component<ChatThreadProps> = (props) => {
                         : "bg-gray-100 text-gray-900",
                     )}
                   >
+                    <InlayTag chat={chat} onDark={isMyMessage(chat)} />
                     <p class="text-sm">{chat.message}</p>
                     <p
                       class={cn(

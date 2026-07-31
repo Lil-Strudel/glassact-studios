@@ -240,6 +240,7 @@ func (m ProjectModule) HandlePatchProject(w http.ResponseWriter, r *http.Request
 	var body struct {
 		Name              *string `json:"name"`
 		InternalReference *string `json:"internal_reference"`
+		InstallationKit   *bool   `json:"installation_kit"`
 	}
 
 	err = m.ReadJSONBody(w, r, &body)
@@ -273,6 +274,16 @@ func (m ProjectModule) HandlePatchProject(w http.ResponseWriter, r *http.Request
 
 	if body.InternalReference != nil {
 		project.InternalReference = normalizeInternalReference(body.InternalReference)
+	}
+
+	// The kit is priced into the order, so it is only negotiable while the
+	// project is still a draft.
+	if body.InstallationKit != nil {
+		if project.Status != data.ProjectStatuses.Draft {
+			m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("can only change the installation kit on projects in draft status"))
+			return
+		}
+		project.InstallationKit = *body.InstallationKit
 	}
 
 	err = m.Db.Projects.Update(project)
@@ -451,6 +462,14 @@ func (m ProjectModule) HandlePlaceOrder(w http.ResponseWriter, r *http.Request) 
 	project.Status = data.ProjectStatuses.Ordered
 	project.OrderedAt = &now
 	project.OrderedBy = &userID
+
+	// One flat kit charge for the whole project, locked here the same way order
+	// snapshots lock inlay prices.
+	kitPriceCents := 0
+	if project.InstallationKit {
+		kitPriceCents = data.InstallationKitPriceCents
+	}
+	project.InstallationKitPriceCents = &kitPriceCents
 
 	err = m.Db.Projects.TxUpdate(tx, project)
 	if err != nil {
@@ -637,11 +656,6 @@ func (m ProjectModule) HandleMarkProjectDelivered(w http.ResponseWriter, r *http
 // inlay at order time. Stock catalog inlays pull from the catalog defaults;
 // approved-proof inlays pull from the proof.
 func (m ProjectModule) buildOrderSnapshot(projectID int, inlay *data.Inlay) (*data.OrderSnapshot, error) {
-	kitCents := 0
-	if inlay.InstallationKit {
-		kitCents = data.InstallationKitPriceCents
-	}
-
 	if inlay.ApprovedProofID != nil {
 		approvedProof, proofFound, err := m.Db.InlayProofs.GetByID(*inlay.ApprovedProofID)
 		if err != nil {
@@ -668,17 +682,15 @@ func (m ProjectModule) buildOrderSnapshot(projectID int, inlay *data.Inlay) (*da
 
 		proofID := approvedProof.ID
 		return &data.OrderSnapshot{
-			ProjectID:                 projectID,
-			InlayID:                   inlay.ID,
-			ProofID:                   &proofID,
-			PriceGroupID:              priceGroupID,
-			PriceCents:                priceCents,
-			PriceAdjustmentType:       approvedProof.PriceAdjustmentType,
-			PriceAdjustmentValue:      approvedProof.PriceAdjustmentValue,
-			Width:                     approvedProof.Width,
-			Height:                    approvedProof.Height,
-			InstallationKit:           inlay.InstallationKit,
-			InstallationKitPriceCents: kitCents,
+			ProjectID:            projectID,
+			InlayID:              inlay.ID,
+			ProofID:              &proofID,
+			PriceGroupID:         priceGroupID,
+			PriceCents:           priceCents,
+			PriceAdjustmentType:  approvedProof.PriceAdjustmentType,
+			PriceAdjustmentValue: approvedProof.PriceAdjustmentValue,
+			Width:                approvedProof.Width,
+			Height:               approvedProof.Height,
 		}, nil
 	}
 
@@ -704,17 +716,15 @@ func (m ProjectModule) buildOrderSnapshot(projectID int, inlay *data.Inlay) (*da
 	}
 
 	return &data.OrderSnapshot{
-		ProjectID:                 projectID,
-		InlayID:                   inlay.ID,
-		ProofID:                   nil,
-		PriceGroupID:              catalogItem.DefaultPriceGroupID,
-		PriceCents:                priceGroup.BasePriceCents,
-		PriceAdjustmentType:       data.PriceAdjustmentTypes.None,
-		PriceAdjustmentValue:      0,
-		Width:                     catalogItem.DefaultWidth,
-		Height:                    catalogItem.DefaultHeight,
-		InstallationKit:           inlay.InstallationKit,
-		InstallationKitPriceCents: kitCents,
+		ProjectID:            projectID,
+		InlayID:              inlay.ID,
+		ProofID:              nil,
+		PriceGroupID:         catalogItem.DefaultPriceGroupID,
+		PriceCents:           priceGroup.BasePriceCents,
+		PriceAdjustmentType:  data.PriceAdjustmentTypes.None,
+		PriceAdjustmentValue: 0,
+		Width:                catalogItem.DefaultWidth,
+		Height:               catalogItem.DefaultHeight,
 	}, nil
 }
 

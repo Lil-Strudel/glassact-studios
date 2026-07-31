@@ -16,27 +16,16 @@ func NewChatModule(app *app.Application) *ChatModule {
 	return &ChatModule{app}
 }
 
-func (m ChatModule) getInlayWithAccessCheck(w http.ResponseWriter, r *http.Request) (*data.Inlay, bool) {
-	inlayUUID := r.PathValue("uuid")
+func (m ChatModule) getProjectWithAccessCheck(w http.ResponseWriter, r *http.Request) (*data.Project, bool) {
+	projectUUID := r.PathValue("uuid")
 
-	err := m.Validate.Var(inlayUUID, "required,uuid4")
+	err := m.Validate.Var(projectUUID, "required,uuid4")
 	if err != nil {
 		m.WriteError(w, r, m.Err.BadRequest, err)
 		return nil, false
 	}
 
-	inlay, found, err := m.Db.Inlays.GetByUUID(inlayUUID)
-	if err != nil {
-		m.WriteError(w, r, m.Err.ServerError, err)
-		return nil, false
-	}
-
-	if !found {
-		m.WriteError(w, r, m.Err.RecordNotFound, nil)
-		return nil, false
-	}
-
-	project, found, err := m.Db.Projects.GetByID(inlay.ProjectID)
+	project, found, err := m.Db.Projects.GetByUUID(projectUUID)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return nil, false
@@ -56,16 +45,16 @@ func (m ChatModule) getInlayWithAccessCheck(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	return inlay, true
+	return project, true
 }
 
-func (m ChatModule) HandleGetInlayChats(w http.ResponseWriter, r *http.Request) {
-	inlay, ok := m.getInlayWithAccessCheck(w, r)
+func (m ChatModule) HandleGetProjectChats(w http.ResponseWriter, r *http.Request) {
+	project, ok := m.getProjectWithAccessCheck(w, r)
 	if !ok {
 		return
 	}
 
-	chats, err := m.Db.InlayChats.GetByInlayID(inlay.ID)
+	chats, err := m.Db.ProjectChats.GetByProjectID(project.ID)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
@@ -74,8 +63,8 @@ func (m ChatModule) HandleGetInlayChats(w http.ResponseWriter, r *http.Request) 
 	m.WriteJSON(w, r, http.StatusOK, chats)
 }
 
-func (m ChatModule) HandlePostInlayChat(w http.ResponseWriter, r *http.Request) {
-	inlay, ok := m.getInlayWithAccessCheck(w, r)
+func (m ChatModule) HandlePostProjectChat(w http.ResponseWriter, r *http.Request) {
+	project, ok := m.getProjectWithAccessCheck(w, r)
 	if !ok {
 		return
 	}
@@ -84,6 +73,9 @@ func (m ChatModule) HandlePostInlayChat(w http.ResponseWriter, r *http.Request) 
 		Message       string  `json:"message" validate:"required"`
 		MessageType   string  `json:"message_type" validate:"required,oneof=text image"`
 		AttachmentURL *string `json:"attachment_url"`
+		// Optional: tags the message with the inlay it is about so the thread
+		// can label it and link there. Not a scope.
+		InlayUUID *string `json:"inlay_uuid" validate:"omitempty,uuid4"`
 	}
 
 	err := m.ReadJSONBody(w, r, &body)
@@ -97,12 +89,33 @@ func (m ChatModule) HandlePostInlayChat(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	var taggedInlay *data.Inlay
+	if body.InlayUUID != nil {
+		inlay, found, err := m.Db.Inlays.GetByUUID(*body.InlayUUID)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+
+		// Never trust the client's inlay/project pairing.
+		if !found || inlay.ProjectID != project.ID {
+			m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("inlay %s does not belong to project %s", *body.InlayUUID, project.UUID))
+			return
+		}
+
+		taggedInlay = inlay
+	}
+
 	user := m.ContextGetUser(r)
-	chat := data.InlayChat{
-		InlayID:       inlay.ID,
+	chat := data.ProjectChat{
+		ProjectID:     project.ID,
 		MessageType:   data.ChatMessageType(body.MessageType),
 		Message:       body.Message,
 		AttachmentURL: body.AttachmentURL,
+	}
+
+	if taggedInlay != nil {
+		chat.InlayID = &taggedInlay.ID
 	}
 
 	if user.IsDealership() {
@@ -113,31 +126,40 @@ func (m ChatModule) HandlePostInlayChat(w http.ResponseWriter, r *http.Request) 
 		chat.InternalUserID = &userID
 	}
 
-	err = m.Db.InlayChats.Insert(&chat)
+	err = m.Db.ProjectChats.Insert(&chat)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
-	m.AutoWatchProject(inlay.ProjectID, user)
+	m.AutoWatchProject(project.ID, user)
+
+	// Tagged messages deep-link the notification to the inlay; untagged ones
+	// land on the project page.
+	title := fmt.Sprintf("New message on project: %s", project.Name)
+	var notifyInlayID *int
+	if taggedInlay != nil {
+		title = fmt.Sprintf("New message on inlay: %s", taggedInlay.Name)
+		notifyInlayID = &taggedInlay.ID
+	}
 
 	if user.IsInternal() {
 		m.NotifyDealership(
-			inlay.ProjectID,
+			project.ID,
 			user,
 			data.NotificationEventTypes.ChatMessage,
-			fmt.Sprintf("New message on inlay: %s", inlay.Name),
+			title,
 			body.Message,
-			&inlay.ID,
+			notifyInlayID,
 		)
 	} else {
 		m.NotifyInternal(
-			inlay.ProjectID,
+			project.ID,
 			user,
 			data.NotificationEventTypes.ChatMessage,
-			fmt.Sprintf("New message on inlay: %s", inlay.Name),
+			title,
 			body.Message,
-			&inlay.ID,
+			notifyInlayID,
 		)
 	}
 

@@ -95,8 +95,8 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("POST /api/inlay/{uuid}/sandblast", canManageKanban.ThenFunc(inlayModule.HandlePostSandblastFile))
 
 	chatModule := chat.NewChatModule(app)
-	mux.Handle("GET /api/inlay/{uuid}/chats", protected.ThenFunc(chatModule.HandleGetInlayChats))
-	mux.Handle("POST /api/inlay/{uuid}/chats", canSendChat.ThenFunc(chatModule.HandlePostInlayChat))
+	mux.Handle("GET /api/project/{uuid}/chats", protected.ThenFunc(chatModule.HandleGetProjectChats))
+	mux.Handle("POST /api/project/{uuid}/chats", canSendChat.ThenFunc(chatModule.HandlePostProjectChat))
 
 	canCreateProof := alice.New(app.Authenticate, app.RequirePermission(data.ActionCreateProof))
 

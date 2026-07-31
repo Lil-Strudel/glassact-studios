@@ -14,6 +14,7 @@ import {
   getSupportPriceGroupsOpts,
 } from "../../queries/support";
 import { Can } from "../../components/Can";
+import { PriceCaveat } from "../../components/price-caveat";
 import { Markdown } from "../../components/markdown";
 import { YoutubeEmbed } from "../../components/youtube-embed";
 import { ArticleFormDialog } from "../../components/support/article-form-dialog";
@@ -237,6 +238,7 @@ function PriceGroupsCard(props: PriceGroupsCardProps) {
               </tbody>
             </table>
           </div>
+          <PriceCaveat class="mt-3" />
         </CardContent>
       </Card>
     </Show>

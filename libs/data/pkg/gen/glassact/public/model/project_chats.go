@@ -24,4 +24,5 @@ type ProjectChats struct {
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	Version          int32
+	InlayID          *int32
 }

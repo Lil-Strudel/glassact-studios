@@ -500,10 +500,9 @@ func (m InlayModule) HandlePatchInlay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		Name            *string   `json:"name"`
-		InstallationKit *bool     `json:"installation_kit"`
-		Description     *string   `json:"description"`
-		ImageURLs       *[]string `json:"image_urls" validate:"omitempty,dive,required"`
+		Name        *string   `json:"name"`
+		Description *string   `json:"description"`
+		ImageURLs   *[]string `json:"image_urls" validate:"omitempty,dive,required"`
 	}
 
 	err = m.ReadJSONBody(w, r, &body)
@@ -539,10 +538,6 @@ func (m InlayModule) HandlePatchInlay(w http.ResponseWriter, r *http.Request) {
 
 	if body.Name != nil {
 		inlay.Name = *body.Name
-	}
-
-	if body.InstallationKit != nil {
-		inlay.InstallationKit = *body.InstallationKit
 	}
 
 	if body.Description != nil {

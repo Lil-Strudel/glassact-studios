@@ -1,8 +1,8 @@
 import { Show, createMemo } from "solid-js";
 import { Badge, ImageLightbox } from "@glassact/ui";
 import type { ColorOverrides, InlayDetail } from "@glassact/data";
-import { INSTALLATION_KIT_PRICE_CENTS } from "@glassact/data";
 import { formatMoney } from "../../utils/format-money";
+import { PriceCaveat } from "../price-caveat";
 import { formatPriceFormula } from "../../utils/format-price-formula";
 import {
   INLAY_PHASE_LABELS,
@@ -139,17 +139,12 @@ export function InlayIdentityRail(props: InlayIdentityRailProps) {
             <span class="text-xs text-gray-500">{priceFormula()}</span>
           </Show>
         </div>
-        <Show when={props.inlay.installation_kit}>
-          <p class="text-xs text-green-700">
-            + Installation kit (
-            {formatMoney(INSTALLATION_KIT_PRICE_CENTS / 100)})
-          </p>
-        </Show>
         <Show when={snapshot()}>
           <p class="text-xs text-gray-400">
             Locked in at order time — invoices bill from this.
           </p>
         </Show>
+        <PriceCaveat />
       </div>
 
       <Show when={props.inlay.is_customized && props.inlay.catalog_item}>

@@ -1,18 +1,21 @@
 import { createSignal } from "solid-js";
 import { useMutation, useQueryClient } from "@tanstack/solid-query";
 import { TextArea, TextFieldRoot, Button } from "@glassact/ui";
-import { postInlayChatOpts } from "../../queries/chat";
+import { postProjectChatOpts } from "../../queries/chat";
 import type { Component } from "solid-js";
 
 interface ChatInputProps {
-  inlayUuid: string;
+  projectUuid: string;
+  // When present, messages sent from here are tagged with this inlay.
+  inlayUuid?: string;
+  placeholder?: string;
   onMessageSent?: () => void;
 }
 
 const ChatInput: Component<ChatInputProps> = (props) => {
   const [message, setMessage] = createSignal("");
   const queryClient = useQueryClient();
-  const mutation = useMutation(() => postInlayChatOpts());
+  const mutation = useMutation(() => postProjectChatOpts());
 
   const handleSubmit = () => {
     const text = message().trim();
@@ -20,14 +23,18 @@ const ChatInput: Component<ChatInputProps> = (props) => {
 
     mutation.mutate(
       {
-        inlayUuid: props.inlayUuid,
-        body: { message: text, message_type: "text" },
+        projectUuid: props.projectUuid,
+        body: {
+          message: text,
+          message_type: "text",
+          ...(props.inlayUuid ? { inlay_uuid: props.inlayUuid } : {}),
+        },
       },
       {
         onSuccess() {
           setMessage("");
           queryClient.invalidateQueries({
-            queryKey: ["inlay", props.inlayUuid, "chats"],
+            queryKey: ["project", props.projectUuid, "chats"],
           });
           props.onMessageSent?.();
         },
@@ -51,7 +58,7 @@ const ChatInput: Component<ChatInputProps> = (props) => {
             setMessage(e.currentTarget.value)
           }
           onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
+          placeholder={props.placeholder ?? "Type a message..."}
         />
       </TextFieldRoot>
       <Button

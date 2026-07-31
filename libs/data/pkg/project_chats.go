@@ -14,9 +14,33 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type ChatMessageType string
+
+type chatMessageTypes struct {
+	Text          ChatMessageType
+	Image         ChatMessageType
+	ProofSent     ChatMessageType
+	ProofApproved ChatMessageType
+	ProofDeclined ChatMessageType
+	System        ChatMessageType
+}
+
+var ChatMessageTypes = chatMessageTypes{
+	Text:          ChatMessageType("text"),
+	Image:         ChatMessageType("image"),
+	ProofSent:     ChatMessageType("proof_sent"),
+	ProofApproved: ChatMessageType("proof_approved"),
+	ProofDeclined: ChatMessageType("proof_declined"),
+	System:        ChatMessageType("system"),
+}
+
+// A project has a single chat thread. InlayID optionally tags a message with
+// the inlay it is about, so the UI can label it and link straight there — it is
+// not a scope: every message on the project belongs to the same conversation.
 type ProjectChat struct {
 	StandardTable
 	ProjectID        int             `json:"project_id"`
+	InlayID          *int            `json:"inlay_id"`
 	DealershipUserID *int            `json:"dealership_user_id"`
 	InternalUserID   *int            `json:"internal_user_id"`
 	MessageType      ChatMessageType `json:"message_type"`
@@ -42,6 +66,12 @@ func projectChatFromGen(genChat model.ProjectChats) *ProjectChat {
 		internalUserID = &internalUserIDVal
 	}
 
+	var inlayID *int
+	if genChat.InlayID != nil {
+		inlayIDVal := int(*genChat.InlayID)
+		inlayID = &inlayIDVal
+	}
+
 	chat := ProjectChat{
 		StandardTable: StandardTable{
 			ID:        int(genChat.ID),
@@ -51,6 +81,7 @@ func projectChatFromGen(genChat model.ProjectChats) *ProjectChat {
 			Version:   int(genChat.Version),
 		},
 		ProjectID:        int(genChat.ProjectID),
+		InlayID:          inlayID,
 		DealershipUserID: dealershipUserID,
 		InternalUserID:   internalUserID,
 		MessageType:      ChatMessageType(genChat.MessageType),
@@ -84,10 +115,17 @@ func projectChatToGen(pc *ProjectChat) (*model.ProjectChats, error) {
 		internalUserID = &internalUserIDVal
 	}
 
+	var inlayID *int32
+	if pc.InlayID != nil {
+		inlayIDVal := int32(*pc.InlayID)
+		inlayID = &inlayIDVal
+	}
+
 	genChat := model.ProjectChats{
 		ID:               int32(pc.ID),
 		UUID:             chatUUID,
 		ProjectID:        int32(pc.ProjectID),
+		InlayID:          inlayID,
 		DealershipUserID: dealershipUserID,
 		InternalUserID:   internalUserID,
 		MessageType:      string(pc.MessageType),
@@ -101,7 +139,7 @@ func projectChatToGen(pc *ProjectChat) (*model.ProjectChats, error) {
 	return &genChat, nil
 }
 
-func (m ProjectChatModel) Insert(chat *ProjectChat) error {
+func (m ProjectChatModel) insertChat(ctx context.Context, executor qrm.Queryable, chat *ProjectChat) error {
 	genChat, err := projectChatToGen(chat)
 	if err != nil {
 		return err
@@ -109,6 +147,7 @@ func (m ProjectChatModel) Insert(chat *ProjectChat) error {
 
 	query := table.ProjectChats.INSERT(
 		table.ProjectChats.ProjectID,
+		table.ProjectChats.InlayID,
 		table.ProjectChats.DealershipUserID,
 		table.ProjectChats.InternalUserID,
 		table.ProjectChats.MessageType,
@@ -124,11 +163,8 @@ func (m ProjectChatModel) Insert(chat *ProjectChat) error {
 		table.ProjectChats.Version,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
 	var dest model.ProjectChats
-	err = query.QueryContext(ctx, m.STDB, &dest)
+	err = query.QueryContext(ctx, executor, &dest)
 	if err != nil {
 		return err
 	}
@@ -140,6 +176,20 @@ func (m ProjectChatModel) Insert(chat *ProjectChat) error {
 	chat.Version = int(dest.Version)
 
 	return nil
+}
+
+func (m ProjectChatModel) Insert(chat *ProjectChat) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return m.insertChat(ctx, m.STDB, chat)
+}
+
+func (m ProjectChatModel) TxInsert(tx *sql.Tx, chat *ProjectChat) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return m.insertChat(ctx, tx, chat)
 }
 
 func (m ProjectChatModel) GetByID(id int) (*ProjectChat, bool, error) {

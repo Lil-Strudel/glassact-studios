@@ -45,6 +45,12 @@ type Project struct {
 	TrackingNumber    *string       `json:"tracking_number"`
 	OrderedAt         *time.Time    `json:"ordered_at"`
 	OrderedBy         *int          `json:"ordered_by"`
+	// InstallationKit is the dealership's draft-time choice; one kit covers every
+	// inlay on the project. InstallationKitPriceCents is nil until the order is
+	// placed, at which point it locks the charge the way order snapshots lock
+	// inlay prices.
+	InstallationKit           bool `json:"installation_kit"`
+	InstallationKitPriceCents *int `json:"installation_kit_price_cents"`
 }
 
 type ProjectModel struct {
@@ -57,6 +63,12 @@ func projectFromGen(genProj model.Projects) *Project {
 	if genProj.OrderedBy != nil {
 		orderedByVal := int(*genProj.OrderedBy)
 		orderedBy = &orderedByVal
+	}
+
+	var kitPriceCents *int
+	if genProj.InstallationKitPriceCents != nil {
+		kitPriceCentsVal := int(*genProj.InstallationKitPriceCents)
+		kitPriceCents = &kitPriceCentsVal
 	}
 
 	project := Project{
@@ -74,6 +86,9 @@ func projectFromGen(genProj model.Projects) *Project {
 		TrackingNumber:    genProj.TrackingNumber,
 		OrderedAt:         genProj.OrderedAt,
 		OrderedBy:         orderedBy,
+
+		InstallationKit:           genProj.InstallationKit,
+		InstallationKitPriceCents: kitPriceCents,
 	}
 
 	return &project
@@ -96,6 +111,12 @@ func projectToGen(p *Project) (*model.Projects, error) {
 		orderedBy = &orderedByVal
 	}
 
+	var kitPriceCents *int32
+	if p.InstallationKitPriceCents != nil {
+		kitPriceCentsVal := int32(*p.InstallationKitPriceCents)
+		kitPriceCents = &kitPriceCentsVal
+	}
+
 	genProj := model.Projects{
 		ID:                int32(p.ID),
 		UUID:              projectUUID,
@@ -109,6 +130,9 @@ func projectToGen(p *Project) (*model.Projects, error) {
 		UpdatedAt:         p.UpdatedAt,
 		CreatedAt:         p.CreatedAt,
 		Version:           int32(p.Version),
+
+		InstallationKit:           p.InstallationKit,
+		InstallationKitPriceCents: kitPriceCents,
 	}
 
 	return &genProj, nil
@@ -309,16 +333,18 @@ func (m ProjectModel) GetAll() ([]*Project, error) {
 
 // ProjectActionSummary captures the per-project counts that tell an internal
 // user, at a glance, which projects need their attention.
+// Chat is one thread per project, so AwaitingReply is a yes/no rather than a
+// count of inlays.
 type ProjectActionSummary struct {
-	NeedsInternalApproval int `json:"needs_internal_approval"`
-	NeedsProof            int `json:"needs_proof"`
-	AwaitingReply         int `json:"awaiting_reply"`
+	NeedsInternalApproval int  `json:"needs_internal_approval"`
+	NeedsProof            int  `json:"needs_proof"`
+	AwaitingReply         bool `json:"awaiting_reply"`
 }
 
 // GetActionSummaries returns a map keyed by project ID of the internal
 // action counts across all projects. It runs three set-based queries (no
 // N+1): customized catalog inlays awaiting internal approval, custom inlays
-// still needing a proof, and inlays whose most recent chat message came from
+// still needing a proof, and projects whose most recent chat message came from
 // the dealership (awaiting an internal reply). Projects with no outstanding
 // action simply won't appear in the map.
 func (m ProjectModel) GetActionSummaries() (map[int]ProjectActionSummary, error) {
@@ -384,17 +410,15 @@ func (m ProjectModel) GetActionSummaries() (map[int]ProjectActionSummary, error)
 	}
 
 	awaitingReply := `
-		SELECT latest.project_id, COUNT(*)
+		SELECT latest.project_id, 1
 		FROM (
-		  SELECT DISTINCT ON (c.inlay_id) i.project_id, c.dealership_user_id
-		  FROM inlay_chats c
-		  JOIN inlays i ON i.id = c.inlay_id
-		  ORDER BY c.inlay_id, c.created_at DESC, c.id DESC
+		  SELECT DISTINCT ON (c.project_id) c.project_id, c.dealership_user_id
+		  FROM project_chats c
+		  ORDER BY c.project_id, c.created_at DESC, c.id DESC
 		) latest
-		WHERE latest.dealership_user_id IS NOT NULL
-		GROUP BY latest.project_id`
+		WHERE latest.dealership_user_id IS NOT NULL`
 	if err := applyCounts(awaitingReply, func(s *ProjectActionSummary, count int) {
-		s.AwaitingReply = count
+		s.AwaitingReply = count > 0
 	}); err != nil {
 		return nil, err
 	}
@@ -449,6 +473,8 @@ func (m ProjectModel) updateProject(ctx context.Context, executor qrm.Queryable,
 		table.Projects.TrackingNumber,
 		table.Projects.OrderedAt,
 		table.Projects.OrderedBy,
+		table.Projects.InstallationKit,
+		table.Projects.InstallationKitPriceCents,
 		table.Projects.Version,
 	).MODEL(
 		genProj,

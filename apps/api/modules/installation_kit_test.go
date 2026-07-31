@@ -27,7 +27,9 @@ func seedDraftCatalogInlay(t *testing.T, ctx *testContext, projectID, catalogIte
 	return inlay
 }
 
-func TestPlaceOrder_SnapshotsInstallationKitFromInlay(t *testing.T) {
+// One kit covers the whole project, so the charge is flat no matter how many
+// inlays are on the order.
+func TestPlaceOrder_LocksSingleInstallationKitPriceOnProject(t *testing.T) {
 	ctx, teardown := setupTestApp(t)
 	defer teardown()
 
@@ -43,57 +45,79 @@ func TestPlaceOrder_SnapshotsInstallationKitFromInlay(t *testing.T) {
 	}
 	require.NoError(t, ctx.db.Projects.Insert(project))
 
-	kitInlay := seedDraftCatalogInlay(t, ctx, project.ID, item.ID, "With Kit")
-	plainInlay := seedDraftCatalogInlay(t, ctx, project.ID, item.ID, "No Kit")
+	firstInlay := seedDraftCatalogInlay(t, ctx, project.ID, item.ID, "First")
+	secondInlay := seedDraftCatalogInlay(t, ctx, project.ID, item.ID, "Second")
 
-	// Toggle the installation kit on via the inlay PATCH endpoint.
 	patchResp := ctx.request(testRequest{
 		method: http.MethodPatch,
-		path:   fmt.Sprintf("/api/inlay/%s", kitInlay.UUID),
+		path:   fmt.Sprintf("/api/project/%s", project.UUID),
 		token:  dealershipToken,
 		body:   map[string]any{"installation_kit": true},
 	})
 	require.Equal(t, http.StatusOK, patchResp.statusCode, string(patchResp.body))
 
-	reloaded, found, err := ctx.db.Inlays.GetByUUID(kitInlay.UUID)
+	reloaded, found, err := ctx.db.Projects.GetByUUID(project.UUID)
 	require.NoError(t, err)
 	require.True(t, found)
 	assert.True(t, reloaded.InstallationKit, "PATCH should persist installation_kit")
+	assert.Nil(t, reloaded.InstallationKitPriceCents, "price should not lock before the order is placed")
 
-	// Place the order for both inlays.
 	orderResp := ctx.request(testRequest{
 		method: http.MethodPost,
 		path:   fmt.Sprintf("/api/project/%s/place-order", project.UUID),
 		token:  dealershipToken,
 		body: map[string]any{
-			"inlay_uuids": []string{kitInlay.UUID, plainInlay.UUID},
+			"inlay_uuids": []string{firstInlay.UUID, secondInlay.UUID},
 		},
 	})
 	require.Equal(t, http.StatusOK, orderResp.statusCode, string(orderResp.body))
 
-	// The kit inlay's snapshot locks in the kit + its price.
-	kitSnapshot, found, err := ctx.db.OrderSnapshots.GetByInlayID(kitInlay.ID)
+	ordered, found, err := ctx.db.Projects.GetByUUID(project.UUID)
 	require.NoError(t, err)
 	require.True(t, found)
-	assert.True(t, kitSnapshot.InstallationKit)
-	assert.Equal(t, data.InstallationKitPriceCents, kitSnapshot.InstallationKitPriceCents)
-
-	// The plain inlay's snapshot carries no kit.
-	plainSnapshot, found, err := ctx.db.OrderSnapshots.GetByInlayID(plainInlay.ID)
-	require.NoError(t, err)
-	require.True(t, found)
-	assert.False(t, plainSnapshot.InstallationKit)
-	assert.Equal(t, 0, plainSnapshot.InstallationKitPriceCents)
+	require.NotNil(t, ordered.InstallationKitPriceCents)
+	assert.Equal(t, data.InstallationKitPriceCents, *ordered.InstallationKitPriceCents,
+		"two inlays must still be charged for exactly one kit")
 }
 
-func TestPatchInlay_InstallationKit_RejectedWhenNotDraft(t *testing.T) {
+func TestPlaceOrder_WithoutInstallationKit_LocksZero(t *testing.T) {
 	ctx, teardown := setupTestApp(t)
 	defer teardown()
 
 	dealershipUser, dealershipToken, _, _ := seedTestData(t, ctx)
 
 	priceGroup := seedPriceGroup(t, ctx, "Standard")
-	item := seedCatalogItem(t, ctx, priceGroup.ID, "A-KIT-0002")
+	item := seedCatalogItem(t, ctx, priceGroup.ID, "A-KIT-0003")
+
+	project := &data.Project{
+		Name:         "No Kit Project",
+		Status:       data.ProjectStatuses.Draft,
+		DealershipID: dealershipUser.DealershipID,
+	}
+	require.NoError(t, ctx.db.Projects.Insert(project))
+
+	inlay := seedDraftCatalogInlay(t, ctx, project.ID, item.ID, "Plain")
+
+	orderResp := ctx.request(testRequest{
+		method: http.MethodPost,
+		path:   fmt.Sprintf("/api/project/%s/place-order", project.UUID),
+		token:  dealershipToken,
+		body:   map[string]any{"inlay_uuids": []string{inlay.UUID}},
+	})
+	require.Equal(t, http.StatusOK, orderResp.statusCode, string(orderResp.body))
+
+	ordered, found, err := ctx.db.Projects.GetByUUID(project.UUID)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.NotNil(t, ordered.InstallationKitPriceCents)
+	assert.Equal(t, 0, *ordered.InstallationKitPriceCents)
+}
+
+func TestPatchProject_InstallationKit_RejectedWhenNotDraft(t *testing.T) {
+	ctx, teardown := setupTestApp(t)
+	defer teardown()
+
+	dealershipUser, dealershipToken, _, _ := seedTestData(t, ctx)
 
 	project := &data.Project{
 		Name:         "Ordered Project",
@@ -102,11 +126,9 @@ func TestPatchInlay_InstallationKit_RejectedWhenNotDraft(t *testing.T) {
 	}
 	require.NoError(t, ctx.db.Projects.Insert(project))
 
-	inlay := seedDraftCatalogInlay(t, ctx, project.ID, item.ID, "Locked")
-
 	resp := ctx.request(testRequest{
 		method: http.MethodPatch,
-		path:   fmt.Sprintf("/api/inlay/%s", inlay.UUID),
+		path:   fmt.Sprintf("/api/project/%s", project.UUID),
 		token:  dealershipToken,
 		body:   map[string]any{"installation_kit": true},
 	})

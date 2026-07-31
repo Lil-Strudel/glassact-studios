@@ -20,7 +20,6 @@ func UseSchema(schema string) {
 	GlassColors = GlassColors.FromSchema(schema)
 	Grouts = Grouts.FromSchema(schema)
 	InlayCatalogInfos = InlayCatalogInfos.FromSchema(schema)
-	InlayChats = InlayChats.FromSchema(schema)
 	InlayCustomInfos = InlayCustomInfos.FromSchema(schema)
 	InlayCustomReferenceImages = InlayCustomReferenceImages.FromSchema(schema)
 	InlayMilestones = InlayMilestones.FromSchema(schema)

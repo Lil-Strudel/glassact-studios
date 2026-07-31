@@ -175,6 +175,18 @@ Place Order is enabled only when **every** inlay on the project is "ready". An i
 
 - `name` (required) — display name.
 - `internal_reference` (optional, nullable TEXT) — dealership's PO number / internal job reference. Surface alongside the project name everywhere.
+- `installation_kit` (BOOLEAN) — whether the order includes an installation kit. **One kit per project, not per inlay**: it covers the install materials for every inlay on the project and is a single flat `INSTALLATION_KIT_PRICE_CENTS` charge regardless of inlay count. Editable only while the project is `draft`.
+- `installation_kit_price_cents` (nullable INTEGER) — NULL until the order is placed, then locked to the charge, the project-level analogue of `order_snapshots.price_cents`.
+
+### Chat
+
+**One chat thread per project** (`project_chats`), shared by every inlay on it. There is no per-inlay thread.
+
+- `inlay_id` (nullable FK) **tags** a message with the inlay it is about — it is not a scope. Untagged messages are about the project as a whole.
+- Every tagged message renders the inlay's name as a link to that inlay, on the project page and the inlay page alike, so "this one is too dark" is never ambiguous.
+- The project page shows the thread in a right-hand rail; the inlay page shows the same thread filtered to that inlay, with a toggle back to the whole project.
+- Proof events (`proof_sent` / `proof_approved` / `proof_declined`) land in this thread tagged with their inlay.
+- Deleting an inlay leaves its messages in the thread, untagged (`ON DELETE SET NULL`).
 
 ### Proof Status Flow
 
@@ -198,7 +210,7 @@ Place Order is enabled only when **every** inlay on the project is "ready". An i
 - When a new proof is created, previous `pending` proofs become `superseded`.
 
 **Approval authority** (`inlay_proofs.approval_authority`):
-- `dealership` — customer-facing proof (custom inlays). An approver/admin dealership user approves or declines; the approval lands in the inlay chat thread and notifies internal staff.
+- `dealership` — customer-facing proof (custom inlays). An approver/admin dealership user approves or declines; the approval lands in the project chat thread (tagged with the inlay) and notifies internal staff.
 - `internal` — customizer-baked proof (customized catalog inlays). An internal designer/admin (with `internal_approve_proof` permission) approves and may override `price_group_id`. No chat message; no customer involvement.
 
 ### Manufacturing Steps
@@ -229,11 +241,15 @@ ordered → materials-prep → cutting → fire-polish → packaging → ready-t
 
 Snapshot values are immutable. Invoices read from snapshots, not from current catalog or proof state.
 
+The installation kit is **not** on the snapshot — it is one flat project-level charge, locked into `projects.installation_kit_price_cents` in the same transaction. A project total is therefore `SUM(order_snapshots.price_cents) + COALESCE(projects.installation_kit_price_cents, 0)`.
+
+**Prices exclude tax and shipping.** Nothing in the schema prices either yet, so every amount shown to a dealership in a project context carries the `PRICE_CAVEAT` line ("Before tax and shipping.") — once per surface, under the total.
+
 ### Proofs
 
 - **Price group is assigned at the proof level**, not the inlay level. A catalog item has `default_price_group_id`; the designer may override based on custom sizing, customization complexity, or special materials.
-- **Versioning:** proofs are versioned per inlay — `(inlay_id, version_number)` is unique. All versions are visible to the dealership. Chat history is a single thread across versions.
-- **Proof-chat integration:** when a proof is created, also insert a chat message with `message_type = 'proof_sent'` and link `proof.sent_in_chat_id = chat_message.id`. Supersede previous `pending` proofs on the same inlay. Update `inlay.preview_url`. Notify dealership.
+- **Versioning:** proofs are versioned per inlay — `(inlay_id, version_number)` is unique. All versions are visible to the dealership.
+- **Proof-chat integration:** when a proof is created, also insert a `project_chats` message with `message_type = 'proof_sent'`, `inlay_id` set to the inlay, and link `proof.sent_in_chat_id = chat_message.id`. Supersede previous `pending` proofs on the same inlay. Update `inlay.preview_url`. Notify dealership.
 
 ### Manufacturing
 

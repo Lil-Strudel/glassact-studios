@@ -28,6 +28,7 @@ type projectChatsTable struct {
 	CreatedAt        postgres.ColumnTimestampz
 	UpdatedAt        postgres.ColumnTimestampz
 	Version          postgres.ColumnInteger
+	InlayID          postgres.ColumnInteger
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -80,8 +81,9 @@ func newProjectChatsTableImpl(schemaName, tableName, alias string) projectChatsT
 		CreatedAtColumn        = postgres.TimestampzColumn("created_at")
 		UpdatedAtColumn        = postgres.TimestampzColumn("updated_at")
 		VersionColumn          = postgres.IntegerColumn("version")
-		allColumns             = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, DealershipUserIDColumn, InternalUserIDColumn, MessageTypeColumn, MessageColumn, AttachmentURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns         = postgres.ColumnList{UUIDColumn, ProjectIDColumn, DealershipUserIDColumn, InternalUserIDColumn, MessageTypeColumn, MessageColumn, AttachmentURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		InlayIDColumn          = postgres.IntegerColumn("inlay_id")
+		allColumns             = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, DealershipUserIDColumn, InternalUserIDColumn, MessageTypeColumn, MessageColumn, AttachmentURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn, InlayIDColumn}
+		mutableColumns         = postgres.ColumnList{UUIDColumn, ProjectIDColumn, DealershipUserIDColumn, InternalUserIDColumn, MessageTypeColumn, MessageColumn, AttachmentURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn, InlayIDColumn}
 		defaultColumns         = postgres.ColumnList{IDColumn, UUIDColumn, MessageTypeColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
@@ -100,6 +102,7 @@ func newProjectChatsTableImpl(schemaName, tableName, alias string) projectChatsT
 		CreatedAt:        CreatedAtColumn,
 		UpdatedAt:        UpdatedAtColumn,
 		Version:          VersionColumn,
+		InlayID:          InlayIDColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

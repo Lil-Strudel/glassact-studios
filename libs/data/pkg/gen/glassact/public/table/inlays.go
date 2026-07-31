@@ -23,7 +23,6 @@ type inlaysTable struct {
 	Name              postgres.ColumnString
 	Type              postgres.ColumnString
 	IsCustomized      postgres.ColumnBool
-	InstallationKit   postgres.ColumnBool
 	PreviewURL        postgres.ColumnString
 	SandblastFileURL  postgres.ColumnString
 	ApprovedProofID   postgres.ColumnInteger
@@ -78,7 +77,6 @@ func newInlaysTableImpl(schemaName, tableName, alias string) inlaysTable {
 		NameColumn              = postgres.StringColumn("name")
 		TypeColumn              = postgres.StringColumn("type")
 		IsCustomizedColumn      = postgres.BoolColumn("is_customized")
-		InstallationKitColumn   = postgres.BoolColumn("installation_kit")
 		PreviewURLColumn        = postgres.StringColumn("preview_url")
 		SandblastFileURLColumn  = postgres.StringColumn("sandblast_file_url")
 		ApprovedProofIDColumn   = postgres.IntegerColumn("approved_proof_id")
@@ -86,9 +84,9 @@ func newInlaysTableImpl(schemaName, tableName, alias string) inlaysTable {
 		CreatedAtColumn         = postgres.TimestampzColumn("created_at")
 		UpdatedAtColumn         = postgres.TimestampzColumn("updated_at")
 		VersionColumn           = postgres.IntegerColumn("version")
-		allColumns              = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, IsCustomizedColumn, InstallationKitColumn, PreviewURLColumn, SandblastFileURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns          = postgres.ColumnList{UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, IsCustomizedColumn, InstallationKitColumn, PreviewURLColumn, SandblastFileURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		defaultColumns          = postgres.ColumnList{IDColumn, UUIDColumn, IsCustomizedColumn, InstallationKitColumn, PreviewURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		allColumns              = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, IsCustomizedColumn, PreviewURLColumn, SandblastFileURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		mutableColumns          = postgres.ColumnList{UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, IsCustomizedColumn, PreviewURLColumn, SandblastFileURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		defaultColumns          = postgres.ColumnList{IDColumn, UUIDColumn, IsCustomizedColumn, PreviewURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
 	)
 
 	return inlaysTable{
@@ -101,7 +99,6 @@ func newInlaysTableImpl(schemaName, tableName, alias string) inlaysTable {
 		Name:              NameColumn,
 		Type:              TypeColumn,
 		IsCustomized:      IsCustomizedColumn,
-		InstallationKit:   InstallationKitColumn,
 		PreviewURL:        PreviewURLColumn,
 		SandblastFileURL:  SandblastFileURLColumn,
 		ApprovedProofID:   ApprovedProofIDColumn,

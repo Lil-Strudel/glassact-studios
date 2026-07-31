@@ -142,7 +142,7 @@ func cleanupTables(t *testing.T) {
 		inlay_updates,
 		inlay_milestones,
 		inlay_proofs,
-		inlay_chats,
+
 		inlay_custom_reference_images,
 		inlay_custom_infos,
 		inlay_catalog_infos,
@@ -299,18 +299,20 @@ func createTestInlay(t *testing.T, models Models, projectID int) *Inlay {
 	return inlay
 }
 
-func createTestInlayChat(t *testing.T, models Models, inlayID int) *InlayChat {
+// Chat lives on the project; inlayID only tags the message.
+func createTestProjectChat(t *testing.T, models Models, projectID int, inlayID *int) *ProjectChat {
 	t.Helper()
 
-	chat := &InlayChat{
+	chat := &ProjectChat{
+		ProjectID:   projectID,
 		InlayID:     inlayID,
 		MessageType: "system",
 		Message:     "Test chat message",
 	}
 
-	err := models.InlayChats.Insert(chat)
+	err := models.ProjectChats.Insert(chat)
 	if err != nil {
-		t.Fatalf("Failed to create test inlay chat: %v", err)
+		t.Fatalf("Failed to create test project chat: %v", err)
 	}
 
 	return chat
@@ -319,7 +321,12 @@ func createTestInlayChat(t *testing.T, models Models, inlayID int) *InlayChat {
 func createTestInlayProof(t *testing.T, models Models, inlayID int, priceGroupID int) *InlayProof {
 	t.Helper()
 
-	chat := createTestInlayChat(t, models, inlayID)
+	inlay, found, err := models.Inlays.GetByID(inlayID)
+	if err != nil || !found {
+		t.Fatalf("Failed to load inlay %d for test proof: %v", inlayID, err)
+	}
+
+	chat := createTestProjectChat(t, models, inlay.ProjectID, &inlayID)
 
 	proof := &InlayProof{
 		InlayID:        inlayID,
@@ -334,7 +341,7 @@ func createTestInlayProof(t *testing.T, models Models, inlayID int, priceGroupID
 		SentInChatID:   &chat.ID,
 	}
 
-	err := models.InlayProofs.Insert(proof)
+	err = models.InlayProofs.Insert(proof)
 	if err != nil {
 		t.Fatalf("Failed to create test inlay proof: %v", err)
 	}

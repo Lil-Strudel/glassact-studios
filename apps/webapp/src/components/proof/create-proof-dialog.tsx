@@ -91,9 +91,8 @@ export default function CreateProofDialog(props: CreateProofDialogProps) {
             queryClient.invalidateQueries({
               queryKey: ["inlay", props.inlayUuid, "proofs"],
             });
-            queryClient.invalidateQueries({
-              queryKey: ["inlay", props.inlayUuid, "chats"],
-            });
+            // Prefix-matches the project chat thread the proof message lands in.
+            queryClient.invalidateQueries({ queryKey: ["project"] });
             props.onProofCreated?.();
             showToast({
               title: "Proof created",

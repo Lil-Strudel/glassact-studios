@@ -17,18 +17,20 @@ type projectsTable struct {
 	postgres.Table
 
 	// Columns
-	ID                postgres.ColumnInteger
-	UUID              postgres.ColumnString
-	DealershipID      postgres.ColumnInteger
-	Name              postgres.ColumnString
-	InternalReference postgres.ColumnString
-	Status            postgres.ColumnString
-	TrackingNumber    postgres.ColumnString
-	OrderedAt         postgres.ColumnTimestampz
-	OrderedBy         postgres.ColumnInteger
-	CreatedAt         postgres.ColumnTimestampz
-	UpdatedAt         postgres.ColumnTimestampz
-	Version           postgres.ColumnInteger
+	ID                        postgres.ColumnInteger
+	UUID                      postgres.ColumnString
+	DealershipID              postgres.ColumnInteger
+	Name                      postgres.ColumnString
+	InternalReference         postgres.ColumnString
+	Status                    postgres.ColumnString
+	TrackingNumber            postgres.ColumnString
+	OrderedAt                 postgres.ColumnTimestampz
+	OrderedBy                 postgres.ColumnInteger
+	CreatedAt                 postgres.ColumnTimestampz
+	UpdatedAt                 postgres.ColumnTimestampz
+	Version                   postgres.ColumnInteger
+	InstallationKit           postgres.ColumnBool
+	InstallationKitPriceCents postgres.ColumnInteger
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -70,39 +72,43 @@ func newProjectsTable(schemaName, tableName, alias string) *ProjectsTable {
 
 func newProjectsTableImpl(schemaName, tableName, alias string) projectsTable {
 	var (
-		IDColumn                = postgres.IntegerColumn("id")
-		UUIDColumn              = postgres.StringColumn("uuid")
-		DealershipIDColumn      = postgres.IntegerColumn("dealership_id")
-		NameColumn              = postgres.StringColumn("name")
-		InternalReferenceColumn = postgres.StringColumn("internal_reference")
-		StatusColumn            = postgres.StringColumn("status")
-		TrackingNumberColumn    = postgres.StringColumn("tracking_number")
-		OrderedAtColumn         = postgres.TimestampzColumn("ordered_at")
-		OrderedByColumn         = postgres.IntegerColumn("ordered_by")
-		CreatedAtColumn         = postgres.TimestampzColumn("created_at")
-		UpdatedAtColumn         = postgres.TimestampzColumn("updated_at")
-		VersionColumn           = postgres.IntegerColumn("version")
-		allColumns              = postgres.ColumnList{IDColumn, UUIDColumn, DealershipIDColumn, NameColumn, InternalReferenceColumn, StatusColumn, TrackingNumberColumn, OrderedAtColumn, OrderedByColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns          = postgres.ColumnList{UUIDColumn, DealershipIDColumn, NameColumn, InternalReferenceColumn, StatusColumn, TrackingNumberColumn, OrderedAtColumn, OrderedByColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		defaultColumns          = postgres.ColumnList{IDColumn, UUIDColumn, StatusColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		IDColumn                        = postgres.IntegerColumn("id")
+		UUIDColumn                      = postgres.StringColumn("uuid")
+		DealershipIDColumn              = postgres.IntegerColumn("dealership_id")
+		NameColumn                      = postgres.StringColumn("name")
+		InternalReferenceColumn         = postgres.StringColumn("internal_reference")
+		StatusColumn                    = postgres.StringColumn("status")
+		TrackingNumberColumn            = postgres.StringColumn("tracking_number")
+		OrderedAtColumn                 = postgres.TimestampzColumn("ordered_at")
+		OrderedByColumn                 = postgres.IntegerColumn("ordered_by")
+		CreatedAtColumn                 = postgres.TimestampzColumn("created_at")
+		UpdatedAtColumn                 = postgres.TimestampzColumn("updated_at")
+		VersionColumn                   = postgres.IntegerColumn("version")
+		InstallationKitColumn           = postgres.BoolColumn("installation_kit")
+		InstallationKitPriceCentsColumn = postgres.IntegerColumn("installation_kit_price_cents")
+		allColumns                      = postgres.ColumnList{IDColumn, UUIDColumn, DealershipIDColumn, NameColumn, InternalReferenceColumn, StatusColumn, TrackingNumberColumn, OrderedAtColumn, OrderedByColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn, InstallationKitColumn, InstallationKitPriceCentsColumn}
+		mutableColumns                  = postgres.ColumnList{UUIDColumn, DealershipIDColumn, NameColumn, InternalReferenceColumn, StatusColumn, TrackingNumberColumn, OrderedAtColumn, OrderedByColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn, InstallationKitColumn, InstallationKitPriceCentsColumn}
+		defaultColumns                  = postgres.ColumnList{IDColumn, UUIDColumn, StatusColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn, InstallationKitColumn}
 	)
 
 	return projectsTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:                IDColumn,
-		UUID:              UUIDColumn,
-		DealershipID:      DealershipIDColumn,
-		Name:              NameColumn,
-		InternalReference: InternalReferenceColumn,
-		Status:            StatusColumn,
-		TrackingNumber:    TrackingNumberColumn,
-		OrderedAt:         OrderedAtColumn,
-		OrderedBy:         OrderedByColumn,
-		CreatedAt:         CreatedAtColumn,
-		UpdatedAt:         UpdatedAtColumn,
-		Version:           VersionColumn,
+		ID:                        IDColumn,
+		UUID:                      UUIDColumn,
+		DealershipID:              DealershipIDColumn,
+		Name:                      NameColumn,
+		InternalReference:         InternalReferenceColumn,
+		Status:                    StatusColumn,
+		TrackingNumber:            TrackingNumberColumn,
+		OrderedAt:                 OrderedAtColumn,
+		OrderedBy:                 OrderedByColumn,
+		CreatedAt:                 CreatedAtColumn,
+		UpdatedAt:                 UpdatedAtColumn,
+		Version:                   VersionColumn,
+		InstallationKit:           InstallationKitColumn,
+		InstallationKitPriceCents: InstallationKitPriceCentsColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

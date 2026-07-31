@@ -348,3 +348,99 @@ func TestProjectChat_GetAll(t *testing.T) {
 		t.Errorf("Expected at least 2 chats, got %d", len(chats))
 	}
 }
+
+// The inlay tag is what lets a project-wide thread stay actionable: a message
+// saying "this one is too dark" has to say which one.
+func TestProjectChat_InlayTag_RoundTrips(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
+
+	author := &DealershipUser{
+		DealershipID: dealership.ID,
+		Name:         "Tag Author",
+		Email:        "tag-author@example.com",
+		Avatar:       "https://example.com/avatar.png",
+		Role:         DealershipUserRoles.Admin,
+		IsActive:     true,
+	}
+	if err := models.DealershipUsers.Insert(author); err != nil {
+		t.Fatalf("Failed to create author: %v", err)
+	}
+
+	tagged := &ProjectChat{
+		ProjectID:        project.ID,
+		InlayID:          &inlay.ID,
+		DealershipUserID: &author.ID,
+		MessageType:      ChatMessageTypes.Text,
+		Message:          "this one is too dark",
+	}
+	if err := models.ProjectChats.Insert(tagged); err != nil {
+		t.Fatalf("Failed to insert tagged chat: %v", err)
+	}
+
+	untagged := &ProjectChat{
+		ProjectID:        project.ID,
+		DealershipUserID: &author.ID,
+		MessageType:      ChatMessageTypes.Text,
+		Message:          "how is the whole order looking?",
+	}
+	if err := models.ProjectChats.Insert(untagged); err != nil {
+		t.Fatalf("Failed to insert untagged chat: %v", err)
+	}
+
+	chats, err := models.ProjectChats.GetByProjectID(project.ID)
+	if err != nil {
+		t.Fatalf("GetByProjectID failed: %v", err)
+	}
+	if len(chats) != 2 {
+		t.Fatalf("Expected 2 chats on the project thread, got %d", len(chats))
+	}
+
+	byID := make(map[int]*ProjectChat, len(chats))
+	for _, c := range chats {
+		byID[c.ID] = c
+	}
+
+	got := byID[tagged.ID]
+	if got == nil || got.InlayID == nil {
+		t.Fatalf("Expected the tagged message to keep its inlay_id")
+	}
+	if *got.InlayID != inlay.ID {
+		t.Errorf("Expected inlay_id %d, got %d", inlay.ID, *got.InlayID)
+	}
+
+	if plain := byID[untagged.ID]; plain == nil || plain.InlayID != nil {
+		t.Errorf("Expected the project-wide message to have no inlay_id")
+	}
+}
+
+// Proof events now live in the project thread, so the widened CHECK has to
+// accept them.
+func TestProjectChat_AcceptsProofMessageTypes(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	inlay := createTestInlay(t, models, project.ID)
+
+	for _, messageType := range []ChatMessageType{
+		ChatMessageTypes.ProofSent,
+		ChatMessageTypes.ProofApproved,
+		ChatMessageTypes.ProofDeclined,
+	} {
+		chat := &ProjectChat{
+			ProjectID:   project.ID,
+			InlayID:     &inlay.ID,
+			MessageType: messageType,
+			Message:     string(messageType),
+		}
+		if err := models.ProjectChats.Insert(chat); err != nil {
+			t.Errorf("Failed to insert %q message: %v", messageType, err)
+		}
+	}
+}

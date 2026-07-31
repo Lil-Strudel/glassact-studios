@@ -27,14 +27,21 @@ export type Project = StandardTable<{
   tracking_number: string | null;
   ordered_at: string | null;
   ordered_by: number | null;
+  // One installation kit covers every inlay on the project.
+  // `installation_kit` is the draft-time choice; `installation_kit_price_cents`
+  // is null until the order is placed, then locks the charge.
+  installation_kit: boolean;
+  installation_kit_price_cents: number | null;
 }>;
 
 // Per-project counts of outstanding internal actions, attached to the project
 // list response for internal users only.
+// `awaiting_reply` is a yes/no: chat is one thread per project, so there is
+// nothing to count.
 export type ProjectActionSummary = {
   needs_internal_approval: number;
   needs_proof: number;
-  awaiting_reply: number;
+  awaiting_reply: boolean;
 };
 
 // The project list entry. `action_summary` and `dealership_name` are present

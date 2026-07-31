@@ -105,7 +105,6 @@ export async function patchInlay(params: {
   uuid: string;
   body: {
     name?: string;
-    installation_kit?: boolean;
     description?: string;
     image_urls?: string[];
   };

@@ -199,10 +199,11 @@ func TestNotifyDealership_SkipsActorAndNonWatchers(t *testing.T) {
 
 	res := testCtx.request(testRequest{
 		method: http.MethodPost,
-		path:   fmt.Sprintf("/api/inlay/%s/chats", inlay.UUID),
+		path:   fmt.Sprintf("/api/project/%s/chats", project.UUID),
 		body: map[string]any{
 			"message":      "Starting on this today",
 			"message_type": "text",
+			"inlay_uuid":   inlay.UUID,
 		},
 		token: internalToken,
 	})
@@ -222,7 +223,7 @@ func TestNotifyDealership_SkipsActorAndNonWatchers(t *testing.T) {
 		"the internal user who posted the message should not notify themselves")
 }
 
-func TestPostInlayChat_AutoSubscribesPoster(t *testing.T) {
+func TestPostProjectChat_AutoSubscribesPoster(t *testing.T) {
 	testCtx, cleanup := setupTestApp(t)
 	defer cleanup()
 
@@ -255,7 +256,7 @@ func TestPostInlayChat_AutoSubscribesPoster(t *testing.T) {
 
 	res := testCtx.request(testRequest{
 		method: http.MethodPost,
-		path:   fmt.Sprintf("/api/inlay/%s/chats", inlay.UUID),
+		path:   fmt.Sprintf("/api/project/%s/chats", project.UUID),
 		body: map[string]any{
 			"message":      "Taking a look",
 			"message_type": "text",

@@ -2,9 +2,11 @@ package data
 
 import "math"
 
-// InstallationKitPriceCents is the flat add-on price charged per inlay when a
-// dealership opts into an installation kit at order time. Keep this in sync with
-// INSTALLATION_KIT_PRICE_CENTS in libs/data/src/installation-kits.ts.
+// InstallationKitPriceCents is the flat add-on price charged once per project
+// when a dealership opts into an installation kit at order time. One kit covers
+// every inlay on the project, so the charge does not scale with inlay count.
+// Keep this in sync with INSTALLATION_KIT_PRICE_CENTS in
+// libs/data/src/installation-kits.ts.
 const InstallationKitPriceCents = 9500
 
 // ComputeAdjustedPriceCents applies a proof's price adjustment to a price

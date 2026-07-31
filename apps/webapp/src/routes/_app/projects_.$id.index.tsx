@@ -30,7 +30,6 @@ import {
 import {
   getInlaysByProjectOpts,
   deleteInlayOpts,
-  patchInlayOpts,
 } from "../../queries/inlay";
 import {
   getProjectInvoiceOpts,
@@ -60,6 +59,8 @@ import {
 } from "solid-icons/io";
 import { ManufacturingTracker } from "../../components/manufacturing/manufacturing-tracker";
 import { SandblastFileCard } from "../../components/inlay/sandblast-file-card";
+import { ProjectDiscussion } from "../../components/chat/project-discussion";
+import { PriceCaveat } from "../../components/price-caveat";
 import { isManufacturingStatus } from "../../utils/project-status";
 
 export const Route = createFileRoute("/_app/projects_/$id/")({
@@ -98,7 +99,7 @@ function RouteComponent() {
   const inlaysQuery = useQuery(() => getInlaysByProjectOpts(params().id));
   const cancelProject = useMutation(deleteProjectOpts);
   const removeInlay = useMutation(deleteInlayOpts);
-  const toggleKit = useMutation(patchInlayOpts);
+  const toggleKit = useMutation(patchProjectOpts);
   const markShipped = useMutation(postMarkProjectShippedOpts);
   const markDelivered = useMutation(postMarkProjectDeliveredOpts);
 
@@ -138,23 +139,25 @@ function RouteComponent() {
     return list.every((inlay) => inlay.is_ready);
   });
 
-  const installationKitCount = createMemo(
-    () => inlays().filter((inlay) => inlay.installation_kit).length,
+  // One kit covers the whole project, so it is a flat add-on rather than a
+  // per-inlay multiple.
+  const hasInstallationKit = createMemo(
+    () => projectQuery.data?.installation_kit ?? false,
   );
 
   const totalPriceCents = createMemo(
     () =>
       inlays().reduce((sum, inlay) => sum + (inlay.price_cents ?? 0), 0) +
-      installationKitCount() * INSTALLATION_KIT_PRICE_CENTS,
+      (hasInstallationKit() ? INSTALLATION_KIT_PRICE_CENTS : 0),
   );
 
-  function handleToggleKit(inlay: InlayWithInfo, next: boolean) {
+  function handleToggleKit(next: boolean) {
     toggleKit.mutate(
-      { uuid: inlay.uuid, body: { installation_kit: next } },
+      { uuid: params().id, body: { installation_kit: next } },
       {
         onSuccess() {
           queryClient.invalidateQueries({
-            queryKey: ["project", params().id, "inlays"],
+            queryKey: ["project", params().id],
           });
         },
         onError(error) {
@@ -324,7 +327,8 @@ function RouteComponent() {
       </Match>
 
       <Match when={projectQuery.isSuccess}>
-        <div>
+        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+          <div class="min-w-0">
           <Breadcrumb
             crumbs={[
               { title: "Projects", to: "/projects" },
@@ -358,12 +362,37 @@ function RouteComponent() {
                   {formatMoney(totalPriceCents() / 100)}
                 </span>
               </p>
-              <p class="text-sm text-gray-500">
-                Installation kits:{" "}
-                <span class="font-semibold text-gray-900">
-                  {installationKitCount()}
-                </span>
-              </p>
+              <PriceCaveat />
+              <Show
+                when={projectQuery.data!.status === "draft"}
+                fallback={
+                  <p class="text-sm text-gray-500">
+                    Installation kit:{" "}
+                    <span class="font-semibold text-gray-900">
+                      {hasInstallationKit() ? "Included" : "Not included"}
+                    </span>
+                  </p>
+                }
+              >
+                {/* Matches the PATCH /project route's gate, which internal
+                    staff pass but create_project would exclude them from. */}
+                <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
+                  <label class="flex w-fit cursor-pointer items-center gap-2 text-sm text-gray-500">
+                    <input
+                      type="checkbox"
+                      class="h-4 w-4 accent-gray-900"
+                      checked={hasInstallationKit()}
+                      disabled={toggleKit.isPending}
+                      onChange={(e) => handleToggleKit(e.currentTarget.checked)}
+                    />
+                    <span>
+                      Include an installation kit (
+                      {formatMoney(INSTALLATION_KIT_PRICE_CENTS / 100)}) — covers
+                      every inlay in this project
+                    </span>
+                  </label>
+                </Can>
+              </Show>
             </div>
             <div class="flex gap-3 flex-wrap">
               <WatchButton
@@ -539,7 +568,7 @@ function RouteComponent() {
 
             <Switch>
               <Match when={inlaysQuery.isLoading}>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
                   <For each={[1, 2, 3]}>
                     {() => (
                       <div class="h-48 bg-gray-200 rounded-lg animate-pulse" />
@@ -587,7 +616,7 @@ function RouteComponent() {
               <Match
                 when={inlaysQuery.isSuccess && inlaysQuery.data!.length > 0}
               >
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
                   <For each={inlaysQuery.data!}>
                     {(inlay) => (
                       <InlayCard
@@ -599,9 +628,6 @@ function RouteComponent() {
                         }
                         onDelete={() => handleDeleteInlay(inlay)}
                         isDeleting={removeInlay.isPending}
-                        canEditKit={projectQuery.data!.status === "draft"}
-                        onToggleKit={(next) => handleToggleKit(inlay, next)}
-                        isTogglingKit={toggleKit.isPending}
                       />
                     )}
                   </For>
@@ -626,6 +652,14 @@ function RouteComponent() {
               />
             </div>
           </Show>
+          </div>
+
+          {/* The conversation stays in view while you work down the inlay list;
+              on narrow screens it stacks underneath instead. */}
+          <ProjectDiscussion
+            projectUuid={params().id}
+            class="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)]"
+          />
         </div>
       </Match>
     </Switch>
@@ -745,9 +779,6 @@ interface InlayCardProps {
   canDelete: boolean;
   onDelete: () => void;
   isDeleting: boolean;
-  canEditKit: boolean;
-  onToggleKit: (next: boolean) => void;
-  isTogglingKit: boolean;
 }
 
 type ReadinessBadge =
@@ -878,11 +909,6 @@ function InlayCard(props: InlayCardProps) {
               <span class="text-gray-500">{priceFormula()}</span>
             </Show>
           </div>
-          <Show when={props.inlay.installation_kit}>
-            <div class="text-xs text-green-700">
-              + Installation kit ({formatMoney(INSTALLATION_KIT_PRICE_CENTS / 100)})
-            </div>
-          </Show>
           <Show when={showManufacturingTracker()}>
             <div class="pt-1">
               <ManufacturingTracker
@@ -898,7 +924,6 @@ function InlayCard(props: InlayCardProps) {
         when={
           props.canDelete ||
           showInternalApprove() ||
-          props.canEditKit ||
           hasSandblast() ||
           canUploadSandblast()
         }
@@ -915,23 +940,6 @@ function InlayCard(props: InlayCardProps) {
               })
             }
           />
-          <Show when={props.canEditKit}>
-            <button
-              type="button"
-              disabled={props.isTogglingKit}
-              onClick={() =>
-                props.onToggleKit(!props.inlay.installation_kit)
-              }
-              class={`text-xs rounded px-2 py-1 border transition-colors w-full ${
-                props.inlay.installation_kit
-                  ? "border-green-600 bg-green-50 text-green-700"
-                  : "border-gray-300 text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              {props.inlay.installation_kit ? "✓ " : "+ "}
-              Installation kit ({formatMoney(INSTALLATION_KIT_PRICE_CENTS / 100)})
-            </button>
-          </Show>
           <Show when={showInternalApprove()}>
             <Can permission={PERMISSION_ACTIONS.INTERNAL_APPROVE_PROOF}>
               <Button

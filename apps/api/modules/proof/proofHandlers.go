@@ -201,14 +201,15 @@ func (m ProofModule) HandleCreateProof(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 
 	internalUserID := user.GetID()
-	chatMessage := data.InlayChat{
-		InlayID:        inlay.ID,
+	chatMessage := data.ProjectChat{
+		ProjectID:      project.ID,
+		InlayID:        &inlay.ID,
 		InternalUserID: &internalUserID,
 		MessageType:    data.ChatMessageTypes.ProofSent,
 		Message:        fmt.Sprintf("Proof v%d ready for review", versionNumber),
 	}
 
-	err = m.Db.InlayChats.TxInsert(tx, &chatMessage)
+	err = m.Db.ProjectChats.TxInsert(tx, &chatMessage)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to create chat message for proof: %w", err))
 		return
@@ -417,8 +418,9 @@ func (m ProofModule) HandleApproveProof(w http.ResponseWriter, r *http.Request) 
 	// customized catalog inlay is an internal process.
 	if proof.ApprovalAuthority == data.ProofApprovalAuthorities.Dealership {
 		actorID := user.GetID()
-		chatMessage := data.InlayChat{
-			InlayID:     inlay.ID,
+		chatMessage := data.ProjectChat{
+			ProjectID:   project.ID,
+			InlayID:     &inlay.ID,
 			MessageType: data.ChatMessageTypes.ProofApproved,
 			Message:     fmt.Sprintf("Proof v%d approved", proof.VersionNumber),
 		}
@@ -428,7 +430,7 @@ func (m ProofModule) HandleApproveProof(w http.ResponseWriter, r *http.Request) 
 			chatMessage.DealershipUserID = &actorID
 		}
 
-		err = m.Db.InlayChats.TxInsert(tx, &chatMessage)
+		err = m.Db.ProjectChats.TxInsert(tx, &chatMessage)
 		if err != nil {
 			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to create approval chat message: %w", err))
 			return
@@ -521,8 +523,9 @@ func (m ProofModule) HandleDeclineProof(w http.ResponseWriter, r *http.Request) 
 
 	if proof.ApprovalAuthority == data.ProofApprovalAuthorities.Dealership {
 		actorID := user.GetID()
-		chatMessage := data.InlayChat{
-			InlayID:     inlay.ID,
+		chatMessage := data.ProjectChat{
+			ProjectID:   project.ID,
+			InlayID:     &inlay.ID,
 			MessageType: data.ChatMessageTypes.ProofDeclined,
 			Message:     fmt.Sprintf("Proof v%d declined: %s", proof.VersionNumber, body.DeclineReason),
 		}
@@ -532,7 +535,7 @@ func (m ProofModule) HandleDeclineProof(w http.ResponseWriter, r *http.Request) 
 			chatMessage.DealershipUserID = &actorID
 		}
 
-		err = m.Db.InlayChats.TxInsert(tx, &chatMessage)
+		err = m.Db.ProjectChats.TxInsert(tx, &chatMessage)
 		if err != nil {
 			m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to create decline chat message: %w", err))
 			return

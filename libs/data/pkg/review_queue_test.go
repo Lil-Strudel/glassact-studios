@@ -139,34 +139,35 @@ func TestProjectModel_GetActionSummaries(t *testing.T) {
 
 	chatInlay := createTestInlay(t, models, projectA.ID)
 	// System message first, then a later dealership message -> awaiting reply.
-	internalChat := &InlayChat{InlayID: chatInlay.ID, MessageType: ChatMessageTypes.System, Message: "system note"}
-	if err := models.InlayChats.Insert(internalChat); err != nil {
+	internalChat := &ProjectChat{ProjectID: projectA.ID, MessageType: ChatMessageTypes.System, Message: "system note"}
+	if err := models.ProjectChats.Insert(internalChat); err != nil {
 		t.Fatalf("Failed to insert system chat: %v", err)
 	}
-	dealershipChat := &InlayChat{
-		InlayID:          chatInlay.ID,
+	dealershipChat := &ProjectChat{
+		ProjectID:        projectA.ID,
+		InlayID:          &chatInlay.ID,
 		DealershipUserID: &dealershipUser.ID,
 		MessageType:      ChatMessageTypes.Text,
 		Message:          "dealership reply please",
 	}
-	if err := models.InlayChats.Insert(dealershipChat); err != nil {
+	if err := models.ProjectChats.Insert(dealershipChat); err != nil {
 		t.Fatalf("Failed to insert dealership chat: %v", err)
 	}
 
-	// Project B: an inlay whose latest chat is internal -> NOT awaiting reply.
+	// Project B: latest chat is internal -> NOT awaiting reply.
 	projectB := createTestProject(t, models, dealership.ID)
-	bInlay := createTestInlay(t, models, projectB.ID)
-	bDealershipChat := &InlayChat{
-		InlayID:          bInlay.ID,
+	createTestInlay(t, models, projectB.ID)
+	bDealershipChat := &ProjectChat{
+		ProjectID:        projectB.ID,
 		DealershipUserID: &dealershipUser.ID,
 		MessageType:      ChatMessageTypes.Text,
 		Message:          "older dealership msg",
 	}
-	if err := models.InlayChats.Insert(bDealershipChat); err != nil {
+	if err := models.ProjectChats.Insert(bDealershipChat); err != nil {
 		t.Fatalf("Failed to insert chat: %v", err)
 	}
-	bInternalChat := &InlayChat{InlayID: bInlay.ID, MessageType: ChatMessageTypes.System, Message: "latest system note"}
-	if err := models.InlayChats.Insert(bInternalChat); err != nil {
+	bInternalChat := &ProjectChat{ProjectID: projectB.ID, MessageType: ChatMessageTypes.System, Message: "latest system note"}
+	if err := models.ProjectChats.Insert(bInternalChat); err != nil {
 		t.Fatalf("Failed to insert chat: %v", err)
 	}
 
@@ -183,13 +184,13 @@ func TestProjectModel_GetActionSummaries(t *testing.T) {
 		// chatInlay is also a custom inlay with no proof, so it counts too.
 		t.Errorf("project A: expected NeedsProof 2, got %d", a.NeedsProof)
 	}
-	if a.AwaitingReply != 1 {
-		t.Errorf("project A: expected AwaitingReply 1, got %d", a.AwaitingReply)
+	if !a.AwaitingReply {
+		t.Error("project A: expected AwaitingReply true")
 	}
 
 	b := summaries[projectB.ID]
-	if b.AwaitingReply != 0 {
-		t.Errorf("project B: expected AwaitingReply 0, got %d", b.AwaitingReply)
+	if b.AwaitingReply {
+		t.Error("project B: expected AwaitingReply false")
 	}
 	if b.NeedsProof != 1 {
 		t.Errorf("project B: expected NeedsProof 1, got %d", b.NeedsProof)

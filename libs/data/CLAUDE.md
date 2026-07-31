@@ -602,7 +602,6 @@ type Models struct {
     InternalUsers      InternalUserModel
     CatalogItems       CatalogItemModel
     Inlays             InlayModel
-    InlayChats         InlayChatModel
     InlayProofs        InlayProofModel
     InlayMilestones    InlayMilestoneModel
     InlayBlockers      InlayBlockerModel

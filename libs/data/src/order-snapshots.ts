@@ -11,6 +11,4 @@ export type OrderSnapshot = StandardTable<{
   price_adjustment_value: number;
   width: number;
   height: number;
-  installation_kit: boolean;
-  installation_kit_price_cents: number;
 }>;

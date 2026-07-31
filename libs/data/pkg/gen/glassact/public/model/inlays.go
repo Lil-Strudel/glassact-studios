@@ -19,7 +19,6 @@ type Inlays struct {
 	Name              string
 	Type              string
 	IsCustomized      bool
-	InstallationKit   bool
 	PreviewURL        string
 	SandblastFileURL  *string
 	ApprovedProofID   *int32

@@ -10,8 +10,8 @@ import (
 // HandleRecustomizeInlay (re)customizes a catalog inlay: the dealership enters
 // the customizer, bakes, and the result becomes a new pending
 // internal-authority proof. Without this the only way to change your mind is to
-// delete the inlay and add it again, losing the installation-kit choice and the
-// chat thread.
+// delete the inlay and add it again, losing its proof history and the inlay tags
+// on the project's chat thread.
 //
 // Applies to any catalog inlay on a draft project, including one added as-is —
 // deciding to colour a stock design is the same operation as recolouring one.
