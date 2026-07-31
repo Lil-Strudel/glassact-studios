@@ -474,12 +474,38 @@ CREATE INDEX idx_invoices_status ON invoices(status);
 -- NOTIFICATIONS
 --------------------------------------------------------------------------------
 
+-- Who receives notifications about a project. A missing row means the user has
+-- never been subscribed; is_watching = false means they explicitly unwatched and
+-- must not be auto-resubscribed by later activity.
+CREATE TABLE project_watchers (
+    id SERIAL PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    project_id INTEGER NOT NULL REFERENCES projects ON DELETE CASCADE,
+    dealership_user_id INTEGER REFERENCES dealership_users ON DELETE CASCADE,
+    internal_user_id INTEGER REFERENCES internal_users ON DELETE CASCADE,
+    is_watching BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    version INTEGER NOT NULL DEFAULT 1,
+    CONSTRAINT project_watchers_user_check CHECK (
+        (dealership_user_id IS NOT NULL AND internal_user_id IS NULL) OR
+        (dealership_user_id IS NULL AND internal_user_id IS NOT NULL)
+    )
+);
+
+CREATE UNIQUE INDEX idx_project_watchers_dealership ON project_watchers(project_id, dealership_user_id)
+    WHERE dealership_user_id IS NOT NULL;
+CREATE UNIQUE INDEX idx_project_watchers_internal ON project_watchers(project_id, internal_user_id)
+    WHERE internal_user_id IS NOT NULL;
+CREATE INDEX idx_project_watchers_project ON project_watchers(project_id)
+    WHERE is_watching;
+
 CREATE TABLE notifications (
     id SERIAL PRIMARY KEY,
     uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
     dealership_user_id INTEGER REFERENCES dealership_users ON DELETE CASCADE,
     internal_user_id INTEGER REFERENCES internal_users ON DELETE CASCADE,
-    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'internal_review_required', 'custom_inlay_submitted', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'invoice_voided', 'payment_received', 'chat_message')),
+    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'internal_review_required', 'custom_inlay_submitted', 'order_placed', 'inlay_step_changed', 'inlay_update', 'project_shipped', 'project_delivered', 'invoice_sent', 'invoice_voided', 'payment_received', 'chat_message')),
     title TEXT NOT NULL,
     body TEXT NOT NULL,
     project_id INTEGER REFERENCES projects ON DELETE SET NULL,
@@ -505,7 +531,7 @@ CREATE INDEX idx_notifications_unread_internal ON notifications(internal_user_id
 CREATE TABLE dealership_user_notification_prefs (
     id SERIAL PRIMARY KEY,
     dealership_user_id INTEGER NOT NULL REFERENCES dealership_users ON DELETE CASCADE,
-    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'internal_review_required', 'custom_inlay_submitted', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'invoice_voided', 'payment_received', 'chat_message')),
+    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'internal_review_required', 'custom_inlay_submitted', 'order_placed', 'inlay_step_changed', 'inlay_update', 'project_shipped', 'project_delivered', 'invoice_sent', 'invoice_voided', 'payment_received', 'chat_message')),
     email_enabled BOOLEAN NOT NULL DEFAULT true,
     UNIQUE(dealership_user_id, event_type)
 );
@@ -513,7 +539,7 @@ CREATE TABLE dealership_user_notification_prefs (
 CREATE TABLE internal_user_notification_prefs (
     id SERIAL PRIMARY KEY,
     internal_user_id INTEGER NOT NULL REFERENCES internal_users ON DELETE CASCADE,
-    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'internal_review_required', 'custom_inlay_submitted', 'order_placed', 'inlay_step_changed', 'inlay_blocked', 'inlay_unblocked', 'project_shipped', 'project_delivered', 'invoice_sent', 'invoice_voided', 'payment_received', 'chat_message')),
+    event_type VARCHAR(255) NOT NULL CHECK (event_type IN ('proof_ready', 'proof_approved', 'proof_declined', 'internal_review_required', 'custom_inlay_submitted', 'order_placed', 'inlay_step_changed', 'inlay_update', 'project_shipped', 'project_delivered', 'invoice_sent', 'invoice_voided', 'payment_received', 'chat_message')),
     email_enabled BOOLEAN NOT NULL DEFAULT true,
     UNIQUE(internal_user_id, event_type)
 );

@@ -36,6 +36,7 @@ func UseSchema(schema string) {
 	OrderSnapshots = OrderSnapshots.FromSchema(schema)
 	PriceGroups = PriceGroups.FromSchema(schema)
 	ProjectChats = ProjectChats.FromSchema(schema)
+	ProjectWatchers = ProjectWatchers.FromSchema(schema)
 	Projects = Projects.FromSchema(schema)
 	SchemaMigrations = SchemaMigrations.FromSchema(schema)
 	SpatialRefSys = SpatialRefSys.FromSchema(schema)

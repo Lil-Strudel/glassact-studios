@@ -402,11 +402,16 @@ func (m InlayModule) HandlePostCatalogInlay(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	m.SendNotificationToAllInternalUsers(
+	user := m.ContextGetUser(r)
+	m.AutoWatchProject(project.ID, user)
+
+	m.NotifyInternal(
+		project.ID,
+		user,
 		data.NotificationEventTypes.InternalReviewRequired,
 		fmt.Sprintf("Customized inlay needs review: %s", inlay.Name),
 		fmt.Sprintf("A customized inlay %q (from catalog %s) is ready for internal pricing review.", inlay.Name, catalogItem.CatalogCode),
-		&project.ID, &inlay.ID,
+		&inlay.ID,
 	)
 
 	m.WriteJSON(w, r, http.StatusCreated, inlay)
@@ -470,11 +475,16 @@ func (m InlayModule) HandlePostCustomInlay(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	m.SendNotificationToAllInternalUsers(
+	user := m.ContextGetUser(r)
+	m.AutoWatchProject(project.ID, user)
+
+	m.NotifyInternal(
+		project.ID,
+		user,
 		data.NotificationEventTypes.CustomInlaySubmitted,
 		fmt.Sprintf("Custom inlay needs a proof: %s", inlay.Name),
 		fmt.Sprintf("A custom inlay %q was submitted and needs a designer to create a proof.", inlay.Name),
-		&project.ID, &inlay.ID,
+		&inlay.ID,
 	)
 
 	m.WriteJSON(w, r, http.StatusCreated, inlay)
@@ -838,9 +848,12 @@ func (m InlayModule) HandlePatchInlayStep(w http.ResponseWriter, r *http.Request
 	// transition is noise. Only the "cutting" milestone is worth an alert (the
 	// dealership sees the full step history on the inlay timeline). Shipping and
 	// delivery are surfaced separately via project_shipped / project_delivered.
+	m.AutoWatchProject(inlay.ProjectID, user)
+
 	if body.Step == data.ManufacturingSteps.Cutting {
-		m.SendNotificationToAllDealershipUsersForProject(
+		m.NotifyDealership(
 			inlay.ProjectID,
+			user,
 			data.NotificationEventTypes.InlayStepChanged,
 			fmt.Sprintf("Inlay now being cut: %s", inlay.Name),
 			fmt.Sprintf("Inlay %q has reached the cutting step.", inlay.Name),
@@ -1000,8 +1013,11 @@ func (m InlayModule) HandlePostInlayUpdate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	m.SendNotificationToAllDealershipUsersForProject(
+	m.AutoWatchProject(inlay.ProjectID, user)
+
+	m.NotifyDealership(
 		inlay.ProjectID,
+		user,
 		data.NotificationEventTypes.InlayUpdate,
 		fmt.Sprintf("Update on inlay: %s", inlay.Name),
 		fmt.Sprintf("New update on inlay %q: %s", inlay.Name, body.Message),

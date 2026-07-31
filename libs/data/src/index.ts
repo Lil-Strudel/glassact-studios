@@ -22,6 +22,7 @@ export * from "./notifications";
 export * from "./order-snapshots";
 export * from "./price-groups";
 export * from "./project-chats";
+export * from "./project-watchers";
 export * from "./projects";
 export * from "./review-queue";
 export * from "./support-articles";

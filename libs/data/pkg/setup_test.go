@@ -164,6 +164,7 @@ func cleanupTables(t *testing.T) {
 		dealership_user_notification_prefs,
 		internal_user_notification_prefs,
 		notifications,
+		project_watchers,
 		dealership_users,
 		internal_users,
 		dealerships CASCADE`)

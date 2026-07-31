@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS support_articles;
 DROP TABLE IF EXISTS internal_user_notification_prefs;
 DROP TABLE IF EXISTS dealership_user_notification_prefs;
 DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS project_watchers;
 
 DROP TABLE IF EXISTS invoices;
 

@@ -45,6 +45,7 @@ import type {
 } from "@glassact/data";
 import { PERMISSION_ACTIONS, INSTALLATION_KIT_PRICE_CENTS } from "@glassact/data";
 import { ProjectStatusBadge } from "../../components/project/status-badge";
+import { WatchButton } from "../../components/project/watch-button";
 import { inlayDeleteBlockedMessage } from "../../utils/inlay-delete";
 import { Can } from "../../components/Can";
 import { useUserContext } from "../../providers/user";
@@ -365,6 +366,11 @@ function RouteComponent() {
               </p>
             </div>
             <div class="flex gap-3 flex-wrap">
+              <WatchButton
+                projectUuid={params().id}
+                isWatching={projectQuery.data!.is_watching}
+                watcherCount={projectQuery.data!.watcher_count}
+              />
               <Show when={canCancel()}>
                 <Dialog>
                   <DialogTrigger as={Button} variant="outline">

@@ -256,8 +256,11 @@ func (m ProofModule) HandleCreateProof(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	m.SendNotificationToAllDealershipUsersForProject(
+	m.AutoWatchProject(project.ID, user)
+
+	m.NotifyDealership(
 		project.ID,
+		user,
 		data.NotificationEventTypes.ProofReady,
 		fmt.Sprintf("Proof ready for review: %s", inlay.Name),
 		fmt.Sprintf("A new proof (v%d) is ready for review on inlay %q.", versionNumber, inlay.Name),
@@ -445,14 +448,18 @@ func (m ProofModule) HandleApproveProof(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	m.AutoWatchProject(project.ID, user)
+
 	// Only notify internal users about dealership approvals (the internal user
 	// who approves an internal-authority proof already knows about it).
 	if proof.ApprovalAuthority == data.ProofApprovalAuthorities.Dealership {
-		m.SendNotificationToAllInternalUsers(
+		m.NotifyInternal(
+			project.ID,
+			user,
 			data.NotificationEventTypes.ProofApproved,
 			fmt.Sprintf("Proof approved: %s", inlay.Name),
 			fmt.Sprintf("Proof v%d for inlay %q has been approved.", proof.VersionNumber, inlay.Name),
-			&project.ID, &inlay.ID,
+			&inlay.ID,
 		)
 	}
 
@@ -538,12 +545,16 @@ func (m ProofModule) HandleDeclineProof(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	m.AutoWatchProject(project.ID, user)
+
 	if proof.ApprovalAuthority == data.ProofApprovalAuthorities.Dealership {
-		m.SendNotificationToAllInternalUsers(
+		m.NotifyInternal(
+			project.ID,
+			user,
 			data.NotificationEventTypes.ProofDeclined,
 			fmt.Sprintf("Proof declined: %s", inlay.Name),
 			fmt.Sprintf("Proof v%d for inlay %q has been declined: %s", proof.VersionNumber, inlay.Name, body.DeclineReason),
-			&project.ID, &inlay.ID,
+			&inlay.ID,
 		)
 	}
 

@@ -304,26 +304,38 @@ Each update carries a free-text `message` and a `step` (the inlay's manufacturin
 
 The full set is `NotificationEventTypes` in `libs/data/pkg/notifications.go`.
 
-| Event                    | Recipients                         | Description                                     |
-| ------------------------ | ---------------------------------- | ----------------------------------------------- |
-| proof_ready              | Dealership users (approver+)       | New proof available                             |
-| proof_approved           | Internal designers                 | Proof was approved                              |
-| proof_declined           | Internal designers                 | Proof was declined                              |
-| internal_review_required | Internal designers                 | A customizer-baked proof needs internal pricing |
-| custom_inlay_submitted   | Internal designers                 | A custom inlay needs a proof                    |
-| order_placed             | Internal production                | New order in queue                              |
-| inlay_step_changed       | Dealership users                   | Inlay moved in manufacturing                    |
-| inlay_update             | Dealership users                   | New update posted on inlay                      |
-| project_shipped          | Dealership users                   | Project shipped                                 |
-| project_delivered        | Dealership users, internal billing | Delivery confirmed; project moved to invoiced   |
-| invoice_sent             | Dealership users (admin)           | Invoice available                               |
-| invoice_voided           | Dealership users                   | Invoice was voided                              |
-| payment_received         | Dealership users                   | Payment confirmed                               |
-| chat_message             | Other party in chat                | New message                                     |
+**Recipients are watch-list driven** (GitHub's model for issues/PRs). Every send goes through `NotifyDealership` or `NotifyInternal` in `apps/api/app/notifications.go`, each of which resolves recipients as:
 
-Users can disable specific notification types; disabled notifications still appear in-app, just no email is sent.
+```
+watchers on that side of the project  ∪  role fallback for this event type  −  the actor
+```
 
-**Known gap:** the "Recipients" column above describes intent, not what the code does. Every send today goes through `SendNotificationToAllInternalUsers` or `SendNotificationToAllDealershipUsersForProject`, which fan out to *everyone* on that side regardless of role or involvement — including the person who triggered the event. See "Make notifications only go to the people involved" in `docs/things-to-fix.md`.
+The **actor is never notified of their own action**, in-app or by email.
+
+`project_watchers` (one row per user per project) holds the subscription. No row = never subscribed; `is_watching = true` = watching; `is_watching = false` = explicitly unwatched, which auto-subscription must never undo (`AutoSubscribe` uses `ON CONFLICT DO NOTHING`).
+
+**Auto-subscribe** — `app.AutoWatchProject(projectID, user)` runs whenever someone does something meaningful: creating a project, placing an order, posting a chat message, creating/approving/declining a proof, submitting a custom or customized inlay, advancing a manufacturing step, posting an inlay update, shipping/delivering, and creating/voiding/paying an invoice.
+
+**Role fallback** — a small set of events must reach whoever is allowed to act on them even if nobody is watching, so work never sits unclaimed. Defined as `internalRoleFallback` / `dealershipRoleFallback` in `apps/api/app/notifications.go`.
+
+| Event                    | Recipients                                | Description                                     |
+| ------------------------ | ----------------------------------------- | ----------------------------------------------- |
+| proof_ready              | Watchers + dealership approver, admin      | New proof available                             |
+| proof_approved           | Internal watchers                          | Proof was approved                              |
+| proof_declined           | Internal watchers                          | Proof was declined                              |
+| internal_review_required | Watchers + internal designer, admin        | A customizer-baked proof needs internal pricing |
+| custom_inlay_submitted   | Watchers + internal designer, admin        | A custom inlay needs a proof                    |
+| order_placed             | Watchers + internal production, admin      | New order in queue                              |
+| inlay_step_changed       | Dealership watchers                        | Inlay moved in manufacturing                    |
+| inlay_update             | Dealership watchers                        | New update posted on inlay                      |
+| project_shipped          | Dealership watchers                        | Project shipped                                 |
+| project_delivered        | Dealership watchers; watchers + internal billing, admin | Delivery confirmed; project moved to invoiced |
+| invoice_sent             | Watchers + dealership admin                | Invoice available                               |
+| invoice_voided           | Watchers + dealership admin                | Invoice was voided                              |
+| payment_received         | Watchers + dealership admin                | Payment confirmed                               |
+| chat_message             | Watchers on the other side of the chat     | New message                                     |
+
+Users can disable specific notification types; disabled notifications still appear in-app, just no email is sent. That preference is orthogonal to watching — the watch list decides *whether* you are a recipient, the preference decides whether that recipient also gets an email.
 
 ## Catalog
 

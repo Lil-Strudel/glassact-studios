@@ -72,8 +72,12 @@ func (m *InvoiceModule) HandlePostProjectInvoice(w http.ResponseWriter, r *http.
 	// an invoice at any point; the project only becomes "invoiced" when it is
 	// delivered while still unpaid (see project delivery handler).
 	projectID := project.ID
-	go m.SendNotificationToAllDealershipUsersForProject(
+	user := m.ContextGetUser(r)
+	m.AutoWatchProject(projectID, user)
+
+	go m.NotifyDealership(
 		projectID,
+		user,
 		data.NotificationEventTypes.InvoiceSent,
 		fmt.Sprintf("Invoice ready: %s", project.Name),
 		fmt.Sprintf("An invoice has been sent for project %q. You can view it using the link provided.", project.Name),
@@ -217,8 +221,12 @@ func (m *InvoiceModule) HandleMarkInvoicePaid(w http.ResponseWriter, r *http.Req
 		if completedNow {
 			body = fmt.Sprintf("Payment has been received for project %q. The project is now complete.", project.Name)
 		}
-		go m.SendNotificationToAllDealershipUsersForProject(
+		user := m.ContextGetUser(r)
+		m.AutoWatchProject(project.ID, user)
+
+		go m.NotifyDealership(
 			project.ID,
+			user,
 			data.NotificationEventTypes.PaymentReceived,
 			fmt.Sprintf("Payment received: %s", project.Name),
 			body,
@@ -265,8 +273,12 @@ func (m *InvoiceModule) HandleVoidInvoice(w http.ResponseWriter, r *http.Request
 	// project lifecycles are decoupled. Billing can attach a replacement invoice
 	// at any point.
 	if project, found, projErr := m.Db.Projects.GetByID(invoice.ProjectID); projErr == nil && found {
-		go m.SendNotificationToAllDealershipUsersForProject(
+		user := m.ContextGetUser(r)
+		m.AutoWatchProject(project.ID, user)
+
+		go m.NotifyDealership(
 			project.ID,
+			user,
 			data.NotificationEventTypes.InvoiceVoided,
 			fmt.Sprintf("Invoice voided: %s", project.Name),
 			fmt.Sprintf("The invoice for project %q has been voided.", project.Name),

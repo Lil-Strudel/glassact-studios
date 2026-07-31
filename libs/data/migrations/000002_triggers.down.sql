@@ -4,6 +4,10 @@
 DROP TRIGGER IF EXISTS update_support_articles_updated_at ON support_articles;
 DROP TRIGGER IF EXISTS increment_support_articles_version ON support_articles;
 
+-- Project Watchers
+DROP TRIGGER IF EXISTS update_project_watchers_updated_at ON project_watchers;
+DROP TRIGGER IF EXISTS increment_project_watchers_version ON project_watchers;
+
 -- Invoices
 DROP TRIGGER IF EXISTS update_invoices_updated_at ON invoices;
 DROP TRIGGER IF EXISTS increment_invoices_version ON invoices;

@@ -250,6 +250,18 @@ CREATE TRIGGER increment_invoices_version
     FOR EACH ROW EXECUTE FUNCTION increment_version_column();
 
 --------------------------------------------------------------------------------
+-- PROJECT WATCHERS
+--------------------------------------------------------------------------------
+
+CREATE TRIGGER update_project_watchers_updated_at
+    BEFORE UPDATE ON project_watchers
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER increment_project_watchers_version
+    BEFORE UPDATE ON project_watchers
+    FOR EACH ROW EXECUTE FUNCTION increment_version_column();
+
+--------------------------------------------------------------------------------
 -- SUPPORT ARTICLES
 --------------------------------------------------------------------------------
 

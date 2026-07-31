@@ -72,6 +72,8 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("POST /api/project/{uuid}/place-order", canPlaceOrder.ThenFunc(projectModule.HandlePlaceOrder))
 	mux.Handle("POST /api/project/{uuid}/ship", canManageShipping.ThenFunc(projectModule.HandleMarkProjectShipped))
 	mux.Handle("POST /api/project/{uuid}/deliver", canManageShipping.ThenFunc(projectModule.HandleMarkProjectDelivered))
+	mux.Handle("PUT /api/project/{uuid}/watch", protected.ThenFunc(projectModule.HandlePutProjectWatch))
+	mux.Handle("GET /api/project/{uuid}/watchers", protected.ThenFunc(projectModule.HandleGetProjectWatchers))
 
 	canManageKanban := alice.New(app.Authenticate, app.RequirePermission(data.ActionManageKanban))
 	canCreateInlayUpdate := alice.New(app.Authenticate, app.RequirePermission(data.ActionCreateInlayUpdate))

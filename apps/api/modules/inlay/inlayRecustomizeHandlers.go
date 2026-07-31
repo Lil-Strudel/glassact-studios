@@ -139,11 +139,16 @@ func (m InlayModule) HandleRecustomizeInlay(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	m.SendNotificationToAllInternalUsers(
+	user := m.ContextGetUser(r)
+	m.AutoWatchProject(project.ID, user)
+
+	m.NotifyInternal(
+		project.ID,
+		user,
 		data.NotificationEventTypes.InternalReviewRequired,
 		fmt.Sprintf("Re-customized inlay needs review: %s", inlay.Name),
 		fmt.Sprintf("The customization on %q (from catalog %s) changed and v%d is ready for internal pricing review.", inlay.Name, catalogItem.CatalogCode, proof.VersionNumber),
-		&project.ID, &inlay.ID,
+		&inlay.ID,
 	)
 
 	detail, err := m.buildInlayDetail(inlay)

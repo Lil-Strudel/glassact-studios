@@ -49,7 +49,11 @@ export type ProjectListItem = GET<Project> & {
 // `awaiting_payment` is a soft, informational signal: the owning dealership
 // requires payment before shipping and there is an unpaid invoice on a project
 // that has not yet shipped. It never blocks internal staff from shipping.
+// `is_watching` is the requesting user's own subscription state; `watcher_count`
+// counts every active watcher on both sides of the project.
 export type ProjectDetail = GET<Project> & {
   dealership_name?: string;
   awaiting_payment?: boolean;
+  is_watching: boolean;
+  watcher_count: number;
 };

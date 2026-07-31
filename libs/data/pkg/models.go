@@ -29,6 +29,7 @@ type Models struct {
 	OrderSnapshots          OrderSnapshotModel
 	PriceGroups             PriceGroupModel
 	ProjectChats            ProjectChatModel
+	ProjectWatchers         ProjectWatcherModel
 	Projects                ProjectModel
 	SupportArticles         SupportArticleModel
 	Pool                    *pgxpool.Pool
@@ -59,6 +60,7 @@ func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 		OrderSnapshots:          OrderSnapshotModel{DB: db, STDB: stdb},
 		PriceGroups:             PriceGroupModel{DB: db, STDB: stdb},
 		ProjectChats:            ProjectChatModel{DB: db, STDB: stdb},
+		ProjectWatchers:         ProjectWatcherModel{DB: db, STDB: stdb},
 		Projects:                ProjectModel{DB: db, STDB: stdb},
 		SupportArticles:         SupportArticleModel{DB: db, STDB: stdb},
 		Pool:                    db,

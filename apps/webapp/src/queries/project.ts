@@ -1,7 +1,14 @@
 import { queryOptions } from "@tanstack/solid-query";
 import api from "./api";
 
-import type { Project, ProjectDetail, ProjectListItem, GET } from "@glassact/data";
+import type {
+  Project,
+  ProjectDetail,
+  ProjectListItem,
+  ProjectWatcherSummary,
+  SetProjectWatchResponse,
+  GET,
+} from "@glassact/data";
 import { mutationOptions } from "../utils/mutation-options";
 
 export async function getProjects(): Promise<ProjectListItem[]> {
@@ -103,5 +110,35 @@ export async function postMarkProjectDelivered(
 export function postMarkProjectDeliveredOpts() {
   return mutationOptions({
     mutationFn: postMarkProjectDelivered,
+  });
+}
+
+export async function setProjectWatch(params: {
+  uuid: string;
+  isWatching: boolean;
+}): Promise<SetProjectWatchResponse> {
+  const res = await api.put(`/project/${params.uuid}/watch`, {
+    is_watching: params.isWatching,
+  });
+  return res.data;
+}
+
+export function setProjectWatchOpts() {
+  return mutationOptions({
+    mutationFn: setProjectWatch,
+  });
+}
+
+export async function getProjectWatchers(
+  uuid: string,
+): Promise<ProjectWatcherSummary[]> {
+  const res = await api.get(`/project/${uuid}/watchers`);
+  return res.data;
+}
+
+export function getProjectWatchersOpts(uuid: string) {
+  return queryOptions({
+    queryKey: ["project", uuid, "watchers"],
+    queryFn: () => getProjectWatchers(uuid),
   });
 }

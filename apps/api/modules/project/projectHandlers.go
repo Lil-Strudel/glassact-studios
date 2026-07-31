@@ -98,6 +98,8 @@ type projectDetail struct {
 	*data.Project
 	DealershipName  string `json:"dealership_name,omitempty"`
 	AwaitingPayment bool   `json:"awaiting_payment"`
+	IsWatching      bool   `json:"is_watching"`
+	WatcherCount    int    `json:"watcher_count"`
 }
 
 // preShipStatuses are the project statuses that precede shipment. A project in
@@ -109,23 +111,27 @@ var preShipStatuses = map[data.ProjectStatus]bool{
 	data.ProjectStatuses.InProduction: true,
 }
 
-func (m ProjectModule) HandleGetProjectByUUID(w http.ResponseWriter, r *http.Request) {
+// getProjectWithAccessCheck resolves the {uuid} path param and enforces the
+// tenancy boundary: a dealership user may only reach their own dealership's
+// projects, while internal users see every dealership. It writes the response
+// and returns false when the request should not proceed.
+func (m ProjectModule) getProjectWithAccessCheck(w http.ResponseWriter, r *http.Request) (*data.Project, bool) {
 	uuid := r.PathValue("uuid")
 
 	err := m.Validate.Var(uuid, "required,uuid4")
 	if err != nil {
 		m.WriteError(w, r, m.Err.BadRequest, err)
-		return
+		return nil, false
 	}
 
 	project, found, err := m.Db.Projects.GetByUUID(uuid)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
-		return
+		return nil, false
 	}
 	if !found {
 		m.WriteError(w, r, m.Err.RecordNotFound, nil)
-		return
+		return nil, false
 	}
 
 	user := m.ContextGetUser(r)
@@ -133,11 +139,35 @@ func (m ProjectModule) HandleGetProjectByUUID(w http.ResponseWriter, r *http.Req
 		dealershipID := user.GetDealershipID()
 		if dealershipID == nil || *dealershipID != project.DealershipID {
 			m.WriteError(w, r, m.Err.Forbidden, nil)
-			return
+			return nil, false
 		}
 	}
 
+	return project, true
+}
+
+func (m ProjectModule) HandleGetProjectByUUID(w http.ResponseWriter, r *http.Request) {
+	project, ok := m.getProjectWithAccessCheck(w, r)
+	if !ok {
+		return
+	}
+
+	user := m.ContextGetUser(r)
+
 	detail := projectDetail{Project: project}
+
+	if isWatching, err := m.Db.ProjectWatchers.IsWatching(project.ID, user); err == nil {
+		detail.IsWatching = isWatching
+	} else {
+		m.Log.Error("failed to resolve watch state", "error", err, "project_id", project.ID)
+	}
+
+	if watcherCount, err := m.Db.ProjectWatchers.CountForProject(project.ID); err == nil {
+		detail.WatcherCount = watcherCount
+	} else {
+		m.Log.Error("failed to count project watchers", "error", err, "project_id", project.ID)
+	}
+
 	if dealership, found, err := m.Db.Dealerships.GetByID(project.DealershipID); err == nil && found {
 		detail.DealershipName = dealership.Name
 
@@ -192,6 +222,8 @@ func (m ProjectModule) HandlePostProject(w http.ResponseWriter, r *http.Request)
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
+
+	m.AutoWatchProject(project.ID, user)
 
 	m.WriteJSON(w, r, http.StatusCreated, project)
 }
@@ -426,17 +458,25 @@ func (m ProjectModule) HandlePlaceOrder(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	err = m.Db.ProjectWatchers.TxAutoSubscribe(tx, project.ID, user)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to subscribe order placer to project: %w", err))
+		return
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, err)
 		return
 	}
 
-	m.SendNotificationToAllInternalUsers(
+	m.NotifyInternal(
+		project.ID,
+		user,
 		data.NotificationEventTypes.OrderPlaced,
 		fmt.Sprintf("Order placed: %s", project.Name),
 		fmt.Sprintf("A new order has been placed for project %q.", project.Name),
-		&project.ID, nil,
+		nil,
 	)
 
 	m.WriteJSON(w, r, http.StatusOK, project)
@@ -497,8 +537,12 @@ func (m ProjectModule) HandleMarkProjectShipped(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	m.SendNotificationToAllDealershipUsersForProject(
+	user := m.ContextGetUser(r)
+	m.AutoWatchProject(project.ID, user)
+
+	m.NotifyDealership(
 		project.ID,
+		user,
 		data.NotificationEventTypes.ProjectShipped,
 		fmt.Sprintf("Project shipped: %s", project.Name),
 		fmt.Sprintf("Your project %q has shipped. Tracking number: %s", project.Name, body.TrackingNumber),
@@ -555,27 +599,34 @@ func (m ProjectModule) HandleMarkProjectDelivered(w http.ResponseWriter, r *http
 		return
 	}
 
+	user := m.ContextGetUser(r)
+	m.AutoWatchProject(project.ID, user)
+
 	if invoicePaid {
-		m.SendNotificationToAllDealershipUsersForProject(
+		m.NotifyDealership(
 			project.ID,
+			user,
 			data.NotificationEventTypes.ProjectDelivered,
 			fmt.Sprintf("Project delivered: %s", project.Name),
 			fmt.Sprintf("Your project %q has been delivered and is complete.", project.Name),
 			nil,
 		)
 	} else {
-		m.SendNotificationToAllDealershipUsersForProject(
+		m.NotifyDealership(
 			project.ID,
+			user,
 			data.NotificationEventTypes.ProjectDelivered,
 			fmt.Sprintf("Project delivered: %s", project.Name),
 			fmt.Sprintf("Your project %q has been delivered.", project.Name),
 			nil,
 		)
-		m.SendNotificationToAllInternalUsers(
+		m.NotifyInternal(
+			project.ID,
+			user,
 			data.NotificationEventTypes.ProjectDelivered,
 			fmt.Sprintf("Project delivered: %s", project.Name),
 			fmt.Sprintf("Project %q has been delivered and is awaiting payment.", project.Name),
-			&project.ID, nil,
+			nil,
 		)
 	}
 

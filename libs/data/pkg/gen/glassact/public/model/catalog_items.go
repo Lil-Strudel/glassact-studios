@@ -27,8 +27,8 @@ type CatalogItems struct {
 	SvgURL              string
 	Manifest            string
 	IsActive            bool
+	DisplayOrder        *int32
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 	Version             int32
-	DisplayOrder        *int32
 }

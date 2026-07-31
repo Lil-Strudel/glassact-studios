@@ -66,7 +66,15 @@ function RouteComponent() {
         <div>
           <h2 class="text-lg font-semibold">Notification Preferences</h2>
           <p class="text-sm text-gray-500 mt-1">
-            Manage how you receive notifications for each event type.
+            You receive notifications for projects you watch, plus anything that
+            needs your role to act on it. Creating a project, placing an order,
+            sending a message, or acting on a proof starts you watching
+            automatically &mdash; use the Watch button on a project to change
+            that.
+          </p>
+          <p class="text-sm text-gray-500 mt-2">
+            These toggles control which of those notifications also reach you by
+            email. Everything still appears in your notification bell.
           </p>
         </div>
 
