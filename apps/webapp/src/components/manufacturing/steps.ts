@@ -3,8 +3,7 @@ import type { ManufacturingStep } from "@glassact/data";
 export const STEP_ORDER: ManufacturingStep[] = [
   "ordered",
   "materials-prep",
-  "cutting",
-  "fire-polish",
+  "manufacturing",
   "packaging",
   "ready-to-ship",
 ];
@@ -12,8 +11,7 @@ export const STEP_ORDER: ManufacturingStep[] = [
 export const STEP_LABELS: Record<ManufacturingStep, string> = {
   ordered: "Ordered",
   "materials-prep": "Prepping Materials",
-  cutting: "Cutting",
-  "fire-polish": "Fire Polish",
+  manufacturing: "Manufacturing",
   packaging: "Packaging",
   "ready-to-ship": "Ready to Ship",
 };
@@ -22,8 +20,7 @@ export const STEP_LABELS: Record<ManufacturingStep, string> = {
 export const STEP_SHORT_LABELS: Record<ManufacturingStep, string> = {
   ordered: "Ordered",
   "materials-prep": "Materials",
-  cutting: "Cutting",
-  "fire-polish": "Polish",
+  manufacturing: "Manufacturing",
   packaging: "Packaging",
   "ready-to-ship": "Ready to Ship",
 };

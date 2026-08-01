@@ -216,9 +216,10 @@ Place Order is enabled only when **every** inlay on the project is "ready". An i
 ### Manufacturing Steps
 
 ```
-ordered → materials-prep → cutting → fire-polish → packaging → ready-to-ship
+ordered → materials-prep → manufacturing → packaging → ready-to-ship
 ```
 
+- `manufacturing` covers cutting and fire-polishing as one operation — production works them as a single continuous pass, so they are not tracked apart.
 - The ladder stops at `ready-to-ship`. Shipping and delivery are recorded on the **project**, not the inlay — there is no `shipped` or `delivered` manufacturing step.
 - Steps can move backward (via "revert" milestone events).
 - Each transition creates an `inlay_milestone` record.
@@ -267,10 +268,10 @@ Example:
 2. exited:ordered           (starting materials)
 3. entered:materials-prep
 4. exited:materials-prep
-5. entered:cutting
+5. entered:manufacturing
 6. reverted:materials-prep  (problem found, going back)
 7. exited:materials-prep
-8. entered:cutting
+8. entered:manufacturing
 ```
 
 `inlays.manufacturing_step` is stored for query convenience; the milestone history is the source of truth.
@@ -282,7 +283,7 @@ Internal users (production/admin, `create_inlay_update` permission) post `inlay_
 | Type  | Meaning                                              |
 | ----- | ---------------------------------------------------- |
 | info  | General note (e.g. "ahead of schedule")              |
-| issue | Something went wrong / needs rework (e.g. "dropped during fire-polish, restarting from materials-prep") |
+| issue | Something went wrong / needs rework (e.g. "dropped during manufacturing, restarting from materials-prep") |
 
 Each update carries a free-text `message` and a `step` (the inlay's manufacturing step when posted, for context). Updates are shown interleaved chronologically with milestone events on the inlay's manufacturing timeline, and posting one notifies the dealership (`inlay_update`).
 

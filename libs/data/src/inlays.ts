@@ -12,8 +12,7 @@ export type InlayType = "catalog" | "custom";
 export type ManufacturingStep =
   | "ordered"
   | "materials-prep"
-  | "cutting"
-  | "fire-polish"
+  | "manufacturing"
   | "packaging"
   | "ready-to-ship";
 

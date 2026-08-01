@@ -87,7 +87,7 @@ func TestInlayMilestone_GetByUUID(t *testing.T) {
 
 	original := &InlayMilestone{
 		InlayID:     inlay.ID,
-		Step:        ManufacturingSteps.Cutting,
+		Step:        ManufacturingSteps.Manufacturing,
 		EventType:   MilestoneEventTypes.Entered,
 		PerformedBy: internalUser.ID,
 		EventTime:   time.Now(),
@@ -122,7 +122,7 @@ func TestInlayMilestone_GetByInlayID(t *testing.T) {
 	inlayID := inlay.ID
 	milestone1 := &InlayMilestone{
 		InlayID:     inlayID,
-		Step:        ManufacturingSteps.FirePolish,
+		Step:        ManufacturingSteps.Manufacturing,
 		EventType:   MilestoneEventTypes.Entered,
 		PerformedBy: internalUser.ID,
 		EventTime:   time.Now(),
@@ -130,7 +130,7 @@ func TestInlayMilestone_GetByInlayID(t *testing.T) {
 
 	milestone2 := &InlayMilestone{
 		InlayID:     inlayID,
-		Step:        ManufacturingSteps.FirePolish,
+		Step:        ManufacturingSteps.Manufacturing,
 		EventType:   MilestoneEventTypes.Exited,
 		PerformedBy: internalUser.ID,
 		EventTime:   time.Now().Add(2 * time.Hour),
@@ -293,8 +293,7 @@ func TestInlayMilestone_ManufacturingSteps(t *testing.T) {
 	steps := []ManufacturingStep{
 		ManufacturingSteps.Ordered,
 		ManufacturingSteps.MaterialsPrep,
-		ManufacturingSteps.Cutting,
-		ManufacturingSteps.FirePolish,
+		ManufacturingSteps.Manufacturing,
 		ManufacturingSteps.Packaging,
 		ManufacturingSteps.ReadyToShip,
 	}

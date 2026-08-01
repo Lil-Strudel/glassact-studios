@@ -159,14 +159,14 @@ func TestGetInternalDashboard_WithManufacturingInlays_ReturnsStepCounts(t *testi
 	require.NoError(t, err)
 	_, err = testDB.STDB.Exec(`UPDATE inlays SET manufacturing_step = $1 WHERE id = $2`, "materials-prep", inlay2.ID)
 	require.NoError(t, err)
-	_, err = testDB.STDB.Exec(`UPDATE inlays SET manufacturing_step = $1 WHERE id = $2`, "cutting", inlay3.ID)
+	_, err = testDB.STDB.Exec(`UPDATE inlays SET manufacturing_step = $1 WHERE id = $2`, "manufacturing", inlay3.ID)
 	require.NoError(t, err)
 
 	dashboard, err := models.Dashboard.GetInternalDashboard()
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(2), findStepCount(dashboard.ManufacturingStepCounts, "materials-prep"))
-	assert.Equal(t, int64(1), findStepCount(dashboard.ManufacturingStepCounts, "cutting"))
+	assert.Equal(t, int64(1), findStepCount(dashboard.ManufacturingStepCounts, "manufacturing"))
 	assert.Len(t, dashboard.ManufacturingStepCounts, 2)
 }
 

@@ -643,8 +643,7 @@ func inlayDeleteBlockedMessage(blockers []data.InlayDeleteBlocker) string {
 var manufacturingStepOrder = []data.ManufacturingStep{
 	data.ManufacturingSteps.Ordered,
 	data.ManufacturingSteps.MaterialsPrep,
-	data.ManufacturingSteps.Cutting,
-	data.ManufacturingSteps.FirePolish,
+	data.ManufacturingSteps.Manufacturing,
 	data.ManufacturingSteps.Packaging,
 	data.ManufacturingSteps.ReadyToShip,
 }
@@ -840,18 +839,18 @@ func (m InlayModule) HandlePatchInlayStep(w http.ResponseWriter, r *http.Request
 	}
 
 	// Manufacturing moves through many steps; notifying the dealership on every
-	// transition is noise. Only the "cutting" milestone is worth an alert (the
-	// dealership sees the full step history on the inlay timeline). Shipping and
-	// delivery are surfaced separately via project_shipped / project_delivered.
+	// transition is noise. Only the "manufacturing" milestone is worth an alert
+	// (the dealership sees the full step history on the inlay timeline). Shipping
+	// and delivery are surfaced separately via project_shipped / project_delivered.
 	m.AutoWatchProject(inlay.ProjectID, user)
 
-	if body.Step == data.ManufacturingSteps.Cutting {
+	if body.Step == data.ManufacturingSteps.Manufacturing {
 		m.NotifyDealership(
 			inlay.ProjectID,
 			user,
 			data.NotificationEventTypes.InlayStepChanged,
-			fmt.Sprintf("Inlay now being cut: %s", inlay.Name),
-			fmt.Sprintf("Inlay %q has reached the cutting step.", inlay.Name),
+			fmt.Sprintf("Inlay now in manufacturing: %s", inlay.Name),
+			fmt.Sprintf("Inlay %q has reached the manufacturing step.", inlay.Name),
 			&inlay.ID,
 		)
 	}

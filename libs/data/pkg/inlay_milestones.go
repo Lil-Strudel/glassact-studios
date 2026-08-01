@@ -59,8 +59,7 @@ type ManufacturingStep string
 type manufacturingSteps struct {
 	Ordered       ManufacturingStep
 	MaterialsPrep ManufacturingStep
-	Cutting       ManufacturingStep
-	FirePolish    ManufacturingStep
+	Manufacturing ManufacturingStep
 	Packaging     ManufacturingStep
 	ReadyToShip   ManufacturingStep
 }
@@ -68,8 +67,7 @@ type manufacturingSteps struct {
 var ManufacturingSteps = manufacturingSteps{
 	Ordered:       ManufacturingStep("ordered"),
 	MaterialsPrep: ManufacturingStep("materials-prep"),
-	Cutting:       ManufacturingStep("cutting"),
-	FirePolish:    ManufacturingStep("fire-polish"),
+	Manufacturing: ManufacturingStep("manufacturing"),
 	Packaging:     ManufacturingStep("packaging"),
 	ReadyToShip:   ManufacturingStep("ready-to-ship"),
 }

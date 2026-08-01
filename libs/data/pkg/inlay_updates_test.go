@@ -15,8 +15,8 @@ func TestInlayUpdate_Insert(t *testing.T) {
 	update := &InlayUpdate{
 		InlayID:    inlay.ID,
 		UpdateType: InlayUpdateTypes.Issue,
-		Message:    "Dropped it during fire-polish, restarting from materials-prep",
-		Step:       stringPtr("fire-polish"),
+		Message:    "Dropped it during manufacturing, restarting from materials-prep",
+		Step:       stringPtr("manufacturing"),
 	}
 
 	err := models.InlayUpdates.Insert(update)
@@ -44,7 +44,7 @@ func TestInlayUpdate_GetByID(t *testing.T) {
 		InlayID:    inlay.ID,
 		UpdateType: InlayUpdateTypes.Info,
 		Message:    "Ahead of schedule",
-		Step:       stringPtr("cutting"),
+		Step:       stringPtr("manufacturing"),
 	}
 
 	err := models.InlayUpdates.Insert(original)
@@ -82,7 +82,7 @@ func TestInlayUpdate_GetByUUID(t *testing.T) {
 		InlayID:    inlay.ID,
 		UpdateType: InlayUpdateTypes.Issue,
 		Message:    "Equipment failure",
-		Step:       stringPtr("fire-polish"),
+		Step:       stringPtr("manufacturing"),
 	}
 
 	err := models.InlayUpdates.Insert(original)
@@ -122,7 +122,7 @@ func TestInlayUpdate_GetByInlayID(t *testing.T) {
 		InlayID:    inlayID,
 		UpdateType: InlayUpdateTypes.Issue,
 		Message:    "Message 2",
-		Step:       stringPtr("cutting"),
+		Step:       stringPtr("manufacturing"),
 	}
 
 	err := models.InlayUpdates.Insert(update1)
@@ -240,7 +240,7 @@ func TestInlayUpdate_GetAll(t *testing.T) {
 		InlayID:    inlay2.ID,
 		UpdateType: InlayUpdateTypes.Issue,
 		Message:    "All test 2",
-		Step:       stringPtr("cutting"),
+		Step:       stringPtr("manufacturing"),
 	}
 
 	err := models.InlayUpdates.Insert(update1)

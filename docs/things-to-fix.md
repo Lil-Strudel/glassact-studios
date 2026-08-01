@@ -1,6 +1,5 @@
 Add granite colors to calaog Fullscreen
 Remove button should never be disabled
-Merge cutting + firepolish into manufacturing
 Make catalog item insertion easier
 Add users in dealer page
 Make invoice more obvious
