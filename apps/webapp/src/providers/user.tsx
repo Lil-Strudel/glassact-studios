@@ -130,6 +130,8 @@ export const UserProvider: ParentComponent = (props) => {
           return role === "billing" || role === "admin";
         case PERMISSION_ACTIONS.MANAGE_INTERNAL_USERS:
           return role === "admin";
+        case PERMISSION_ACTIONS.MANAGE_DEALERSHIP_USERS:
+          return role === "admin";
         case PERMISSION_ACTIONS.MANAGE_DEALERSHIPS:
           return role === "admin";
         case PERMISSION_ACTIONS.MANAGE_DEALERSHIP:

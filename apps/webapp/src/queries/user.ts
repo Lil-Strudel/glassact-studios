@@ -135,3 +135,30 @@ export function postInternalUserOpts() {
     mutationFn: postInternalUser,
   });
 }
+
+export async function patchInternalUser(args: {
+  uuid: string;
+  body: PATCH<InternalUser>;
+}): Promise<GET<InternalUser>> {
+  const res = await api.patch(`/internal-user/${args.uuid}`, args.body);
+  return res.data;
+}
+
+export function patchInternalUserOpts() {
+  return mutationOptions({
+    mutationFn: patchInternalUser,
+  });
+}
+
+export async function deleteInternalUser(
+  uuid: string,
+): Promise<GET<InternalUser>> {
+  const res = await api.delete(`/internal-user/${uuid}`);
+  return res.data;
+}
+
+export function deleteInternalUserOpts() {
+  return mutationOptions({
+    mutationFn: deleteInternalUser,
+  });
+}

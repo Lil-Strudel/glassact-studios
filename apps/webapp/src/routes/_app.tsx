@@ -53,6 +53,7 @@ const navigation = [
     name: "My Dealership",
     to: "/dealership",
     permission: PERMISSION_ACTIONS.MANAGE_DEALERSHIP_USERS,
+    dealershipOnly: true,
   },
   { name: "Support", to: "/support" },
   { name: "Admin", to: "/admin", permission: PERMISSION_ACTIONS.ACCESS_ADMIN },
@@ -67,11 +68,15 @@ const userNavigation = [
 ];
 
 function RouteComponent() {
-  const { user, can } = useUserContext();
+  const { user, can, isDealership } = useUserContext();
   const [open, setOpen] = createSignal(false);
 
   const filteredNavigation = createMemo(() =>
-    navigation.filter((item) => !item.permission || can(item.permission)),
+    navigation.filter(
+      (item) =>
+        (!item.permission || can(item.permission)) &&
+        (!item.dealershipOnly || isDealership()),
+    ),
   );
 
   function toggleOpen() {
