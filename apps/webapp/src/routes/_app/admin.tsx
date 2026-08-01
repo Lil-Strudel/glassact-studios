@@ -12,6 +12,7 @@ import {
   IoPricetagOutline,
   IoColorPaletteOutline,
   IoBrushOutline,
+  IoHelpCircleOutline,
 } from "solid-icons/io";
 import { getUserSelfOpts } from "../../queries/user";
 
@@ -60,6 +61,11 @@ const navigationItems = [
     label: "Grout",
     icon: IoBrushOutline,
     path: "/admin/grout",
+  },
+  {
+    label: "Support",
+    icon: IoHelpCircleOutline,
+    path: "/admin/support",
   },
 ];
 

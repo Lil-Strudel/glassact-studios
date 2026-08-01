@@ -67,8 +67,15 @@ function RouteComponent() {
     await invalidateUsers();
   }
 
-  async function deactivate(user: GET<DealershipUser>) {
-    await deleteUser.mutateAsync(user.uuid);
+  async function setActive(user: GET<DealershipUser>, isActive: boolean) {
+    if (isActive) {
+      await patchUser.mutateAsync({
+        uuid: user.uuid,
+        body: { is_active: true },
+      });
+    } else {
+      await deleteUser.mutateAsync(user.uuid);
+    }
     await invalidateUsers();
   }
 
@@ -133,7 +140,7 @@ function RouteComponent() {
         permission={PERMISSION_ACTIONS.MANAGE_DEALERSHIP_USERS}
         roleOptions={DEALERSHIP_ROLE_OPTIONS}
         onUpdateRole={updateRole}
-        onDeactivate={deactivate}
+        onSetActive={setActive}
         addAction={
           <Dialog open={addOpen()} onOpenChange={setAddOpen}>
             <DialogTrigger>

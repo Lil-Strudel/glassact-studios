@@ -198,10 +198,11 @@ func (m *UserModule) HandleUpdateDealershipUser(w http.ResponseWriter, r *http.R
 	}
 
 	var body struct {
-		Name   string                  `json:"name"`
-		Email  string                  `json:"email"`
-		Avatar string                  `json:"avatar"`
-		Role   data.DealershipUserRole `json:"role"`
+		Name     string                  `json:"name"`
+		Email    string                  `json:"email"`
+		Avatar   string                  `json:"avatar"`
+		Role     data.DealershipUserRole `json:"role"`
+		IsActive *bool                   `json:"is_active"`
 	}
 
 	err = m.ReadJSONBody(w, r, &body)
@@ -221,6 +222,9 @@ func (m *UserModule) HandleUpdateDealershipUser(w http.ResponseWriter, r *http.R
 	}
 	if body.Role != "" {
 		user.Role = body.Role
+	}
+	if body.IsActive != nil {
+		user.IsActive = *body.IsActive
 	}
 
 	err = m.Db.DealershipUsers.Update(user)
@@ -351,10 +355,11 @@ func (m *UserModule) HandleUpdateInternalUser(w http.ResponseWriter, r *http.Req
 	}
 
 	var body struct {
-		Name   string                `json:"name"`
-		Email  string                `json:"email"`
-		Avatar string                `json:"avatar"`
-		Role   data.InternalUserRole `json:"role"`
+		Name     string                `json:"name"`
+		Email    string                `json:"email"`
+		Avatar   string                `json:"avatar"`
+		Role     data.InternalUserRole `json:"role"`
+		IsActive *bool                 `json:"is_active"`
 	}
 
 	err = m.ReadJSONBody(w, r, &body)
@@ -374,6 +379,9 @@ func (m *UserModule) HandleUpdateInternalUser(w http.ResponseWriter, r *http.Req
 	}
 	if body.Role != "" {
 		user.Role = body.Role
+	}
+	if body.IsActive != nil {
+		user.IsActive = *body.IsActive
 	}
 
 	err = m.Db.InternalUsers.Update(user)

@@ -55,8 +55,15 @@ function RouteComponent() {
     await invalidateUsers();
   }
 
-  async function deactivate(user: GET<InternalUser>) {
-    await deleteUser.mutateAsync(user.uuid);
+  async function setActive(user: GET<InternalUser>, isActive: boolean) {
+    if (isActive) {
+      await patchUser.mutateAsync({
+        uuid: user.uuid,
+        body: { is_active: true },
+      });
+    } else {
+      await deleteUser.mutateAsync(user.uuid);
+    }
     await invalidateUsers();
   }
 
@@ -117,7 +124,7 @@ function RouteComponent() {
         permission={PERMISSION_ACTIONS.MANAGE_INTERNAL_USERS}
         roleOptions={INTERNAL_ROLE_OPTIONS}
         onUpdateRole={updateRole}
-        onDeactivate={deactivate}
+        onSetActive={setActive}
         addAction={
           <Dialog open={dialogOpen()} onOpenChange={setDialogOpen}>
             <DialogTrigger>

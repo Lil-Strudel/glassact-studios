@@ -22,6 +22,20 @@ export function getSupportArticlesOpts() {
   });
 }
 
+export async function getSupportArticlesAdmin(): Promise<
+  GET<SupportArticle>[]
+> {
+  const res = await api.get("/support/articles/all");
+  return res.data;
+}
+
+export function getSupportArticlesAdminOpts() {
+  return queryOptions({
+    queryKey: ["support", "all"],
+    queryFn: getSupportArticlesAdmin,
+  });
+}
+
 export async function getSupportArticle(
   uuid: string,
 ): Promise<GET<SupportArticle>> {

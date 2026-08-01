@@ -27,6 +27,18 @@ func (m *SupportModule) HandleGetArticles(w http.ResponseWriter, r *http.Request
 	m.WriteJSON(w, r, http.StatusOK, articles)
 }
 
+// HandleGetArticlesAdmin returns every article, published or not, so the admin
+// management screen can find and re-publish drafts.
+func (m *SupportModule) HandleGetArticlesAdmin(w http.ResponseWriter, r *http.Request) {
+	articles, err := m.Db.SupportArticles.GetAll()
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, articles)
+}
+
 func (m *SupportModule) HandleGetArticle(w http.ResponseWriter, r *http.Request) {
 	uuid := r.PathValue("uuid")
 

@@ -27,7 +27,6 @@ import {
   getFilteredRowModel,
 } from "@tanstack/solid-table";
 import { PriceGroup, GET } from "@glassact/data";
-import { IoTrashOutline } from "solid-icons/io";
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
@@ -154,23 +153,33 @@ const defaultColumns: ColumnDef<GET<PriceGroup>>[] = [
       const deleteMutation = useMutation(() =>
         deletePriceGroupOpts(props.row.original.uuid),
       );
+      const patchMutation = useMutation(() =>
+        patchPriceGroupOpts(props.row.original.uuid),
+      );
+
+      const invalidate = () =>
+        queryClient.invalidateQueries({ queryKey: ["price-groups"] });
+
+      // DELETE is a soft deactivate on the server, so it pairs with a PATCH back
+      // to active rather than being a one-way removal.
+      const toggleActive = () => {
+        if (props.row.original.is_active) {
+          deleteMutation.mutate(undefined, { onSuccess: invalidate });
+        } else {
+          patchMutation.mutate({ is_active: true }, { onSuccess: invalidate });
+        }
+      };
 
       return (
         <div class="flex gap-2">
           <EditButton item={props.row.original} />
           <Button
             variant="ghost"
-            size="icon"
-            onClick={() => {
-              deleteMutation.mutate(undefined, {
-                onSuccess: () => {
-                  queryClient.invalidateQueries({ queryKey: ["price-groups"] });
-                },
-              });
-            }}
-            disabled={deleteMutation.isPending}
+            size="sm"
+            onClick={toggleActive}
+            disabled={deleteMutation.isPending || patchMutation.isPending}
           >
-            <IoTrashOutline size={20} />
+            {props.row.original.is_active ? "Deactivate" : "Reactivate"}
           </Button>
         </div>
       );

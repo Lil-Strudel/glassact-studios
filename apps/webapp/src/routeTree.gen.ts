@@ -23,6 +23,7 @@ import { Route as AppDealershipIndexRouteImport } from './routes/_app/dealership
 import { Route as AppCatalogIndexRouteImport } from './routes/_app/catalog.index'
 import { Route as AppProjectsCreateProjectRouteImport } from './routes/_app/projects_.create-project'
 import { Route as AppDealershipIdRouteImport } from './routes/_app/dealership.$id'
+import { Route as AppAdminSupportRouteImport } from './routes/_app/admin.support'
 import { Route as AppAdminPriceGroupsRouteImport } from './routes/_app/admin.price-groups'
 import { Route as AppAdminGroutRouteImport } from './routes/_app/admin.grout'
 import { Route as AppAdminGlassRouteImport } from './routes/_app/admin.glass'
@@ -111,6 +112,11 @@ const AppDealershipIdRoute = AppDealershipIdRouteImport.update({
   id: '/dealership/$id',
   path: '/dealership/$id',
   getParentRoute: () => AppRoute,
+} as any)
+const AppAdminSupportRoute = AppAdminSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AppAdminRoute,
 } as any)
 const AppAdminPriceGroupsRoute = AppAdminPriceGroupsRouteImport.update({
   id: '/price-groups',
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/admin/glass': typeof AppAdminGlassRoute
   '/admin/grout': typeof AppAdminGroutRoute
   '/admin/price-groups': typeof AppAdminPriceGroupsRoute
+  '/admin/support': typeof AppAdminSupportRoute
   '/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/projects/create-project': typeof AppProjectsCreateProjectRoute
   '/catalog/': typeof AppCatalogIndexRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/admin/glass': typeof AppAdminGlassRoute
   '/admin/grout': typeof AppAdminGroutRoute
   '/admin/price-groups': typeof AppAdminPriceGroupsRoute
+  '/admin/support': typeof AppAdminSupportRoute
   '/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/projects/create-project': typeof AppProjectsCreateProjectRoute
   '/catalog': typeof AppCatalogIndexRoute
@@ -290,6 +298,7 @@ export interface FileRoutesById {
   '/_app/admin/glass': typeof AppAdminGlassRoute
   '/_app/admin/grout': typeof AppAdminGroutRoute
   '/_app/admin/price-groups': typeof AppAdminPriceGroupsRoute
+  '/_app/admin/support': typeof AppAdminSupportRoute
   '/_app/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/_app/projects_/create-project': typeof AppProjectsCreateProjectRoute
   '/_app/catalog/': typeof AppCatalogIndexRoute
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
     | '/admin/glass'
     | '/admin/grout'
     | '/admin/price-groups'
+    | '/admin/support'
     | '/dealership/$id'
     | '/projects/create-project'
     | '/catalog/'
@@ -358,6 +368,7 @@ export interface FileRouteTypes {
     | '/admin/glass'
     | '/admin/grout'
     | '/admin/price-groups'
+    | '/admin/support'
     | '/dealership/$id'
     | '/projects/create-project'
     | '/catalog'
@@ -392,6 +403,7 @@ export interface FileRouteTypes {
     | '/_app/admin/glass'
     | '/_app/admin/grout'
     | '/_app/admin/price-groups'
+    | '/_app/admin/support'
     | '/_app/dealership/$id'
     | '/_app/projects_/create-project'
     | '/_app/catalog/'
@@ -516,6 +528,13 @@ declare module '@tanstack/solid-router' {
       fullPath: '/dealership/$id'
       preLoaderRoute: typeof AppDealershipIdRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_app/admin/support': {
+      id: '/_app/admin/support'
+      path: '/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AppAdminSupportRouteImport
+      parentRoute: typeof AppAdminRoute
     }
     '/_app/admin/price-groups': {
       id: '/_app/admin/price-groups'
@@ -652,6 +671,7 @@ interface AppAdminRouteChildren {
   AppAdminGlassRoute: typeof AppAdminGlassRoute
   AppAdminGroutRoute: typeof AppAdminGroutRoute
   AppAdminPriceGroupsRoute: typeof AppAdminPriceGroupsRoute
+  AppAdminSupportRoute: typeof AppAdminSupportRoute
   AppAdminCatalogUuidRoute: typeof AppAdminCatalogUuidRoute
   AppAdminCatalogCreateRoute: typeof AppAdminCatalogCreateRoute
   AppAdminCatalogOrderRoute: typeof AppAdminCatalogOrderRoute
@@ -666,6 +686,7 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminGlassRoute: AppAdminGlassRoute,
   AppAdminGroutRoute: AppAdminGroutRoute,
   AppAdminPriceGroupsRoute: AppAdminPriceGroupsRoute,
+  AppAdminSupportRoute: AppAdminSupportRoute,
   AppAdminCatalogUuidRoute: AppAdminCatalogUuidRoute,
   AppAdminCatalogCreateRoute: AppAdminCatalogCreateRoute,
   AppAdminCatalogOrderRoute: AppAdminCatalogOrderRoute,

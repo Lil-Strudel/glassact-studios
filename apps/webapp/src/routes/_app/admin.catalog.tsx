@@ -53,7 +53,7 @@ const defaultColumns: ColumnDef<GET<CatalogItem>>[] = [
             onClick={() => {
               if (
                 window.confirm(
-                  "Are you sure you want to delete this catalog item?",
+                  "Are you sure you want to deactivate this catalog item?",
                 )
               ) {
                 deleteCatalog.mutate(props.row.original.uuid, {

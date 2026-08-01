@@ -149,6 +149,80 @@ func TestSupportModule(t *testing.T) {
 		assert.Equal(t, http.StatusOK, allowed.statusCode)
 	})
 
+	t.Run("admin list surfaces unpublished articles so they can be republished", func(t *testing.T) {
+		created := testCtx.request(testRequest{
+			method: "POST",
+			path:   "/api/support/articles",
+			body: map[string]interface{}{
+				"category":     "general",
+				"title":        "Draft only",
+				"body":         "",
+				"is_published": false,
+			},
+			token: internalAdminToken,
+		})
+		require.Equal(t, http.StatusCreated, created.statusCode)
+
+		var article map[string]interface{}
+		require.NoError(t, json.Unmarshal(created.body, &article))
+		uuid, ok := article["uuid"].(string)
+		require.True(t, ok)
+
+		public := testCtx.request(testRequest{
+			method: "GET",
+			path:   "/api/support/articles",
+			token:  dealershipToken,
+		})
+		require.Equal(t, http.StatusOK, public.statusCode)
+
+		var publicArticles []map[string]interface{}
+		require.NoError(t, json.Unmarshal(public.body, &publicArticles))
+		for _, a := range publicArticles {
+			assert.NotEqual(t, uuid, a["uuid"], "draft leaked into the public list")
+		}
+
+		adminList := testCtx.request(testRequest{
+			method: "GET",
+			path:   "/api/support/articles/all",
+			token:  internalAdminToken,
+		})
+		require.Equal(t, http.StatusOK, adminList.statusCode)
+
+		var allArticles []map[string]interface{}
+		require.NoError(t, json.Unmarshal(adminList.body, &allArticles))
+
+		foundDraft := false
+		for _, a := range allArticles {
+			if a["uuid"] == uuid {
+				foundDraft = true
+			}
+		}
+		assert.True(t, foundDraft, "admin list should include the draft")
+
+		republished := testCtx.request(testRequest{
+			method: "PATCH",
+			path:   "/api/support/articles/" + uuid,
+			body:   map[string]interface{}{"is_published": true},
+			token:  internalAdminToken,
+		})
+		require.Equal(t, http.StatusOK, republished.statusCode)
+
+		var updated map[string]interface{}
+		require.NoError(t, json.Unmarshal(republished.body, &updated))
+		assert.Equal(t, true, updated["is_published"])
+	})
+
+	t.Run("admin list is forbidden to non-admin readers", func(t *testing.T) {
+		for _, token := range []string{dealershipToken, designerToken} {
+			resp := testCtx.request(testRequest{
+				method: "GET",
+				path:   "/api/support/articles/all",
+				token:  token,
+			})
+			assert.Equal(t, http.StatusForbidden, resp.statusCode)
+		}
+	})
+
 	t.Run("price groups are readable by dealership users", func(t *testing.T) {
 		seedPriceGroup(t, testCtx, "Support PG")
 

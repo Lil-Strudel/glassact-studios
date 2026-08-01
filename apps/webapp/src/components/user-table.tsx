@@ -51,7 +51,7 @@ interface UserTableProps<T extends ManagedUser> {
   /** Inserted between Role and Status, for context a single view needs (e.g. which dealership). */
   extraColumns?: ColumnDef<T>[];
   onUpdateRole: (user: T, role: string) => Promise<unknown>;
-  onDeactivate: (user: T) => Promise<unknown>;
+  onSetActive: (user: T, isActive: boolean) => Promise<unknown>;
 }
 
 function toErrorMessage(error: unknown) {
@@ -63,29 +63,37 @@ function toErrorMessage(error: unknown) {
 
 export function UserTable<T extends ManagedUser>(props: UserTableProps<T>) {
   const [editingUser, setEditingUser] = createSignal<T | null>(null);
-  const [deactivatingUuid, setDeactivatingUuid] = createSignal<string | null>(
-    null,
-  );
+  const [pendingUuid, setPendingUuid] = createSignal<string | null>(null);
 
-  async function handleDeactivate(user: T) {
-    if (!confirm(`Deactivate ${user.name}? They will lose access.`)) return;
+  // Only deactivation is destructive enough to confirm — restoring access is not.
+  async function handleSetActive(user: T, isActive: boolean) {
+    if (
+      !isActive &&
+      !confirm(`Deactivate ${user.name}? They will lose access.`)
+    ) {
+      return;
+    }
 
-    setDeactivatingUuid(user.uuid);
+    setPendingUuid(user.uuid);
     try {
-      await props.onDeactivate(user);
+      await props.onSetActive(user, isActive);
       showToast({
-        title: "User deactivated",
-        description: `${user.name} can no longer sign in.`,
+        title: isActive ? "User reactivated" : "User deactivated",
+        description: isActive
+          ? `${user.name} can sign in again.`
+          : `${user.name} can no longer sign in.`,
         variant: "success",
       });
     } catch (error) {
       showToast({
-        title: "Problem deactivating user...",
+        title: isActive
+          ? "Problem reactivating user..."
+          : "Problem deactivating user...",
         description: toErrorMessage(error),
         variant: "error",
       });
     } finally {
-      setDeactivatingUuid(null);
+      setPendingUuid(null);
     }
   }
 
@@ -112,16 +120,19 @@ export function UserTable<T extends ManagedUser>(props: UserTableProps<T>) {
             >
               Edit
             </Button>
-            <Show when={info.row.original.is_active}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDeactivate(info.row.original)}
-                disabled={deactivatingUuid() === info.row.original.uuid}
-              >
-                Deactivate
-              </Button>
-            </Show>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                handleSetActive(
+                  info.row.original,
+                  !info.row.original.is_active,
+                )
+              }
+              disabled={pendingUuid() === info.row.original.uuid}
+            >
+              {info.row.original.is_active ? "Deactivate" : "Reactivate"}
+            </Button>
           </div>
         </Can>
       ),

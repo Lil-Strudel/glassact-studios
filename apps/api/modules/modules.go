@@ -186,6 +186,7 @@ func GetRoutes(app *app.Application) http.Handler {
 	supportModule := support.NewSupportModule(app)
 	mux.Handle("GET /api/support/articles", protected.ThenFunc(supportModule.HandleGetArticles))
 	mux.Handle("GET /api/support/price-groups", protected.ThenFunc(supportModule.HandleGetPriceGroups))
+	mux.Handle("GET /api/support/articles/all", canManageSupport.ThenFunc(supportModule.HandleGetArticlesAdmin))
 	mux.Handle("GET /api/support/articles/{uuid}", protected.ThenFunc(supportModule.HandleGetArticle))
 	mux.Handle("POST /api/support/articles", canManageSupport.ThenFunc(supportModule.HandlePostArticle))
 	mux.Handle("PATCH /api/support/articles/{uuid}", canManageSupport.ThenFunc(supportModule.HandlePatchArticle))
