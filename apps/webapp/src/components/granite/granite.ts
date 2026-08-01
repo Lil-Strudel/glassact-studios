@@ -1,7 +1,8 @@
 import type { JSX } from "solid-js";
-import graniteSlab from "../../../assets/images/granite/granite-slab.jpg";
+import graniteSlab from "../../assets/images/granite/granite-slab.jpg";
 
-// The customizer previews an inlay against the "stone" it will be set into.
+// The customizer and the catalog preview an inlay against the "stone" it will
+// be set into.
 // Rather than ship one photo per granite color, we tint a single neutral
 // grayscale granite tile (see granite-slab.jpg / CREDITS.md) to each of the
 // common monument granite colors via CSS `background-blend-mode`. This keeps
@@ -30,6 +31,9 @@ export const GRANITE_PRESETS: GranitePreset[] = [
 ];
 
 export const DEFAULT_GRANITE_KEY = "gray";
+
+// What the catalog opens on, before the dealership picks a stone.
+export const PLAIN_GRANITE_KEY = "none";
 
 export function graniteByKey(key: string): GranitePreset {
   return (

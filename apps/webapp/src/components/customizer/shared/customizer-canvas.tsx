@@ -1,11 +1,10 @@
-import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js";
+import { createEffect, createSignal, onCleanup, onMount, Show } from "solid-js";
 import { Button, createPanZoom } from "@glassact/ui";
 import {
-  GRANITE_PRESETS,
   graniteBackgroundStyle,
-  graniteSwatchStyle,
   type GranitePreset,
-} from "./granite";
+} from "../../granite/granite";
+import { GranitePill } from "../../granite/granite-pill";
 
 interface CustomizerCanvasProps {
   svgText: string;
@@ -172,27 +171,11 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
       </div>
 
       <Show when={props.granite && props.onSelectGranite}>
-        <div class="pointer-events-none absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-1 rounded-full border border-gray-200 bg-white/90 px-2 py-1 shadow-sm">
-          <span class="px-1 text-[11px] font-medium text-gray-500">Granite</span>
-          <For each={GRANITE_PRESETS}>
-            {(preset) => (
-              <button
-                type="button"
-                title={preset.name}
-                aria-label={`${preset.name} background`}
-                onClick={() => props.onSelectGranite?.(preset.key)}
-                class="pointer-events-auto h-6 w-6 rounded-full border transition"
-                classList={{
-                  "border-blue-600 ring-2 ring-blue-500/40":
-                    props.graniteKey === preset.key,
-                  "border-black/15 hover:border-gray-500":
-                    props.graniteKey !== preset.key,
-                }}
-                style={graniteSwatchStyle(preset)}
-              />
-            )}
-          </For>
-        </div>
+        <GranitePill
+          class="absolute left-3 top-3"
+          selectedKey={props.graniteKey ?? ""}
+          onSelect={(key) => props.onSelectGranite?.(key)}
+        />
       </Show>
 
       <div class="pointer-events-none absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-gray-200 bg-white/90 px-2 py-1 shadow-sm">

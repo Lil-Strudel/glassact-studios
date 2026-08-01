@@ -8,7 +8,6 @@ import {
   Button,
   Breadcrumb,
   Form,
-  ImageLightbox,
   textfieldLabel,
   showToast,
 } from "@glassact/ui";
@@ -25,6 +24,7 @@ import { postCatalogInlayOpts, postCustomInlayOpts } from "../../queries/inlay";
 import { postUploadOpts } from "../../queries/upload";
 import { getProjectOpts } from "../../queries/project";
 import { isApiError } from "../../utils/is-api-error";
+import { GraniteImageLightbox } from "../../components/granite/granite-image-lightbox";
 
 export const Route = createFileRoute("/_app/projects_/$id/add-inlay/")({
   component: RouteComponent,
@@ -181,16 +181,17 @@ function CatalogSelector(props: CatalogSelectorProps) {
               <For each={query.data?.items ?? []}>
                 {(item) => (
                   <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
-                    <ImageLightbox
+                    <GraniteImageLightbox
                       images={[{ src: item.svg_url, alt: item.name }]}
-                      triggerClass="block w-full bg-gray-50 p-4 h-48 overflow-hidden"
+                      triggerClass="block w-full h-48 overflow-hidden"
+                      previewClass="w-full h-full p-4"
                     >
                       <img
                         src={item.svg_url}
                         alt={item.name}
                         class="w-full h-full object-contain"
                       />
-                    </ImageLightbox>
+                    </GraniteImageLightbox>
                     <div class="p-4 flex flex-col gap-2 flex-1">
                       <code class="text-xs font-mono bg-gray-100 px-2 py-1 rounded w-fit">
                         {item.catalog_code}

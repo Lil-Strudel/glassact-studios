@@ -17,14 +17,13 @@ import type {
 } from "@glassact/data";
 import { Alert, AlertDescription, Badge, Button } from "@glassact/ui";
 import { postBakeOpts } from "../../queries/customize";
+import { useGranitePreference } from "../../hooks/use-granite-preference";
 import { ControlPanel } from "./control-panel";
 import { PricingWarningDialog } from "./pricing-warning-dialog";
 import {
   CustomizerCanvas,
   buildGroutPieceIds,
   buildPieceSourceMap,
-  DEFAULT_GRANITE_KEY,
-  graniteByKey,
   groupGlassId,
   resolvePieceHex,
   totalCustomPieces,
@@ -84,11 +83,10 @@ export function Customizer(props: CustomizerProps) {
   );
   const height = createMemo(() => width() * aspect);
 
-  // The granite backdrop (the "stone" the inlay sits on) is a purely in-memory
-  // viewing preference, independent of the saved/baked coloring. It always
-  // starts on gray.
-  const [graniteKey, setGraniteKey] = createSignal(DEFAULT_GRANITE_KEY);
-  const granite = createMemo(() => graniteByKey(graniteKey()));
+  // The granite backdrop (the "stone" the inlay sits on) is a viewing
+  // preference, independent of the saved/baked coloring. It is shared with the
+  // catalog so the stone a dealership browsed on carries into the customizer.
+  const { graniteKey, granite, setGraniteKey } = useGranitePreference();
 
   const manifest = createMemo(
     () =>

@@ -6,9 +6,9 @@ import {
   DialogTitle,
   DialogTrigger,
   Button,
-  ImageLightbox,
 } from "@glassact/ui";
 import { ParentProps, Show } from "solid-js";
+import { GraniteImageLightbox } from "../granite/granite-image-lightbox";
 
 interface ItemDetailModalProps {
   item: GET<CatalogItem>;
@@ -28,16 +28,17 @@ export function ItemDetailModal(props: ParentProps<ItemDetailModalProps>) {
         </DialogHeader>
 
         <div class="flex flex-col gap-6">
-          <ImageLightbox
+          <GraniteImageLightbox
             images={[{ src: props.item.svg_url, alt: props.item.name }]}
-            triggerClass="bg-gray-50 rounded-md p-4 flex items-center justify-center min-h-[400px]"
+            triggerClass="block w-full rounded-md overflow-hidden"
+            previewClass="p-4 flex items-center justify-center min-h-[400px]"
           >
             <img
               src={props.item.svg_url}
               alt={props.item.name}
               class="max-w-full max-h-[400px] object-contain"
             />
-          </ImageLightbox>
+          </GraniteImageLightbox>
 
           <div class="grid grid-cols-2 gap-4">
             <div>

@@ -1,7 +1,6 @@
 import { CatalogItem, GET } from "@glassact/data";
 import {
   Button,
-  ImageLightbox,
   Pagination,
   PaginationEllipsis,
   PaginationItem,
@@ -11,6 +10,7 @@ import {
 } from "@glassact/ui";
 import { For, Show } from "solid-js";
 import { ItemDetailModal } from "./item-detail-modal";
+import { GraniteImageLightbox } from "../granite/granite-image-lightbox";
 
 interface CatalogGridProps {
   items: GET<CatalogItem>[];
@@ -41,16 +41,17 @@ export function CatalogGrid(props: CatalogGridProps) {
           <For each={props.items}>
             {(item) => (
               <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                <ImageLightbox
+                <GraniteImageLightbox
                   images={[{ src: item.svg_url, alt: item.name }]}
-                  triggerClass="block w-full bg-gray-50 p-4 h-64 overflow-hidden"
+                  triggerClass="block w-full h-64 overflow-hidden"
+                  previewClass="w-full h-full p-4"
                 >
                   <img
                     src={item.svg_url}
                     alt={item.name}
                     class="w-full h-full object-contain"
                   />
-                </ImageLightbox>
+                </GraniteImageLightbox>
 
                 <div class="p-4 flex flex-col gap-3">
                   <div>

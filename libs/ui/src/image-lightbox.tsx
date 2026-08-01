@@ -2,6 +2,7 @@ import { Dialog as DialogPrimitive } from "@kobalte/core/dialog";
 import {
   For,
   Show,
+  children,
   createEffect,
   createMemo,
   createSignal,
@@ -28,6 +29,13 @@ export interface ImageLightboxProps {
   children?: JSX.Element;
   /** Class applied to the trigger wrapper. */
   triggerClass?: string;
+  /**
+   * Background for the viewer surface, replacing the default dark backdrop —
+   * e.g. the granite slab an inlay is previewed against.
+   */
+  backdropStyle?: JSX.CSSProperties;
+  /** Overlaid at the top-left of the viewer, e.g. a backdrop picker. */
+  controls?: JSX.Element;
 }
 
 /**
@@ -51,6 +59,9 @@ export function ImageLightbox(props: ImageLightboxProps) {
   }
 
   const panZoom = createPanZoom({ minScale: 0.5, maxScale: 8 });
+
+  // Memoized so testing for and rendering the slot doesn't build it twice.
+  const controls = children(() => props.controls);
 
   const count = createMemo(() => props.images.length);
   const hasGallery = createMemo(() => count() > 1);
@@ -158,6 +169,7 @@ export function ImageLightbox(props: ImageLightboxProps) {
               "relative flex-1 touch-none overflow-hidden",
               panZoom.isPanning() ? "cursor-grabbing" : "cursor-grab",
             )}
+            style={props.backdropStyle}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -183,6 +195,12 @@ export function ImageLightbox(props: ImageLightboxProps) {
               </Show>
             </div>
           </div>
+
+          <Show when={controls()}>
+            {/* Sibling of the viewport, not a child, so interacting with the
+                controls never reads as the start of a pan. */}
+            <div class="absolute left-3 top-3">{controls()}</div>
+          </Show>
 
           <Show when={hasGallery()}>
             <button

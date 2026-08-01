@@ -25,12 +25,3 @@ export {
   totalCustomPieces,
 } from "./resolution";
 export type { Selection, GlassById } from "./resolution";
-
-export {
-  GRANITE_PRESETS,
-  DEFAULT_GRANITE_KEY,
-  graniteByKey,
-  graniteBackgroundStyle,
-  graniteSwatchStyle,
-} from "./granite";
-export type { GranitePreset } from "./granite";

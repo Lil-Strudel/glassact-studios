@@ -2,6 +2,9 @@ import { For } from "solid-js";
 import { TextField, TextFieldRoot, Button } from "@glassact/ui";
 import { useQuery } from "@tanstack/solid-query";
 import { getCatalogCategoriesOpts } from "../../queries/catalog-browse";
+import { GranitePicker } from "../granite/granite-picker";
+import { PLAIN_GRANITE_KEY } from "../granite/granite";
+import { useGranitePreference } from "../../hooks/use-granite-preference";
 
 interface FilterSidebarProps {
   onSearchChange: (value: string) => void;
@@ -12,6 +15,8 @@ interface FilterSidebarProps {
 
 export function FilterSidebar(props: FilterSidebarProps) {
   const categoriesQuery = useQuery(() => getCatalogCategoriesOpts());
+  const { graniteKey, granite, setGraniteKey } =
+    useGranitePreference(PLAIN_GRANITE_KEY);
 
   const clearFilters = () => {
     props.onSearchChange("");
@@ -48,6 +53,21 @@ export function FilterSidebar(props: FilterSidebarProps) {
         <Button variant="outline" class="w-full" onClick={clearFilters}>
           Clear filters
         </Button>
+
+        <div class="border-t border-gray-200 pt-6">
+          <label class="text-sm font-medium text-gray-900">
+            Granite backdrop
+          </label>
+          <p class="text-xs text-gray-500 mt-1">
+            Preview only — does not filter results.
+          </p>
+          <GranitePicker
+            selectedKey={graniteKey()}
+            onSelect={setGraniteKey}
+            class="mt-2"
+          />
+          <p class="text-xs text-gray-600 mt-2">{granite().name}</p>
+        </div>
       </div>
     </div>
   );

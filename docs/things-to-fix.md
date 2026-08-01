@@ -1,4 +1,3 @@
-Add granite colors to calaog Fullscreen
 Remove button should never be disabled
 Make invoice more obvious
 Make sure disabling and enabling works across catalog items, glass, and grout
