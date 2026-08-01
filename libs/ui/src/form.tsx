@@ -30,6 +30,16 @@ import {
 } from "./filefield";
 import { FileUpload, type UploadResponse } from "./file-upload";
 import { Checkbox, CheckboxControl, CheckboxLabel } from "./checkbox";
+import {
+  RadioGroup,
+  RadioGroupButtonLabel,
+  RadioGroupDescription,
+  RadioGroupErrorMessage,
+  RadioGroupItem,
+  RadioGroupItemInput,
+  RadioGroupLabel,
+} from "./radio-group";
+import { formatPhone, toPhoneDigits } from "./format-phone";
 import { loadGooglePlaces } from "./google-places";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- type-erased escape hatch, matches AnyFieldApi's own style */
@@ -99,6 +109,101 @@ function FormTextField(props: FormTextFieldProps) {
           .join(", ")}
       </TextFieldErrorMessage>
     </TextFieldRoot>
+  );
+}
+
+interface FormPhoneFieldProps {
+  field: () => AnyFieldApi;
+  class?: JSX.HTMLAttributes<"div">["class"];
+  label?: string;
+  placeholder?: string;
+  description?: string;
+  fullWidth?: boolean;
+}
+// Holds digits in form state and renders them formatted, so what gets sent to
+// the API is always clean regardless of how the number was typed or pasted.
+function FormPhoneField(props: FormPhoneFieldProps) {
+  const validationState = useValidationState(() => props.field());
+
+  return (
+    <TextFieldRoot
+      class={cn((props.fullWidth ?? true) && "w-full", props.class)}
+      validationState={validationState()}
+    >
+      {props.label && <TextFieldLabel>{props.label}</TextFieldLabel>}
+      <TextField
+        type="tel"
+        inputmode="tel"
+        autocomplete="tel"
+        placeholder={props.placeholder ?? "(555) 123-4567"}
+        name={props.field().name}
+        value={formatPhone(props.field().state.value ?? "")}
+        onBlur={() => props.field().handleBlur()}
+        onInput={(e) =>
+          props.field().handleChange(toPhoneDigits(e.currentTarget.value))
+        }
+      />
+      {props.description && (
+        <TextFieldDescription>{props.description}</TextFieldDescription>
+      )}
+      <TextFieldErrorMessage>
+        {props.field()
+          .state.meta.errors.map((error) => error?.message)
+          .join(", ")}
+      </TextFieldErrorMessage>
+    </TextFieldRoot>
+  );
+}
+
+interface FormButtonGroupProps<T extends string> {
+  field: () => AnyFieldApi;
+  options: { label: string; value: T; disabled?: boolean }[];
+  class?: JSX.HTMLAttributes<"div">["class"];
+  label?: string;
+  description?: string;
+}
+// A segmented control: looks like a row of buttons, behaves like a radio group,
+// so arrow-key navigation and screen-reader semantics come from the primitive.
+function FormButtonGroup<T extends string>(props: FormButtonGroupProps<T>) {
+  const validationState = useValidationState(() => props.field());
+
+  return (
+    <RadioGroup
+      class={props.class}
+      orientation="horizontal"
+      validationState={validationState()}
+      name={props.field().name}
+      value={props.field().state.value ?? ""}
+      onChange={(value) => props.field().handleChange(value)}
+    >
+      {props.label && <RadioGroupLabel>{props.label}</RadioGroupLabel>}
+      <div class="inline-flex w-fit max-w-full flex-wrap gap-1 rounded-md border border-input bg-muted p-1">
+        <For each={props.options}>
+          {(option) => (
+            <RadioGroupItem value={option.value} disabled={option.disabled}>
+              {/* The primitive already visually hides this input and gives it
+                  the group's name, so arrow-key navigation is native. blur does
+                  not bubble, so it binds here rather than on the group. */}
+              <RadioGroupItemInput
+                class="peer"
+                onBlur={() => props.field().handleBlur()}
+              />
+              <RadioGroupButtonLabel class="block peer-focus-visible:outline-none peer-focus-visible:ring-[2px] peer-focus-visible:ring-primary">
+                {option.label}
+              </RadioGroupButtonLabel>
+            </RadioGroupItem>
+          )}
+        </For>
+      </div>
+      {props.description && (
+        <RadioGroupDescription>{props.description}</RadioGroupDescription>
+      )}
+      <RadioGroupErrorMessage>
+        {props.field()
+          .state.meta.errors.map((error) => error?.message)
+          .join(", ")}
+      </RadioGroupErrorMessage>
+    </RadioGroup>
   );
 }
 
@@ -610,6 +715,8 @@ function FormAddressField(props: FormAddressFieldProps) {
 
 export const Form = {
   TextField: FormTextField,
+  PhoneField: FormPhoneField,
+  ButtonGroup: FormButtonGroup,
   TextArea: FormTextArea,
   NumberField: FormNumberField,
   Combobox: FormCombobox,

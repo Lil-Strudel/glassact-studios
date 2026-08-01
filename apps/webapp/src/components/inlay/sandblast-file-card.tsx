@@ -11,7 +11,7 @@ import {
   showToast,
 } from "@glassact/ui";
 import { IoCloudUploadOutline, IoDownloadOutline } from "solid-icons/io";
-import type { ProjectStatus } from "@glassact/data";
+import type { ProjectStatus, SandblastFileFormat } from "@glassact/data";
 import { PERMISSION_ACTIONS } from "@glassact/data";
 import {
   getSandblastDownloadUrl,
@@ -25,6 +25,9 @@ interface SandblastFileCardProps {
   inlayUuid: string;
   inlayName: string;
   sandblastFileUrl: string | null;
+  // The owning dealership's preferred delivery format, shown to whoever
+  // uploads. Guidance only — no format is rejected.
+  sandblastFileFormat?: SandblastFileFormat;
   projectStatus: ProjectStatus;
   // Query keys to refresh after an upload, so both the project grid and the
   // inlay page stay current wherever this is rendered from.
@@ -43,6 +46,7 @@ export function SandblastFileCard(props: SandblastFileCardProps) {
   const [dialogOpen, setDialogOpen] = createSignal(false);
 
   const hasSandblast = () => !!props.sandblastFileUrl;
+  const preferredFormat = () => props.sandblastFileFormat?.toUpperCase();
   const canUpload = () =>
     props.projectStatus !== "draft" &&
     userContext.can(PERMISSION_ACTIONS.MANAGE_KANBAN);
@@ -140,6 +144,14 @@ export function SandblastFileCard(props: SandblastFileCardProps) {
                 <span class="font-semibold">{props.inlayName}</span>. The
                 dealership will be able to download it from this project.
               </p>
+              <Show when={preferredFormat()}>
+                {(format) => (
+                  <p class="text-sm text-gray-600">
+                    This dealership wants sandblasting files as{" "}
+                    <span class="font-semibold">{format()}</span>.
+                  </p>
+                )}
+              </Show>
               <div class="mt-4">
                 <FileUpload
                   uploadPath="sandblast"
@@ -150,6 +162,14 @@ export function SandblastFileCard(props: SandblastFileCardProps) {
               </div>
             </DialogContent>
           </Dialog>
+
+          <Show when={preferredFormat()}>
+            {(format) => (
+              <p class="text-center text-xs text-gray-500">
+                {format()} preferred
+              </p>
+            )}
+          </Show>
         </Show>
       </div>
     </Show>

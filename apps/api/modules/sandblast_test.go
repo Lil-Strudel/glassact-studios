@@ -130,7 +130,9 @@ func TestGetSandblastFile_OtherDealershipForbidden(t *testing.T) {
 
 	// Create a second dealership + user in a different tenant.
 	otherDealership := &data.Dealership{
-		Name: "Other Dealership",
+		Name:                "Other Dealership",
+		PaymentTiming:       data.PaymentTimings.PostShipping,
+		SandblastFileFormat: data.SandblastFileFormats.PDF,
 		Address: data.Address{
 			Street: "456 Side St", City: "Other City", State: "OS",
 			PostalCode: "67890", Country: "US", Latitude: 41.0, Longitude: -73.0,

@@ -186,7 +186,9 @@ func (tc *testContext) request(req testRequest) *testResponse {
 
 func seedTestData(t *testing.T, ctx *testContext) (*data.DealershipUser, string, *data.InternalUser, string) {
 	dealership := &data.Dealership{
-		Name: "Test Dealership",
+		Name:                "Test Dealership",
+		PaymentTiming:       data.PaymentTimings.PostShipping,
+		SandblastFileFormat: data.SandblastFileFormats.PDF,
 		Address: data.Address{
 			Street:     "123 Main St",
 			City:       "Test City",
@@ -357,7 +359,10 @@ func TestAPIEndpoints(t *testing.T) {
 				method: "POST",
 				path:   "/api/dealership",
 				body: map[string]interface{}{
-					"name": "New Test Dealership",
+					"name":                  "New Test Dealership",
+					"phone":                 "5551112222",
+					"payment_timing":        string(data.PaymentTimings.PreShipping),
+					"sandblast_file_format": string(data.SandblastFileFormats.SVG),
 					"address": map[string]interface{}{
 						"street":      "456 Oak Ave",
 						"city":        "New City",

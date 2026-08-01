@@ -253,6 +253,7 @@ function InlayDetailPage() {
                     inlayUuid={params().inlayId}
                     inlayName={inlay()!.name}
                     sandblastFileUrl={inlay()!.sandblast_file_url}
+                    sandblastFileFormat={project()!.sandblast_file_format}
                     projectStatus={project()!.status}
                     onUploaded={invalidateInlay}
                     layout="card"

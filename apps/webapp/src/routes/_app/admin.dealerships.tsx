@@ -26,7 +26,13 @@ import {
   getPaginationRowModel,
   getFilteredRowModel,
 } from "@tanstack/solid-table";
-import { Dealership, GET } from "@glassact/data";
+import {
+  Dealership,
+  GET,
+  PAYMENT_TIMINGS,
+  SANDBLAST_FILE_FORMATS,
+} from "@glassact/data";
+import type { PaymentTiming, SandblastFileFormat } from "@glassact/data";
 import { IoBuildOutline } from "solid-icons/io";
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
@@ -36,10 +42,21 @@ import {
   postDealershipOpts,
 } from "../../queries/dealership";
 import { isApiError } from "../../utils/is-api-error";
+import { PAYMENT_TIMING_LABELS } from "../../utils/payment-timing";
 
 export const Route = createFileRoute("/_app/admin/dealerships")({
   component: RouteComponent,
 });
+
+const SANDBLAST_FORMAT_OPTIONS = SANDBLAST_FILE_FORMATS.map((format) => ({
+  label: format.toUpperCase(),
+  value: format,
+}));
+
+const PAYMENT_TIMING_OPTIONS = PAYMENT_TIMINGS.map((timing) => ({
+  label: PAYMENT_TIMING_LABELS[timing],
+  value: timing,
+}));
 
 const defaultColumns: ColumnDef<GET<Dealership>>[] = [
   {
@@ -80,7 +97,11 @@ const defaultColumns: ColumnDef<GET<Dealership>>[] = [
 
 const formSchema = z.object({
   name: z.string().min(1),
-  requires_payment_before_shipping: z.boolean(),
+  phone: z
+    .string()
+    .refine((d) => d === "" || d.length === 10, "Enter a 10-digit phone number"),
+  payment_timing: z.enum(PAYMENT_TIMINGS),
+  sandblast_file_format: z.enum(SANDBLAST_FILE_FORMATS),
   address: z.object({
     street: z.string().min(1),
     street_ext: z.string(),
@@ -121,7 +142,9 @@ function RouteComponent() {
   const form = createForm(() => ({
     defaultValues: {
       name: "",
-      requires_payment_before_shipping: false,
+      phone: "",
+      payment_timing: "post-shipping" as PaymentTiming,
+      sandblast_file_format: "pdf" as SandblastFileFormat,
       address: {
         street: "",
         street_ext: "",
@@ -195,12 +218,32 @@ function RouteComponent() {
               />
 
               <form.Field
-                name="requires_payment_before_shipping"
+                name="phone"
                 children={(field) => (
-                  <Form.Checkbox
+                  <Form.PhoneField field={field} label="Phone" />
+                )}
+              />
+
+              <form.Field
+                name="sandblast_file_format"
+                children={(field) => (
+                  <Form.ButtonGroup
                     field={field}
-                    label="Require payment before shipping"
-                    description="Projects for this dealership show a notice that they will not ship until the invoice is paid. This does not block shipping."
+                    label="Sandblasting file format"
+                    description="The format this dealership wants sandblasting files delivered in."
+                    options={SANDBLAST_FORMAT_OPTIONS}
+                  />
+                )}
+              />
+
+              <form.Field
+                name="payment_timing"
+                children={(field) => (
+                  <Form.ButtonGroup
+                    field={field}
+                    label="Payment timing"
+                    description="When this dealership is expected to have paid. Projects show a notice explaining the rule; nothing is blocked."
+                    options={PAYMENT_TIMING_OPTIONS}
                   />
                 )}
               />

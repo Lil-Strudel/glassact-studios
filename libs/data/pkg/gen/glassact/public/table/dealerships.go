@@ -17,20 +17,22 @@ type dealershipsTable struct {
 	postgres.Table
 
 	// Columns
-	ID                            postgres.ColumnInteger
-	UUID                          postgres.ColumnString
-	Name                          postgres.ColumnString
-	Street                        postgres.ColumnString
-	StreetExt                     postgres.ColumnString
-	City                          postgres.ColumnString
-	State                         postgres.ColumnString
-	PostalCode                    postgres.ColumnString
-	Country                       postgres.ColumnString
-	Location                      postgres.ColumnString
-	RequiresPaymentBeforeShipping postgres.ColumnBool
-	CreatedAt                     postgres.ColumnTimestampz
-	UpdatedAt                     postgres.ColumnTimestampz
-	Version                       postgres.ColumnInteger
+	ID                  postgres.ColumnInteger
+	UUID                postgres.ColumnString
+	Name                postgres.ColumnString
+	Street              postgres.ColumnString
+	StreetExt           postgres.ColumnString
+	City                postgres.ColumnString
+	State               postgres.ColumnString
+	PostalCode          postgres.ColumnString
+	Country             postgres.ColumnString
+	Location            postgres.ColumnString
+	CreatedAt           postgres.ColumnTimestampz
+	UpdatedAt           postgres.ColumnTimestampz
+	Version             postgres.ColumnInteger
+	PaymentTiming       postgres.ColumnString
+	SandblastFileFormat postgres.ColumnString
+	Phone               postgres.ColumnString
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -72,43 +74,47 @@ func newDealershipsTable(schemaName, tableName, alias string) *DealershipsTable 
 
 func newDealershipsTableImpl(schemaName, tableName, alias string) dealershipsTable {
 	var (
-		IDColumn                            = postgres.IntegerColumn("id")
-		UUIDColumn                          = postgres.StringColumn("uuid")
-		NameColumn                          = postgres.StringColumn("name")
-		StreetColumn                        = postgres.StringColumn("street")
-		StreetExtColumn                     = postgres.StringColumn("street_ext")
-		CityColumn                          = postgres.StringColumn("city")
-		StateColumn                         = postgres.StringColumn("state")
-		PostalCodeColumn                    = postgres.StringColumn("postal_code")
-		CountryColumn                       = postgres.StringColumn("country")
-		LocationColumn                      = postgres.StringColumn("location")
-		RequiresPaymentBeforeShippingColumn = postgres.BoolColumn("requires_payment_before_shipping")
-		CreatedAtColumn                     = postgres.TimestampzColumn("created_at")
-		UpdatedAtColumn                     = postgres.TimestampzColumn("updated_at")
-		VersionColumn                       = postgres.IntegerColumn("version")
-		allColumns                          = postgres.ColumnList{IDColumn, UUIDColumn, NameColumn, StreetColumn, StreetExtColumn, CityColumn, StateColumn, PostalCodeColumn, CountryColumn, LocationColumn, RequiresPaymentBeforeShippingColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns                      = postgres.ColumnList{UUIDColumn, NameColumn, StreetColumn, StreetExtColumn, CityColumn, StateColumn, PostalCodeColumn, CountryColumn, LocationColumn, RequiresPaymentBeforeShippingColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		defaultColumns                      = postgres.ColumnList{IDColumn, UUIDColumn, StreetExtColumn, RequiresPaymentBeforeShippingColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		IDColumn                  = postgres.IntegerColumn("id")
+		UUIDColumn                = postgres.StringColumn("uuid")
+		NameColumn                = postgres.StringColumn("name")
+		StreetColumn              = postgres.StringColumn("street")
+		StreetExtColumn           = postgres.StringColumn("street_ext")
+		CityColumn                = postgres.StringColumn("city")
+		StateColumn               = postgres.StringColumn("state")
+		PostalCodeColumn          = postgres.StringColumn("postal_code")
+		CountryColumn             = postgres.StringColumn("country")
+		LocationColumn            = postgres.StringColumn("location")
+		CreatedAtColumn           = postgres.TimestampzColumn("created_at")
+		UpdatedAtColumn           = postgres.TimestampzColumn("updated_at")
+		VersionColumn             = postgres.IntegerColumn("version")
+		PaymentTimingColumn       = postgres.StringColumn("payment_timing")
+		SandblastFileFormatColumn = postgres.StringColumn("sandblast_file_format")
+		PhoneColumn               = postgres.StringColumn("phone")
+		allColumns                = postgres.ColumnList{IDColumn, UUIDColumn, NameColumn, StreetColumn, StreetExtColumn, CityColumn, StateColumn, PostalCodeColumn, CountryColumn, LocationColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn, PaymentTimingColumn, SandblastFileFormatColumn, PhoneColumn}
+		mutableColumns            = postgres.ColumnList{UUIDColumn, NameColumn, StreetColumn, StreetExtColumn, CityColumn, StateColumn, PostalCodeColumn, CountryColumn, LocationColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn, PaymentTimingColumn, SandblastFileFormatColumn, PhoneColumn}
+		defaultColumns            = postgres.ColumnList{IDColumn, UUIDColumn, StreetExtColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn, PaymentTimingColumn, SandblastFileFormatColumn, PhoneColumn}
 	)
 
 	return dealershipsTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:                            IDColumn,
-		UUID:                          UUIDColumn,
-		Name:                          NameColumn,
-		Street:                        StreetColumn,
-		StreetExt:                     StreetExtColumn,
-		City:                          CityColumn,
-		State:                         StateColumn,
-		PostalCode:                    PostalCodeColumn,
-		Country:                       CountryColumn,
-		Location:                      LocationColumn,
-		RequiresPaymentBeforeShipping: RequiresPaymentBeforeShippingColumn,
-		CreatedAt:                     CreatedAtColumn,
-		UpdatedAt:                     UpdatedAtColumn,
-		Version:                       VersionColumn,
+		ID:                  IDColumn,
+		UUID:                UUIDColumn,
+		Name:                NameColumn,
+		Street:              StreetColumn,
+		StreetExt:           StreetExtColumn,
+		City:                CityColumn,
+		State:               StateColumn,
+		PostalCode:          PostalCodeColumn,
+		Country:             CountryColumn,
+		Location:            LocationColumn,
+		CreatedAt:           CreatedAtColumn,
+		UpdatedAt:           UpdatedAtColumn,
+		Version:             VersionColumn,
+		PaymentTiming:       PaymentTimingColumn,
+		SandblastFileFormat: SandblastFileFormatColumn,
+		Phone:               PhoneColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

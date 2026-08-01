@@ -93,8 +93,11 @@ func (m DealershipModule) HandleGetDealershipByUUID(w http.ResponseWriter, r *ht
 
 func (m DealershipModule) HandlePostDealership(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Name    string `json:"name" validate:"required"`
-		Address struct {
+		Name                string `json:"name" validate:"required"`
+		Phone               string `json:"phone" validate:"omitempty,numeric,len=10"`
+		PaymentTiming       string `json:"payment_timing" validate:"required,oneof=pre-manufacturing pre-shipping post-shipping"`
+		SandblastFileFormat string `json:"sandblast_file_format" validate:"required,oneof=pdf svg png dxf"`
+		Address             struct {
 			Street     string  `json:"street" validate:"required"`
 			StreetExt  string  `json:"street_ext"`
 			City       string  `json:"city" validate:"required"`
@@ -113,8 +116,11 @@ func (m DealershipModule) HandlePostDealership(w http.ResponseWriter, r *http.Re
 	}
 
 	dealership := data.Dealership{
-		Name:    body.Name,
-		Address: data.Address(body.Address),
+		Name:                body.Name,
+		Phone:               body.Phone,
+		PaymentTiming:       data.PaymentTiming(body.PaymentTiming),
+		SandblastFileFormat: data.SandblastFileFormat(body.SandblastFileFormat),
+		Address:             data.Address(body.Address),
 	}
 
 	err = m.Db.Dealerships.Insert(&dealership)
@@ -152,9 +158,13 @@ func (m DealershipModule) HandlePatchDealership(w http.ResponseWriter, r *http.R
 	}
 
 	var body struct {
-		Name                          string `json:"name" validate:"required"`
-		RequiresPaymentBeforeShipping bool   `json:"requires_payment_before_shipping"`
-		Address                       struct {
+		Name  string `json:"name" validate:"required"`
+		Phone string `json:"phone" validate:"omitempty,numeric,len=10"`
+		// Omitted entirely by the dealership-facing form, which never shows the
+		// control, so this cannot be `required`.
+		PaymentTiming       string `json:"payment_timing" validate:"omitempty,oneof=pre-manufacturing pre-shipping post-shipping"`
+		SandblastFileFormat string `json:"sandblast_file_format" validate:"required,oneof=pdf svg png dxf"`
+		Address             struct {
 			Street     string  `json:"street" validate:"required"`
 			StreetExt  string  `json:"street_ext"`
 			City       string  `json:"city" validate:"required"`
@@ -173,12 +183,14 @@ func (m DealershipModule) HandlePatchDealership(w http.ResponseWriter, r *http.R
 	}
 
 	dealership.Name = body.Name
+	dealership.Phone = body.Phone
+	dealership.SandblastFileFormat = data.SandblastFileFormat(body.SandblastFileFormat)
 	dealership.Address = data.Address(body.Address)
 
-	// Payment terms are GlassAct's call. A dealership admin holds
-	// manage_dealership and would otherwise be able to clear their own.
-	if m.ContextGetUser(r).IsInternal() {
-		dealership.RequiresPaymentBeforeShipping = body.RequiresPaymentBeforeShipping
+	// Payment timing is GlassAct's call. A dealership admin holds
+	// manage_dealership and would otherwise be able to change their own.
+	if m.ContextGetUser(r).IsInternal() && body.PaymentTiming != "" {
+		dealership.PaymentTiming = data.PaymentTiming(body.PaymentTiming)
 	}
 
 	err = m.Db.Dealerships.Update(dealership)

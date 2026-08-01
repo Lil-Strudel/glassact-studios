@@ -106,7 +106,9 @@ func TestProjectWatch_DealershipUserCannotWatchOtherDealershipsProject(t *testin
 	_, dealershipToken, _, _ := seedTestData(t, testCtx)
 
 	otherDealership := &data.Dealership{
-		Name: "Other Dealership",
+		Name:                "Other Dealership",
+		PaymentTiming:       data.PaymentTimings.PostShipping,
+		SandblastFileFormat: data.SandblastFileFormats.PDF,
 		Address: data.Address{
 			Street:     "999 Other St",
 			City:       "Other City",

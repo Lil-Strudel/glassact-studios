@@ -14,6 +14,41 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// PaymentTiming marks when a dealership is expected to have paid. It gates
+// nothing: it only decides which notice a project surfaces to the dealership
+// and to internal staff.
+type PaymentTiming string
+
+type paymentTimings struct {
+	PreManufacturing PaymentTiming
+	PreShipping      PaymentTiming
+	PostShipping     PaymentTiming
+}
+
+var PaymentTimings = paymentTimings{
+	PreManufacturing: PaymentTiming("pre-manufacturing"),
+	PreShipping:      PaymentTiming("pre-shipping"),
+	PostShipping:     PaymentTiming("post-shipping"),
+}
+
+// SandblastFileFormat is the format a dealership wants its per-inlay
+// sandblasting files delivered in.
+type SandblastFileFormat string
+
+type sandblastFileFormats struct {
+	PDF SandblastFileFormat
+	SVG SandblastFileFormat
+	PNG SandblastFileFormat
+	DXF SandblastFileFormat
+}
+
+var SandblastFileFormats = sandblastFileFormats{
+	PDF: SandblastFileFormat("pdf"),
+	SVG: SandblastFileFormat("svg"),
+	PNG: SandblastFileFormat("png"),
+	DXF: SandblastFileFormat("dxf"),
+}
+
 type Address struct {
 	Street     string  `json:"street"`
 	StreetExt  string  `json:"street_ext"`
@@ -27,9 +62,12 @@ type Address struct {
 
 type Dealership struct {
 	StandardTable
-	Name                          string  `json:"name"`
-	RequiresPaymentBeforeShipping bool    `json:"requires_payment_before_shipping"`
-	Address                       Address `json:"address"`
+	Name string `json:"name"`
+	// Digits only; the UI formats it for display.
+	Phone               string              `json:"phone"`
+	PaymentTiming       PaymentTiming       `json:"payment_timing"`
+	SandblastFileFormat SandblastFileFormat `json:"sandblast_file_format"`
+	Address             Address             `json:"address"`
 }
 
 type DealershipModel struct {
@@ -46,8 +84,10 @@ func dealershipFromGen(genDeal model.Dealerships, longitude, latitude float64) *
 			UpdatedAt: genDeal.UpdatedAt,
 			Version:   int(genDeal.Version),
 		},
-		Name:                          genDeal.Name,
-		RequiresPaymentBeforeShipping: genDeal.RequiresPaymentBeforeShipping,
+		Name:                genDeal.Name,
+		Phone:               genDeal.Phone,
+		PaymentTiming:       PaymentTiming(genDeal.PaymentTiming),
+		SandblastFileFormat: SandblastFileFormat(genDeal.SandblastFileFormat),
 		Address: Address{
 			Street:     genDeal.Street,
 			StreetExt:  genDeal.StreetExt,
@@ -75,19 +115,21 @@ func dealershipToGen(d *Dealership) (*model.Dealerships, error) {
 	}
 
 	genDeal := model.Dealerships{
-		ID:                            int32(d.ID),
-		UUID:                          dealershipUUID,
-		Name:                          d.Name,
-		Street:                        d.Address.Street,
-		StreetExt:                     d.Address.StreetExt,
-		City:                          d.Address.City,
-		State:                         d.Address.State,
-		PostalCode:                    d.Address.PostalCode,
-		Country:                       d.Address.Country,
-		RequiresPaymentBeforeShipping: d.RequiresPaymentBeforeShipping,
-		UpdatedAt:                     d.UpdatedAt,
-		CreatedAt:                     d.CreatedAt,
-		Version:                       int32(d.Version),
+		ID:                  int32(d.ID),
+		UUID:                dealershipUUID,
+		Name:                d.Name,
+		Street:              d.Address.Street,
+		StreetExt:           d.Address.StreetExt,
+		City:                d.Address.City,
+		State:               d.Address.State,
+		PostalCode:          d.Address.PostalCode,
+		Country:             d.Address.Country,
+		Phone:               d.Phone,
+		PaymentTiming:       string(d.PaymentTiming),
+		SandblastFileFormat: string(d.SandblastFileFormat),
+		UpdatedAt:           d.UpdatedAt,
+		CreatedAt:           d.CreatedAt,
+		Version:             int32(d.Version),
 	}
 
 	return &genDeal, nil
@@ -112,7 +154,9 @@ func (m DealershipModel) Insert(dealership *Dealership) error {
 		table.Dealerships.PostalCode,
 		table.Dealerships.Country,
 		table.Dealerships.Location,
-		table.Dealerships.RequiresPaymentBeforeShipping,
+		table.Dealerships.Phone,
+		table.Dealerships.PaymentTiming,
+		table.Dealerships.SandblastFileFormat,
 	).VALUES(
 		genDeal.Name,
 		genDeal.Street,
@@ -122,7 +166,9 @@ func (m DealershipModel) Insert(dealership *Dealership) error {
 		genDeal.PostalCode,
 		genDeal.Country,
 		locationExpr,
-		genDeal.RequiresPaymentBeforeShipping,
+		genDeal.Phone,
+		genDeal.PaymentTiming,
+		genDeal.SandblastFileFormat,
 	).RETURNING(
 		table.Dealerships.ID,
 		table.Dealerships.UUID,
@@ -265,7 +311,9 @@ func (m DealershipModel) Update(dealership *Dealership) error {
 		table.Dealerships.PostalCode,
 		table.Dealerships.Country,
 		table.Dealerships.Location,
-		table.Dealerships.RequiresPaymentBeforeShipping,
+		table.Dealerships.Phone,
+		table.Dealerships.PaymentTiming,
+		table.Dealerships.SandblastFileFormat,
 		table.Dealerships.Version,
 	).SET(
 		table.Dealerships.Name.SET(postgres.String(genDeal.Name)),
@@ -276,7 +324,9 @@ func (m DealershipModel) Update(dealership *Dealership) error {
 		table.Dealerships.PostalCode.SET(postgres.String(genDeal.PostalCode)),
 		table.Dealerships.Country.SET(postgres.String(genDeal.Country)),
 		table.Dealerships.Location.SET(locationExpr),
-		table.Dealerships.RequiresPaymentBeforeShipping.SET(postgres.Bool(genDeal.RequiresPaymentBeforeShipping)),
+		table.Dealerships.Phone.SET(postgres.String(genDeal.Phone)),
+		table.Dealerships.PaymentTiming.SET(postgres.String(genDeal.PaymentTiming)),
+		table.Dealerships.SandblastFileFormat.SET(postgres.String(genDeal.SandblastFileFormat)),
 		table.Dealerships.Version.SET(postgres.Int(int64(genDeal.Version))),
 	).WHERE(
 		postgres.AND(

@@ -10,7 +10,10 @@ func TestDealership_Insert(t *testing.T) {
 	models := getTestModels(t)
 
 	dealership := &Dealership{
-		Name: "Test Dealership",
+		Name:                "Test Dealership",
+		Phone:               "5551234567",
+		PaymentTiming:       PaymentTimings.PreManufacturing,
+		SandblastFileFormat: SandblastFileFormats.DXF,
 		Address: Address{
 			Street:     "123 Main St",
 			StreetExt:  "Suite 100",
@@ -33,6 +36,21 @@ func TestDealership_Insert(t *testing.T) {
 	}
 	if dealership.UUID == "" {
 		t.Errorf("Expected UUID, got empty string")
+	}
+
+	retrieved, _, err := models.Dealerships.GetByID(dealership.ID)
+	if err != nil {
+		t.Fatalf("Failed to get dealership: %v", err)
+	}
+
+	if retrieved.Phone != "5551234567" {
+		t.Errorf("Expected phone 5551234567, got %s", retrieved.Phone)
+	}
+	if retrieved.PaymentTiming != PaymentTimings.PreManufacturing {
+		t.Errorf("Expected payment timing %s, got %s", PaymentTimings.PreManufacturing, retrieved.PaymentTiming)
+	}
+	if retrieved.SandblastFileFormat != SandblastFileFormats.DXF {
+		t.Errorf("Expected sandblast format %s, got %s", SandblastFileFormats.DXF, retrieved.SandblastFileFormat)
 	}
 }
 
@@ -90,7 +108,9 @@ func TestDealership_GetAll(t *testing.T) {
 	// Create multiple dealerships
 	createTestDealership(t, models)
 	dealership2 := &Dealership{
-		Name: "Another Dealership",
+		Name:                "Another Dealership",
+		PaymentTiming:       PaymentTimings.PostShipping,
+		SandblastFileFormat: SandblastFileFormats.PDF,
 		Address: Address{
 			Street:     "456 Oak Ave",
 			City:       "Another City",
@@ -124,6 +144,9 @@ func TestDealership_Update(t *testing.T) {
 
 	dealership.Name = "Updated Dealership"
 	dealership.Address.City = "Updated City"
+	dealership.Phone = "5559876543"
+	dealership.PaymentTiming = PaymentTimings.PreShipping
+	dealership.SandblastFileFormat = SandblastFileFormats.SVG
 
 	err := models.Dealerships.Update(dealership)
 	if err != nil {
@@ -140,6 +163,15 @@ func TestDealership_Update(t *testing.T) {
 	}
 	if retrieved.Address.City != "Updated City" {
 		t.Errorf("Expected city to be updated, got %s", retrieved.Address.City)
+	}
+	if retrieved.Phone != "5559876543" {
+		t.Errorf("Expected phone to be updated, got %s", retrieved.Phone)
+	}
+	if retrieved.PaymentTiming != PaymentTimings.PreShipping {
+		t.Errorf("Expected payment timing to be updated, got %s", retrieved.PaymentTiming)
+	}
+	if retrieved.SandblastFileFormat != SandblastFileFormats.SVG {
+		t.Errorf("Expected sandblast format to be updated, got %s", retrieved.SandblastFileFormat)
 	}
 }
 

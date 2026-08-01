@@ -89,26 +89,37 @@ type projectListItem struct {
 	ActionSummary  *data.ProjectActionSummary `json:"action_summary,omitempty"`
 }
 
-// projectDetail embeds the project and the owning dealership's name, surfaced
-// on the project detail page. AwaitingPayment is a soft, informational signal
-// (see the field docs on ProjectDetail in @glassact/data): the owning
-// dealership requires payment before shipping and there is an unpaid invoice on
-// a project that has not yet shipped. It never blocks internal staff.
+// projectDetail embeds the project and details of the owning dealership that
+// the project page needs. PaymentTiming and SandblastFileFormat are the
+// dealership's settings, carried here so the page does not need a second fetch.
+// AwaitingPayment is a soft, informational signal (see the field docs on
+// ProjectDetail in @glassact/data): the dealership's payment deadline still
+// lies ahead and there is an unpaid invoice. It never blocks internal staff.
 type projectDetail struct {
 	*data.Project
-	DealershipName  string `json:"dealership_name,omitempty"`
-	AwaitingPayment bool   `json:"awaiting_payment"`
-	IsWatching      bool   `json:"is_watching"`
-	WatcherCount    int    `json:"watcher_count"`
+	DealershipName      string                   `json:"dealership_name,omitempty"`
+	PaymentTiming       data.PaymentTiming       `json:"payment_timing,omitempty"`
+	SandblastFileFormat data.SandblastFileFormat `json:"sandblast_file_format,omitempty"`
+	AwaitingPayment     bool                     `json:"awaiting_payment"`
+	IsWatching          bool                     `json:"is_watching"`
+	WatcherCount        int                      `json:"watcher_count"`
 }
 
-// preShipStatuses are the project statuses that precede shipment. A project in
-// one of these can still be held back by an unpaid invoice when the dealership
-// requires payment before shipping.
-var preShipStatuses = map[data.ProjectStatus]bool{
-	data.ProjectStatuses.Draft:        true,
-	data.ProjectStatuses.Ordered:      true,
-	data.ProjectStatuses.InProduction: true,
+// paymentDueAhead reports whether the dealership's payment deadline still lies
+// ahead of where the project has got to. How far the window extends depends on
+// the timing, since pre-manufacturing dealerships are expected to have paid
+// before the project ever reaches in-production.
+func paymentDueAhead(timing data.PaymentTiming, status data.ProjectStatus) bool {
+	switch timing {
+	case data.PaymentTimings.PreManufacturing:
+		return status == data.ProjectStatuses.Draft || status == data.ProjectStatuses.Ordered
+	case data.PaymentTimings.PreShipping:
+		return status == data.ProjectStatuses.Draft ||
+			status == data.ProjectStatuses.Ordered ||
+			status == data.ProjectStatuses.InProduction
+	default:
+		return false
+	}
 }
 
 // getProjectWithAccessCheck resolves the {uuid} path param and enforces the
@@ -170,8 +181,10 @@ func (m ProjectModule) HandleGetProjectByUUID(w http.ResponseWriter, r *http.Req
 
 	if dealership, found, err := m.Db.Dealerships.GetByID(project.DealershipID); err == nil && found {
 		detail.DealershipName = dealership.Name
+		detail.PaymentTiming = dealership.PaymentTiming
+		detail.SandblastFileFormat = dealership.SandblastFileFormat
 
-		if dealership.RequiresPaymentBeforeShipping && preShipStatuses[project.Status] {
+		if paymentDueAhead(dealership.PaymentTiming, project.Status) {
 			if invoice, invFound, invErr := m.Db.Invoices.GetActiveByProjectID(project.ID); invErr == nil && invFound {
 				if invoice.Status != data.InvoiceStatuses.Void && invoice.Status != data.InvoiceStatuses.Paid {
 					detail.AwaitingPayment = true

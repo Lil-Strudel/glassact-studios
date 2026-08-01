@@ -13,18 +13,20 @@ import (
 )
 
 type Dealerships struct {
-	ID                            int32 `sql:"primary_key"`
-	UUID                          uuid.UUID
-	Name                          string
-	Street                        string
-	StreetExt                     string
-	City                          string
-	State                         string
-	PostalCode                    string
-	Country                       string
-	Location                      string
-	RequiresPaymentBeforeShipping bool
-	CreatedAt                     time.Time
-	UpdatedAt                     time.Time
-	Version                       int32
+	ID                  int32 `sql:"primary_key"`
+	UUID                uuid.UUID
+	Name                string
+	Street              string
+	StreetExt           string
+	City                string
+	State               string
+	PostalCode          string
+	Country             string
+	Location            string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	Version             int32
+	PaymentTiming       string
+	SandblastFileFormat string
+	Phone               string
 }

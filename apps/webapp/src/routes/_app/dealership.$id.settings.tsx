@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { Show } from "solid-js";
-import { Form, Button, showToast } from "@glassact/ui";
-import { GET, Dealership, PERMISSION_ACTIONS } from "@glassact/data";
+import { Form, Button, showToast, formatPhone } from "@glassact/ui";
+import {
+  GET,
+  Dealership,
+  PERMISSION_ACTIONS,
+  PAYMENT_TIMINGS,
+  SANDBLAST_FILE_FORMATS,
+} from "@glassact/data";
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
@@ -12,6 +18,17 @@ import {
 import { useUserContext } from "../../providers/user";
 import { Can } from "../../components/Can";
 import { isApiError } from "../../utils/is-api-error";
+import { PAYMENT_TIMING_LABELS } from "../../utils/payment-timing";
+
+const SANDBLAST_FORMAT_OPTIONS = SANDBLAST_FILE_FORMATS.map((format) => ({
+  label: format.toUpperCase(),
+  value: format,
+}));
+
+const PAYMENT_TIMING_OPTIONS = PAYMENT_TIMINGS.map((timing) => ({
+  label: PAYMENT_TIMING_LABELS[timing],
+  value: timing,
+}));
 
 export const Route = createFileRoute("/_app/dealership/$id/settings")({
   component: RouteComponent,
@@ -19,7 +36,11 @@ export const Route = createFileRoute("/_app/dealership/$id/settings")({
 
 const formSchema = z.object({
   name: z.string().min(1),
-  requires_payment_before_shipping: z.boolean(),
+  phone: z
+    .string()
+    .refine((d) => d === "" || d.length === 10, "Enter a 10-digit phone number"),
+  payment_timing: z.enum(PAYMENT_TIMINGS),
+  sandblast_file_format: z.enum(SANDBLAST_FILE_FORMATS),
   address: z.object({
     street: z.string().min(1),
     street_ext: z.string(),
@@ -71,13 +92,25 @@ function ReadOnlyView(props: { dealership: GET<Dealership> }) {
         <dt class="text-sm font-medium text-gray-500">Name</dt>
         <dd class="text-gray-900">{props.dealership.name}</dd>
       </div>
+      <div>
+        <dt class="text-sm font-medium text-gray-500">Phone</dt>
+        <dd class="text-gray-900">
+          {formatPhone(props.dealership.phone) || "—"}
+        </dd>
+      </div>
+      <div>
+        <dt class="text-sm font-medium text-gray-500">
+          Sandblasting file format
+        </dt>
+        <dd class="text-gray-900">
+          {props.dealership.sandblast_file_format.toUpperCase()}
+        </dd>
+      </div>
       <Can permission={PERMISSION_ACTIONS.MANAGE_DEALERSHIPS}>
         <div>
-          <dt class="text-sm font-medium text-gray-500">
-            Requires payment before shipping
-          </dt>
+          <dt class="text-sm font-medium text-gray-500">Payment timing</dt>
           <dd class="text-gray-900">
-            {props.dealership.requires_payment_before_shipping ? "Yes" : "No"}
+            {PAYMENT_TIMING_LABELS[props.dealership.payment_timing]}
           </dd>
         </div>
       </Can>
@@ -100,8 +133,9 @@ function SettingsForm(props: { dealership: GET<Dealership>; uuid: string }) {
   const form = createForm(() => ({
     defaultValues: {
       name: props.dealership.name,
-      requires_payment_before_shipping:
-        props.dealership.requires_payment_before_shipping,
+      phone: props.dealership.phone,
+      payment_timing: props.dealership.payment_timing,
+      sandblast_file_format: props.dealership.sandblast_file_format,
       address: {
         street: props.dealership.address.street,
         street_ext: props.dealership.address.street_ext,
@@ -159,14 +193,32 @@ function SettingsForm(props: { dealership: GET<Dealership>; uuid: string }) {
         children={(field) => <Form.TextField field={field} label="Name" />}
       />
 
+      <form.Field
+        name="phone"
+        children={(field) => <Form.PhoneField field={field} label="Phone" />}
+      />
+
+      <form.Field
+        name="sandblast_file_format"
+        children={(field) => (
+          <Form.ButtonGroup
+            field={field}
+            label="Sandblasting file format"
+            description="The format you want sandblasting files delivered in."
+            options={SANDBLAST_FORMAT_OPTIONS}
+          />
+        )}
+      />
+
       <Can permission={PERMISSION_ACTIONS.MANAGE_DEALERSHIPS}>
         <form.Field
-          name="requires_payment_before_shipping"
+          name="payment_timing"
           children={(field) => (
-            <Form.Checkbox
+            <Form.ButtonGroup
               field={field}
-              label="Require payment before shipping"
-              description="Projects for this dealership show a notice that they will not ship until the invoice is paid. This does not block shipping."
+              label="Payment timing"
+              description="When this dealership is expected to have paid. Projects show a notice explaining the rule; nothing is blocked."
+              options={PAYMENT_TIMING_OPTIONS}
             />
           )}
         />

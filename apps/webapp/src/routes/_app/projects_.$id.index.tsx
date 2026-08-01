@@ -41,6 +41,7 @@ import type {
   ManufacturingStep,
   ProjectStatus,
   InlayWithInfo,
+  SandblastFileFormat,
 } from "@glassact/data";
 import { PERMISSION_ACTIONS, INSTALLATION_KIT_PRICE_CENTS } from "@glassact/data";
 import { ProjectStatusBadge } from "../../components/project/status-badge";
@@ -62,6 +63,7 @@ import { SandblastFileCard } from "../../components/inlay/sandblast-file-card";
 import { ProjectDiscussion } from "../../components/chat/project-discussion";
 import { PriceCaveat } from "../../components/price-caveat";
 import { isManufacturingStatus } from "../../utils/project-status";
+import { paymentTimingNotice } from "../../utils/payment-timing";
 
 export const Route = createFileRoute("/_app/projects_/$id/")({
   component: RouteComponent,
@@ -94,6 +96,7 @@ const SHIPPABLE_STATUSES: ProjectStatus[] = ["ordered", "in-production"];
 function RouteComponent() {
   const params = Route.useParams();
   const queryClient = useQueryClient();
+  const userContext = useUserContext();
 
   const projectQuery = useQuery(() => getProjectOpts(params().id));
   const inlaysQuery = useQuery(() => getInlaysByProjectOpts(params().id));
@@ -210,6 +213,15 @@ function RouteComponent() {
   const canDeliver = createMemo(() => {
     if (!projectQuery.isSuccess) return false;
     return projectQuery.data.status === "shipped";
+  });
+
+  const paymentNotice = createMemo(() => {
+    if (!projectQuery.isSuccess) return null;
+    return paymentTimingNotice({
+      timing: projectQuery.data.payment_timing,
+      awaitingPayment: projectQuery.data.awaiting_payment ?? false,
+      isInternal: userContext.isInternal(),
+    });
   });
 
   function handleMarkShipped() {
@@ -532,11 +544,18 @@ function RouteComponent() {
             </div>
           </Show>
 
-          <Show when={projectQuery.data!.awaiting_payment}>
-            <div class="mt-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              This project is waiting to ship until the invoice is paid. Once
-              payment is received it will be released for shipment.
-            </div>
+          <Show when={paymentNotice()}>
+            {(notice) => (
+              <div
+                class={`mt-4 rounded-md border px-4 py-3 text-sm ${
+                  notice().tone === "warning"
+                    ? "border-amber-300 bg-amber-50 text-amber-800"
+                    : "border-blue-200 bg-blue-50 text-blue-800"
+                }`}
+              >
+                {notice().message}
+              </div>
+            )}
           </Show>
 
           <Show when={projectQuery.data!.tracking_number}>
@@ -623,6 +642,9 @@ function RouteComponent() {
                         inlay={inlay}
                         projectId={params().id}
                         projectStatus={projectQuery.data!.status}
+                        sandblastFileFormat={
+                          projectQuery.data!.sandblast_file_format
+                        }
                         canDelete={
                           projectQuery.data!.status === "draft"
                         }
@@ -777,6 +799,7 @@ interface InlayCardProps {
   inlay: InlayWithInfo;
   projectId: string;
   projectStatus: ProjectStatus;
+  sandblastFileFormat?: SandblastFileFormat;
   canDelete: boolean;
   onDelete: () => void;
   isDeleting: boolean;
@@ -934,6 +957,7 @@ function InlayCard(props: InlayCardProps) {
             inlayUuid={props.inlay.uuid}
             inlayName={props.inlay.name}
             sandblastFileUrl={props.inlay.sandblast_file_url}
+            sandblastFileFormat={props.sandblastFileFormat}
             projectStatus={props.projectStatus}
             onUploaded={() =>
               queryClient.invalidateQueries({

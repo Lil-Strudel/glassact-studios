@@ -177,7 +177,10 @@ func createTestDealership(t *testing.T, models Models) *Dealership {
 	t.Helper()
 
 	dealership := &Dealership{
-		Name: "Test Dealership",
+		Name:                "Test Dealership",
+		Phone:               "5551234567",
+		PaymentTiming:       PaymentTimings.PostShipping,
+		SandblastFileFormat: SandblastFileFormats.PDF,
 		Address: Address{
 			Street:     "123 Main St",
 			StreetExt:  "Suite 100",

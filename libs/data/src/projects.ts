@@ -1,3 +1,4 @@
+import type { PaymentTiming, SandblastFileFormat } from "./dealerships";
 import { GET, StandardTable } from "./helpers";
 
 export type ProjectStatus =
@@ -52,14 +53,17 @@ export type ProjectListItem = GET<Project> & {
   action_summary?: ProjectActionSummary;
 };
 
-// The single-project detail response. Adds the owning dealership's name.
-// `awaiting_payment` is a soft, informational signal: the owning dealership
-// requires payment before shipping and there is an unpaid invoice on a project
-// that has not yet shipped. It never blocks internal staff from shipping.
+// The single-project detail response. Adds the details of the owning dealership
+// the project page needs, so it does not have to fetch the dealership itself.
+// `awaiting_payment` is a soft, informational signal: the dealership's payment
+// deadline (see `payment_timing`) still lies ahead of where the project has got
+// to, and there is an unpaid invoice. It never blocks internal staff.
 // `is_watching` is the requesting user's own subscription state; `watcher_count`
 // counts every active watcher on both sides of the project.
 export type ProjectDetail = GET<Project> & {
   dealership_name?: string;
+  payment_timing?: PaymentTiming;
+  sandblast_file_format?: SandblastFileFormat;
   awaiting_payment?: boolean;
   is_watching: boolean;
   watcher_count: number;

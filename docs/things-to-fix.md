@@ -1,10 +1,6 @@
 Add granite colors to calaog Fullscreen
 Remove button should never be disabled
-The customer pays for shipping
 Merge cutting + firepolish into manufacturing
-Dealership pay before manufacturing as well
-Dealer preference on how they want their sandblasting file
-Dealership phone number
 Make catalog item insertion easier
 Add users in dealer page
 Make invoice more obvious
