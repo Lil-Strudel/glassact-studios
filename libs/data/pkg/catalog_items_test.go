@@ -505,16 +505,17 @@ func TestCatalogItem_GetCategories_ReturnsSortedCategories(t *testing.T) {
 	}
 }
 
-func TestCatalogItem_GetAllActive_OrdersByDisplayOrderThenName(t *testing.T) {
+func TestCatalogItem_GetAllActive_OrdersByRankThenCatalogCode(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 
 	models := getTestModels(t)
 	priceGroup := createTestPriceGroup(t, models)
 
-	// Names chosen so alphabetical order differs from insertion order.
-	zebra := newTestCatalogItem("ORD-1", "Zebra", "A-ANIMALS", priceGroup.ID)
-	apple := newTestCatalogItem("ORD-2", "Apple", "A-ANIMALS", priceGroup.ID)
-	mango := newTestCatalogItem("ORD-3", "Mango", "A-ANIMALS", priceGroup.ID)
+	// Codes disagree with both insertion order and name order, so the assertion
+	// fails if catalog_code stops being the tiebreaker.
+	zebra := newTestCatalogItem("ORD-5", "Zebra", "A-ANIMALS", priceGroup.ID)
+	apple := newTestCatalogItem("ORD-9", "Apple", "A-ANIMALS", priceGroup.ID)
+	mango := newTestCatalogItem("ORD-2", "Mango", "A-ANIMALS", priceGroup.ID)
 
 	for _, item := range []*CatalogItem{zebra, apple, mango} {
 		if err := models.CatalogItems.Insert(item); err != nil {
@@ -522,7 +523,7 @@ func TestCatalogItem_GetAllActive_OrdersByDisplayOrderThenName(t *testing.T) {
 		}
 	}
 
-	// Rank Zebra first; Apple and Mango stay unranked and should follow by name.
+	// Rank Zebra first; Apple and Mango stay unranked and follow by catalog code.
 	if err := models.CatalogItems.SetDisplayOrder([]string{zebra.UUID}); err != nil {
 		t.Fatalf("Failed to set display order: %v", err)
 	}
@@ -537,7 +538,46 @@ func TestCatalogItem_GetAllActive_OrdersByDisplayOrderThenName(t *testing.T) {
 		got[i] = item.Name
 	}
 
-	want := []string{"Zebra", "Apple", "Mango"}
+	want := []string{"Zebra", "Mango", "Apple"}
+	if !slices.Equal(got, want) {
+		t.Errorf("Expected order %v, got %v", want, got)
+	}
+}
+
+func TestCatalogItem_GetAll_OrdersByRankThenCatalogCode(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	priceGroup := createTestPriceGroup(t, models)
+
+	zebra := newTestCatalogItem("ALL-5", "Zebra", "A-ANIMALS", priceGroup.ID)
+	apple := newTestCatalogItem("ALL-9", "Apple", "A-ANIMALS", priceGroup.ID)
+	mango := newTestCatalogItem("ALL-2", "Mango", "A-ANIMALS", priceGroup.ID)
+
+	// Inactive items still appear in GetAll, which backs the admin catalog table.
+	apple.IsActive = false
+
+	for _, item := range []*CatalogItem{zebra, apple, mango} {
+		if err := models.CatalogItems.Insert(item); err != nil {
+			t.Fatalf("Failed to insert %s: %v", item.Name, err)
+		}
+	}
+
+	if err := models.CatalogItems.SetDisplayOrder([]string{zebra.UUID}); err != nil {
+		t.Fatalf("Failed to set display order: %v", err)
+	}
+
+	items, err := models.CatalogItems.GetAll()
+	if err != nil {
+		t.Fatalf("Failed to get all items: %v", err)
+	}
+
+	got := make([]string, len(items))
+	for i, item := range items {
+		got[i] = item.Name
+	}
+
+	want := []string{"Zebra", "Mango", "Apple"}
 	if !slices.Equal(got, want) {
 		t.Errorf("Expected order %v, got %v", want, got)
 	}

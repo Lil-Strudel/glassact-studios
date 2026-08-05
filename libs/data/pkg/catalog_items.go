@@ -46,6 +46,16 @@ type CatalogItemModel struct {
 	STDB *sql.DB
 }
 
+// Catalog lists share one order wherever they surface: manual best-seller rank
+// first, then catalog code, then name.
+func catalogItemOrder() []postgres.OrderByClause {
+	return []postgres.OrderByClause{
+		table.CatalogItems.DisplayOrder.ASC().NULLS_LAST(),
+		table.CatalogItems.CatalogCode.ASC(),
+		table.CatalogItems.Name.ASC(),
+	}
+}
+
 func catalogItemFromGen(genCatalogItem model.CatalogItems) *CatalogItem {
 	var manifest map[string]interface{}
 	if genCatalogItem.Manifest != "" {
@@ -299,6 +309,8 @@ func (m CatalogItemModel) GetAll() ([]*CatalogItem, error) {
 		table.CatalogItems.AllColumns,
 	).FROM(
 		table.CatalogItems,
+	).ORDER_BY(
+		catalogItemOrder()...,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -458,7 +470,7 @@ func (m CatalogItemModel) GetRanked() ([]*CatalogItem, error) {
 	).WHERE(
 		table.CatalogItems.DisplayOrder.IS_NOT_NULL(),
 	).ORDER_BY(
-		table.CatalogItems.DisplayOrder.ASC(),
+		catalogItemOrder()...,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -544,6 +556,8 @@ func (m CatalogItemModel) GetByTag(tag string) ([]*CatalogItem, error) {
 		),
 	).WHERE(
 		table.CatalogItemTags.Tag.EQ(postgres.String(tag)),
+	).ORDER_BY(
+		catalogItemOrder()...,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -578,6 +592,8 @@ func (m CatalogItemModel) GetByCategory(category string) ([]*CatalogItem, error)
 		table.CatalogItems,
 	).WHERE(
 		table.CatalogItems.Category.EQ(postgres.String(category)),
+	).ORDER_BY(
+		catalogItemOrder()...,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -613,8 +629,7 @@ func (m CatalogItemModel) GetAllActive() ([]*CatalogItem, error) {
 	).WHERE(
 		table.CatalogItems.IsActive.EQ(postgres.Bool(true)),
 	).ORDER_BY(
-		table.CatalogItems.DisplayOrder.ASC().NULLS_LAST(),
-		table.CatalogItems.Name.ASC(),
+		catalogItemOrder()...,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

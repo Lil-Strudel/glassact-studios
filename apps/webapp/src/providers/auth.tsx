@@ -3,12 +3,18 @@ import {
   createSignal,
   createContext,
   createEffect,
+  onCleanup,
+  onMount,
+  untrack,
   useContext,
   ParentComponent,
   Setter,
 } from "solid-js";
-import { postAuthTokenAccessOpts } from "../queries/auth";
-import api from "../queries/api";
+import {
+  getValidAccessToken,
+  refreshAccessToken,
+  setOnSessionExpired,
+} from "../queries/access-token";
 import { DeferredPromise } from "../utils/deferred-promise";
 
 type AuthStatus = "pending" | "unauthenticated" | "authenticated";
@@ -35,25 +41,58 @@ export const AuthProvider: ParentComponent = (props) => {
     new DeferredPromise<SettledAuthStatus>(),
   );
 
-  const queryOptions = () => {
-    const queryOptions = postAuthTokenAccessOpts();
-    queryOptions.staleTime = Infinity;
-    queryOptions.retry = false;
-    queryOptions.refetchInterval = 1000 * 60 * 60 * 1.5;
-
-    return queryOptions;
-  };
+  // This query only answers "is there a session?" for the router gate. Keeping
+  // the bearer fresh afterwards belongs to the api client's interceptor.
+  const queryOptions = () => ({
+    queryKey: ["token", "authentication"],
+    queryFn: () => refreshAccessToken(),
+    staleTime: Infinity,
+    retry: false,
+  });
 
   const query = useQuery(queryOptions);
+
+  onMount(() => {
+    // Fired imperatively from the api layer, so every status read here is a
+    // point-in-time check rather than a subscription.
+    setOnSessionExpired(() => {
+      // A first-load 401 is the ordinary signed-out path, already handled by the
+      // router's beforeLoad — redirecting on it would loop the login page.
+      if (untrack(status) !== "authenticated") return;
+
+      setStatus("unauthenticated");
+
+      // deferredStatus resolves once ever, so the router's gate cannot re-run in
+      // place. A full navigation re-arms it and drops the stale query cache.
+      const redirect = window.location.pathname + window.location.search;
+      window.location.assign(`/login?redirect=${encodeURIComponent(redirect)}`);
+    });
+
+    // The interceptor already guarantees correctness; topping up on wake just
+    // spares the user a refresh round trip on their first click back.
+    const topUpToken = () => {
+      if (untrack(status) !== "authenticated") return;
+      if (document.visibilityState !== "visible") return;
+
+      void getValidAccessToken().catch(() => {});
+    };
+
+    document.addEventListener("visibilitychange", topUpToken);
+    window.addEventListener("focus", topUpToken);
+    window.addEventListener("online", topUpToken);
+
+    onCleanup(() => {
+      document.removeEventListener("visibilitychange", topUpToken);
+      window.removeEventListener("focus", topUpToken);
+      window.removeEventListener("online", topUpToken);
+    });
+  });
 
   createEffect(() => {
     switch (query.status) {
       case "success": {
         setStatus("authenticated");
         deferredStatus().resolve("authenticated");
-        api.defaults.headers.common = {
-          Authorization: `Bearer ${query.data.access_token}`,
-        };
         break;
       }
 
