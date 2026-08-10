@@ -5,6 +5,7 @@ import {
   type GranitePreset,
 } from "../../granite/granite";
 import { GranitePill } from "../../granite/granite-pill";
+import { GROUT_REGION_KEY } from "./resolution";
 
 interface CustomizerCanvasProps {
   svgText: string;
@@ -16,9 +17,13 @@ interface CustomizerCanvasProps {
   // inside an effect re-applies fills whenever overrides/hover-preview change.
   resolveHex: (pieceId: string, groupKey: string) => string;
   groutHex: string | null;
-  selectedPieceId: string | null;
-  // Group key whose pieces should be region-highlighted (e.g. on hover).
+  selectedPieceIds: string[];
+  // Group key whose pieces should be region-highlighted (e.g. on hover). Accepts
+  // GROUT_REGION_KEY to highlight the grout region.
   highlightedRegion: string | null;
+  // Admin-only: lets grout pieces be hovered and clicked so a misclassified piece
+  // can be moved back to glass. The consumer customizer leaves grout inert.
+  groutSelectable?: boolean;
   // Granite backdrop the inlay is previewed against. Optional: when omitted (e.g.
   // the admin manifest editor) the canvas shows a plain backdrop and no picker.
   granite?: GranitePreset;
@@ -32,6 +37,7 @@ interface CustomizerCanvasProps {
 
 const HIGHLIGHT_CSS = `
 .gac-canvas [id^="p"]:not([data-grout]) { cursor: pointer; }
+.gac-canvas.gac-grout-interactive [data-grout] { cursor: pointer; }
 .gac-canvas .gac-hover { stroke: white; stroke-width: 4px; paint-order: stroke fill; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 2px #60a5fa); }
 .gac-canvas .gac-selected { stroke: white; stroke-width: 5px; paint-order: stroke fill; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px #2563eb); }
 `;
@@ -88,26 +94,42 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
     }
   });
 
-  // Selection + region highlight.
+  // Selection + region highlight, across glass pieces and grout alike so a
+  // multi-piece selection is visible and the grout region can be highlighted.
   createEffect(() => {
     if (!ready()) return;
-    const selected = props.selectedPieceId;
+    const selected = new Set(props.selectedPieceIds);
     const region = props.highlightedRegion;
-    for (const [id, groupKey] of props.pieceSource.entries()) {
-      const el = pieceEls.get(id);
-      if (!el) continue;
-      el.classList.toggle("gac-selected", selected === id);
+
+    function paint(el: SVGElement, id: string, groupKey: string) {
+      const isSelected = selected.has(id);
+      el.classList.toggle("gac-selected", isSelected);
       el.classList.toggle(
         "gac-hover",
-        selected !== id && region !== null && groupKey === region,
+        !isSelected && region !== null && groupKey === region,
       );
     }
+
+    for (const [id, groupKey] of props.pieceSource.entries()) {
+      const el = pieceEls.get(id);
+      if (el) paint(el, id, groupKey);
+    }
+    for (const [id, el] of groutEls.entries()) {
+      paint(el, id, GROUT_REGION_KEY);
+    }
   });
+
+  // The group key a piece reports back through the hover/click callbacks.
+  function regionOf(id: string): string | null {
+    return props.pieceSource.get(id) ?? (groutEls.has(id) ? GROUT_REGION_KEY : null);
+  }
 
   function pieceAt(target: EventTarget | null): string | null {
     const el = target as Element | null;
     if (!el || !el.id) return null;
-    return props.pieceSource.has(el.id) ? el.id : null;
+    if (props.pieceSource.has(el.id)) return el.id;
+    if (props.groutSelectable && groutEls.has(el.id)) return el.id;
+    return null;
   }
 
   function onPointerDown(e: PointerEvent) {
@@ -122,7 +144,7 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
       return;
     }
     const id = pieceAt(e.target);
-    props.onPieceHover(id, id ? props.pieceSource.get(id)! : null);
+    props.onPieceHover(id, id ? regionOf(id) : null);
   }
 
   function onPointerUp(e: PointerEvent) {
@@ -130,7 +152,7 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
     // on empty backdrop it deselects.
     if (panZoom.isPanning() && !panZoom.didPan()) {
       if (pressedPiece) {
-        props.onPieceClick(pressedPiece, props.pieceSource.get(pressedPiece)!);
+        props.onPieceClick(pressedPiece, regionOf(pressedPiece)!);
       } else {
         props.onDeselect?.();
       }
@@ -148,6 +170,7 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
       <div
         ref={panZoom.setViewport}
         class="gac-canvas relative flex-1 overflow-hidden rounded-lg border border-gray-200"
+        classList={{ "gac-grout-interactive": props.groutSelectable }}
         style={
           props.granite
             ? graniteBackgroundStyle(props.granite)

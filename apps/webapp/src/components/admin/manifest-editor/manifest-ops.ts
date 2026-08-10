@@ -73,15 +73,21 @@ export function mergeGroups(
   return next;
 }
 
-// Split the given pieces out of their current groups into a brand-new group.
+// Split the given pieces out of their current regions into a brand-new group.
 // Returns the new manifest and the freshly minted key. Pieces are removed from
-// whichever glass group currently holds them (grout pieces are ignored).
+// whichever glass group holds them, and from grout — a selection can mix the two.
 export function splitGroup(
   manifest: Manifest,
   pieceIds: string[],
 ): { manifest: Manifest; newKey: string } {
   const next = cloneManifest(manifest);
   const moving = new Set(pieceIds);
+
+  next.grout_region.piece_ids = next.grout_region.piece_ids.filter(
+    (id) => !moving.has(id),
+  );
+  next.grout_region.count = next.grout_region.piece_ids.length;
+
   for (const region of Object.values(next.glass_regions)) {
     region.piece_ids = region.piece_ids.filter((id) => !moving.has(id));
     region.count = region.piece_ids.length;
@@ -166,6 +172,7 @@ export function markGroupAsGrout(
 }
 
 // Pull pieces out of grout into a new glass group (the inverse of marking grout).
+// This is the recovery path when ingest seeds a glass detail into the grout region.
 export function unmarkGroutPieces(
   manifest: Manifest,
   pieceIds: string[],

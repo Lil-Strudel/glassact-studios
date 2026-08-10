@@ -10,6 +10,10 @@ import (
 	"github.com/beevik/etree"
 )
 
+// cutListMetadataID is the id of the <metadata> element carrying the cutlist in a
+// baked SVG.
+const cutListMetadataID = "glassact-cutlist"
+
 // cutListGlassGroup records the chosen group-level glass color for a manifest
 // glass group (nil when left at the manifest default with no override).
 type cutListGlassGroup struct {
@@ -59,8 +63,7 @@ func Bake(
 	stripStyles(root)
 	applyFit(root, bbox, width, height)
 
-	// Size the grout rect to the fit viewBox so it covers the whole canvas.
-	if err := insertGrout(root, manifest, overrides, groutHexByID); err != nil {
+	if err := recolorGrout(root, manifest, overrides, groutHexByID); err != nil {
 		return nil, err
 	}
 
@@ -90,7 +93,7 @@ func BakeConsumer(
 		return nil, err
 	}
 
-	if err := insertGrout(root, manifest, overrides, groutHexByID); err != nil {
+	if err := recolorGrout(root, manifest, overrides, groutHexByID); err != nil {
 		return nil, err
 	}
 	applyScale(root, manifest.ViewBox, scaleFactor)
@@ -187,9 +190,9 @@ func recolor(
 	return cl, nil
 }
 
-// insertGrout colors the grout pieces when a grout id is resolved
+// recolorGrout colors the grout pieces when a grout id is resolved
 // (override wins over manifest default).
-func insertGrout(
+func recolorGrout(
 	root *etree.Element,
 	manifest Manifest,
 	overrides ColorOverrides,
@@ -284,13 +287,24 @@ func applyScale(root *etree.Element, viewBox string, scaleFactor float64) {
 	root.CreateAttr("height", formatNum(h*scaleFactor))
 }
 
+// addCutListMetadata replaces the cutlist. Re-saving a catalog item bakes an
+// already-baked SVG, so any cutlist from a previous bake has to be dropped first
+// — otherwise a stale one survives (swept into the gac-fit wrapper by applyFit)
+// and a consumer reading //metadata[@id='glassact-cutlist'] gets whichever it
+// happens to find first.
 func addCutListMetadata(root *etree.Element, cl cutList) {
+	for _, stale := range root.FindElements("//metadata[@id='" + cutListMetadataID + "']") {
+		if parent := stale.Parent(); parent != nil {
+			parent.RemoveChild(stale)
+		}
+	}
+
 	data, err := json.Marshal(cl)
 	if err != nil {
 		return
 	}
 	meta := etree.NewElement("metadata")
-	meta.CreateAttr("id", "glassact-cutlist")
+	meta.CreateAttr("id", cutListMetadataID)
 	meta.SetText(string(data))
 	root.InsertChildAt(0, meta)
 }

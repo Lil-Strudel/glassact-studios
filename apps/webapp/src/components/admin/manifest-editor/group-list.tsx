@@ -1,25 +1,32 @@
 import { createMemo, For, Show } from "solid-js";
 import type { GlassColor, Grout, Manifest, GET } from "@glassact/data";
 import { Badge, Button } from "@glassact/ui";
-import { SwatchPicker, type Swatch, type Selection } from "../../customizer/shared";
+import {
+  GROUT_REGION_KEY,
+  SwatchPicker,
+  type Swatch,
+} from "../../customizer/shared";
 
 interface GroupListProps {
   manifest: Manifest;
   glassColors: GET<GlassColor>[];
   grouts: GET<Grout>[];
-  selection: Selection | null;
-  // The group key currently open for color editing (group selection).
-  activeGroupKey: string | null;
+  // The region currently open for color editing: a glass group key, or
+  // GROUT_REGION_KEY for the grout region.
+  activeRegionKey: string | null;
   // Set of pieces tagged for a move operation.
   selectedPieceIds: string[];
-  onSelectGroup: (groupKey: string) => void;
-  onHoverGroup: (groupKey: string | null) => void;
+  // True when the selection reaches into the grout region.
+  selectionHasGroutPieces: boolean;
+  onSelectRegion: (regionKey: string) => void;
+  onHoverRegion: (regionKey: string | null) => void;
   onAssignGroupColor: (groupKey: string, glassColorId: number) => void;
   onAssignGroutColor: (groutId: number) => void;
   onMarkGroupAsGrout: (groupKey: string) => void;
   onMergeInto: (targetKey: string) => void;
   onMovePiecesToGroup: (targetKey: string) => void;
   onMovePiecesToGrout: () => void;
+  onMovePiecesToGlass: () => void;
   onSplitSelected: () => void;
   onClearPieceSelection: () => void;
 }
@@ -50,6 +57,15 @@ export function GroupList(props: GroupListProps) {
 
   const hasPieceSelection = createMemo(() => props.selectedPieceIds.length > 0);
 
+  const isGroutActive = createMemo(
+    () => props.activeRegionKey === GROUT_REGION_KEY,
+  );
+
+  const assignedGrout = createMemo(() => {
+    const id = props.manifest.grout_region.grout_id;
+    return id != null ? props.grouts.find((g) => g.id === id) : undefined;
+  });
+
   return (
     <div class="flex flex-col gap-4">
       <Show when={hasPieceSelection()}>
@@ -78,6 +94,15 @@ export function GroupList(props: GroupListProps) {
             >
               Move to grout
             </Button>
+            <Show when={props.selectionHasGroutPieces}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={props.onMovePiecesToGlass}
+              >
+                Move to glass (new group)
+              </Button>
+            </Show>
           </div>
           <p class="mt-2 text-xs text-blue-700">
             Or pick a group below, then use its "Move here" action.
@@ -91,7 +116,7 @@ export function GroupList(props: GroupListProps) {
         </h3>
         <For each={groups()}>
           {([groupKey, region]) => {
-            const isActive = () => props.activeGroupKey === groupKey;
+            const isActive = () => props.activeRegionKey === groupKey;
             const assigned = () =>
               region.glass_color_id != null
                 ? glassById().get(region.glass_color_id)
@@ -103,13 +128,13 @@ export function GroupList(props: GroupListProps) {
                   "border-blue-500 ring-1 ring-blue-400": isActive(),
                   "border-gray-200": !isActive(),
                 }}
-                onMouseEnter={() => props.onHoverGroup(groupKey)}
-                onMouseLeave={() => props.onHoverGroup(null)}
+                onMouseEnter={() => props.onHoverRegion(groupKey)}
+                onMouseLeave={() => props.onHoverRegion(null)}
               >
                 <button
                   type="button"
                   class="flex w-full items-center gap-3 p-3 text-left"
-                  onClick={() => props.onSelectGroup(groupKey)}
+                  onClick={() => props.onSelectRegion(groupKey)}
                 >
                   <Show
                     when={assigned()}
@@ -197,42 +222,76 @@ export function GroupList(props: GroupListProps) {
 
       <div class="flex flex-col gap-2 border-t border-gray-200 pt-4">
         <h3 class="text-sm font-semibold text-gray-900">Grout</h3>
-        <div class="flex items-center gap-3 px-1">
-          <Show
-            when={
-              props.manifest.grout_region.grout_id != null
-                ? props.grouts.find(
-                    (g) => g.id === props.manifest.grout_region.grout_id,
-                  )
-                : undefined
-            }
-            fallback={
+        <div
+          class="rounded-lg border transition"
+          classList={{
+            "border-blue-500 ring-1 ring-blue-400": isGroutActive(),
+            "border-gray-200": !isGroutActive(),
+          }}
+          onMouseEnter={() => props.onHoverRegion(GROUT_REGION_KEY)}
+          onMouseLeave={() => props.onHoverRegion(null)}
+        >
+          <button
+            type="button"
+            class="flex w-full items-center gap-3 p-3 text-left"
+            onClick={() => props.onSelectRegion(GROUT_REGION_KEY)}
+          >
+            <Show
+              when={assignedGrout()}
+              fallback={
+                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded border-2 border-dashed border-amber-400 bg-amber-50 text-amber-600">
+                  !
+                </span>
+              }
+            >
+              {(g) => (
+                <span
+                  class="h-7 w-7 shrink-0 rounded border border-black/10"
+                  style={{ "background-color": g().hex }}
+                />
+              )}
+            </Show>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium text-gray-900">
+                {assignedGrout()?.name ?? "Unassigned"}
+              </p>
+              <p class="text-xs text-gray-500">
+                {props.manifest.grout_region.count} piece
+                {props.manifest.grout_region.count === 1 ? "" : "s"}
+              </p>
+            </div>
+            <Show when={props.manifest.grout_region.grout_id == null}>
               <Badge variant="warning" class="rounded-full">
                 Unassigned
               </Badge>
-            }
-          >
-            {(g) => (
-              <span class="flex items-center gap-2 text-sm text-gray-700">
-                <span
-                  class="h-6 w-6 rounded border border-black/10"
-                  style={{ "background-color": g().hex }}
-                />
-                {g().name}
-              </span>
-            )}
+            </Show>
+          </button>
+
+          <Show when={isGroutActive()}>
+            <div class="border-t border-gray-100 p-3">
+              <SwatchPicker
+                swatches={groutSwatches()}
+                selectedId={props.manifest.grout_region.grout_id}
+                onSelect={props.onAssignGroutColor}
+                searchPlaceholder="Search grouts..."
+              />
+              <Show when={hasPieceSelection()}>
+                <div class="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={props.onMovePiecesToGrout}
+                  >
+                    Move selected here
+                  </Button>
+                </div>
+              </Show>
+            </div>
           </Show>
-          <span class="text-xs text-gray-500">
-            {props.manifest.grout_region.count} piece
-            {props.manifest.grout_region.count === 1 ? "" : "s"}
-          </span>
         </div>
-        <SwatchPicker
-          swatches={groutSwatches()}
-          selectedId={props.manifest.grout_region.grout_id}
-          onSelect={props.onAssignGroutColor}
-          searchPlaceholder="Search grouts..."
-        />
+        <p class="px-1 text-xs text-gray-500">
+          Switch to piece mode to click a grout shape and move it back to glass.
+        </p>
       </div>
     </div>
   );

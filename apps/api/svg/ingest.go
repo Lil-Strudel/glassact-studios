@@ -12,21 +12,45 @@ import (
 // the browser editor/customizer can map grout pieces from the structure SVG.
 const groutGroupKey = "grout"
 
-// colorGroup is an intermediate, source-hex-keyed grouping built during ingest
-// before stable group keys are assigned and grout collapse happens.
+// sourceFill is a shape's fill as a renderer would resolve it.
+type sourceFill struct {
+	// key groups pieces that share a fill: the normalized hex, or the raw paint
+	// string for paints that resolve to no color (url(#grad), currentColor).
+	key string
+	// hex is the normalized "#rrggbb" fill, empty for an unresolvable paint.
+	hex string
+	// class is the <style> class the fill came from, kept for provenance.
+	class *string
+	// implicit is true when no fill was declared anywhere up the tree, so the
+	// shape renders UA-default black.
+	implicit bool
+}
+
+// colorGroup is an intermediate, fill-keyed grouping built during ingest before
+// stable group keys are assigned and the grout region is split off.
 type colorGroup struct {
+	key        string
 	sourceHex  string
 	sourceCls  *string
+	implicit   bool
 	pieceIDs   []string
 	firstOrder int // document order of the group's first piece, for stable keys
 }
 
 // Ingest parses a raw catalog source SVG into a structure SVG (with stable
 // per-shape ids p0, p1, ... and a group class on each recolorable piece) plus a
-// manifest grouped into a single grout region and N glass regions. It best-
-// guesses a grout_id / glass_color_id for each region from the supplied
-// palettes, leaving any region with no close match unassigned and noted in
-// warnings.
+// manifest grouped into a single grout region and N glass regions.
+//
+// Grout is seeded from the back-most paintable shape: in document order that is
+// the shape every other one is drawn on top of, i.e. the backing plate or the
+// border ring. Its whole fill group becomes the grout region. Nothing is
+// classified as grout for merely being black — a black glass detail sitting on a
+// dark backing has to stay glass — and the manifest editor is the escape hatch
+// when the seed guesses wrong.
+//
+// It best-guesses a grout_id / glass_color_id for each region from the supplied
+// palettes, leaving any region with no declared fill or no close match unassigned
+// and noted in warnings.
 //
 // It only hard-errors on a genuinely unparseable SVG or a missing <svg> root.
 // Embedded raster, gradients and missing fills are surfaced as warnings rather
@@ -54,8 +78,10 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 
 	classFills := parseStyleFills(collectStyleCSS(doc))
 
-	// Group pieces by resolved source hex, preserving document order.
+	// Group pieces by resolved fill, preserving document order.
 	groups := map[string]*colorGroup{}
+	groupOf := map[string]*colorGroup{}
+	backMostID := ""
 	pieceIndex := 0
 
 	walkFillable(root, func(el *etree.Element) {
@@ -64,17 +90,34 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 		pieceIndex++
 		el.CreateAttr("id", id)
 
-		hex, classPtr, paintable := resolveSourceFill(el, classFills)
+		fill, paintable := resolveSourceFill(el, classFills)
 		if !paintable {
 			return // e.g. fill:none stroke outline — has an id but is not a region
 		}
+		if backMostID == "" {
+			backMostID = id
+		}
 
-		g, ok := groups[hex]
+		g, ok := groups[fill.key]
 		if !ok {
-			g = &colorGroup{sourceHex: hex, sourceCls: classPtr, firstOrder: order}
-			groups[hex] = g
+			g = &colorGroup{
+				key:        fill.key,
+				sourceHex:  fill.hex,
+				sourceCls:  fill.class,
+				implicit:   fill.implicit,
+				firstOrder: order,
+			}
+			groups[fill.key] = g
+		}
+		if g.sourceCls == nil {
+			g.sourceCls = fill.class
+		}
+		// A group only counts as undeclared if every piece in it is.
+		if !fill.implicit {
+			g.implicit = false
 		}
 		g.pieceIDs = append(g.pieceIDs, id)
+		groupOf[id] = g
 	})
 
 	if pieceIndex == 0 {
@@ -84,18 +127,11 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 		warnings = append(warnings, "no recolorable fills found in source")
 	}
 
-	// Identify the grout hexes: the implicit-black group plus the group that
-	// owns p0 (the back-most shape in document order).
-	groutHexes := map[string]bool{}
-	if _, ok := groups[defaultFill]; ok {
-		groutHexes[defaultFill] = true
-	}
-	for hex, g := range groups {
-		for _, id := range g.pieceIDs {
-			if id == "p0" {
-				groutHexes[hex] = true
-			}
-		}
+	// The back-most paintable shape is the backing plate, so its fill group is
+	// the grout region.
+	groutKey := ""
+	if g := groupOf[backMostID]; g != nil {
+		groutKey = g.key
 	}
 
 	// Split into grout vs glass groups, ordered deterministically by the
@@ -109,22 +145,32 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 	})
 
 	grout := GroutRegion{PieceIDs: []string{}}
-	var groutSourceHex string
 	glassRegions := map[string]GlassRegion{}
 	byID := indexByID(root)
 	groupIndex := 0
 
 	for _, g := range ordered {
-		if groutHexes[g.sourceHex] {
+		if g.key == groutKey {
 			grout.PieceIDs = append(grout.PieceIDs, g.pieceIDs...)
-			grout.Count += len(g.pieceIDs)
-			if groutSourceHex == "" {
-				groutSourceHex = g.sourceHex
-			}
+			grout.Count = len(grout.PieceIDs)
 			for _, id := range g.pieceIDs {
 				if el := byID[id]; el != nil {
 					el.CreateAttr("class", groutGroupKey)
 				}
+			}
+
+			if g.sourceHex != "" {
+				grout.GroutID = MatchGrout(g.sourceHex, groutPalette)
+			}
+			if grout.GroutID == nil {
+				warnings = append(warnings, fmt.Sprintf("grout region (%s) has no close grout match", g.key))
+			}
+			// The one case the seed cannot decide: mortar lines drawn on top share
+			// the backing's fill and are grout, a black eye shares it and is not.
+			if grout.Count > 1 {
+				warnings = append(warnings, fmt.Sprintf(
+					"grout region seeded with %d pieces sharing %s — check none of them are glass details",
+					grout.Count, g.key))
 			}
 			continue
 		}
@@ -132,16 +178,25 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 		key := fmt.Sprintf("group-%d", groupIndex)
 		groupIndex++
 
-		hex := g.sourceHex
 		region := GlassRegion{
 			PieceIDs:    append([]string{}, g.pieceIDs...),
 			Count:       len(g.pieceIDs),
 			SourceClass: g.sourceCls,
-			SourceHex:   &hex,
 		}
-		region.GlassColorID = MatchGlass(hex, glassPalette)
-		if region.GlassColorID == nil {
-			warnings = append(warnings, fmt.Sprintf("glass group %s (%s) has no close color match", key, hex))
+		switch {
+		case g.implicit:
+			// The source is asking for a color here, not offering one: leave it
+			// unassigned so the admin picks rather than defaulting it to black.
+			warnings = append(warnings, fmt.Sprintf("glass group %s has no declared fill in the source — pick a color", key))
+		case g.sourceHex == "":
+			warnings = append(warnings, fmt.Sprintf("glass group %s uses an unsupported paint (%s) — pick a color", key, g.key))
+		default:
+			hex := g.sourceHex
+			region.SourceHex = &hex
+			region.GlassColorID = MatchGlass(hex, glassPalette)
+			if region.GlassColorID == nil {
+				warnings = append(warnings, fmt.Sprintf("glass group %s (%s) has no close color match", key, hex))
+			}
 		}
 		glassRegions[key] = region
 
@@ -149,13 +204,6 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 			if el := byID[id]; el != nil {
 				el.CreateAttr("class", key)
 			}
-		}
-	}
-
-	if groutSourceHex != "" {
-		grout.GroutID = MatchGrout(groutSourceHex, groutPalette)
-		if grout.GroutID == nil {
-			warnings = append(warnings, fmt.Sprintf("grout region (%s) has no close grout match", groutSourceHex))
 		}
 	}
 
@@ -175,33 +223,63 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 	return structureSVG, manifest, warnings, nil
 }
 
-// resolveSourceFill determines a shape's source color. Returns paintable=false
-// for shapes whose class explicitly sets fill:none (stroke-only outlines).
-func resolveSourceFill(el *etree.Element, classFills map[string]string) (hex string, class *string, paintable bool) {
-	classAttr := strings.TrimSpace(el.SelectAttrValue("class", ""))
-	sawFillNone := false
+// resolveSourceFill determines the fill a renderer would paint a shape with. It
+// applies CSS precedence at each level (inline style, then a <style> class rule,
+// then the fill presentation attribute) and walks up to the root for inherited
+// fills. Returns paintable=false when the winning declaration is "none", e.g. a
+// stroke-only outline.
+func resolveSourceFill(el *etree.Element, classFills map[string]string) (sourceFill, bool) {
+	for node := el; node != nil; node = node.Parent() {
+		value, class, ok := declaredFill(node, classFills)
+		if !ok {
+			continue
+		}
+		if strings.EqualFold(value, "none") {
+			return sourceFill{}, false
+		}
+		if hex, isColor := normalizeColor(value); isColor {
+			return sourceFill{key: hex, hex: hex, class: class}, true
+		}
+		// A paint we cannot resolve to a color (url(#grad), currentColor). Keep
+		// those pieces together under the raw value so the editor can assign them.
+		return sourceFill{key: value, class: class}, true
+	}
+	// Nothing declared anywhere: renders UA-default black, and is recolorable.
+	return sourceFill{key: defaultFill, implicit: true}, true
+}
 
-	if classAttr != "" {
-		for _, c := range strings.Fields(classAttr) {
-			fv, ok := classFills[c]
-			if !ok {
-				continue
-			}
-			if h, isHex := normalizeHex(fv); isHex {
-				cc := c
-				return h, &cc, true
-			}
-			if strings.EqualFold(strings.TrimSpace(fv), "none") {
-				sawFillNone = true
-			}
+// declaredFill returns the fill declaration that wins on a single element, in CSS
+// precedence order: inline style, then a <style> class rule, then the fill
+// presentation attribute. Among several matching classes a color beats "none",
+// so a shape carrying both a paint class and an outline class stays paintable.
+func declaredFill(el *etree.Element, classFills map[string]string) (value string, class *string, ok bool) {
+	if style := el.SelectAttrValue("style", ""); style != "" {
+		if m := cssFillRe.FindStringSubmatch(style); m != nil {
+			return strings.TrimSpace(m[1]), nil, true
 		}
 	}
 
-	if sawFillNone {
-		return "", nil, false
+	sawFillNone := false
+	for _, c := range strings.Fields(el.SelectAttrValue("class", "")) {
+		fv, found := classFills[c]
+		if !found {
+			continue
+		}
+		if strings.EqualFold(strings.TrimSpace(fv), "none") {
+			sawFillNone = true
+			continue
+		}
+		cc := c
+		return strings.TrimSpace(fv), &cc, true
 	}
-	// No class, or a class with no fill rule: UA-default black, recolorable.
-	return defaultFill, nil, true
+	if sawFillNone {
+		return "none", nil, true
+	}
+
+	if attr := strings.TrimSpace(el.SelectAttrValue("fill", "")); attr != "" {
+		return attr, nil, true
+	}
+	return "", nil, false
 }
 
 func walkFillable(el *etree.Element, visit func(*etree.Element)) {

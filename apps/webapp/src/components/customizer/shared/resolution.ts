@@ -12,6 +12,11 @@ export type Selection =
 
 export type GlassById = Map<number, GET<GlassColor>>;
 
+// Stands in for a group key when a callback reports the grout region rather than
+// a glass group. Mirrors `groutGroupKey` in apps/api/svg/ingest.go, which is also
+// the class ingest writes onto every grout piece.
+export const GROUT_REGION_KEY = "grout";
+
 // Neutral fill used only for the in-editor unassigned state (a saved catalog
 // item always has a default glass_color_id on every group).
 const NEUTRAL_FALLBACK = "#cccccc";

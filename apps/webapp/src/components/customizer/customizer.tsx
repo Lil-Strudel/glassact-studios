@@ -364,10 +364,10 @@ export function Customizer(props: CustomizerProps) {
             groutPieceIds={groutPieceIds()}
             resolveHex={resolveHex}
             groutHex={groutHex()}
-            selectedPieceId={
+            selectedPieceIds={
               selection()?.type === "piece"
-                ? (selection() as { pieceId: string }).pieceId
-                : null
+                ? [(selection() as { pieceId: string }).pieceId]
+                : []
             }
             highlightedRegion={hoveredRegion()}
             granite={granite()}

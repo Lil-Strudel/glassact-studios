@@ -4,6 +4,7 @@
 package svg
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -24,8 +25,9 @@ var fillableTags = map[string]bool{
 // real recolorable region.
 const defaultFill = "#000000"
 
-// GroutRegion is the single collapsed grout region: the back-most group plus
-// classless implicit-black pieces. GroutID is nil until assigned in the editor.
+// GroutRegion is the single collapsed grout region: the fill group of the
+// back-most paintable shape, i.e. the backing plate everything else is drawn on
+// top of. GroutID is nil until assigned in the editor.
 type GroutRegion struct {
 	GroutID  *int     `json:"grout_id"`
 	PieceIDs []string `json:"piece_ids"`
@@ -83,9 +85,33 @@ var (
 	hex6Re    = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 	hex3Re    = regexp.MustCompile(`^#[0-9a-fA-F]{3}$`)
 	numRe     = regexp.MustCompile(`-?\d*\.?\d+`)
+	rgbRe     = regexp.MustCompile(`^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$`)
 	// matches a `fill: ...;` declaration inside an inline style attribute
 	inlineFillRe = regexp.MustCompile(`(?i)\s*fill\s*:[^;]*;?`)
 )
+
+// The CSS basic color keywords. Sources overwhelmingly use hex, but a hand-edited
+// or Inkscape file can name a color, and silently treating that as "no fill" puts
+// the shape in the wrong region.
+var namedColors = map[string]string{
+	"black":   "#000000",
+	"silver":  "#c0c0c0",
+	"gray":    "#808080",
+	"grey":    "#808080",
+	"white":   "#ffffff",
+	"maroon":  "#800000",
+	"red":     "#ff0000",
+	"purple":  "#800080",
+	"fuchsia": "#ff00ff",
+	"green":   "#008000",
+	"lime":    "#00ff00",
+	"olive":   "#808000",
+	"yellow":  "#ffff00",
+	"navy":    "#000080",
+	"blue":    "#0000ff",
+	"teal":    "#008080",
+	"aqua":    "#00ffff",
+}
 
 // parseStyleFills maps each CSS class to its declared fill value (raw string).
 // Generic on purpose: it does not assume the `.st` prefix (the glass palette
@@ -118,6 +144,29 @@ func normalizeHex(s string) (string, bool) {
 	}
 	if hex3Re.MatchString(s) {
 		return "#" + string([]byte{s[1], s[1], s[2], s[2], s[3], s[3]}), true
+	}
+	return "", false
+}
+
+// normalizeColor resolves a CSS paint value to a normalized "#rrggbb" hex,
+// accepting hex, rgb() and the basic color keywords. ok is false for anything
+// that names no color, such as "none", "currentColor" or "url(#grad)".
+func normalizeColor(s string) (string, bool) {
+	s = strings.ToLower(strings.TrimSpace(s))
+	if hex, ok := normalizeHex(s); ok {
+		return hex, true
+	}
+	if named, ok := namedColors[s]; ok {
+		return named, true
+	}
+	if m := rgbRe.FindStringSubmatch(s); m != nil {
+		r, _ := strconv.Atoi(m[1])
+		g, _ := strconv.Atoi(m[2])
+		b, _ := strconv.Atoi(m[3])
+		if r > 255 || g > 255 || b > 255 {
+			return "", false
+		}
+		return fmt.Sprintf("#%02x%02x%02x", r, g, b), true
 	}
 	return "", false
 }

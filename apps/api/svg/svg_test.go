@@ -39,6 +39,63 @@ const svgNoViewBox = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height
   <rect class="st0" x="0" y="0" width="2" height="2"/>
 </svg>`
 
+// The real shape of the catalog artwork this pipeline ingests: an explicitly
+// colored grout border drawn first, with the glass shape left unfilled on top.
+const svgGroutBorderUnfilledGlass = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 229 289">
+  <defs><style>.st0 { fill: #92918a; }</style></defs>
+  <path class="st0" d="M0 0h10v10H0z"/>
+  <path d="M1 1h8v8H1z"/>
+</svg>`
+
+const svgFillNoneFirst = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+  <defs><style>.outline{fill:none;stroke:#000;}.bg{fill:#92918a;}.fg{fill:#a7a9ac;}</style></defs>
+  <polyline class="outline" points="0,0 5,5"/>
+  <rect class="bg" x="0" y="0" width="10" height="10"/>
+  <path class="fg" d="M1 1h2v2H1z"/>
+</svg>`
+
+const svgAttrFills = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+  <path fill="#92918a" d="M0 0h10v10H0z"/>
+  <path fill="#a7a9ac" d="M1 1h2v2H1z"/>
+</svg>`
+
+const svgInlineStyleFills = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+  <path style="fill:#92918a" d="M0 0h10v10H0z"/>
+  <path style="opacity:1;fill:#a7a9ac" d="M1 1h2v2H1z"/>
+</svg>`
+
+const svgInheritedFills = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+  <g fill="#92918a"><path d="M0 0h10v10H0z"/></g>
+  <g style="fill:#a7a9ac"><path d="M1 1h2v2H1z"/></g>
+</svg>`
+
+const svgClassBeatsAttr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+  <defs><style>.st0{fill:#92918a;}</style></defs>
+  <path class="st0" fill="#ff0000" d="M0 0h10v10H0z"/>
+  <path fill="#a7a9ac" d="M1 1h2v2H1z"/>
+</svg>`
+
+const svgInlineBeatsClass = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+  <defs><style>.st0{fill:#ff0000;}</style></defs>
+  <path class="st0" style="fill:#92918a" d="M0 0h10v10H0z"/>
+  <path fill="#a7a9ac" d="M1 1h2v2H1z"/>
+</svg>`
+
+const svgFillNoneAttr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+  <path fill="#92918a" d="M0 0h10v10H0z"/>
+  <polyline fill="none" stroke="#000" points="0,0 5,5"/>
+</svg>`
+
+func hasWarning(warnings []string, substr string) bool {
+	for _, w := range warnings {
+		if strings.Contains(w, substr) {
+			return true
+		}
+	}
+	return false
+}
+
 // The first piece (p0, back-most) is the grout group; remaining are glass.
 func findByID(t *testing.T, data []byte, id string) *etree.Element {
 	t.Helper()
@@ -86,15 +143,115 @@ func TestIngest_MultiClass_GroupsByColorAndGroutCollapse(t *testing.T) {
 	assert.Equal(t, groutGroupKey, findByID(t, structureSVG, "p0").SelectAttrValue("class", ""))
 }
 
-func TestIngest_ClasslessShapeJoinsGrout(t *testing.T) {
+func TestIngest_ClasslessBackMostShapeIsGrout(t *testing.T) {
 	_, manifest := ingestOK(t, svgImplicitBlack)
 
-	// p0 is classless implicit-black (back-most) -> grout.
+	// p0 is the back-most shape -> grout, regardless of it being classless.
 	assert.Equal(t, []string{"p0"}, manifest.GroutRegion.PieceIDs)
 
 	// The #111111 group becomes the single glass region.
 	require.Len(t, manifest.GlassRegions, 1)
 	assert.Equal(t, []string{"p1"}, manifest.GlassRegions["group-0"].PieceIDs)
+}
+
+// The bug this pipeline shipped with: an explicitly colored grout border plus an
+// unfilled glass shape put BOTH pieces in the grout region (the back-most rule
+// claimed the border, a separate implicit-black rule claimed the glass), leaving
+// zero glass groups so bake painted the whole inlay one flat color.
+func TestIngest_UnfilledForegroundShapeIsGlassNotGrout(t *testing.T) {
+	glass := []PaletteColor{{ID: 1, Hex: "#010101"}}
+	grout := []PaletteColor{{ID: 1, Hex: "#1a1a1a"}, {ID: 3, Hex: "#92918a"}}
+
+	structureSVG, manifest, warnings, err := Ingest([]byte(svgGroutBorderUnfilledGlass), glass, grout)
+	require.NoError(t, err)
+
+	// The explicitly-colored border drawn behind everything is the grout.
+	assert.Equal(t, []string{"p0"}, manifest.GroutRegion.PieceIDs)
+	require.NotNil(t, manifest.GroutRegion.GroutID)
+	assert.Equal(t, 3, *manifest.GroutRegion.GroutID)
+
+	// The unfilled shape is glass awaiting a color, not grout for rendering black.
+	require.Len(t, manifest.GlassRegions, 1)
+	region := manifest.GlassRegions["group-0"]
+	assert.Equal(t, []string{"p1"}, region.PieceIDs)
+	assert.Nil(t, region.GlassColorID, "an undeclared fill must not be auto-matched to black glass")
+	assert.Nil(t, region.SourceHex)
+	assert.True(t, hasWarning(warnings, "no declared fill"), "warnings: %v", warnings)
+
+	assert.Equal(t, groutGroupKey, findByID(t, structureSVG, "p0").SelectAttrValue("class", ""))
+	assert.Equal(t, "group-0", findByID(t, structureSVG, "p1").SelectAttrValue("class", ""))
+}
+
+func TestIngest_GroutSeedsFromBackMostPaintableShape(t *testing.T) {
+	_, manifest := ingestOK(t, svgFillNoneFirst)
+
+	// p0 is a fill:none outline, so the seed falls through to p1.
+	assert.Equal(t, []string{"p1"}, manifest.GroutRegion.PieceIDs)
+	require.Len(t, manifest.GlassRegions, 1)
+	assert.Equal(t, []string{"p2"}, manifest.GlassRegions["group-0"].PieceIDs)
+}
+
+func TestIngest_MultiPieceGroutSeedWarns(t *testing.T) {
+	_, _, warnings, err := Ingest([]byte(svgMultiClass), nil, nil)
+	require.NoError(t, err)
+	assert.True(t, hasWarning(warnings, "check none of them are glass details"), "warnings: %v", warnings)
+}
+
+// Fills declared as presentation attributes, inline styles or on an ancestor are
+// what Inkscape and potrace emit. Reading only <style> class rules collapsed every
+// such shape into one implicit-black group.
+func TestIngest_ResolvesFillsOutsideStyleBlocks(t *testing.T) {
+	tests := []struct {
+		name string
+		src  string
+	}{
+		{"presentation attribute", svgAttrFills},
+		{"inline style", svgInlineStyleFills},
+		{"inherited from ancestor group", svgInheritedFills},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, manifest := ingestOK(t, tt.src)
+
+			assert.Equal(t, []string{"p0"}, manifest.GroutRegion.PieceIDs)
+			require.Len(t, manifest.GlassRegions, 1)
+			region := manifest.GlassRegions["group-0"]
+			assert.Equal(t, []string{"p1"}, region.PieceIDs)
+			require.NotNil(t, region.SourceHex)
+			assert.Equal(t, "#a7a9ac", *region.SourceHex)
+		})
+	}
+}
+
+func TestIngest_FillPrecedence(t *testing.T) {
+	tests := []struct {
+		name string
+		src  string
+	}{
+		{"class rule beats presentation attribute", svgClassBeatsAttr},
+		{"inline style beats class rule", svgInlineBeatsClass},
+	}
+	grout := []PaletteColor{{ID: 3, Hex: "#92918a"}, {ID: 9, Hex: "#ff0000"}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, manifest, _, err := Ingest([]byte(tt.src), nil, grout)
+			require.NoError(t, err)
+
+			assert.Equal(t, []string{"p0"}, manifest.GroutRegion.PieceIDs)
+			require.NotNil(t, manifest.GroutRegion.GroutID)
+			assert.Equal(t, 3, *manifest.GroutRegion.GroutID, "the losing declaration was used")
+		})
+	}
+}
+
+func TestIngest_FillNoneAttributeIsNotARegion(t *testing.T) {
+	structureSVG, manifest := ingestOK(t, svgFillNoneAttr)
+
+	assert.Equal(t, []string{"p0"}, manifest.GroutRegion.PieceIDs)
+	assert.Len(t, manifest.GlassRegions, 0)
+	assert.NotNil(t, findByID(t, structureSVG, "p1"), "the outline keeps a stable id")
 }
 
 func TestIngest_FillNoneShapeIsNotARegion(t *testing.T) {
@@ -243,6 +400,29 @@ func TestBake_EmbedsCutListMetadata(t *testing.T) {
 	body := meta.Text()
 	assert.Contains(t, body, "\"group_key\":\"group-0\"")
 	assert.Contains(t, body, "\"grout_id\":3")
+}
+
+// Saving a catalog item again bakes the already-baked SVG, so a cutlist from the
+// previous bake must not survive alongside the new one.
+func TestBake_ReplacesStaleCutListMetadataOnRebake(t *testing.T) {
+	manifest, structureSVG := bakedManifest(t, svgMultiClass)
+	manifest.GroutRegion.GroutID = intPtr(3)
+	bbox := ContentBBox{X: 0, Y: 0, Width: 100, Height: 200}
+
+	first, err := Bake(structureSVG, *manifest, bbox, 1, 2, ColorOverrides{},
+		nil, map[int]string{3: "#cccccc"})
+	require.NoError(t, err)
+
+	manifest.GroutRegion.GroutID = intPtr(1)
+	second, err := Bake(first, *manifest, bbox, 1, 2, ColorOverrides{},
+		nil, map[int]string{1: "#1a1a1a"})
+	require.NoError(t, err)
+
+	doc := etree.NewDocument()
+	require.NoError(t, doc.ReadFromBytes(second))
+	metas := doc.FindElements("//metadata[@id='glassact-cutlist']")
+	require.Len(t, metas, 1)
+	assert.Contains(t, metas[0].Text(), "\"grout_id\":1")
 }
 
 func TestBake_UnknownGlassColorIDErrors(t *testing.T) {

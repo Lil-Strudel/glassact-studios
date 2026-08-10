@@ -17,6 +17,7 @@ export { SwatchPicker } from "./swatch-picker";
 export type { Swatch } from "./swatch-picker";
 
 export {
+  GROUT_REGION_KEY,
   buildPieceSourceMap,
   buildGroutPieceIds,
   resolvePieceHex,
