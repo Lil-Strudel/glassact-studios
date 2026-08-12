@@ -2,7 +2,6 @@ package svg
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/beevik/etree"
@@ -29,12 +28,17 @@ type sourceFill struct {
 // colorGroup is an intermediate, fill-keyed grouping built during ingest before
 // stable group keys are assigned and the grout region is split off.
 type colorGroup struct {
-	key        string
-	sourceHex  string
-	sourceCls  *string
-	implicit   bool
-	pieceIDs   []string
-	firstOrder int // document order of the group's first piece, for stable keys
+	key       string
+	sourceHex string
+	sourceCls *string
+	// lab is sourceHex in CIELAB, cached so perceptual grouping does not
+	// reconvert per piece. Valid only when labOK.
+	lab   labColor
+	labOK bool
+	// implicitCount is how many of the group's pieces declared no fill at all and
+	// were resolved to UA-default black, so ingest can ask the admin to verify.
+	implicitCount int
+	pieceIDs      []string
 }
 
 // Ingest parses a raw catalog source SVG into a structure SVG (with stable
@@ -48,9 +52,16 @@ type colorGroup struct {
 // dark backing has to stay glass — and the manifest editor is the escape hatch
 // when the seed guesses wrong.
 //
+// Fills that are perceptually identical share a region: exporters routinely emit
+// #010101 for one shape the artist drew black and leave the next one classless
+// (rendering UA-default #000000), and splitting those would hand the admin two
+// indistinguishable groups to color separately.
+//
 // It best-guesses a grout_id / glass_color_id for each region from the supplied
-// palettes, leaving any region with no declared fill or no close match unassigned
-// and noted in warnings.
+// palettes, leaving any region with an unresolvable paint or no close match
+// unassigned and noted in warnings. A region whose color the source never declared
+// is resolved the way a renderer resolves it — black — and flagged for the admin
+// to verify, since black-by-omission is also what a forgotten fill looks like.
 //
 // It only hard-errors on a genuinely unparseable SVG or a missing <svg> root.
 // Embedded raster, gradients and missing fills are surfaced as warnings rather
@@ -78,15 +89,17 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 
 	classFills := parseStyleFills(collectStyleCSS(doc))
 
-	// Group pieces by resolved fill, preserving document order.
-	groups := map[string]*colorGroup{}
+	// Group pieces by resolved fill, preserving document order. ordered is the
+	// source of truth (map iteration order is randomized, and perceptual grouping
+	// has to scan deterministically); byKey is the exact-hit fast path.
+	ordered := []*colorGroup{}
+	byKey := map[string]*colorGroup{}
 	groupOf := map[string]*colorGroup{}
 	backMostID := ""
 	pieceIndex := 0
 
 	walkFillable(root, func(el *etree.Element) {
 		id := fmt.Sprintf("p%d", pieceIndex)
-		order := pieceIndex
 		pieceIndex++
 		el.CreateAttr("id", id)
 
@@ -98,23 +111,22 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 			backMostID = id
 		}
 
-		g, ok := groups[fill.key]
-		if !ok {
+		g := findGroup(ordered, byKey, fill)
+		if g == nil {
 			g = &colorGroup{
-				key:        fill.key,
-				sourceHex:  fill.hex,
-				sourceCls:  fill.class,
-				implicit:   fill.implicit,
-				firstOrder: order,
+				key:       fill.key,
+				sourceHex: fill.hex,
+				sourceCls: fill.class,
 			}
-			groups[fill.key] = g
+			g.lab, g.labOK = hexToLab(fill.hex)
+			ordered = append(ordered, g)
+			byKey[fill.key] = g
 		}
 		if g.sourceCls == nil {
 			g.sourceCls = fill.class
 		}
-		// A group only counts as undeclared if every piece in it is.
-		if !fill.implicit {
-			g.implicit = false
+		if fill.implicit {
+			g.implicitCount++
 		}
 		g.pieceIDs = append(g.pieceIDs, id)
 		groupOf[id] = g
@@ -123,7 +135,7 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 	if pieceIndex == 0 {
 		warnings = append(warnings, "no fillable shapes found in source")
 	}
-	if len(groups) == 0 {
+	if len(ordered) == 0 {
 		warnings = append(warnings, "no recolorable fills found in source")
 	}
 
@@ -134,16 +146,8 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 		groutKey = g.key
 	}
 
-	// Split into grout vs glass groups, ordered deterministically by the
-	// document order of each group's first piece.
-	ordered := make([]*colorGroup, 0, len(groups))
-	for _, g := range groups {
-		ordered = append(ordered, g)
-	}
-	sort.Slice(ordered, func(i, j int) bool {
-		return ordered[i].firstOrder < ordered[j].firstOrder
-	})
-
+	// Split into grout vs glass groups. ordered is already in document order of
+	// each group's first piece, which is what makes the group keys stable.
 	grout := GroutRegion{PieceIDs: []string{}}
 	glassRegions := map[string]GlassRegion{}
 	byID := indexByID(root)
@@ -165,6 +169,9 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 			if grout.GroutID == nil {
 				warnings = append(warnings, fmt.Sprintf("grout region (%s) has no close grout match", g.key))
 			}
+			if w := implicitFillWarning("grout region", g); w != "" {
+				warnings = append(warnings, w)
+			}
 			// The one case the seed cannot decide: mortar lines drawn on top share
 			// the backing's fill and are grout, a black eye shares it and is not.
 			if grout.Count > 1 {
@@ -183,20 +190,20 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 			Count:       len(g.pieceIDs),
 			SourceClass: g.sourceCls,
 		}
-		switch {
-		case g.implicit:
-			// The source is asking for a color here, not offering one: leave it
-			// unassigned so the admin picks rather than defaulting it to black.
-			warnings = append(warnings, fmt.Sprintf("glass group %s has no declared fill in the source — pick a color", key))
-		case g.sourceHex == "":
+		if g.sourceHex == "" {
+			// A paint that names no color (url(#grad), currentColor): the source
+			// really is offering nothing, so leave it for the admin to pick.
 			warnings = append(warnings, fmt.Sprintf("glass group %s uses an unsupported paint (%s) — pick a color", key, g.key))
-		default:
+		} else {
 			hex := g.sourceHex
 			region.SourceHex = &hex
 			region.GlassColorID = MatchGlass(hex, glassPalette)
 			if region.GlassColorID == nil {
 				warnings = append(warnings, fmt.Sprintf("glass group %s (%s) has no close color match", key, hex))
 			}
+		}
+		if w := implicitFillWarning("glass group "+key, g); w != "" {
+			warnings = append(warnings, w)
 		}
 		glassRegions[key] = region
 
@@ -223,6 +230,41 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 	return structureSVG, manifest, warnings, nil
 }
 
+// findGroup returns the group a shape with this fill belongs to, or nil to start
+// a new one. An exact key match wins; failing that, a fill that resolves to a
+// color joins the first group whose own color is perceptually identical, which is
+// what folds an exporter's near-duplicate blacks into one region. Paints that name
+// no color (url(#grad), currentColor) only ever match their exact raw key.
+func findGroup(ordered []*colorGroup, byKey map[string]*colorGroup, fill sourceFill) *colorGroup {
+	if g, ok := byKey[fill.key]; ok {
+		return g
+	}
+	lab, ok := hexToLab(fill.hex)
+	if !ok {
+		return nil
+	}
+	for _, g := range ordered {
+		if g.labOK && sameColor(lab, g.lab) {
+			byKey[fill.key] = g
+			return g
+		}
+	}
+	return nil
+}
+
+// implicitFillWarning asks the admin to confirm a region whose color the source
+// never declared. Such a shape renders UA-default black, so ingest resolves it
+// that way rather than guessing, but black-by-omission is also what an export
+// looks like when the artist simply forgot to assign a color.
+func implicitFillWarning(label string, g *colorGroup) string {
+	if g.implicitCount == 0 {
+		return ""
+	}
+	return fmt.Sprintf(
+		"%s: %d of %d piece(s) declared no fill and were treated as black (%s) — verify the color",
+		label, g.implicitCount, len(g.pieceIDs), defaultFill)
+}
+
 // resolveSourceFill determines the fill a renderer would paint a shape with. It
 // applies CSS precedence at each level (inline style, then a <style> class rule,
 // then the fill presentation attribute) and walks up to the root for inherited
@@ -245,7 +287,7 @@ func resolveSourceFill(el *etree.Element, classFills map[string]string) (sourceF
 		return sourceFill{key: value, class: class}, true
 	}
 	// Nothing declared anywhere: renders UA-default black, and is recolorable.
-	return sourceFill{key: defaultFill, implicit: true}, true
+	return sourceFill{key: defaultFill, hex: defaultFill, implicit: true}, true
 }
 
 // declaredFill returns the fill declaration that wins on a single element, in CSS

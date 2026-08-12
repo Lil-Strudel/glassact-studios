@@ -48,6 +48,18 @@ const svgGroutBorderUnfilledGlass = `<?xml version="1.0" encoding="UTF-8"?>
   <path d="M1 1h8v8H1z"/>
 </svg>`
 
+// How Illustrator exports a design with black detail work (A-EGL-0002L): the
+// backing gets a class, the black pieces get a near-black class, and a black piece
+// it can shave bytes off is left classless to inherit UA-default #000000.
+const svgNearIdenticalBlacks = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs><style>.st0 { fill: #010101; } .st1 { fill: #5f4d40; }</style></defs>
+  <path class="st1" d="M0 0h100v100H0z"/>
+  <path class="st0" d="M1 1h2v2H1z"/>
+  <path class="st0" d="M4 1h2v2H4z"/>
+  <path d="M7 1h2v2H7z"/>
+</svg>`
+
 const svgFillNoneFirst = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
   <defs><style>.outline{fill:none;stroke:#000;}.bg{fill:#92918a;}.fg{fill:#a7a9ac;}</style></defs>
   <polyline class="outline" points="0,0 5,5"/>
@@ -149,7 +161,8 @@ func TestIngest_ClasslessBackMostShapeIsGrout(t *testing.T) {
 	// p0 is the back-most shape -> grout, regardless of it being classless.
 	assert.Equal(t, []string{"p0"}, manifest.GroutRegion.PieceIDs)
 
-	// The #111111 group becomes the single glass region.
+	// The #111111 group becomes the single glass region: it is ΔE76 ~5 from p0's
+	// implicit #000000, far enough apart to stay two colors.
 	require.Len(t, manifest.GlassRegions, 1)
 	assert.Equal(t, []string{"p1"}, manifest.GlassRegions["group-0"].PieceIDs)
 }
@@ -170,16 +183,47 @@ func TestIngest_UnfilledForegroundShapeIsGlassNotGrout(t *testing.T) {
 	require.NotNil(t, manifest.GroutRegion.GroutID)
 	assert.Equal(t, 3, *manifest.GroutRegion.GroutID)
 
-	// The unfilled shape is glass awaiting a color, not grout for rendering black.
+	// The unfilled shape is glass, not grout for rendering black. Its color
+	// resolves the way a renderer resolves it, and the admin is asked to verify.
 	require.Len(t, manifest.GlassRegions, 1)
 	region := manifest.GlassRegions["group-0"]
 	assert.Equal(t, []string{"p1"}, region.PieceIDs)
-	assert.Nil(t, region.GlassColorID, "an undeclared fill must not be auto-matched to black glass")
-	assert.Nil(t, region.SourceHex)
-	assert.True(t, hasWarning(warnings, "no declared fill"), "warnings: %v", warnings)
+	require.NotNil(t, region.SourceHex)
+	assert.Equal(t, "#000000", *region.SourceHex)
+	require.NotNil(t, region.GlassColorID)
+	assert.Equal(t, 1, *region.GlassColorID)
+	assert.True(t, hasWarning(warnings, "declared no fill"), "warnings: %v", warnings)
 
 	assert.Equal(t, groutGroupKey, findByID(t, structureSVG, "p0").SelectAttrValue("class", ""))
 	assert.Equal(t, "group-0", findByID(t, structureSVG, "p1").SelectAttrValue("class", ""))
+}
+
+// Illustrator's #010101 and a classless shape's UA-default #000000 are the same
+// black to anyone looking at the file, so they must be one region the admin colors
+// once — not two indistinguishable groups to assign separately.
+func TestIngest_PerceptuallyIdenticalFillsShareARegion(t *testing.T) {
+	glass := []PaletteColor{{ID: 7, Hex: "#020202"}}
+	grout := []PaletteColor{{ID: 4, Hex: "#5f4d40"}}
+
+	_, manifest, warnings, err := Ingest([]byte(svgNearIdenticalBlacks), glass, grout)
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"p0"}, manifest.GroutRegion.PieceIDs)
+
+	require.Len(t, manifest.GlassRegions, 1)
+	region := manifest.GlassRegions["group-0"]
+	assert.Equal(t, []string{"p1", "p2", "p3"}, region.PieceIDs)
+	assert.Equal(t, 3, region.Count)
+
+	// The group keeps the back-most piece's declared hex, so an exporter's
+	// rounding never displaces a color the source actually stated.
+	require.NotNil(t, region.SourceHex)
+	assert.Equal(t, "#010101", *region.SourceHex)
+	require.NotNil(t, region.GlassColorID)
+	assert.Equal(t, 7, *region.GlassColorID)
+
+	// The one classless piece is still called out for the admin to verify.
+	assert.True(t, hasWarning(warnings, "1 of 3 piece(s) declared no fill"), "warnings: %v", warnings)
 }
 
 func TestIngest_GroutSeedsFromBackMostPaintableShape(t *testing.T) {

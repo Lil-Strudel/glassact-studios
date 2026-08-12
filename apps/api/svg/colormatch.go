@@ -7,6 +7,13 @@ import "math"
 // region is left unassigned (and surfaced as a warning).
 const matchThreshold = 25.0
 
+// mergeThreshold is the ΔE76 below which two source fills are treated as the same
+// color and grouped together. Set at the just-noticeable difference, so it only
+// ever collapses an exporter's rounding — Illustrator emits #010101 for a shape
+// the designer drew black, alongside classless shapes that render UA-default
+// #000000 — and never two colors a human could tell apart.
+const mergeThreshold = 2.0
+
 // PaletteColor is one candidate color (a glass color or a grout) to match
 // against, identified by its database id.
 type PaletteColor struct {
@@ -85,6 +92,12 @@ func labF(t float64) float64 {
 		return math.Cbrt(t)
 	}
 	return t/(3*delta*delta) + 4.0/29.0
+}
+
+// sameColor reports whether two Lab colors are close enough to be treated as one
+// color during ingest grouping.
+func sameColor(a, b labColor) bool {
+	return deltaE76(a, b) <= mergeThreshold
 }
 
 // deltaE76 is the Euclidean distance between two Lab colors.

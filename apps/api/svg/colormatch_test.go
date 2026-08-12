@@ -39,6 +39,33 @@ func TestMatchNearest_EmptyPaletteOrBadHex(t *testing.T) {
 	assert.Nil(t, MatchGlass("not-a-hex", []PaletteColor{{ID: 1, Hex: "#abcdef"}}))
 }
 
+// sameColor decides which source fills ingest folds into one region, so the
+// threshold has to stay at "a human cannot tell these apart". Widening it far
+// enough to swallow #111111 would start merging colors a designer chose.
+func TestSameColor_MergesExporterRoundingOnly(t *testing.T) {
+	tests := []struct {
+		name string
+		a, b string
+		want bool
+	}{
+		{"identical", "#010101", "#010101", true},
+		{"illustrator near-black vs UA default", "#010101", "#000000", true},
+		{"visibly lighter black", "#000000", "#111111", false},
+		{"two greys", "#7a8074", "#a7a9ac", false},
+		{"black vs white", "#000000", "#ffffff", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a, ok := hexToLab(tt.a)
+			require.True(t, ok)
+			b, ok := hexToLab(tt.b)
+			require.True(t, ok)
+			assert.Equal(t, tt.want, sameColor(a, b))
+		})
+	}
+}
+
 func TestDeltaE76_ZeroForIdentical(t *testing.T) {
 	a, ok := hexToLab("#123456")
 	require.True(t, ok)
