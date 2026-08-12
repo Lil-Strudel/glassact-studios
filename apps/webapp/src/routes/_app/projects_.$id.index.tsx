@@ -927,10 +927,10 @@ function InlayCard(props: InlayCardProps) {
               </Badge>
             </Show>
           </div>
-          <div class="flex items-end justify-between text-xs text-gray-600">
+          <div class="flex items-end justify-between gap-2 text-xs text-gray-600">
             <span>{priceLabel()}</span>
             <Show when={priceFormula()}>
-              <span class="text-gray-500">{priceFormula()}</span>
+              {(formula) => <Badge variant="secondary">{formula()}</Badge>}
             </Show>
           </div>
           <Show when={showManufacturingTracker()}>

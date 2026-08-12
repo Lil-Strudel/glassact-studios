@@ -25,6 +25,7 @@ import { postUploadOpts } from "../../queries/upload";
 import { getProjectOpts } from "../../queries/project";
 import { isApiError } from "../../utils/is-api-error";
 import { GraniteImageLightbox } from "../../components/granite/granite-image-lightbox";
+import PriceGroupTag from "../../components/price-group-tag";
 
 export const Route = createFileRoute("/_app/projects_/$id/add-inlay/")({
   component: RouteComponent,
@@ -196,10 +197,21 @@ function CatalogSelector(props: CatalogSelectorProps) {
                       <code class="text-xs font-mono bg-gray-100 px-2 py-1 rounded w-fit">
                         {item.catalog_code}
                       </code>
-                      <h3 class="font-semibold text-gray-900 text-sm line-clamp-2">
-                        {item.name}
-                      </h3>
-                      <p class="text-xs text-gray-500">{item.category}</p>
+                      <div class="flex items-end justify-between gap-2">
+                        <div class="min-w-0">
+                          <h3 class="font-semibold text-gray-900 text-sm line-clamp-2">
+                            {item.name}
+                          </h3>
+                          <p class="text-xs text-gray-500 mt-2">
+                            {item.category}
+                          </p>
+                        </div>
+                        <div class="flex flex-shrink-0">
+                          <PriceGroupTag
+                            priceGroupId={item.default_price_group_id}
+                          />
+                        </div>
+                      </div>
                       <div class="flex flex-col gap-2 mt-auto pt-2">
                         <Button
                           variant="outline"

@@ -11,6 +11,7 @@ import {
 import { For, Show } from "solid-js";
 import { ItemDetailModal } from "./item-detail-modal";
 import { GraniteImageLightbox } from "../granite/granite-image-lightbox";
+import PriceGroupTag from "../price-group-tag";
 
 interface CatalogGridProps {
   items: GET<CatalogItem>[];
@@ -60,11 +61,18 @@ export function CatalogGrid(props: CatalogGridProps) {
                     </code>
                   </div>
 
-                  <div>
-                    <h3 class="font-semibold text-gray-900 text-sm line-clamp-2">
-                      {item.name}
-                    </h3>
-                    <p class="text-xs text-gray-500 mt-1">{item.category}</p>
+                  <div class="flex items-end justify-between gap-2">
+                    <div class="min-w-0">
+                      <h3 class="font-semibold text-gray-900 text-sm line-clamp-2">
+                        {item.name}
+                      </h3>
+                      <p class="text-xs text-gray-500 mt-1">{item.category}</p>
+                    </div>
+                    <div class="flex flex-shrink-0">
+                      <PriceGroupTag
+                        priceGroupId={item.default_price_group_id}
+                      />
+                    </div>
                   </div>
 
                   <ItemDetailModal item={item}>
