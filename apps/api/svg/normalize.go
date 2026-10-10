@@ -7,6 +7,8 @@ import (
 	"github.com/beevik/etree"
 )
 
+const illustratorNamespace = "http://ns.adobe.com/AdobeIllustrator/10.0/"
+
 // Containers whose children are templates or resources, never drawn in place.
 var nonRenderedContainers = map[string]bool{
 	"defs":     true,
@@ -76,6 +78,48 @@ func isHidden(el *etree.Element, rules []cssRule) bool {
 		return visibility == "hidden" || visibility == "collapse"
 	}
 	return false
+}
+
+// removeIllustratorData deletes Illustrator's private editing data: elements and
+// attributes in its namespace, the <metadata> left empty by that, and the
+// namespace declaration. With "Preserve Illustrator Editing Capabilities" on,
+// the <i:aipgf> blob is a full copy of the .ai file and can be megabytes; no
+// renderer reads it.
+func removeIllustratorData(root *etree.Element) {
+	var walk func(el *etree.Element)
+	walk = func(el *etree.Element) {
+		for _, child := range el.ChildElements() {
+			if child.NamespaceURI() == illustratorNamespace {
+				el.RemoveChild(child)
+				continue
+			}
+			for _, attr := range append([]etree.Attr{}, child.Attr...) {
+				if attr.NamespaceURI() == illustratorNamespace {
+					child.RemoveAttr(attr.FullKey())
+				}
+			}
+			hadChildren := len(child.ChildElements()) > 0
+			walk(child)
+			if hadChildren && isEmptyMetadata(child) {
+				el.RemoveChild(child)
+			}
+		}
+	}
+	walk(root)
+
+	for _, el := range append([]*etree.Element{root}, root.FindElements("//*")...) {
+		for _, attr := range append([]etree.Attr{}, el.Attr...) {
+			if attr.Space == "xmlns" && attr.Value == illustratorNamespace {
+				el.RemoveAttr(attr.FullKey())
+			}
+		}
+	}
+}
+
+func isEmptyMetadata(el *etree.Element) bool {
+	return strings.EqualFold(localName(el.Tag), "metadata") &&
+		len(el.ChildElements()) == 0 &&
+		strings.TrimSpace(el.Text()) == ""
 }
 
 // inlineClassStyles writes every element's class-rule declarations into its

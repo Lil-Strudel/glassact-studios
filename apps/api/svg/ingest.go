@@ -87,6 +87,7 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 			strings.Join(unsupportedSelectors, ", ")))
 	}
 
+	removeIllustratorData(root)
 	if removed := removeHiddenElements(root, rules); removed > 0 {
 		warnings = append(warnings, fmt.Sprintf(
 			"%d hidden element(s) (hidden layers, guides or reference images) were removed", removed))

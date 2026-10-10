@@ -64,6 +64,17 @@ const svgRulesSplitAcrossBlocks = `<svg xmlns="http://www.w3.org/2000/svg" viewB
   <path class="st2" d="M4 1h2v2H4z"/>
 </svg>`
 
+// How Illustrator exports with "Preserve Illustrator Editing Capabilities" on:
+// a copy of the .ai file in <metadata>, which made F-TMP-0009 5.6MB.
+const svgIllustratorEditingData = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:i="http://ns.adobe.com/AdobeIllustrator/10.0/" viewBox="0 0 10 10">
+  <metadata>
+    <i:aipgfRef id="adobe_illustrator_pgf"/>
+    <i:aipgf id="adobe_illustrator_pgf" i:pgfEncoding="zstd/base64" i:pgfVersion="24">KLUv/QBY</i:aipgf>
+  </metadata>
+  <metadata id="keep-me">unrelated</metadata>
+  <path fill="#5f4d40" i:knockout="Off" d="M0 0h10v10H0z"/>
+</svg>`
+
 const svgShapeInClipPath = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
   <defs><clipPath id="clip"><rect x="0" y="0" width="5" height="5"/></clipPath></defs>
   <path fill="#5f4d40" d="M0 0h10v10H0z"/>
@@ -214,6 +225,17 @@ func TestIngest_ShapesInsideDefsAreNotPieces(t *testing.T) {
 	require.Len(t, manifest.GlassRegions, 1)
 	assert.Equal(t, []string{"p1"}, manifest.GlassRegions["group-0"].PieceIDs)
 	assert.Contains(t, string(structureSVG), "<clipPath", "clip paths stay referenceable")
+}
+
+func TestIngest_StripsIllustratorEditingData(t *testing.T) {
+	structureSVG, manifest := ingestOK(t, svgIllustratorEditingData)
+
+	out := string(structureSVG)
+	assert.NotContains(t, out, "aipgf")
+	assert.NotContains(t, out, "AdobeIllustrator")
+	assert.NotContains(t, out, "i:knockout")
+	assert.Contains(t, out, `id="keep-me"`, "metadata that is not Illustrator's survives")
+	assert.Equal(t, []string{"p0"}, manifest.GroutRegion.PieceIDs)
 }
 
 func containsWarning(warnings []string, substr string) bool {
