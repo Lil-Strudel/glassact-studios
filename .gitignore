@@ -224,3 +224,6 @@ terraform.rc
 .tanstack
 **/tmp/**
 tools/svg-to-catalog/input/*
+tools/granite-textures/input/*
+tools/*/.venv/
+__pycache__/
