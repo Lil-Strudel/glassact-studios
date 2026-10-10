@@ -61,7 +61,10 @@ const PaginationEllipsis = <T extends ValidComponent = "div">(
   ]);
   return (
     <PaginationPrimitive.Ellipsis
-      class={cn("flex size-10 items-center justify-center", local.class)}
+      class={cn(
+        "relative flex size-10 items-center justify-center",
+        local.class,
+      )}
       {...others}
     >
       <svg
