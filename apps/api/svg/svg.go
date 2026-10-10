@@ -81,7 +81,6 @@ type ContentBBox struct {
 
 var (
 	cssRuleRe = regexp.MustCompile(`([^{}]+)\{([^}]*)\}`)
-	cssFillRe = regexp.MustCompile(`(?i)fill\s*:\s*([^;]+)`)
 	hex6Re    = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 	hex3Re    = regexp.MustCompile(`^#[0-9a-fA-F]{3}$`)
 	numRe     = regexp.MustCompile(`-?\d*\.?\d+`)
@@ -111,28 +110,6 @@ var namedColors = map[string]string{
 	"blue":    "#0000ff",
 	"teal":    "#008080",
 	"aqua":    "#00ffff",
-}
-
-// parseStyleFills maps each CSS class to its declared fill value (raw string).
-// Generic on purpose: it does not assume the `.st` prefix (the glass palette
-// file uses `.cls-`).
-func parseStyleFills(css string) map[string]string {
-	out := map[string]string{}
-	for _, rule := range cssRuleRe.FindAllStringSubmatch(css, -1) {
-		selectors, body := rule[1], rule[2]
-		fm := cssFillRe.FindStringSubmatch(body)
-		if fm == nil {
-			continue
-		}
-		fill := strings.TrimSpace(fm[1])
-		for _, sel := range strings.Split(selectors, ",") {
-			sel = strings.TrimSpace(sel)
-			if strings.HasPrefix(sel, ".") && !strings.ContainsAny(sel, " >+~") {
-				out[strings.TrimPrefix(sel, ".")] = fill
-			}
-		}
-	}
-	return out
 }
 
 // normalizeHex lowercases and expands shorthand hex; returns ok=false for
