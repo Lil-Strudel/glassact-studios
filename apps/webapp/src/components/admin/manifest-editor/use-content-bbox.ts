@@ -12,6 +12,20 @@ import type { ContentBBox } from "@glassact/data";
 // Returns a getter that lazily renders + measures the provided SVG text on demand
 // so callers can re-measure at save time against the latest structure SVG.
 
+// The source artboard that ingest clips the artwork to (artboardClipID in
+// apps/api/svg/normalize.go). getBBox() ignores clipping, so a stray shape off
+// the artboard would otherwise widen the box the server fits the design into.
+const ARTBOARD_CLIP_ID = "gac-artboard";
+
+function intersect(a: DOMRect, b: DOMRect): ContentBBox | null {
+  const x = Math.max(a.x, b.x);
+  const y = Math.max(a.y, b.y);
+  const width = Math.min(a.x + a.width, b.x + b.width) - x;
+  const height = Math.min(a.y + a.height, b.y + b.height) - y;
+  if (width <= 0 || height <= 0) return null;
+  return { x, y, width, height };
+}
+
 export function useContentBBox() {
   let container: HTMLDivElement | null = null;
 
@@ -45,7 +59,12 @@ export function useContentBBox() {
     try {
       const box = target.getBBox();
       if (box.width === 0 && box.height === 0) return null;
-      return { x: box.x, y: box.y, width: box.width, height: box.height };
+      const artboard = svg.querySelector<SVGRectElement>(
+        `#${ARTBOARD_CLIP_ID} rect`,
+      );
+      return artboard
+        ? intersect(box, artboard.getBBox())
+        : { x: box.x, y: box.y, width: box.width, height: box.height };
     } catch {
       return null;
     } finally {

@@ -9,6 +9,10 @@ import (
 
 const illustratorNamespace = "http://ns.adobe.com/AdobeIllustrator/10.0/"
 
+// artboardClipID is the <clipPath> holding the source artboard. The admin
+// editor's bbox measurement (use-content-bbox.ts) reads it by this id.
+const artboardClipID = "gac-artboard"
+
 // Containers whose children are templates or resources, never drawn in place.
 var nonRenderedContainers = map[string]bool{
 	"defs":     true,
@@ -120,6 +124,38 @@ func isEmptyMetadata(el *etree.Element) bool {
 	return strings.EqualFold(localName(el.Tag), "metadata") &&
 		len(el.ChildElements()) == 0 &&
 		strings.TrimSpace(el.Text()) == ""
+}
+
+// clipToArtboard clips the artwork to the source viewBox. A browser crops
+// anything drawn off the artboard, but Bake fits the browser-measured content
+// bbox, which includes it: a stray point outside the artboard shrinks and
+// off-centers the design. The clip rect is kept in the artwork's own coordinates
+// (it moves into the gac-fit wrapper with everything else), so the editor can
+// bound its measurement by it, and it keeps the baked output cropped like the
+// source.
+func clipToArtboard(root *etree.Element, viewBox string) {
+	x, y, w, h, ok := parseViewBox(viewBox)
+	if !ok {
+		return
+	}
+
+	content := etree.NewElement("g")
+	content.CreateAttr("clip-path", "url(#"+artboardClipID+")")
+	for _, child := range root.ChildElements() {
+		root.RemoveChild(child)
+		content.AddChild(child)
+	}
+
+	clip := etree.NewElement("clipPath")
+	clip.CreateAttr("id", artboardClipID)
+	rect := clip.CreateElement("rect")
+	rect.CreateAttr("x", formatNum(x))
+	rect.CreateAttr("y", formatNum(y))
+	rect.CreateAttr("width", formatNum(w))
+	rect.CreateAttr("height", formatNum(h))
+
+	root.AddChild(clip)
+	root.AddChild(content)
 }
 
 // inlineClassStyles writes every element's class-rule declarations into its

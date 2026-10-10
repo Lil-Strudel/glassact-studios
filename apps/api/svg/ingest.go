@@ -232,6 +232,7 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 
 	// Preserve the original viewBox; fit happens at bake.
 	viewBox := ensureViewBox(root)
+	clipToArtboard(root, viewBox)
 
 	manifest = &Manifest{
 		ViewBox:      viewBox,

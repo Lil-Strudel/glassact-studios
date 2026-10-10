@@ -246,3 +246,44 @@ func containsWarning(warnings []string, substr string) bool {
 	}
 	return false
 }
+
+// F-TMP-0009 carries a stray 2.5-unit circle past the artboard's right edge: the
+// browser crops it, but it widened the measured bbox and shrank the design.
+const svgOffArtboardShape = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 786 497">
+  <path fill="#5f4d40" d="M15 50h760v430H15z"/>
+  <circle fill="#c1cdca" cx="851" cy="241" r="1.25"/>
+</svg>`
+
+func TestIngest_ClipsArtworkToSourceArtboard(t *testing.T) {
+	structureSVG, manifest := ingestOK(t, svgOffArtboardShape)
+	assert.Equal(t, []string{"p1"}, manifest.GlassRegions["group-0"].PieceIDs, "off-artboard shapes stay pieces")
+
+	doc := etree.NewDocument()
+	require.NoError(t, doc.ReadFromBytes(structureSVG))
+	rect := doc.FindElement("//clipPath[@id='" + artboardClipID + "']/rect")
+	require.NotNil(t, rect)
+	assert.Equal(t, []string{"0", "0", "786", "497"}, []string{
+		rect.SelectAttrValue("x", ""), rect.SelectAttrValue("y", ""),
+		rect.SelectAttrValue("width", ""), rect.SelectAttrValue("height", ""),
+	})
+
+	piece := findByID(t, structureSVG, "p1")
+	require.NotNil(t, piece)
+	assert.Equal(t, "url(#"+artboardClipID+")", piece.Parent().SelectAttrValue("clip-path", ""),
+		"every piece is drawn inside the artboard clip")
+}
+
+func TestBake_KeepsArtboardClipInsideFitWrapper(t *testing.T) {
+	manifest, structureSVG := bakedManifest(t, svgOffArtboardShape)
+
+	out, err := Bake(structureSVG, *manifest, ContentBBox{X: 15, Y: 50, Width: 760, Height: 430}, 2, 1,
+		ColorOverrides{}, map[int]string{}, map[int]string{})
+	require.NoError(t, err)
+
+	doc := etree.NewDocument()
+	require.NoError(t, doc.ReadFromBytes(out))
+	clip := doc.FindElement("//clipPath[@id='" + artboardClipID + "']")
+	require.NotNil(t, clip)
+	assert.Equal(t, "gac-fit", clip.Parent().SelectAttrValue("id", ""),
+		"the clip rect must share the artwork's pre-fit coordinates")
+}
