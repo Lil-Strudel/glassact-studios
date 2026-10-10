@@ -52,6 +52,7 @@ func (m *CatalogModule) HandleGetCatalog(w http.ResponseWriter, r *http.Request)
 	}
 
 	filtered := filterCatalogItems(items, search, category, isActive)
+	total := len(filtered)
 
 	end := offset + limit
 	if end > len(filtered) {
@@ -66,7 +67,7 @@ func (m *CatalogModule) HandleGetCatalog(w http.ResponseWriter, r *http.Request)
 
 	m.WriteJSON(w, r, http.StatusOK, map[string]interface{}{
 		"items":  filtered,
-		"total":  len(items),
+		"total":  total,
 		"limit":  limit,
 		"offset": offset,
 	})
