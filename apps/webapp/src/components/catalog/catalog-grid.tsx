@@ -12,6 +12,7 @@ import { For, Show } from "solid-js";
 import { ItemDetailModal } from "./item-detail-modal";
 import { GraniteImageLightbox } from "../granite/granite-image-lightbox";
 import PriceGroupTag from "../price-group-tag";
+import { useScrollToTopOnChange } from "../../hooks/use-scroll-to-top-on-change";
 
 interface CatalogGridProps {
   items: GET<CatalogItem>[];
@@ -22,8 +23,14 @@ interface CatalogGridProps {
 }
 
 export function CatalogGrid(props: CatalogGridProps) {
+  let gridTop: HTMLDivElement | undefined;
+  useScrollToTopOnChange(
+    () => props.page,
+    () => gridTop,
+  );
+
   return (
-    <div class="flex-1 flex flex-col gap-6">
+    <div ref={gridTop} class="flex-1 flex flex-col gap-6 scroll-mt-6">
       <Show
         when={!props.isLoading && props.items.length > 0}
         fallback={

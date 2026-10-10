@@ -4,6 +4,7 @@ import { AuthProvider, AuthState, useAuthContext } from "./providers/auth";
 import { AppStateProvider } from "./providers/app-state";
 import { routeTree } from "./routeTree.gen";
 import { UserProvider } from "./providers/user";
+import { trackLastVisitedSearch } from "@glassact/ui";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -31,6 +32,7 @@ const router = createRouter({
   defaultPreloadStaleTime: 0,
   notFoundMode: "root",
 });
+trackLastVisitedSearch(router);
 
 declare module "@tanstack/solid-router" {
   interface Register {

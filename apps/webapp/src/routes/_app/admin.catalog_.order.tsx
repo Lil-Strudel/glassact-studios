@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
+import { lastAdminCatalogSearch } from "../../utils/list-search";
 import {
   For,
   Show,
@@ -16,6 +17,7 @@ import {
   TextFieldRoot,
   showToast,
   cn,
+  buttonVariants,
 } from "@glassact/ui";
 import {
   draggable,
@@ -271,9 +273,13 @@ function RouteComponent() {
             the order shown. Everything else follows alphabetically.
           </p>
         </div>
-        <Button variant="outline" as={Link} to="/admin/catalog">
+        <Link
+          to="/admin/catalog"
+          search={lastAdminCatalogSearch()}
+          class={buttonVariants({ variant: "outline" })}
+        >
           Back to catalog
-        </Button>
+        </Link>
       </div>
 
       <div class="flex items-center justify-between rounded-md border bg-gray-50 px-4 py-3">

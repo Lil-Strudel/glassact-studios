@@ -36,6 +36,8 @@ export * from "./create-pan-zoom";
 
 export * from "./image-lightbox";
 
+export * from "./last-visited-search";
+
 export * from "./pagination";
 
 export * from "./select";

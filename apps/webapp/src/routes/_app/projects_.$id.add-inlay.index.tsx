@@ -1,4 +1,9 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/solid-router";
+import {
+  createFileRoute,
+  Link,
+  stripSearchParams,
+  useNavigate,
+} from "@tanstack/solid-router";
 import {
   Tabs,
   TabsContent,
@@ -8,17 +13,30 @@ import {
   Button,
   Breadcrumb,
   Form,
+  Pagination,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationItems,
+  PaginationNext,
+  PaginationPrevious,
   textfieldLabel,
   showToast,
 } from "@glassact/ui";
 import { IoClose } from "solid-icons/io";
 import { createForm } from "@tanstack/solid-form";
-import { createSignal, For, Show } from "solid-js";
+import { createMemo, For, Show } from "solid-js";
 import { z } from "zod";
 import { zodStringNumber } from "../../utils/zod-string-number";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import { browseCatalogOpts } from "../../queries/catalog-browse";
-import { useDebounce } from "../../hooks/use-debounce";
+import { useClampPage } from "../../hooks/use-clamp-page";
+import { useDebouncedSearchInput } from "../../hooks/use-debounced-search-input";
+import { useScrollToTopOnChange } from "../../hooks/use-scroll-to-top-on-change";
+import {
+  catalogBrowseSearchDefaults,
+  catalogBrowseSearchSchema,
+  type CatalogBrowseSearchInput,
+} from "../../utils/list-search";
 import { FilterSidebar } from "../../components/catalog/filter-sidebar";
 import { postCatalogInlayOpts, postCustomInlayOpts } from "../../queries/inlay";
 import { postUploadOpts } from "../../queries/upload";
@@ -27,7 +45,25 @@ import { isApiError } from "../../utils/is-api-error";
 import { GraniteImageLightbox } from "../../components/granite/granite-image-lightbox";
 import PriceGroupTag from "../../components/price-group-tag";
 
+const PAGE_SIZE = 50;
+
+function toBrowseParams(search: z.output<typeof catalogBrowseSearchSchema>) {
+  return {
+    search: search.q,
+    category: search.category,
+    limit: PAGE_SIZE,
+    offset: (search.page - 1) * PAGE_SIZE,
+  };
+}
+
 export const Route = createFileRoute("/_app/projects_/$id/add-inlay/")({
+  validateSearch: catalogBrowseSearchSchema,
+  search: { middlewares: [stripSearchParams(catalogBrowseSearchDefaults)] },
+  loaderDeps: ({ search }) => search,
+  loader: ({ context, deps }) =>
+    context.queryClient.ensureQueryData(
+      browseCatalogOpts(toBrowseParams(deps)),
+    ),
   component: RouteComponent,
 });
 
@@ -96,21 +132,39 @@ interface CatalogSelectorProps {
 }
 
 function CatalogSelector(props: CatalogSelectorProps) {
-  const [search, setSearch] = createSignal("");
-  const [category, setCategory] = createSignal("");
-  const [offset, setOffset] = createSignal(0);
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
 
-  const limit = 50;
+  function updateSearch(patch: CatalogBrowseSearchInput) {
+    navigate({
+      search: (prev) => ({ ...prev, ...patch }),
+      replace: true,
+      resetScroll: false,
+    });
+  }
 
-  const debouncedSearch = useDebounce(search, 300);
+  const [searchText, setSearchText] = useDebouncedSearchInput(
+    () => search().q,
+    (q) => updateSearch({ q, page: 1 }),
+  );
 
-  const query = useQuery(() =>
-    browseCatalogOpts({
-      search: debouncedSearch(),
-      category: category(),
-      limit,
-      offset: offset(),
-    }),
+  const query = useQuery(() => browseCatalogOpts(toBrowseParams(search())));
+
+  const totalPages = createMemo(() =>
+    Math.max(1, Math.ceil((query.data?.total ?? 0) / PAGE_SIZE)),
+  );
+
+  useClampPage({
+    page: () => search().page,
+    pageCount: totalPages,
+    hasSettled: () => query.isSuccess && !query.isPlaceholderData,
+    setPage: (page) => updateSearch({ page }),
+  });
+
+  let gridTop: HTMLDivElement | undefined;
+  useScrollToTopOnChange(
+    () => search().page,
+    () => gridTop,
   );
 
   const postCatalogInlay = useMutation(postCatalogInlayOpts);
@@ -151,19 +205,13 @@ function CatalogSelector(props: CatalogSelectorProps) {
     <>
       <div class="flex flex-col lg:flex-row gap-6">
         <FilterSidebar
-          searchValue={search()}
-          selectedCategory={category()}
-          onSearchChange={(value) => {
-            setSearch(value);
-            setOffset(0);
-          }}
-          onCategoryChange={(value) => {
-            setCategory(value);
-            setOffset(0);
-          }}
+          searchValue={searchText()}
+          selectedCategory={search().category}
+          onSearchChange={setSearchText}
+          onCategoryChange={(category) => updateSearch({ category, page: 1 })}
         />
 
-        <div class="flex-1 flex flex-col gap-6">
+        <div ref={gridTop} class="flex-1 flex flex-col gap-6 scroll-mt-6">
           <Show
             when={!query.isLoading && (query.data?.items.length ?? 0) > 0}
             fallback={
@@ -251,21 +299,21 @@ function CatalogSelector(props: CatalogSelectorProps) {
             </div>
           </Show>
 
-          <Show
-            when={
-              !query.isLoading &&
-              query.data &&
-              query.data.items.length > 0 &&
-              offset() + limit < query.data.total
-            }
-          >
+          <Show when={!query.isLoading && totalPages() > 1}>
             <div class="flex justify-center">
-              <Button
-                onClick={() => setOffset(offset() + limit)}
-                variant="outline"
+              <Pagination
+                count={totalPages()}
+                page={search().page}
+                onPageChange={(page) => updateSearch({ page })}
+                itemComponent={(p) => (
+                  <PaginationItem page={p.page}>{p.page}</PaginationItem>
+                )}
+                ellipsisComponent={() => <PaginationEllipsis />}
               >
-                Load More
-              </Button>
+                <PaginationPrevious />
+                <PaginationItems />
+                <PaginationNext />
+              </Pagination>
             </div>
           </Show>
         </div>

@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/solid-router";
+import { lastAdminCatalogSearch } from "../../utils/list-search";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import {
   getCatalogItemOpts,
@@ -50,7 +51,7 @@ function RouteComponent() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["catalog"] });
-          navigate({ to: "/admin/catalog" });
+          navigate({ to: "/admin/catalog", search: lastAdminCatalogSearch() });
         },
         onError: (error) => {
           console.error("Failed to update catalog item:", error);
@@ -71,7 +72,7 @@ function RouteComponent() {
     deleteCatalog.mutate(params().uuid, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["catalog"] });
-        navigate({ to: "/admin/catalog" });
+        navigate({ to: "/admin/catalog", search: lastAdminCatalogSearch() });
       },
       onError: (error) => {
         console.error("Failed to delete catalog item:", error);

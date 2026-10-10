@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/solid-router";
-import { For, Show, createMemo, createSignal } from "solid-js";
+import { createFileRoute, stripSearchParams } from "@tanstack/solid-router";
+import { For, Show, createSignal } from "solid-js";
 import {
   Dialog,
   DialogContent,
@@ -36,8 +36,22 @@ import {
   patchPriceGroupOpts,
   deletePriceGroupOpts,
 } from "../../queries/price-group";
+import { useClampPage } from "../../hooks/use-clamp-page";
+import { useDebouncedSearchInput } from "../../hooks/use-debounced-search-input";
+import { useScrollToTopOnChange } from "../../hooks/use-scroll-to-top-on-change";
+import {
+  listSearchDefaults,
+  listSearchSchema,
+  type ListSearchInput,
+} from "../../utils/list-search";
+import {
+  onTablePaginationChange,
+  tablePaginationState,
+} from "../../utils/table-pagination";
 
 export const Route = createFileRoute("/_app/admin/price-groups")({
+  validateSearch: listSearchSchema,
+  search: { middlewares: [stripSearchParams(listSearchDefaults)] },
   component: RouteComponent,
 });
 
@@ -273,26 +287,61 @@ function EditButton(props: EditButtonProps) {
 }
 
 function RouteComponent() {
-  const [filterValue, setFilterValue] = createSignal("");
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+
+  function updateSearch(patch: ListSearchInput) {
+    navigate({
+      search: (prev) => ({ ...prev, ...patch }),
+      replace: true,
+      resetScroll: false,
+    });
+  }
+
+  const [filterText, setFilterText] = useDebouncedSearchInput(
+    () => search().q,
+    (q) => updateSearch({ q, page: 1 }),
+  );
+
   const query = useQuery(() => getPriceGroupsOpts({ limit: 99, offset: 0 }));
   const postMutation = useMutation(() => postPriceGroupOpts());
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = createSignal(false);
 
-  const table = createMemo(() =>
-    createSolidTable({
-      get data() {
-        return query.data?.items ?? [];
+  const table = createSolidTable({
+    get data() {
+      return query.data?.items ?? [];
+    },
+    columns: defaultColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    state: {
+      get pagination() {
+        return tablePaginationState(search().page);
       },
-      columns: defaultColumns,
-      getCoreRowModel: getCoreRowModel(),
-      getPaginationRowModel: getPaginationRowModel(),
-      getFilteredRowModel: getFilteredRowModel(),
-      state: {
-        globalFilter: filterValue(),
+      get globalFilter() {
+        return search().q;
       },
-      onGlobalFilterChange: setFilterValue,
-    }),
+    },
+    onPaginationChange: onTablePaginationChange(
+      () => search().page,
+      (page) => updateSearch({ page }),
+    ),
+    autoResetPageIndex: false,
+  });
+
+  useClampPage({
+    page: () => search().page,
+    pageCount: () => table.getPageCount(),
+    hasSettled: () => query.isSuccess,
+    setPage: (page) => updateSearch({ page }),
+  });
+
+  let tableTop: HTMLDivElement | undefined;
+  useScrollToTopOnChange(
+    () => search().page,
+    () => tableTop,
   );
 
   const handleCreateSubmit = (data: FormSchema) => {
@@ -316,8 +365,8 @@ function RouteComponent() {
     <div>
       <div class="flex items-center justify-between py-4">
         <TextFieldRoot
-          value={filterValue()}
-          onChange={(value) => setFilterValue(value)}
+          value={filterText()}
+          onChange={setFilterText}
         >
           <TextField placeholder="Filter by name..." class="max-w-sm" />
         </TextFieldRoot>
@@ -338,10 +387,10 @@ function RouteComponent() {
           </DialogContent>
         </Dialog>
       </div>
-      <div class="rounded-md border">
+      <div ref={tableTop} class="rounded-md border scroll-mt-6">
         <Table>
           <TableHeader>
-            <For each={table().getHeaderGroups()}>
+            <For each={table.getHeaderGroups()}>
               {(headerGroup) => (
                 <TableRow>
                   <For each={headerGroup.headers}>
@@ -364,7 +413,7 @@ function RouteComponent() {
           </TableHeader>
           <TableBody>
             <Show
-              when={table().getRowModel().rows?.length}
+              when={table.getRowModel().rows?.length}
               fallback={
                 <TableRow>
                   <TableCell
@@ -376,7 +425,7 @@ function RouteComponent() {
                 </TableRow>
               }
             >
-              <For each={table().getRowModel().rows}>
+              <For each={table.getRowModel().rows}>
                 {(row) => (
                   <TableRow data-state={row.getIsSelected() && "selected"}>
                     <For each={row.getVisibleCells()}>
@@ -400,16 +449,16 @@ function RouteComponent() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => table().previousPage()}
-          disabled={!table().getCanPreviousPage()}
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
         >
           Previous
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => table().nextPage()}
-          disabled={!table().getCanNextPage()}
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
         >
           Next
         </Button>

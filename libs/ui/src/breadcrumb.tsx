@@ -1,10 +1,12 @@
 import { Link } from "@tanstack/solid-router";
 import { Button } from "./button";
 import { For } from "solid-js";
+import { lastVisitedSearch } from "./last-visited-search";
 type breadcrumbProps = {
   crumbs: {
     to: string;
     title: string;
+    search?: Record<string, unknown>;
   }[];
 };
 export const Breadcrumb = (props: breadcrumbProps) => {
@@ -13,7 +15,15 @@ export const Breadcrumb = (props: breadcrumbProps) => {
       <For each={props.crumbs}>
         {(crumb, i) => (
           <>
-            <Button as={Link} to={crumb.to} variant="link" class="px-0">
+            <Button
+              as={Link}
+              to={crumb.to}
+              // libs/ui never sees the app's registered router, so Link's
+              // search type collapses to never here.
+              search={(crumb.search ?? lastVisitedSearch(crumb.to)) as never}
+              variant="link"
+              class="px-0"
+            >
               {crumb.title}
             </Button>
             {i() !== props.crumbs.length - 1 && (

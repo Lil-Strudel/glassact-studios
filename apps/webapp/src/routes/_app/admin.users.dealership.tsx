@@ -1,4 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/solid-router";
+import {
+  createFileRoute,
+  Link,
+  stripSearchParams,
+} from "@tanstack/solid-router";
 import { createMemo, createSignal, Show } from "solid-js";
 import {
   Dialog,
@@ -34,12 +38,30 @@ import {
   buildAvatarUrl,
 } from "../../utils/user-roles";
 import { isApiError } from "../../utils/is-api-error";
+import {
+  listSearchDefaults,
+  listSearchSchema,
+  type ListSearchInput,
+} from "../../utils/list-search";
 
 export const Route = createFileRoute("/_app/admin/users/dealership")({
+  validateSearch: listSearchSchema,
+  search: { middlewares: [stripSearchParams(listSearchDefaults)] },
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+
+  function updateSearch(patch: ListSearchInput) {
+    navigate({
+      search: (prev) => ({ ...prev, ...patch }),
+      replace: true,
+      resetScroll: false,
+    });
+  }
+
   const usersQuery = useQuery(() => getDealershipUsersOpts());
   const dealershipsQuery = useQuery(() => getDealershipsOpts());
   const queryClient = useQueryClient();
@@ -157,6 +179,9 @@ function RouteComponent() {
 
       <UserTable
         users={usersQuery.data ?? []}
+        search={search()}
+        onSearchChange={updateSearch}
+        hasLoaded={usersQuery.isSuccess}
         permission={PERMISSION_ACTIONS.MANAGE_DEALERSHIP_USERS}
         roleOptions={DEALERSHIP_ROLE_OPTIONS}
         extraColumns={dealershipColumn()}

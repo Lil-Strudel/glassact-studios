@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/solid-router";
+import { lastAdminCatalogSearch } from "../../utils/list-search";
 import { useMutation, useQueryClient } from "@tanstack/solid-query";
 import { postCatalogOpts } from "../../queries/catalog";
 import { CatalogForm } from "../../components/admin/catalog-form";
@@ -18,7 +19,7 @@ function RouteComponent() {
     await postCatalog.mutateAsync(req, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["catalog"] });
-        navigate({ to: "/admin/catalog" });
+        navigate({ to: "/admin/catalog", search: lastAdminCatalogSearch() });
       },
       onError: (error) => {
         console.error("Failed to create catalog item:", error);
@@ -34,7 +35,9 @@ function RouteComponent() {
           <p class="text-gray-600 mt-1">Add a new catalog item to the system</p>
         </div>
         <button
-          onClick={() => navigate({ to: "/admin/catalog" })}
+          onClick={() =>
+            navigate({ to: "/admin/catalog", search: lastAdminCatalogSearch() })
+          }
           class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-colors"
         >
           Back to catalog

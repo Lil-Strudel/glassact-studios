@@ -1,5 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/solid-router";
-import { For, Show, createMemo, createSignal } from "solid-js";
+import {
+  createFileRoute,
+  Link,
+  stripSearchParams,
+} from "@tanstack/solid-router";
+import { For, Show, createMemo } from "solid-js";
+import { z } from "zod";
 import {
   Table,
   TableHeader,
@@ -22,9 +27,39 @@ import { CatalogItem, GET } from "@glassact/data";
 import { IoPencilOutline, IoTrashOutline } from "solid-icons/io";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import { getCatalogListOpts, deleteCatalogOpts } from "../../queries/catalog";
-import { useDebounce } from "../../hooks/use-debounce";
+import { useClampPage } from "../../hooks/use-clamp-page";
+import { useDebouncedSearchInput } from "../../hooks/use-debounced-search-input";
+import { useScrollToTopOnChange } from "../../hooks/use-scroll-to-top-on-change";
+import {
+  adminCatalogSearchDefaults,
+  adminCatalogSearchSchema,
+  type AdminCatalogSearchInput,
+} from "../../utils/list-search";
+
+const PAGE_SIZE = 50;
+
+function toCatalogListParams(
+  search: z.output<typeof adminCatalogSearchSchema>,
+) {
+  return {
+    search: search.q,
+    // Omitting the filter returns both; the server treats a present
+    // is_active as strict equality, so passing false would hide the
+    // active items instead of adding the inactive ones.
+    isActive: search.inactive ? undefined : true,
+    limit: PAGE_SIZE,
+    offset: (search.page - 1) * PAGE_SIZE,
+  };
+}
 
 export const Route = createFileRoute("/_app/admin/catalog")({
+  validateSearch: adminCatalogSearchSchema,
+  search: { middlewares: [stripSearchParams(adminCatalogSearchDefaults)] },
+  loaderDeps: ({ search }) => search,
+  loader: ({ context, deps }) =>
+    context.queryClient.ensureQueryData(
+      getCatalogListOpts(toCatalogListParams(deps)),
+    ),
   component: RouteComponent,
 });
 
@@ -126,41 +161,43 @@ const defaultColumns: ColumnDef<GET<CatalogItem>>[] = [
   },
 ];
 
-const PAGE_SIZE = 50;
-
 function RouteComponent() {
-  const [filterValue, setFilterValue] = createSignal("");
-  const [showInactive, setShowInactive] = createSignal(false);
-  const [page, setPage] = createSignal(1);
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
 
-  const debouncedFilterValue = useDebounce(filterValue, 300);
+  function updateSearch(patch: AdminCatalogSearchInput) {
+    navigate({
+      search: (prev) => ({ ...prev, ...patch }),
+      replace: true,
+      resetScroll: false,
+    });
+  }
+
+  const [searchText, setSearchText] = useDebouncedSearchInput(
+    () => search().q,
+    (q) => updateSearch({ q, page: 1 }),
+  );
 
   const query = useQuery(() =>
-    getCatalogListOpts({
-      search: debouncedFilterValue(),
-      // Omitting the filter returns both; the server treats a present
-      // is_active as strict equality, so passing false would hide the
-      // active items instead of adding the inactive ones.
-      isActive: showInactive() ? undefined : true,
-      limit: PAGE_SIZE,
-      offset: (page() - 1) * PAGE_SIZE,
-    }),
+    getCatalogListOpts(toCatalogListParams(search())),
   );
 
   const totalPages = createMemo(() =>
     Math.max(1, Math.ceil((query.data?.total ?? 0) / PAGE_SIZE)),
   );
 
-  // Narrowing the result set can leave you past the end of it.
-  function handleSearchChange(value: string) {
-    setFilterValue(value);
-    setPage(1);
-  }
+  useClampPage({
+    page: () => search().page,
+    pageCount: totalPages,
+    hasSettled: () => query.isSuccess && !query.isPlaceholderData,
+    setPage: (page) => updateSearch({ page }),
+  });
 
-  function handleShowInactiveChange(value: boolean) {
-    setShowInactive(value);
-    setPage(1);
-  }
+  let tableTop: HTMLDivElement | undefined;
+  useScrollToTopOnChange(
+    () => search().page,
+    () => tableTop,
+  );
 
   // Paging is server-side, so the table renders exactly the rows it is given.
   const table = createMemo(() =>
@@ -177,7 +214,7 @@ function RouteComponent() {
     <div>
       <div class="flex items-center justify-between py-4 gap-4">
         <div class="flex items-center gap-4">
-          <TextFieldRoot value={filterValue()} onChange={handleSearchChange}>
+          <TextFieldRoot value={searchText()} onChange={setSearchText}>
             <TextField
               placeholder="Search by code or name..."
               class="max-w-sm"
@@ -187,8 +224,10 @@ function RouteComponent() {
           <label class="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
-              checked={showInactive()}
-              onChange={(e) => handleShowInactiveChange(e.currentTarget.checked)}
+              checked={search().inactive}
+              onChange={(e) =>
+                updateSearch({ inactive: e.currentTarget.checked, page: 1 })
+              }
               class="rounded border-gray-300"
             />
             Include inactive
@@ -205,7 +244,7 @@ function RouteComponent() {
         </div>
       </div>
 
-      <div class="rounded-md border">
+      <div ref={tableTop} class="rounded-md border scroll-mt-6">
         <Table>
           <TableHeader>
             <For each={table().getHeaderGroups()}>
@@ -266,24 +305,22 @@ function RouteComponent() {
 
       <div class="flex items-center justify-end gap-4 py-4">
         <span class="text-sm text-gray-500">
-          Page {page()} of {totalPages()} ({query.data?.total ?? 0} items)
+          Page {search().page} of {totalPages()} ({query.data?.total ?? 0} items)
         </span>
         <div class="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
-            disabled={page() <= 1}
+            onClick={() => updateSearch({ page: search().page - 1 })}
+            disabled={search().page <= 1}
           >
             Previous
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() =>
-              setPage((current) => Math.min(totalPages(), current + 1))
-            }
-            disabled={page() >= totalPages()}
+            onClick={() => updateSearch({ page: search().page + 1 })}
+            disabled={search().page >= totalPages()}
           >
             Next
           </Button>

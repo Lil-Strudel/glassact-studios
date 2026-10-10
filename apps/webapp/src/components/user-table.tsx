@@ -28,6 +28,14 @@ import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
 import { Can } from "./Can";
 import { isApiError } from "../utils/is-api-error";
+import { useClampPage } from "../hooks/use-clamp-page";
+import { useDebouncedSearchInput } from "../hooks/use-debounced-search-input";
+import { useScrollToTopOnChange } from "../hooks/use-scroll-to-top-on-change";
+import type { ListSearchInput } from "../utils/list-search";
+import {
+  onTablePaginationChange,
+  tablePaginationState,
+} from "../utils/table-pagination";
 
 export interface ManagedUser {
   uuid: string;
@@ -52,6 +60,9 @@ interface UserTableProps<T extends ManagedUser> {
   extraColumns?: ColumnDef<T>[];
   onUpdateRole: (user: T, role: string) => Promise<unknown>;
   onSetActive: (user: T, isActive: boolean) => Promise<unknown>;
+  search: { page: number; q: string };
+  onSearchChange: (patch: ListSearchInput) => void;
+  hasLoaded: boolean;
 }
 
 function toErrorMessage(error: unknown) {
@@ -149,22 +160,50 @@ export function UserTable<T extends ManagedUser>(props: UserTableProps<T>) {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    state: {
+      get pagination() {
+        return tablePaginationState(props.search.page);
+      },
+      get columnFilters() {
+        return props.search.q ? [{ id: "name", value: props.search.q }] : [];
+      },
+    },
+    onPaginationChange: onTablePaginationChange(
+      () => props.search.page,
+      (page) => props.onSearchChange({ page }),
+    ),
+    autoResetPageIndex: false,
   });
+
+  const [filterText, setFilterText] = useDebouncedSearchInput(
+    () => props.search.q,
+    (q) => props.onSearchChange({ q, page: 1 }),
+  );
+
+  useClampPage({
+    page: () => props.search.page,
+    pageCount: () => table.getPageCount(),
+    hasSettled: () => props.hasLoaded,
+    setPage: (page) => props.onSearchChange({ page }),
+  });
+
+  let tableTop: HTMLDivElement | undefined;
+  useScrollToTopOnChange(
+    () => props.search.page,
+    () => tableTop,
+  );
 
   return (
     <div>
       <div class="flex items-center justify-between py-4">
-        <TextFieldRoot
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(value) => table.getColumn("name")?.setFilterValue(value)}
-        >
+        <TextFieldRoot value={filterText()} onChange={setFilterText}>
           <TextField placeholder="Filter by name..." class="max-w-sm" />
         </TextFieldRoot>
 
         <Can permission={props.permission}>{props.addAction}</Can>
       </div>
 
-      <div class="rounded-md border">
+      <div ref={tableTop} class="rounded-md border scroll-mt-6">
         <Table>
           <TableHeader>
             <For each={table.getHeaderGroups()}>
