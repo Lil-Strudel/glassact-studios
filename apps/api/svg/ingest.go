@@ -80,14 +80,24 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 		return nil, nil, nil, fmt.Errorf("svg has no root element")
 	}
 
+	rules, unsupportedSelectors := parseClassRules(collectStyleCSS(doc))
+	if len(unsupportedSelectors) > 0 {
+		warnings = append(warnings, fmt.Sprintf(
+			"source CSS uses selectors other than plain classes (%s); their styles were ignored",
+			strings.Join(unsupportedSelectors, ", ")))
+	}
+
+	if removed := removeHiddenElements(root, rules); removed > 0 {
+		warnings = append(warnings, fmt.Sprintf(
+			"%d hidden element(s) (hidden layers, guides or reference images) were removed", removed))
+	}
+
 	if len(doc.FindElements("//image")) > 0 {
 		warnings = append(warnings, "source contains an embedded raster image; it cannot be recolored and was ignored")
 	}
 	if len(doc.FindElements("//linearGradient")) > 0 || len(doc.FindElements("//radialGradient")) > 0 {
 		warnings = append(warnings, "source contains gradient fills; affected pieces fall back to a solid color")
 	}
-
-	classFills := parseStyleFills(collectStyleCSS(doc))
 
 	// Group pieces by resolved fill, preserving document order. ordered is the
 	// source of truth (map iteration order is randomized, and perceptual grouping
@@ -103,7 +113,7 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 		pieceIndex++
 		el.CreateAttr("id", id)
 
-		fill, paintable := resolveSourceFill(el, classFills)
+		fill, paintable := resolveSourceFill(el, rules)
 		if !paintable {
 			return // e.g. fill:none stroke outline — has an id but is not a region
 		}
@@ -145,6 +155,11 @@ func Ingest(raw []byte, glassPalette, groutPalette []PaletteColor) (structureSVG
 	if g := groupOf[backMostID]; g != nil {
 		groutKey = g.key
 	}
+
+	// Fills are resolved, so the source classes have done their job. Inline them
+	// before the group keys below take over the class attribute.
+	inlineClassStyles(root, rules)
+	stripStyles(root)
 
 	// Split into grout vs glass groups. ordered is already in document order of
 	// each group's first piece, which is what makes the group keys stable.
@@ -270,9 +285,9 @@ func implicitFillWarning(label string, g *colorGroup) string {
 // then the fill presentation attribute) and walks up to the root for inherited
 // fills. Returns paintable=false when the winning declaration is "none", e.g. a
 // stroke-only outline.
-func resolveSourceFill(el *etree.Element, classFills map[string]string) (sourceFill, bool) {
+func resolveSourceFill(el *etree.Element, rules []cssRule) (sourceFill, bool) {
 	for node := el; node != nil; node = node.Parent() {
-		value, class, ok := declaredFill(node, classFills)
+		value, class, ok := declaredProperty(node, "fill", rules)
 		if !ok {
 			continue
 		}
@@ -290,42 +305,11 @@ func resolveSourceFill(el *etree.Element, classFills map[string]string) (sourceF
 	return sourceFill{key: defaultFill, hex: defaultFill, implicit: true}, true
 }
 
-// declaredFill returns the fill declaration that wins on a single element, in CSS
-// precedence order: inline style, then a <style> class rule, then the fill
-// presentation attribute. Among several matching classes a color beats "none",
-// so a shape carrying both a paint class and an outline class stays paintable.
-func declaredFill(el *etree.Element, classFills map[string]string) (value string, class *string, ok bool) {
-	if style := el.SelectAttrValue("style", ""); style != "" {
-		if m := cssFillRe.FindStringSubmatch(style); m != nil {
-			return strings.TrimSpace(m[1]), nil, true
-		}
-	}
-
-	sawFillNone := false
-	for _, c := range strings.Fields(el.SelectAttrValue("class", "")) {
-		fv, found := classFills[c]
-		if !found {
-			continue
-		}
-		if strings.EqualFold(strings.TrimSpace(fv), "none") {
-			sawFillNone = true
-			continue
-		}
-		cc := c
-		return strings.TrimSpace(fv), &cc, true
-	}
-	if sawFillNone {
-		return "none", nil, true
-	}
-
-	if attr := strings.TrimSpace(el.SelectAttrValue("fill", "")); attr != "" {
-		return attr, nil, true
-	}
-	return "", nil, false
-}
-
 func walkFillable(el *etree.Element, visit func(*etree.Element)) {
 	for _, child := range el.ChildElements() {
+		if isNonRenderedContainer(child.Tag) {
+			continue
+		}
 		if isFillable(child.Tag) {
 			visit(child)
 		}
