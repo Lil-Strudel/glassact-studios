@@ -17,16 +17,6 @@ const PAGE_SIZE = 50;
 export const Route = createFileRoute("/_app/catalog/")({
   validateSearch: catalogBrowseSearchSchema,
   search: { middlewares: [stripSearchParams(catalogBrowseSearchDefaults)] },
-  loaderDeps: ({ search }) => search,
-  loader: ({ context, deps }) =>
-    context.queryClient.ensureQueryData(
-      browseCatalogOpts({
-        search: deps.q,
-        category: deps.category,
-        limit: PAGE_SIZE,
-        offset: (deps.page - 1) * PAGE_SIZE,
-      }),
-    ),
   component: RouteComponent,
 });
 

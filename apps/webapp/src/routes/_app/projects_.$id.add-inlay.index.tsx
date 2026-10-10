@@ -59,11 +59,6 @@ function toBrowseParams(search: z.output<typeof catalogBrowseSearchSchema>) {
 export const Route = createFileRoute("/_app/projects_/$id/add-inlay/")({
   validateSearch: catalogBrowseSearchSchema,
   search: { middlewares: [stripSearchParams(catalogBrowseSearchDefaults)] },
-  loaderDeps: ({ search }) => search,
-  loader: ({ context, deps }) =>
-    context.queryClient.ensureQueryData(
-      browseCatalogOpts(toBrowseParams(deps)),
-    ),
   component: RouteComponent,
 });
 

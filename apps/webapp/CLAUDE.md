@@ -600,7 +600,7 @@ Page, search text and filters of every list are search params, so Back, refresh 
 - Validate with a schema from `utils/list-search.ts` (`listSearchSchema` or an `.extend()` of it) and strip defaults with `search: { middlewares: [stripSearchParams(defaults)] }`.
 - Every page/filter change navigates with `replace: true` (one history entry per list visit) and `resetScroll: false` (`useScrollToTopOnChange` handles scrolling).
 - Text inputs go through `useDebouncedSearchInput`; never bind an input straight to the URL.
-- Server-paginated lists add `loaderDeps: ({ search }) => search` plus an `ensureQueryData` loader.
+- Do not add `loaderDeps` for list search params: they are part of the match identity, so every page or keystroke remounts the route component (losing input text and the scroll hook). Fetch with `useQuery` keyed on the search instead.
 - TanStack Table lists control `pagination` from the URL via `utils/table-pagination.ts` and set `autoResetPageIndex: false`, or async data arriving resets the page.
 - `useClampPage` pulls the page back when a delete or filter leaves it past the end.
 - Links back to a list use `lastVisitedSearch(path)` from `@glassact/ui`; `Breadcrumb` does this automatically.

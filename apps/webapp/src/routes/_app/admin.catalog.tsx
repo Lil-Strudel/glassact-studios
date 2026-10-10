@@ -55,11 +55,6 @@ function toCatalogListParams(
 export const Route = createFileRoute("/_app/admin/catalog")({
   validateSearch: adminCatalogSearchSchema,
   search: { middlewares: [stripSearchParams(adminCatalogSearchDefaults)] },
-  loaderDeps: ({ search }) => search,
-  loader: ({ context, deps }) =>
-    context.queryClient.ensureQueryData(
-      getCatalogListOpts(toCatalogListParams(deps)),
-    ),
   component: RouteComponent,
 });
 
