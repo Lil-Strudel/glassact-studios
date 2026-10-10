@@ -15,8 +15,7 @@ interface FilterSidebarProps {
 
 export function FilterSidebar(props: FilterSidebarProps) {
   const categoriesQuery = useQuery(() => getCatalogCategoriesOpts());
-  const { graniteKey, granite, setGraniteKey } =
-    useGranitePreference(PLAIN_GRANITE_KEY);
+  const granitePreference = useGranitePreference(PLAIN_GRANITE_KEY);
 
   const clearFilters = () => {
     props.onSearchChange("");
@@ -61,12 +60,7 @@ export function FilterSidebar(props: FilterSidebarProps) {
           <p class="text-xs text-gray-500 mt-1">
             Preview only — does not filter results.
           </p>
-          <GranitePicker
-            selectedKey={graniteKey()}
-            onSelect={setGraniteKey}
-            class="mt-2"
-          />
-          <p class="text-xs text-gray-600 mt-2">{granite().name}</p>
+          <GranitePicker preference={granitePreference} class="mt-2" />
         </div>
       </div>
     </div>

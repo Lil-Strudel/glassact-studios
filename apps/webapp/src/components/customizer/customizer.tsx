@@ -86,7 +86,8 @@ export function Customizer(props: CustomizerProps) {
   // The granite backdrop (the "stone" the inlay sits on) is a viewing
   // preference, independent of the saved/baked coloring. It is shared with the
   // catalog so the stone a dealership browsed on carries into the customizer.
-  const { graniteKey, granite, setGraniteKey } = useGranitePreference();
+  const granitePreference = useGranitePreference();
+  const inlayInches = createMemo(() => ({ width: width(), height: height() }));
 
   const manifest = createMemo(
     () =>
@@ -370,9 +371,8 @@ export function Customizer(props: CustomizerProps) {
                 : []
             }
             highlightedRegion={hoveredRegion()}
-            granite={granite()}
-            graniteKey={graniteKey()}
-            onSelectGranite={setGraniteKey}
+            granite={granitePreference}
+            inlayInches={inlayInches()}
             onPieceClick={onPieceClick}
             onPieceHover={(_, groupKey) => setHoveredRegion(groupKey)}
             onDeselect={deselect}

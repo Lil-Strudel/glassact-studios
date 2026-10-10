@@ -1,10 +1,12 @@
 import { createEffect, createSignal, onCleanup, onMount, Show } from "solid-js";
 import { Button, createPanZoom } from "@glassact/ui";
-import {
-  graniteBackgroundStyle,
-  type GranitePreset,
-} from "../../granite/granite";
+import { graniteBackdropStyle } from "../../granite/granite";
 import { GranitePill } from "../../granite/granite-pill";
+import {
+  createGranitePlacement,
+  type InlayInches,
+} from "../../granite/create-granite-placement";
+import type { GranitePreference } from "../../../hooks/use-granite-preference";
 import { GROUT_REGION_KEY } from "./resolution";
 
 interface CustomizerCanvasProps {
@@ -26,9 +28,9 @@ interface CustomizerCanvasProps {
   groutSelectable?: boolean;
   // Granite backdrop the inlay is previewed against. Optional: when omitted (e.g.
   // the admin manifest editor) the canvas shows a plain backdrop and no picker.
-  granite?: GranitePreset;
-  graniteKey?: string;
-  onSelectGranite?: (key: string) => void;
+  granite?: GranitePreference;
+  // The inlay's physical size, so the granite is drawn at true scale.
+  inlayInches?: InlayInches;
   onPieceClick: (pieceId: string, groupKey: string) => void;
   onPieceHover: (pieceId: string | null, groupKey: string | null) => void;
   // Fired when the user clicks empty backdrop (not a piece, not a pan).
@@ -44,11 +46,20 @@ const HIGHLIGHT_CSS = `
 
 export function CustomizerCanvas(props: CustomizerCanvasProps) {
   let host!: HTMLDivElement;
+  const [viewport, setViewport] = createSignal<HTMLDivElement>();
   const [ready, setReady] = createSignal(false);
   const pieceEls = new Map<string, SVGElement>();
   const groutEls = new Map<string, SVGElement>();
 
   const panZoom = createPanZoom();
+
+  const granitePlacement = createGranitePlacement({
+    backdrop: viewport,
+    inlay: () =>
+      ready() ? (host.querySelector("svg") ?? undefined) : undefined,
+    inches: () => props.inlayInches,
+    track: panZoom.transform,
+  });
 
   let pressedPiece: string | null = null;
 
@@ -168,12 +179,15 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
     <div class="relative flex h-full w-full flex-col">
       <style>{HIGHLIGHT_CSS}</style>
       <div
-        ref={panZoom.setViewport}
+        ref={(el) => {
+          panZoom.setViewport(el);
+          setViewport(el);
+        }}
         class="gac-canvas relative flex-1 overflow-hidden rounded-lg border border-gray-200"
         classList={{ "gac-grout-interactive": props.groutSelectable }}
         style={
           props.granite
-            ? graniteBackgroundStyle(props.granite)
+            ? graniteBackdropStyle(props.granite.granite(), granitePlacement())
             : { "background-color": "#f3f4f6" }
         }
         onPointerDown={onPointerDown}
@@ -193,12 +207,10 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
         </div>
       </div>
 
-      <Show when={props.granite && props.onSelectGranite}>
-        <GranitePill
-          class="absolute left-3 top-3"
-          selectedKey={props.graniteKey ?? ""}
-          onSelect={(key) => props.onSelectGranite?.(key)}
-        />
+      <Show when={props.granite}>
+        {(granite) => (
+          <GranitePill class="absolute left-3 top-3" preference={granite()} />
+        )}
       </Show>
 
       <div class="pointer-events-none absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-gray-200 bg-white/90 px-2 py-1 shadow-sm">

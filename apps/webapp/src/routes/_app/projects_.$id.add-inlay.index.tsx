@@ -232,6 +232,7 @@ function CatalogSelector(props: CatalogSelectorProps) {
                   <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
                     <GraniteImageLightbox
                       images={[{ src: item.svg_url, alt: item.name }]}
+                      inches={{ width: item.default_width, height: item.default_height }}
                       triggerClass="block w-full h-48 overflow-hidden"
                       previewClass="w-full h-full p-4"
                     >
