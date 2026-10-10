@@ -40,6 +40,8 @@ export * from "./last-visited-search";
 
 export * from "./pagination";
 
+export * from "./popover";
+
 export * from "./select";
 
 export * from "./table";

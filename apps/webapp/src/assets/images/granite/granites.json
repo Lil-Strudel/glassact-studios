@@ -1,0 +1,115 @@
+{
+  "tint": {
+    "tileInches": 6.0
+  },
+  "samples": [
+    {
+      "key": "jet-black",
+      "name": "Jet Black",
+      "tileInches": 8.0,
+      "meanHex": "#010101"
+    },
+    {
+      "key": "galaxy-black",
+      "name": "Galaxy Black",
+      "tileInches": 12.0,
+      "meanHex": "#040404"
+    },
+    {
+      "key": "india-mist",
+      "name": "India Mist",
+      "tileInches": 8.0,
+      "meanHex": "#212121"
+    },
+    {
+      "key": "impala-black",
+      "name": "Impala Black",
+      "tileInches": 12.0,
+      "meanHex": "#272725"
+    },
+    {
+      "key": "black-mist",
+      "name": "Black Mist",
+      "tileInches": 12.0,
+      "meanHex": "#343536"
+    },
+    {
+      "key": "paradiso",
+      "name": "Paradiso",
+      "tileInches": 12.0,
+      "meanHex": "#625a58"
+    },
+    {
+      "key": "bahama-blue",
+      "name": "Bahama Blue",
+      "tileInches": 12.0,
+      "meanHex": "#5f5c62"
+    },
+    {
+      "key": "georgia-gray",
+      "name": "Georgia Gray",
+      "tileInches": 12.0,
+      "meanHex": "#929291"
+    },
+    {
+      "key": "newbury-gray",
+      "name": "Newbury Gray",
+      "tileInches": 8.0,
+      "meanHex": "#8d9492"
+    },
+    {
+      "key": "silver-cloud",
+      "name": "Silver Cloud",
+      "tileInches": 12.0,
+      "meanHex": "#a09d9b"
+    },
+    {
+      "key": "tropical-green",
+      "name": "Tropical Green",
+      "tileInches": 12.0,
+      "meanHex": "#3e3d29"
+    },
+    {
+      "key": "paradise-green",
+      "name": "Paradise Green",
+      "tileInches": 12.0,
+      "meanHex": "#2e3632"
+    },
+    {
+      "key": "butterfly-blue",
+      "name": "Butterfly Blue",
+      "tileInches": 12.0,
+      "meanHex": "#3b4945"
+    },
+    {
+      "key": "blue-pearl",
+      "name": "Blue Pearl",
+      "tileInches": 12.0,
+      "meanHex": "#4e535c"
+    },
+    {
+      "key": "india-red",
+      "name": "India Red",
+      "tileInches": 8.0,
+      "meanHex": "#5d382d"
+    },
+    {
+      "key": "mahogany",
+      "name": "Mahogany",
+      "tileInches": 12.0,
+      "meanHex": "#504440"
+    },
+    {
+      "key": "mountain-rose",
+      "name": "Mountain Rose",
+      "tileInches": 12.0,
+      "meanHex": "#836758"
+    },
+    {
+      "key": "antique-rose",
+      "name": "Antique Rose",
+      "tileInches": 12.0,
+      "meanHex": "#b0a29a"
+    }
+  ]
+}

@@ -1,70 +1,141 @@
 import type { JSX } from "solid-js";
-import graniteSlab from "../../assets/images/granite/granite-slab.jpg";
+import manifest from "../../assets/images/granite/granites.json";
+import tintBase from "../../assets/images/granite/tint-base.webp";
+import type { GranitePlacement } from "./create-granite-placement";
 
-// The customizer and the catalog preview an inlay against the "stone" it will
-// be set into.
-// Rather than ship one photo per granite color, we tint a single neutral
-// grayscale granite tile (see granite-slab.jpg / CREDITS.md) to each of the
-// common monument granite colors via CSS `background-blend-mode`. This keeps
-// the asset footprint tiny while still reading as real speckled granite in
-// context. To use a real per-color photograph instead, give that preset an
-// `image` and set `blend: "normal"`.
-export interface GranitePreset {
-  key: string;
-  name: string;
-  // Base color the granite tile is tinted toward.
-  tint: string;
-  // How the tint composites over the tile. "normal" with no image = flat color.
-  blend: JSX.CSSProperties["background-blend-mode"];
-  // Optional override texture (defaults to the shared grayscale slab).
-  image?: string;
+// The customizer and the catalog preview an inlay against the stone it will be
+// set into. The tiles, their physical size and picker order are generated from
+// the supplier's samples by tools/granite-textures; for a stone we have no
+// sample of, the user picks a color and a neutral tile is tinted to it.
+
+const textureUrls = import.meta.glob<string>(
+  "../../assets/images/granite/*.webp",
+  { eager: true, query: "?url", import: "default" },
+);
+
+function textureUrl(file: string): string {
+  const url = textureUrls[`../../assets/images/granite/${file}`];
+  if (!url) {
+    throw new Error(`granites.json lists ${file}, which was not generated`);
+  }
+  return url;
 }
 
-export const GRANITE_PRESETS: GranitePreset[] = [
-  { key: "none", name: "Plain", tint: "#f3f4f6", blend: "normal" },
-  { key: "black", name: "Absolute Black", tint: "#282828", blend: "multiply" },
-  { key: "gray", name: "Barre Gray", tint: "#8f8f8f", blend: "multiply" },
-  { key: "mahogany", name: "Dakota Mahogany", tint: "#7a4a37", blend: "multiply" },
-  { key: "pink", name: "Salisbury Pink", tint: "#c39a95", blend: "multiply" },
-  { key: "blue", name: "Blue Pearl", tint: "#46536b", blend: "multiply" },
-  { key: "green", name: "Forest Green", tint: "#3a4a40", blend: "multiply" },
-];
+export interface GraniteSample {
+  key: string;
+  name: string;
+  // Physical size of one tile of the photo, so the stone is drawn to scale.
+  tileInches: number;
+  // Average color, shown under the tile while it loads.
+  meanHex: string;
+  image: string;
+  swatch: string;
+}
 
-export const DEFAULT_GRANITE_KEY = "gray";
+export const GRANITE_SAMPLES: GraniteSample[] = manifest.samples.map(
+  (sample) => ({
+    ...sample,
+    image: textureUrl(`${sample.key}.webp`),
+    swatch: textureUrl(`${sample.key}-swatch.webp`),
+  }),
+);
 
-// What the catalog opens on, before the dealership picks a stone.
-export const PLAIN_GRANITE_KEY = "none";
+export type GraniteChoice =
+  | { kind: "plain" }
+  | { kind: "sample"; sample: GraniteSample }
+  | { kind: "custom"; hex: string };
 
-export function graniteByKey(key: string): GranitePreset {
+export const PLAIN_GRANITE_KEY = "plain";
+export const CUSTOM_GRANITE_KEY = "custom";
+export const DEFAULT_GRANITE_KEY = "georgia-gray";
+export const DEFAULT_CUSTOM_HEX = "#7a6a5e";
+
+const PLAIN_HEX = "#f3f4f6";
+// Until the inlay has been measured there is no true scale to draw at; this
+// approximates a 4" inlay filling a typical preview.
+const UNPLACED_PX_PER_INCH = 60;
+
+export function isGraniteKey(key: string): boolean {
   return (
-    GRANITE_PRESETS.find((p) => p.key === key) ??
-    GRANITE_PRESETS.find((p) => p.key === DEFAULT_GRANITE_KEY)!
+    key === PLAIN_GRANITE_KEY ||
+    key === CUSTOM_GRANITE_KEY ||
+    GRANITE_SAMPLES.some((sample) => sample.key === key)
   );
 }
 
-// The inline background style for the canvas backdrop element.
-export function graniteBackgroundStyle(preset: GranitePreset): JSX.CSSProperties {
-  if (preset.key === "none") {
-    return { "background-color": preset.tint };
+export function graniteChoice(key: string, customHex: string): GraniteChoice {
+  if (key === PLAIN_GRANITE_KEY) return { kind: "plain" };
+  if (key === CUSTOM_GRANITE_KEY) return { kind: "custom", hex: customHex };
+  const sample =
+    GRANITE_SAMPLES.find((s) => s.key === key) ??
+    GRANITE_SAMPLES.find((s) => s.key === DEFAULT_GRANITE_KEY)!;
+  return { kind: "sample", sample };
+}
+
+export function graniteChoiceName(choice: GraniteChoice): string {
+  switch (choice.kind) {
+    case "plain":
+      return "Plain";
+    case "custom":
+      return "Custom color";
+    case "sample":
+      return choice.sample.name;
   }
+}
+
+// The backdrop behind an inlay. With a placement the stone is drawn at true
+// scale and anchored to the inlay's corner, so it pans and zooms with it.
+export function graniteBackdropStyle(
+  choice: GraniteChoice,
+  placement: GranitePlacement | null,
+): JSX.CSSProperties {
+  if (choice.kind === "plain") {
+    return { "background-color": PLAIN_HEX };
+  }
+
+  const tileInches =
+    choice.kind === "sample"
+      ? choice.sample.tileInches
+      : manifest.tint.tileInches;
+  const tilePx = tileInches * (placement?.pxPerInch ?? UNPLACED_PX_PER_INCH);
+
+  const image = choice.kind === "sample" ? choice.sample.image : tintBase;
   return {
-    "background-color": preset.tint,
-    "background-image": `url(${preset.image ?? graniteSlab})`,
-    "background-blend-mode": preset.blend,
-    "background-size": "260px 260px",
+    ...textureLayers(choice, image),
+    "background-size": `${tilePx}px ${tilePx}px`,
+    "background-position": placement
+      ? `${placement.originX}px ${placement.originY}px`
+      : "center",
     "background-repeat": "repeat",
   };
 }
 
-// A small solid-color swatch representing a preset in the picker.
-export function graniteSwatchStyle(preset: GranitePreset): JSX.CSSProperties {
-  if (preset.key === "none") {
-    return { "background-color": preset.tint };
+export function graniteSwatchStyle(choice: GraniteChoice): JSX.CSSProperties {
+  if (choice.kind === "plain") {
+    return { "background-color": PLAIN_HEX };
+  }
+  const image = choice.kind === "sample" ? choice.sample.swatch : tintBase;
+  return {
+    ...textureLayers(choice, image),
+    "background-size": "cover",
+  };
+}
+
+// The tint tile is centered on 50% gray, and `overlay` leaves 50% gray showing
+// exactly the color beneath, so a custom backdrop averages to the picked color.
+function textureLayers(
+  choice: Exclude<GraniteChoice, { kind: "plain" }>,
+  image: string,
+): JSX.CSSProperties {
+  if (choice.kind === "sample") {
+    return {
+      "background-color": choice.sample.meanHex,
+      "background-image": `url(${image})`,
+    };
   }
   return {
-    "background-color": preset.tint,
-    "background-image": `url(${preset.image ?? graniteSlab})`,
-    "background-blend-mode": preset.blend,
-    "background-size": "cover",
+    "background-color": choice.hex,
+    "background-image": `url(${image})`,
+    "background-blend-mode": "overlay",
   };
 }

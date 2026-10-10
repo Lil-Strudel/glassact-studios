@@ -30,6 +30,7 @@ export function ItemDetailModal(props: ParentProps<ItemDetailModalProps>) {
         <div class="flex flex-col gap-6">
           <GraniteImageLightbox
             images={[{ src: props.item.svg_url, alt: props.item.name }]}
+            inches={{ width: props.item.default_width, height: props.item.default_height }}
             triggerClass="block w-full rounded-md overflow-hidden"
             previewClass="p-4 flex items-center justify-center min-h-[400px]"
           >

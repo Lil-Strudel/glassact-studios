@@ -8,6 +8,7 @@ import {
   createSignal,
   onCleanup,
   untrack,
+  type Accessor,
   type JSX,
 } from "solid-js";
 import { cn } from "./cn";
@@ -16,6 +17,14 @@ import { createPanZoom } from "./create-pan-zoom";
 export interface LightboxImage {
   src: string;
   alt: string;
+}
+
+/** Live view of the open viewer, for a backdrop that follows the image. */
+export interface LightboxView {
+  viewport: Accessor<HTMLElement | undefined>;
+  image: Accessor<HTMLImageElement | undefined>;
+  /** The pan/zoom transform applied to the image. */
+  transform: Accessor<string>;
 }
 
 export interface ImageLightboxProps {
@@ -31,9 +40,11 @@ export interface ImageLightboxProps {
   triggerClass?: string;
   /**
    * Background for the viewer surface, replacing the default dark backdrop —
-   * e.g. the granite slab an inlay is previewed against.
+   * e.g. the granite slab an inlay is previewed against. Called once, when the
+   * lightbox is created, so it can set up anything that tracks the view (such
+   * as anchoring the backdrop to the image as it pans and zooms).
    */
-  backdropStyle?: JSX.CSSProperties;
+  backdropStyle?: (view: LightboxView) => Accessor<JSX.CSSProperties>;
   /** Overlaid at the top-left of the viewer, e.g. a backdrop picker. */
   controls?: JSX.Element;
 }
@@ -106,13 +117,22 @@ export function ImageLightbox(props: ImageLightboxProps) {
     }
   }
 
-  let viewport: HTMLDivElement | undefined;
+  const [viewport, setViewport] = createSignal<HTMLDivElement>();
+  const [imageElement, setImageElement] = createSignal<HTMLImageElement>();
   let activePointer: number | null = null;
+
+  const backdropStyle = untrack(() =>
+    props.backdropStyle?.({
+      viewport,
+      image: imageElement,
+      transform: panZoom.transform,
+    }),
+  );
 
   function onPointerDown(e: PointerEvent) {
     activePointer = e.pointerId;
     panZoom.beginPan(e);
-    viewport?.setPointerCapture(e.pointerId);
+    viewport()?.setPointerCapture(e.pointerId);
   }
 
   function onPointerMove(e: PointerEvent) {
@@ -123,7 +143,7 @@ export function ImageLightbox(props: ImageLightboxProps) {
   function onPointerUp(e: PointerEvent) {
     if (activePointer !== e.pointerId) return;
     panZoom.endPan();
-    viewport?.releasePointerCapture?.(e.pointerId);
+    viewport()?.releasePointerCapture?.(e.pointerId);
     activePointer = null;
   }
 
@@ -162,14 +182,15 @@ export function ImageLightbox(props: ImageLightboxProps) {
 
           <div
             ref={(el) => {
-              viewport = el;
+              setViewport(el);
+              onCleanup(() => setViewport(undefined));
               panZoom.setViewport(el);
             }}
             class={cn(
               "relative flex-1 touch-none overflow-hidden",
               panZoom.isPanning() ? "cursor-grabbing" : "cursor-grab",
             )}
-            style={props.backdropStyle}
+            style={backdropStyle?.()}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -186,6 +207,10 @@ export function ImageLightbox(props: ImageLightboxProps) {
               <Show when={image()}>
                 {(img) => (
                   <img
+                    ref={(el) => {
+                      setImageElement(el);
+                      onCleanup(() => setImageElement(undefined));
+                    }}
                     src={img().src}
                     alt={img().alt}
                     draggable={false}
