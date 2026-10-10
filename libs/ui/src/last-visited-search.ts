@@ -6,8 +6,10 @@ function normalizePathname(pathname: string): string {
   return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
 }
 
+// onResolved only fires after a pending phase, which search-only changes on
+// routes without loaders never enter; onBeforeLoad fires for every navigation.
 export function trackLastVisitedSearch(router: AnyRouter): () => void {
-  return router.subscribe("onResolved", ({ toLocation }) => {
+  return router.subscribe("onBeforeLoad", ({ toLocation }) => {
     searchByPathname.set(
       normalizePathname(toLocation.pathname),
       toLocation.search,
