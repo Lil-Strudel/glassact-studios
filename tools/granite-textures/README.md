@@ -21,7 +21,8 @@ Writes to `apps/webapp/src/assets/images/granite/`:
 Each "2x1" PDF is a 24"×12" page painted with a tiling pattern whose single
 image is the stone photo, so the PDF itself tells us the photo's physical size
 (12" for most samples, 8" for some). The JPEG is lifted out byte-for-byte rather
-than rasterizing the page.
+than rasterizing the page. Most photos are printed larger than life, so
+`GRAIN_SHRINK_PERCENT` scales each one down to match the real stone.
 
 1. **Decode to linear light** (sRGB, or Gray Gamma 2.2 for the grayscale samples).
 2. **Destripe** — remove brightness that is constant along whole rows or columns
