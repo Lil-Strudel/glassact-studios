@@ -74,6 +74,7 @@ data "aws_iam_policy_document" "immich_backup" {
     actions = [
       "s3:PutObject",
       "s3:GetObject",
+      "s3:GetObjectVersion",
       "s3:RestoreObject",
       "s3:AbortMultipartUpload",
       "s3:ListMultipartUploadParts",
