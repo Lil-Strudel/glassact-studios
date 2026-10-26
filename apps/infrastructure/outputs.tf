@@ -65,3 +65,7 @@ output "webapp_cloudfront_domain" {
   description = "Point app.glassactstudios.com CNAME to this value"
   value       = aws_cloudfront_distribution.webapp.domain_name
 }
+
+output "immich_backups_bucket_name" {
+  value = aws_s3_bucket.immich_backups.bucket
+}
