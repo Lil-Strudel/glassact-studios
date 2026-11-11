@@ -322,6 +322,10 @@ func (m InlayModule) HandlePostCatalogInlay(w http.ResponseWriter, r *http.Reque
 		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("catalog item with id %d not found", body.CatalogItemID))
 		return
 	}
+	if catalogItem.IsBackground() {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("catalog item %s is a sandblast background, not an inlay", catalogItem.CatalogCode))
+		return
+	}
 
 	if body.Customization == nil {
 		// Stock catalog inlay — ready immediately, no proof needed.

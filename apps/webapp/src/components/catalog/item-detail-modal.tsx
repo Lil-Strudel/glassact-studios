@@ -1,4 +1,4 @@
-import { CatalogItem, GET } from "@glassact/data";
+import { BACKGROUND_CATEGORY, CatalogItem, GET } from "@glassact/data";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import {
 } from "@glassact/ui";
 import { ParentProps, Show } from "solid-js";
 import { GraniteImageLightbox } from "../granite/granite-image-lightbox";
+import { DownloadSandblastButton } from "./download-sandblast-button";
 
 interface ItemDetailModalProps {
   item: GET<CatalogItem>;
@@ -85,6 +86,19 @@ export function ItemDetailModal(props: ParentProps<ItemDetailModalProps>) {
               </p>
             </div>
           </div>
+
+          <Show when={props.item.category === BACKGROUND_CATEGORY}>
+            <div class="flex flex-col gap-2 border-t border-gray-200 pt-4">
+              <p class="text-sm text-gray-600">
+                A sandblast mask for the stone face. Place it on a stone in the
+                project designer, or download the file for your sandblaster.
+              </p>
+              <DownloadSandblastButton
+                catalogItemUuid={props.item.uuid}
+                class="self-start"
+              />
+            </div>
+          </Show>
         </div>
       </DialogContent>
     </Dialog>

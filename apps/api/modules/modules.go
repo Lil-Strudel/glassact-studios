@@ -152,6 +152,7 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/catalog/{uuid}", protected.ThenFunc(catalogModule.HandleGetCatalogItem))
 	mux.Handle("GET /api/catalog/{uuid}/tags", protected.ThenFunc(catalogModule.HandleGetTags))
 	mux.Handle("GET /api/catalog/{uuid}/svg", protected.ThenFunc(catalogModule.HandleGetCatalogSVG))
+	mux.Handle("GET /api/catalog/{uuid}/sandblast", protected.ThenFunc(catalogModule.HandleGetCatalogSandblast))
 
 	customizerModule := customizer.NewCustomizerModule(app)
 	mux.Handle("POST /api/catalog/{uuid}/bake", protected.ThenFunc(customizerModule.HandleBake))

@@ -39,6 +39,7 @@ function RouteComponent() {
 
   const query = useQuery(() =>
     browseCatalogOpts({
+      kind: "all",
       search: search().q,
       category: search().category,
       limit: PAGE_SIZE,

@@ -1,8 +1,9 @@
 import { keepPreviousData, queryOptions } from "@tanstack/solid-query";
 import api from "./api";
-import type { CatalogItem, GET } from "@glassact/data";
+import type { CatalogBrowseKind, CatalogItem, GET } from "@glassact/data";
 
 export async function browseCatalog(params?: {
+  kind?: CatalogBrowseKind;
   category?: string;
   tags?: string[];
   search?: string;
@@ -15,6 +16,7 @@ export async function browseCatalog(params?: {
   offset: number;
 }> {
   const queryParams = new URLSearchParams();
+  if (params?.kind) queryParams.append("kind", params.kind);
   if (params?.category) queryParams.append("category", params.category);
   if (params?.tags?.length) queryParams.append("tags", params.tags.join(","));
   if (params?.search) queryParams.append("search", params.search);
@@ -28,6 +30,7 @@ export async function browseCatalog(params?: {
 }
 
 export function browseCatalogOpts(params?: {
+  kind?: CatalogBrowseKind;
   category?: string;
   tags?: string[];
   search?: string;
@@ -63,4 +66,11 @@ export function getCatalogAllTagsOpts() {
     queryKey: ["catalog-all-tags"],
     queryFn: getCatalogAllTags,
   });
+}
+
+export async function getCatalogSandblastUrl(
+  uuid: string,
+): Promise<{ url: string }> {
+  const res = await api.get(`/catalog/${uuid}/sandblast`);
+  return res.data;
 }

@@ -1,4 +1,5 @@
-import { For } from "solid-js";
+import { For, createMemo } from "solid-js";
+import { BACKGROUND_CATEGORY } from "@glassact/data";
 import { TextField, TextFieldRoot, Button } from "@glassact/ui";
 import { useQuery } from "@tanstack/solid-query";
 import { getCatalogCategoriesOpts } from "../../queries/catalog-browse";
@@ -11,11 +12,18 @@ interface FilterSidebarProps {
   onCategoryChange: (value: string) => void;
   searchValue: string;
   selectedCategory: string;
+  hideBackgrounds?: boolean;
 }
 
 export function FilterSidebar(props: FilterSidebarProps) {
   const categoriesQuery = useQuery(() => getCatalogCategoriesOpts());
   const granitePreference = useGranitePreference(PLAIN_GRANITE_KEY);
+  const categories = createMemo(() => {
+    const all = categoriesQuery.isSuccess ? categoriesQuery.data : [];
+    return props.hideBackgrounds
+      ? all.filter((category) => category !== BACKGROUND_CATEGORY)
+      : all;
+  });
 
   const clearFilters = () => {
     props.onSearchChange("");
@@ -43,7 +51,7 @@ export function FilterSidebar(props: FilterSidebarProps) {
             class="w-full mt-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <option value="">All categories</option>
-            <For each={categoriesQuery.isSuccess ? categoriesQuery.data : []}>
+            <For each={categories()}>
               {(category) => <option value={category}>{category}</option>}
             </For>
           </select>

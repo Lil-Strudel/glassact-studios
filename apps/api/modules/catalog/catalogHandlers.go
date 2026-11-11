@@ -371,6 +371,42 @@ func (m *CatalogModule) HandleGetCatalogSVG(w http.ResponseWriter, r *http.Reque
 	_, _ = w.Write(data)
 }
 
+// HandleGetCatalogSandblast hands out a background's stored SVG as a download,
+// named by catalog code so the file is recognisable in the dealership's
+// sandblasting software.
+func (m *CatalogModule) HandleGetCatalogSandblast(w http.ResponseWriter, r *http.Request) {
+	uuid := r.PathValue("uuid")
+
+	err := m.Validate.Var(uuid, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	item, found, err := m.Db.CatalogItems.GetByUUID(uuid)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+	if !found || !item.IsBackground() {
+		m.WriteError(w, r, m.Err.RecordNotFound, nil)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	key := strings.TrimPrefix(item.SvgURL, "/")
+	filename := upload.SanitizeFilenamePart(item.CatalogCode, "background") + ".svg"
+	url, err := upload.GenerateSignedDownloadURL(ctx, m.S3, m.Cfg, key, filename, 15*time.Minute)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, err)
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, map[string]string{"url": url})
+}
+
 func (m *CatalogModule) HandleGetCatalogItem(w http.ResponseWriter, r *http.Request) {
 	uuid := r.PathValue("uuid")
 
@@ -646,6 +682,12 @@ func (m *CatalogModule) HandleBrowseCatalog(w http.ResponseWriter, r *http.Reque
 	category := r.URL.Query().Get("category")
 	tagsParam := r.URL.Query().Get("tags")
 
+	kind := catalogBrowseKind(r.URL.Query().Get("kind"))
+	if !kind.isValid() {
+		m.WriteError(w, r, m.Err.BadRequest, fmt.Errorf("kind must be one of inlay, background, all"))
+		return
+	}
+
 	var tags []string
 	if tagsParam != "" {
 		tags = strings.Split(tagsParam, ",")
@@ -660,7 +702,7 @@ func (m *CatalogModule) HandleBrowseCatalog(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	filtered := filterCatalogItemsWithTags(items, search, category, tags)
+	filtered := filterCatalogItemsWithTags(items, kind, search, category, tags)
 	total := len(filtered)
 
 	end := offset + limit
@@ -731,10 +773,37 @@ func filterCatalogItems(items []*data.CatalogItem, search, category, isActive st
 	return filtered
 }
 
-func filterCatalogItemsWithTags(items []*data.CatalogItem, search, category string, tags []string) []*data.CatalogItem {
+type catalogBrowseKind string
+
+const (
+	browseKindInlay      catalogBrowseKind = "inlay"
+	browseKindBackground catalogBrowseKind = "background"
+	browseKindAll        catalogBrowseKind = "all"
+)
+
+func (k catalogBrowseKind) isValid() bool {
+	return k == "" || k == browseKindInlay || k == browseKindBackground || k == browseKindAll
+}
+
+func (k catalogBrowseKind) includes(item *data.CatalogItem) bool {
+	switch k {
+	case browseKindAll:
+		return true
+	case browseKindBackground:
+		return item.IsBackground()
+	default:
+		return !item.IsBackground()
+	}
+}
+
+func filterCatalogItemsWithTags(items []*data.CatalogItem, kind catalogBrowseKind, search, category string, tags []string) []*data.CatalogItem {
 	filtered := make([]*data.CatalogItem, 0, len(items))
 
 	for _, item := range items {
+		if !kind.includes(item) {
+			continue
+		}
+
 		if search != "" {
 			searchLower := strings.ToLower(search)
 			if !strings.Contains(strings.ToLower(item.Name), searchLower) &&
