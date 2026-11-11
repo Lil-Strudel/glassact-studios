@@ -7,6 +7,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/auth"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/catalog"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/chat"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/compound"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/customizer"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dashboard"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/dealership"
@@ -19,6 +20,7 @@ import (
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/project"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/proof"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/review"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/stonedesign"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/support"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/upload"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/user"
@@ -83,6 +85,13 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/project/{uuid}/inlays", protected.ThenFunc(inlayModule.HandleGetInlaysByProject))
 	mux.Handle("POST /api/project/{uuid}/inlays/catalog", canCreateProject.ThenFunc(inlayModule.HandlePostCatalogInlay))
 	mux.Handle("POST /api/project/{uuid}/inlays/custom", canCreateProject.ThenFunc(inlayModule.HandlePostCustomInlay))
+
+	compoundModule := compound.NewCompoundModule(app)
+	mux.Handle("POST /api/project/{uuid}/inlays/compound", canCreateProject.ThenFunc(compoundModule.HandlePostProjectCompound))
+
+	stoneDesignModule := stonedesign.NewStoneDesignModule(app)
+	mux.Handle("GET /api/project/{uuid}/stone-design", protected.ThenFunc(stoneDesignModule.HandleGetStoneDesign))
+	mux.Handle("PUT /api/project/{uuid}/stone-design", canCreateProject.ThenFunc(stoneDesignModule.HandlePutStoneDesign))
 	mux.Handle("GET /api/inlay/{uuid}", protected.ThenFunc(inlayModule.HandleGetInlayByUUID))
 	mux.Handle("PATCH /api/inlay/{uuid}", canManageProject.ThenFunc(inlayModule.HandlePatchInlay))
 	mux.Handle("POST /api/inlay/{uuid}/recustomize", canManageProject.ThenFunc(inlayModule.HandleRecustomizeInlay))
@@ -153,6 +162,14 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/catalog/{uuid}/tags", protected.ThenFunc(catalogModule.HandleGetTags))
 	mux.Handle("GET /api/catalog/{uuid}/svg", protected.ThenFunc(catalogModule.HandleGetCatalogSVG))
 	mux.Handle("GET /api/catalog/{uuid}/sandblast", protected.ThenFunc(catalogModule.HandleGetCatalogSandblast))
+
+	mux.Handle("GET /api/compound", canManageCatalog.ThenFunc(compoundModule.HandleGetCompounds))
+	mux.Handle("POST /api/compound", canManageCatalog.ThenFunc(compoundModule.HandlePostCompound))
+	mux.Handle("GET /api/compound/browse", protected.ThenFunc(compoundModule.HandleBrowseCompounds))
+	mux.Handle("GET /api/compound/{uuid}", canManageCatalog.ThenFunc(compoundModule.HandleGetCompound))
+	mux.Handle("PUT /api/compound/{uuid}", canManageCatalog.ThenFunc(compoundModule.HandlePutCompound))
+	mux.Handle("PATCH /api/compound/{uuid}", canManageCatalog.ThenFunc(compoundModule.HandlePatchCompound))
+	mux.Handle("DELETE /api/compound/{uuid}", canManageCatalog.ThenFunc(compoundModule.HandleDeleteCompound))
 
 	customizerModule := customizer.NewCustomizerModule(app)
 	mux.Handle("POST /api/catalog/{uuid}/bake", protected.ThenFunc(customizerModule.HandleBake))

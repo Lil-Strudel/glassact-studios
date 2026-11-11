@@ -72,7 +72,57 @@ func (m InlayModule) buildInlayWithProofStatus(inlay *data.Inlay) (InlayWithProo
 	result.PriceAdjustmentType = pricing.AdjustmentType
 	result.PriceAdjustmentValue = pricing.AdjustmentValue
 
+	width, height, err := m.resolveInlayDimensions(inlay, latestProof)
+	if err != nil {
+		return InlayWithProofStatus{}, nil, fmt.Errorf("failed to resolve dimensions for inlay %d: %w", inlay.ID, err)
+	}
+	result.Width = width
+	result.Height = height
+
 	return result, latestProof, nil
+}
+
+// resolveInlayDimensions picks the size the inlay will be made at: the approved
+// proof is binding; before approval a pending proof is the best estimate; with
+// no proof, a stock catalog inlay is its catalog default and a custom inlay is
+// what the dealership asked for.
+func (m InlayModule) resolveInlayDimensions(inlay *data.Inlay, latestProof *data.InlayProof) (*float64, *float64, error) {
+	if inlay.ApprovedProofID != nil {
+		approved := latestProof
+		if approved == nil || approved.ID != *inlay.ApprovedProofID {
+			proof, found, err := m.Db.InlayProofs.GetByID(*inlay.ApprovedProofID)
+			if err != nil {
+				return nil, nil, err
+			}
+			approved = nil
+			if found {
+				approved = proof
+			}
+		}
+		if approved != nil {
+			return &approved.Width, &approved.Height, nil
+		}
+	}
+
+	if latestProof != nil && latestProof.Status == data.ProofStatuses.Pending {
+		return &latestProof.Width, &latestProof.Height, nil
+	}
+
+	if inlay.CatalogInfo != nil {
+		item, found, err := m.Db.CatalogItems.GetByID(inlay.CatalogInfo.CatalogItemID)
+		if err != nil {
+			return nil, nil, err
+		}
+		if found {
+			return &item.DefaultWidth, &item.DefaultHeight, nil
+		}
+	}
+
+	if inlay.CustomInfo != nil {
+		return &inlay.CustomInfo.RequestedWidth, &inlay.CustomInfo.RequestedHeight, nil
+	}
+
+	return nil, nil, nil
 }
 
 // buildInlayDetail assembles the full single-inlay response.

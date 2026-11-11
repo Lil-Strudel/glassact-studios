@@ -1,5 +1,6 @@
 export * from "./auth";
 export * from "./catalog-admin";
+export * from "./catalog-compound";
 export * from "./catalog-item";
 export * from "./customizer";
 export * from "./dashboard";
@@ -24,4 +25,5 @@ export * from "./project-chats";
 export * from "./project-watchers";
 export * from "./projects";
 export * from "./review-queue";
+export * from "./stone-design";
 export * from "./support-articles";

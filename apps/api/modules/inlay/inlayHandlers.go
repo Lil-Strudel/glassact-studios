@@ -88,6 +88,11 @@ type InlayWithProofStatus struct {
 	PriceCents           *int                     `json:"price_cents"`
 	PriceAdjustmentType  data.PriceAdjustmentType `json:"price_adjustment_type"`
 	PriceAdjustmentValue float64                  `json:"price_adjustment_value"`
+	// Width and Height are the inlay's physical size in inches as it would be
+	// made today, so the stone designer can draw it to scale. Nil only when
+	// nothing records a size.
+	Width  *float64 `json:"width"`
+	Height *float64 `json:"height"`
 	// CanDelete is false when dependent records (a proof, milestones, updates or
 	// an order snapshot) would make the DELETE fail. The frontend disables the
 	// remove control rather than letting the user hit a guaranteed error.

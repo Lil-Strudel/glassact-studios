@@ -74,6 +74,10 @@ export type InlayWithInfo = GET<Inlay> & {
   price_cents: number | null;
   price_adjustment_type: PriceAdjustmentType;
   price_adjustment_value: number;
+  // Physical size in inches as it would be made today; null only when nothing
+  // records a size.
+  width: number | null;
+  height: number | null;
 };
 
 // The slice of a catalog item the inlay page needs: enough to identify the

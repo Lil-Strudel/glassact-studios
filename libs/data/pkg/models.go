@@ -7,6 +7,7 @@ import (
 )
 
 type Models struct {
+	CatalogCompounds        CatalogCompoundModel
 	CatalogItems            CatalogItemModel
 	Dashboard               DashboardModel
 	DealershipAccounts      DealershipAccountModel
@@ -30,6 +31,7 @@ type Models struct {
 	ProjectChats            ProjectChatModel
 	ProjectWatchers         ProjectWatcherModel
 	Projects                ProjectModel
+	StoneDesigns            StoneDesignModel
 	SupportArticles         SupportArticleModel
 	Pool                    *pgxpool.Pool
 	STDB                    *sql.DB
@@ -37,6 +39,7 @@ type Models struct {
 
 func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 	return Models{
+		CatalogCompounds:        CatalogCompoundModel{DB: db, STDB: stdb},
 		CatalogItems:            CatalogItemModel{DB: db, STDB: stdb},
 		Dashboard:               DashboardModel{DB: db, STDB: stdb},
 		DealershipAccounts:      DealershipAccountModel{DB: db, STDB: stdb},
@@ -60,6 +63,7 @@ func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 		ProjectChats:            ProjectChatModel{DB: db, STDB: stdb},
 		ProjectWatchers:         ProjectWatcherModel{DB: db, STDB: stdb},
 		Projects:                ProjectModel{DB: db, STDB: stdb},
+		StoneDesigns:            StoneDesignModel{DB: db, STDB: stdb},
 		SupportArticles:         SupportArticleModel{DB: db, STDB: stdb},
 		Pool:                    db,
 		STDB:                    stdb,
