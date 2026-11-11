@@ -31,7 +31,8 @@ Run from repo root unless noted.
 - `pnpm db:migrate/new <name>` — scaffold a new migration pair
 - `pnpm db:migrate/up` / `db:migrate/down` / `db:migrate/goto` / `db:migrate/force`
 - `pnpm db:gen` — regenerate Jet code from live DB schema (run after migrations)
-- `pnpm db:seed` — load `seed.sql`
+- `pnpm db:seed` — load the catalog snapshot (`catalog_seed.sql`: price groups, glass colors, grouts, catalog items, tags) then the dev users in `seed.sql`
+- `pnpm db:catalog/backup` — snapshot the prod catalog and its SVGs into `libs/data/backups/<date>/` (gitignored) and refresh `catalog_seed.sql`; see `docs/catalog-backup.md`
 - `pnpm db:psql` — psql shell
 - Each data command sources `libs/data/.env` for `DATABASE_DSN`.
 

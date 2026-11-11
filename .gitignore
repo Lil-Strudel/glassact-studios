@@ -226,4 +226,5 @@ terraform.rc
 tools/svg-to-catalog/input/*
 tools/granite-textures/input/*
 tools/*/.venv/
+libs/data/backups/
 __pycache__/

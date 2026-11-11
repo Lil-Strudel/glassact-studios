@@ -37,7 +37,8 @@ Replicates, headlessly, the browser-driven admin flow
 
 - API running (default `http://localhost:4100` via `pnpm dev`) with **S3
   configured** in `apps/api/.env` — analyze and bake round-trip through S3.
-- Reference data seeded: `pnpm db:seed` (glass colors, grouts, price groups).
+- Reference data seeded: `pnpm db:seed` (glass colors, grouts and price groups
+  come from `libs/data/catalog_seed.sql`).
 - An internal **admin/designer** access token (the catalog routes require the
   `manage_catalog` permission), supplied via `AUTH_TOKEN`.
 
