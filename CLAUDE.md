@@ -366,6 +366,22 @@ Users can disable specific notification types; disabled notifications still appe
 | Customization      | `customization_notes`         | Full custom design              |
 | Pricing basis      | Catalog default + adjustments | Designer assessment             |
 
+### Sandblast backgrounds
+
+Items in the `SB-BACKGROUNDS` category (`BACKGROUND_CATEGORY` / `data.BackgroundCategory`) are sandblast masks for the stone face, not inlays. They are never orderable: catalog browse returns `kind=inlay` by default, and the API rejects adding one as an inlay or a compound member. Dealerships place them in the stone designer and download the stored SVG (`GET /api/catalog/{uuid}/sandblast`, named by catalog code) for their own sandblaster. They carry no price.
+
+### Compound inlays
+
+A compound (`catalog_compounds` + `catalog_compound_members`) is an admin-authored arrangement of two or more catalog items, each with an offset in inches from the compound's center and a rotation. Adding one to a draft project creates an ordinary **stock** catalog inlay per member and, in the same transaction, places them on the project's stone design as one group. Nothing downstream (proofs, ordering, manufacturing, invoicing) knows compounds exist; the grouping lives only in the stone design and can be ungrouped. A compound with any disabled member is hidden from dealerships rather than half-offered.
+
+## Stone Design
+
+One per project (`project_stone_designs`): the stone's shape (`STONE_SHAPES`), size in inches and granite (`granite_key` from the webapp's supplier samples, or `custom` + `granite_custom_hex`), plus a JSONB `layout` of elements (inlays, backgrounds, text) and groups. Element `x`/`y` are centers in inches from the stone's top-left; an inlay element has no size of its own — it is drawn at the inlay's real size (approved proof, else pending proof, else catalog default or requested size, reported as `width`/`height` on the inlay list).
+
+- It is a visual aid, never part of the price or the order.
+- Editable only by dealership users with `create_project`, only while the project is `draft`; frozen afterwards. Internal users see it read-only.
+- Saves are version-locked (409 on a stale version). The API validates the layout's shape on every write and drops inlay elements whose inlay is not on the project.
+
 ## Future Considerations
 
 **Graphical editor (post-MVP).** `inlay_proofs.scale_factor` and `inlay_proofs.color_overrides` are pre-wired; the editor will start from the catalog item's design asset, apply scale + color overrides, and regenerate `preview_url`.

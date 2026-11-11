@@ -91,9 +91,18 @@ importers:
       '@atlaskit/pragmatic-drag-and-drop-auto-scroll':
         specifier: ^2.1.5
         version: 2.1.5
+      '@fontsource-variable/cinzel':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource-variable/cormorant-garamond':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@fontsource-variable/roboto':
         specifier: ^5.2.10
         version: 5.2.10
+      '@fontsource/great-vibes':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@glassact/ui':
         specifier: workspace:*
         version: link:../../libs/ui
@@ -111,7 +120,7 @@ importers:
         version: 8.21.3(solid-js@1.9.11)
       axios:
         specifier: ^1.13.6
-        version: 1.13.6
+        version: 1.13.6(debug@4.4.3)
       dompurify:
         specifier: ^3.4.11
         version: 3.4.11
@@ -992,8 +1001,17 @@ packages:
   '@floating-ui/utils@0.2.10':
     resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
 
+  '@fontsource-variable/cinzel@5.3.0':
+    resolution: {integrity: sha512-eFcU0TwaAP5QESF2pV8VoOPJJXJ6sSGm/6mXMwqTdMBPAJMaLhfa6oISHuOtFeddsoHP9RYm4Io0j1j3mNEz2Q==}
+
+  '@fontsource-variable/cormorant-garamond@5.3.0':
+    resolution: {integrity: sha512-rgZJ/5w3hi60swAPnrOXpZf5wEH6NTrvm4H8D9Y4b1QIFUqlX14eM3QTMU/eAznjfh0eXpO1QUqsFhiy58aoMg==}
+
   '@fontsource-variable/roboto@5.2.10':
     resolution: {integrity: sha512-LJ0iLg6aHbLzN515gyHzmdTqJzd9NlI95cCg1DW0F5G7KkFqRLBBKBbqEJx4nSu4aby3IKmw3ZH6Fe928IfaSQ==}
+
+  '@fontsource/great-vibes@5.3.0':
+    resolution: {integrity: sha512-1w60cXzXnC9V4y943po8044O1mqRQBiTTK75h7OpZE+1VQtx+KlAAzoIyEE5KNzu05gUpxaCQg7cbL7ITSwegQ==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -4583,7 +4601,13 @@ snapshots:
 
   '@floating-ui/utils@0.2.10': {}
 
+  '@fontsource-variable/cinzel@5.3.0': {}
+
+  '@fontsource-variable/cormorant-garamond@5.3.0': {}
+
   '@fontsource-variable/roboto@5.2.10': {}
+
+  '@fontsource/great-vibes@5.3.0': {}
 
   '@humanfs/core@0.19.1': {}
 
@@ -5695,9 +5719,9 @@ snapshots:
       postcss: 8.5.6
       postcss-value-parser: 4.2.0
 
-  axios@1.13.6:
+  axios@1.13.6(debug@4.4.3):
     dependencies:
-      follow-redirects: 1.15.11
+      follow-redirects: 1.15.11(debug@4.4.3)
       form-data: 4.0.5
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -6237,7 +6261,9 @@ snapshots:
 
   flattie@1.1.1: {}
 
-  follow-redirects@1.15.11: {}
+  follow-redirects@1.15.11(debug@4.4.3):
+    optionalDependencies:
+      debug: 4.4.3
 
   fontace@0.4.1:
     dependencies:

@@ -44,6 +44,8 @@ import { getProjectOpts } from "../../queries/project";
 import { isApiError } from "../../utils/is-api-error";
 import { GraniteImageLightbox } from "../../components/granite/granite-image-lightbox";
 import PriceGroupTag from "../../components/price-group-tag";
+import { CompoundPicker } from "../../components/stone-designer/compound-picker";
+import { postProjectCompound } from "../../queries/compound";
 
 const PAGE_SIZE = 50;
 
@@ -77,6 +79,26 @@ function RouteComponent() {
     navigate({ to: "/projects/$id", params: { id: params().id } });
   }
 
+  async function addCompound(compoundUuid: string) {
+    try {
+      await postProjectCompound({ projectUuid: params().id, compoundUuid });
+    } catch (error) {
+      showToast({
+        title: "Failed to add compound",
+        description:
+          error instanceof Error && isApiError(error)
+            ? (error.data?.error ?? "Unknown error")
+            : "Unknown error",
+        variant: "error",
+      });
+      return;
+    }
+    queryClient.invalidateQueries({
+      queryKey: ["project", params().id, "stone-design"],
+    });
+    handleSuccess();
+  }
+
   return (
     <div>
       <Breadcrumb
@@ -99,6 +121,7 @@ function RouteComponent() {
         <div class="max-w-[400px] mx-auto mt-4">
           <TabsList>
             <TabsTrigger value="catalog">Catalog</TabsTrigger>
+            <TabsTrigger value="compound">Compound</TabsTrigger>
             <TabsTrigger value="custom">Custom</TabsTrigger>
             <TabsIndicator />
           </TabsList>
@@ -108,6 +131,16 @@ function RouteComponent() {
             <CatalogSelector
               projectUuid={params().id}
               onSuccess={handleSuccess}
+            />
+          </TabsContent>
+          <TabsContent value="compound">
+            <p class="mx-auto mb-6 max-w-2xl text-center text-sm text-gray-600">
+              Arranged sets of inlays that look good together. Adding one puts
+              every inlay in it on the project, grouped on the stone design.
+            </p>
+            <CompoundPicker
+              onAdd={addCompound}
+              class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
             />
           </TabsContent>
           <TabsContent value="custom">

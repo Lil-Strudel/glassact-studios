@@ -9,6 +9,7 @@ import {
   IoPersonOutline,
   IoBusinessOutline,
   IoShapesOutline,
+  IoAppsOutline,
   IoPricetagOutline,
   IoColorPaletteOutline,
   IoBrushOutline,
@@ -46,6 +47,11 @@ const navigationItems = [
     label: "Catalog",
     icon: IoShapesOutline,
     path: "/admin/catalog",
+  },
+  {
+    label: "Compounds",
+    icon: IoAppsOutline,
+    path: "/admin/compounds",
   },
   {
     label: "Price Groups",

@@ -110,6 +110,41 @@ export function graniteBackdropStyle(
   };
 }
 
+export interface GraniteTexture {
+  image: string;
+  tileInches: number;
+  baseHex: string;
+  // A custom color: the tile is a neutral gray to overlay-blend onto baseHex.
+  isTinted: boolean;
+}
+
+// The texture behind a stone drawn in inches (the stone designer), as opposed
+// to a CSS backdrop sized in pixels. Null means draw the plain color.
+export function graniteTexture(choice: GraniteChoice): GraniteTexture | null {
+  switch (choice.kind) {
+    case "plain":
+      return null;
+    case "sample":
+      return {
+        image: choice.sample.image,
+        tileInches: choice.sample.tileInches,
+        baseHex: choice.sample.meanHex,
+        isTinted: false,
+      };
+    case "custom":
+      return {
+        image: tintBase,
+        tileInches: manifest.tint.tileInches,
+        baseHex: choice.hex,
+        isTinted: true,
+      };
+  }
+}
+
+export function graniteMeanHex(choice: GraniteChoice): string {
+  return graniteTexture(choice)?.baseHex ?? PLAIN_HEX;
+}
+
 export function graniteSwatchStyle(choice: GraniteChoice): JSX.CSSProperties {
   if (choice.kind === "plain") {
     return { "background-color": PLAIN_HEX };

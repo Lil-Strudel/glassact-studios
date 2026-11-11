@@ -53,6 +53,7 @@ import { isApiError } from "../../utils/is-api-error";
 import { formatMoney } from "../../utils/format-money";
 import { formatPriceFormula } from "../../utils/format-price-formula";
 import { PlaceOrderCart } from "../../components/place-order-cart";
+import { StoneDesignSection } from "../../components/stone-designer/stone-design-section";
 import {
   IoTrashOutline,
   IoAddCircleOutline,
@@ -566,6 +567,12 @@ function RouteComponent() {
               </div>
             )}
           </Show>
+
+          <StoneDesignSection
+            projectUuid={params().id}
+            inlays={inlays()}
+            isDraft={projectQuery.data!.status === "draft"}
+          />
 
           <div class="mt-8">
             <div class="flex items-center justify-between mb-4">
