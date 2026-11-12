@@ -23,26 +23,11 @@ SWATCH_INCHES = 3.0
 TINT_TILE_INCHES = 6.0
 # Below this OKLab chroma a stone reads as black/gray rather than colored.
 NEUTRAL_CHROMA = 0.012
-# Most sample photos are blown up past life size on their PDF page, so their
-# grain reads too coarse next to the real stone. GlassAct judged these by eye
-# as "shrink N%": the page size is divided by 1 + N/100, so 100 halves it.
-GRAIN_SHRINK_PERCENT = {
-    "galaxy-black": 30,
-    "india-mist": 100,
-    "impala-black": 50,
-    "paradiso": 30,
-    "bahama-blue": 80,
-    "georgia-gray": 30,
-    "newbury-gray": 30,
-    "silver-cloud": 30,
-    "tropical-green": 50,
-    "paradise-green": 30,
-    "butterfly-blue": 200,
-    "blue-pearl": 100,
-    "india-red": 60,
-    "mahogany": 100,
-    "mountain-rose": 50,
-    "antique-rose": 200,
+# Most photos are printed at life size, but these are blown up on their page.
+# The true tile size was judged by eye on a whole stone in the designer.
+LIFE_SIZE_TILE_INCHES = {
+    "butterfly-blue": 5.0,
+    "blue-pearl": 8.0,
 }
 
 
@@ -96,18 +81,17 @@ def extract_sample(pdf_path: Path) -> Sample:
     if abs(float(pattern["/XStep"]) - bbox_width) > 1e-3:
         raise ValueError(f"{pdf_path.name}: pattern step does not match its tile")
     scale = float(pattern["/Matrix"][0])
-    page_tile_inches = bbox_width * scale / PDF_POINTS_PER_INCH
+    page_tile_inches = round(bbox_width * scale / PDF_POINTS_PER_INCH, 3)
 
     jpeg = image.get_data()
     if jpeg[:2] != b"\xff\xd8":
         raise ValueError(f"{pdf_path.name}: image stream is not a JPEG")
 
     key = sample_key(pdf_path)
-    shrink = 1 + GRAIN_SHRINK_PERCENT.get(key, 0) / 100
     return Sample(
         key=key,
         name=sample_name(pdf_path),
-        tile_inches=round(page_tile_inches / shrink, 3),
+        tile_inches=LIFE_SIZE_TILE_INCHES.get(key, page_tile_inches),
         jpeg=jpeg,
         is_gray_gamma=is_gray_gamma,
     )
@@ -393,8 +377,8 @@ def main() -> None:
     pdfs = sorted(INPUT_DIR.glob("*.pdf"))
     if not pdfs:
         sys.exit(f"No sample PDFs in {INPUT_DIR}")
-    if unknown := GRAIN_SHRINK_PERCENT.keys() - {sample_key(pdf) for pdf in pdfs}:
-        sys.exit(f"GRAIN_SHRINK_PERCENT names granites with no sample PDF: {sorted(unknown)}")
+    if unknown := LIFE_SIZE_TILE_INCHES.keys() - {sample_key(pdf) for pdf in pdfs}:
+        sys.exit(f"LIFE_SIZE_TILE_INCHES names granites with no sample PDF: {sorted(unknown)}")
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     if args.review:
         args.review.mkdir(parents=True, exist_ok=True)
