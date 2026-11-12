@@ -1,8 +1,9 @@
 # Catalog backup and restore
 
 The production catalog is the source of truth for the dev seed. A snapshot is
-the catalog rows, the reference data their manifests point at by id (price
-groups, glass colors, grouts), and every SVG those rows reference.
+the catalog rows, the sandblast backgrounds and their related inlays, the
+reference data the catalog manifests point at by id (price groups, glass
+colors, grouts), and every SVG those rows reference.
 
 ## Take a snapshot
 

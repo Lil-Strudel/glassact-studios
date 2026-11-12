@@ -64,7 +64,7 @@ func TestStoneDesign(t *testing.T) {
 	dealershipUser, dealershipToken, _, internalToken := seedTestData(t, ctx)
 	priceGroup := seedPriceGroup(t, ctx, "Standard")
 	item := seedCatalogItem(t, ctx, priceGroup.ID, "A-DOV-0001")
-	background := seedBackgroundItem(t, ctx, priceGroup.ID, "SB-BOR-0001")
+	background := seedBackground(t, ctx, "SB-BOR-0001")
 
 	project := seedDraftProject(t, ctx, dealershipUser.DealershipID, "Smith")
 	inlay := seedDraftCatalogInlay(t, ctx, project.ID, item.ID, "Dove")
@@ -85,7 +85,7 @@ func TestStoneDesign(t *testing.T) {
 			body: stoneDesignBody(0,
 				inlayElement("e1", inlay.UUID),
 				inlayElement("e2", otherInlay.UUID),
-				map[string]any{"id": "e3", "type": "background", "x": 18, "y": 12, "rotation": 0, "group_id": nil, "catalog_item_uuid": background.UUID, "width": 30},
+				map[string]any{"id": "e3", "type": "background", "x": 18, "y": 12, "rotation": 0, "group_id": nil, "background_uuid": background.UUID, "width": 30},
 				map[string]any{"id": "e4", "type": "text", "x": 18, "y": 4, "rotation": 0, "group_id": nil, "text": "SMITH", "font": "roman", "size": 2, "align": "center", "finish": "engraved"},
 			),
 		})
@@ -114,10 +114,10 @@ func TestStoneDesign(t *testing.T) {
 		assert.Equal(t, 2, design.Version)
 	})
 
-	t.Run("a non-background catalog item is rejected as a background", func(t *testing.T) {
+	t.Run("a catalog item is rejected as a background", func(t *testing.T) {
 		resp := ctx.request(testRequest{
 			method: http.MethodPut, path: path, token: dealershipToken,
-			body: stoneDesignBody(2, map[string]any{"id": "b", "type": "background", "x": 1, "y": 1, "rotation": 0, "group_id": nil, "catalog_item_uuid": item.UUID, "width": 10}),
+			body: stoneDesignBody(2, map[string]any{"id": "b", "type": "background", "x": 1, "y": 1, "rotation": 0, "group_id": nil, "background_uuid": item.UUID, "width": 10}),
 		})
 		assert.Equal(t, http.StatusBadRequest, resp.statusCode, string(resp.body))
 	})

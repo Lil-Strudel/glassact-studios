@@ -5,6 +5,7 @@ import (
 
 	"github.com/Lil-Strudel/glassact-studios/apps/api/app"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/auth"
+	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/background"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/catalog"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/chat"
 	"github.com/Lil-Strudel/glassact-studios/apps/api/modules/compound"
@@ -161,7 +162,17 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/catalog/{uuid}", protected.ThenFunc(catalogModule.HandleGetCatalogItem))
 	mux.Handle("GET /api/catalog/{uuid}/tags", protected.ThenFunc(catalogModule.HandleGetTags))
 	mux.Handle("GET /api/catalog/{uuid}/svg", protected.ThenFunc(catalogModule.HandleGetCatalogSVG))
-	mux.Handle("GET /api/catalog/{uuid}/sandblast", protected.ThenFunc(catalogModule.HandleGetCatalogSandblast))
+
+	backgroundModule := background.NewBackgroundModule(app)
+	mux.Handle("GET /api/background", canManageCatalog.ThenFunc(backgroundModule.HandleGetBackgrounds))
+	mux.Handle("POST /api/background", canManageCatalog.ThenFunc(backgroundModule.HandlePostBackground))
+	mux.Handle("POST /api/background/prepare", canManageCatalog.ThenFunc(backgroundModule.HandlePrepareBackground))
+	mux.Handle("GET /api/background/browse", protected.ThenFunc(backgroundModule.HandleBrowseBackgrounds))
+	mux.Handle("GET /api/background/{uuid}", canManageCatalog.ThenFunc(backgroundModule.HandleGetBackground))
+	mux.Handle("PUT /api/background/{uuid}", canManageCatalog.ThenFunc(backgroundModule.HandlePutBackground))
+	mux.Handle("PATCH /api/background/{uuid}", canManageCatalog.ThenFunc(backgroundModule.HandlePatchBackground))
+	mux.Handle("GET /api/background/{uuid}/svg", protected.ThenFunc(backgroundModule.HandleGetBackgroundSVG))
+	mux.Handle("GET /api/background/{uuid}/sandblast", protected.ThenFunc(backgroundModule.HandleGetBackgroundSandblast))
 
 	mux.Handle("GET /api/compound", canManageCatalog.ThenFunc(compoundModule.HandleGetCompounds))
 	mux.Handle("POST /api/compound", canManageCatalog.ThenFunc(compoundModule.HandlePostCompound))

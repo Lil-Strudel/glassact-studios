@@ -31,7 +31,6 @@ func TestCompounds(t *testing.T) {
 	priceGroup := seedPriceGroup(t, ctx, "Standard")
 	left := seedCatalogItem(t, ctx, priceGroup.ID, "A-DOV-0001L")
 	right := seedCatalogItem(t, ctx, priceGroup.ID, "A-DOV-0001R")
-	background := seedBackgroundItem(t, ctx, priceGroup.ID, "SB-BOR-0001")
 
 	var compound data.CatalogCompound
 
@@ -50,11 +49,6 @@ func TestCompounds(t *testing.T) {
 
 	t.Run("a compound needs at least two members", func(t *testing.T) {
 		resp := ctx.request(testRequest{method: http.MethodPost, path: "/api/compound", token: adminToken, body: compoundBody("Lonely", left.ID)})
-		assert.Equal(t, http.StatusBadRequest, resp.statusCode)
-	})
-
-	t.Run("a background cannot be a member", func(t *testing.T) {
-		resp := ctx.request(testRequest{method: http.MethodPost, path: "/api/compound", token: adminToken, body: compoundBody("Framed", left.ID, background.ID)})
 		assert.Equal(t, http.StatusBadRequest, resp.statusCode)
 	})
 

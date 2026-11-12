@@ -55,9 +55,6 @@ func (m CompoundModule) membersFromBody(members []compoundMemberBody) ([]data.Ca
 		if !found {
 			return nil, fmt.Errorf("catalog item %d not found", member.CatalogItemID)
 		}
-		if item.IsBackground() {
-			return nil, fmt.Errorf("%s is a sandblast background and cannot be part of a compound", item.CatalogCode)
-		}
 		if !item.IsActive {
 			return nil, fmt.Errorf("%s is disabled in the catalog", item.CatalogCode)
 		}

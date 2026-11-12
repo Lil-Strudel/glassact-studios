@@ -34,15 +34,6 @@ type CatalogItem struct {
 	Tags                []string               `json:"tags,omitempty"`
 }
 
-// BackgroundCategory holds sandblast masks for the stone face. They live in the
-// catalog so admins manage them alongside inlays, but they are never ordered as
-// inlays.
-const BackgroundCategory = "SB-BACKGROUNDS"
-
-func (c *CatalogItem) IsBackground() bool {
-	return c.Category == BackgroundCategory
-}
-
 type CatalogItemTag struct {
 	ID            int       `json:"id"`
 	CatalogItemID int       `json:"catalog_item_id"`

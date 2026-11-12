@@ -31,6 +31,7 @@ type Models struct {
 	ProjectChats            ProjectChatModel
 	ProjectWatchers         ProjectWatcherModel
 	Projects                ProjectModel
+	SandblastBackgrounds    SandblastBackgroundModel
 	StoneDesigns            StoneDesignModel
 	SupportArticles         SupportArticleModel
 	Pool                    *pgxpool.Pool
@@ -63,6 +64,7 @@ func NewModels(db *pgxpool.Pool, stdb *sql.DB) Models {
 		ProjectChats:            ProjectChatModel{DB: db, STDB: stdb},
 		ProjectWatchers:         ProjectWatcherModel{DB: db, STDB: stdb},
 		Projects:                ProjectModel{DB: db, STDB: stdb},
+		SandblastBackgrounds:    SandblastBackgroundModel{DB: db, STDB: stdb},
 		StoneDesigns:            StoneDesignModel{DB: db, STDB: stdb},
 		SupportArticles:         SupportArticleModel{DB: db, STDB: stdb},
 		Pool:                    db,

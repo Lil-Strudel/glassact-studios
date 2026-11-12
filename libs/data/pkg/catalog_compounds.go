@@ -55,7 +55,7 @@ func (c *CatalogCompound) IsOfferable() bool {
 		return false
 	}
 	for _, member := range c.Members {
-		if member.CatalogItem == nil || !member.CatalogItem.IsActive || member.CatalogItem.Category == BackgroundCategory {
+		if member.CatalogItem == nil || !member.CatalogItem.IsActive {
 			return false
 		}
 	}

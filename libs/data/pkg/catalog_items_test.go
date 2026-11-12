@@ -487,7 +487,7 @@ func TestCatalogItem_GetCategories_ReturnsSortedCategories(t *testing.T) {
 	priceGroup := createTestPriceGroup(t, models)
 
 	// Inserted deliberately out of order.
-	for i, category := range []string{"D-FLOWERS", "A-ANIMALS", "SB-BACKGROUNDS", "B-OUTDOORS"} {
+	for i, category := range []string{"D-FLOWERS", "A-ANIMALS", "G-PROFESSIONS", "B-OUTDOORS"} {
 		item := newTestCatalogItem(fmt.Sprintf("SORT-CAT-%d", i), "Item", category, priceGroup.ID)
 		if err := models.CatalogItems.Insert(item); err != nil {
 			t.Fatalf("Failed to insert item: %v", err)
@@ -499,7 +499,7 @@ func TestCatalogItem_GetCategories_ReturnsSortedCategories(t *testing.T) {
 		t.Fatalf("Failed to get categories: %v", err)
 	}
 
-	want := []string{"A-ANIMALS", "B-OUTDOORS", "D-FLOWERS", "SB-BACKGROUNDS"}
+	want := []string{"A-ANIMALS", "B-OUTDOORS", "D-FLOWERS", "G-PROFESSIONS"}
 	if !slices.Equal(categories, want) {
 		t.Errorf("Expected categories %v, got %v", want, categories)
 	}

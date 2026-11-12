@@ -140,6 +140,8 @@ func cleanupTables(t *testing.T) {
 	t.Helper()
 	_, err := testDB.STDB.Exec(`TRUNCATE TABLE
 		project_stone_designs,
+		sandblast_background_related_items,
+		sandblast_backgrounds,
 		catalog_compound_members,
 		catalog_compounds,
 		inlay_updates,

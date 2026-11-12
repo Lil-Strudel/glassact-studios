@@ -169,17 +169,17 @@ func (m StoneDesignModule) projectInlayUUIDs(projectID int) (map[string]bool, er
 func (m StoneDesignModule) validateBackgrounds(layout data.StoneLayout) error {
 	checked := map[string]bool{}
 	for _, el := range layout.Elements {
-		if el.Type != data.StoneElementTypes.Background || checked[el.CatalogItemUUID] {
+		if el.Type != data.StoneElementTypes.Background || checked[el.BackgroundUUID] {
 			continue
 		}
-		item, found, err := m.Db.CatalogItems.GetByUUID(el.CatalogItemUUID)
+		_, found, err := m.Db.SandblastBackgrounds.GetByUUID(el.BackgroundUUID)
 		if err != nil {
-			return fmt.Errorf("failed to look up background %s: %w", el.CatalogItemUUID, err)
+			return fmt.Errorf("failed to look up background %s: %w", el.BackgroundUUID, err)
 		}
-		if !found || !item.IsBackground() {
-			return fmt.Errorf("catalog item %s is not a sandblast background", el.CatalogItemUUID)
+		if !found {
+			return fmt.Errorf("%s is not a sandblast background", el.BackgroundUUID)
 		}
-		checked[el.CatalogItemUUID] = true
+		checked[el.BackgroundUUID] = true
 	}
 	return nil
 }

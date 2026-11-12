@@ -40,6 +40,8 @@ func UseSchema(schema string) {
 	ProjectStoneDesigns = ProjectStoneDesigns.FromSchema(schema)
 	ProjectWatchers = ProjectWatchers.FromSchema(schema)
 	Projects = Projects.FromSchema(schema)
+	SandblastBackgroundRelatedItems = SandblastBackgroundRelatedItems.FromSchema(schema)
+	SandblastBackgrounds = SandblastBackgrounds.FromSchema(schema)
 	SchemaMigrations = SchemaMigrations.FromSchema(schema)
 	SpatialRefSys = SpatialRefSys.FromSchema(schema)
 	SupportArticles = SupportArticles.FromSchema(schema)

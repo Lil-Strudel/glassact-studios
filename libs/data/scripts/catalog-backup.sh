@@ -35,6 +35,7 @@ echo "Dumping catalog on $instance_id to s3://$backups_bucket/$dump_key"
 remote_cmd="set -o pipefail; docker exec glassact-postgres-1 pg_dump -U glassact -d glassact \
 --data-only --no-owner --no-privileges --column-inserts \
 -t price_groups -t glass_colors -t grouts -t catalog_items -t catalog_item_tags \
+-t sandblast_backgrounds -t sandblast_background_related_items \
 | aws s3 cp - s3://$backups_bucket/$dump_key"
 
 params="$(python3 -c 'import json,sys; print(json.dumps({"commands": ["bash -c " + json.dumps(sys.argv[1])]}))' "$remote_cmd")"
@@ -67,7 +68,7 @@ aws_ s3 cp "s3://$backups_bucket/$dump_key" - |
 
 cp "$backup_dir/catalog.sql" "$data_dir/catalog_seed.sql"
 
-grep -o "'/file/catalog-items/[^']*'" "$backup_dir/catalog.sql" | tr -d "'" | sort -u |
+grep -oE "'/file/(catalog-items|sandblast-backgrounds)/[^']*'" "$backup_dir/catalog.sql" | tr -d "'" | sort -u |
     sed 's|^/||' >"$backup_dir/file-keys.txt"
 
 key_count="$(wc -l <"$backup_dir/file-keys.txt")"

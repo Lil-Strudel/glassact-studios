@@ -33,11 +33,12 @@ if [[ ! -f "$seed_file" ]]; then
     exit 1
 fi
 
-catalog_tables="price_groups, glass_colors, grouts, catalog_items, catalog_item_tags"
+catalog_tables="price_groups, glass_colors, grouts, catalog_items, catalog_item_tags, sandblast_backgrounds, sandblast_background_related_items"
 
 existing="$(psql "$DATABASE_DSN" -Atc "SELECT
     (SELECT count(*) FROM price_groups) + (SELECT count(*) FROM glass_colors) +
-    (SELECT count(*) FROM grouts) + (SELECT count(*) FROM catalog_items)")"
+    (SELECT count(*) FROM grouts) + (SELECT count(*) FROM catalog_items) +
+    (SELECT count(*) FROM sandblast_backgrounds)")"
 
 truncate_sql=""
 if ((existing > 0)); then
@@ -61,7 +62,7 @@ fi
     echo "BEGIN;"
     echo "$truncate_sql"
     cat "$seed_file"
-    for table in price_groups glass_colors grouts catalog_items catalog_item_tags; do
+    for table in price_groups glass_colors grouts catalog_items catalog_item_tags sandblast_backgrounds sandblast_background_related_items; do
         echo "SELECT setval(pg_get_serial_sequence('public.$table', 'id'), GREATEST((SELECT max(id) FROM public.$table), 1));"
     done
     echo "COMMIT;"

@@ -84,9 +84,9 @@ type StoneElement struct {
 	InlayUUID string `json:"inlay_uuid,omitempty"`
 
 	// background
-	CatalogItemUUID string  `json:"catalog_item_uuid,omitempty"`
-	Width           float64 `json:"width,omitempty"`
-	FlipX           bool    `json:"flip_x,omitempty"`
+	BackgroundUUID string  `json:"background_uuid,omitempty"`
+	Width          float64 `json:"width,omitempty"`
+	FlipX          bool    `json:"flip_x,omitempty"`
 
 	// text
 	Text   string  `json:"text,omitempty"`
@@ -174,8 +174,8 @@ func (l StoneLayout) Validate() error {
 			}
 			placedInlays[el.InlayUUID] = true
 		case StoneElementTypes.Background:
-			if _, err := uuid.Parse(el.CatalogItemUUID); err != nil {
-				return fmt.Errorf("element %q has an invalid catalog_item_uuid", el.ID)
+			if _, err := uuid.Parse(el.BackgroundUUID); err != nil {
+				return fmt.Errorf("element %q has an invalid background_uuid", el.ID)
 			}
 			if !isFiniteWithin(el.Width, 0.25, maxStoneInches) {
 				return fmt.Errorf("element %q has an out-of-range width", el.ID)

@@ -14,7 +14,7 @@ func validLayout() StoneLayout {
 		Groups: []StoneGroup{{ID: "g1", Name: "Doves"}},
 		Elements: []StoneElement{
 			{ID: "e1", Type: StoneElementTypes.Inlay, X: 10, Y: 8, InlayUUID: "7ddea090-6db0-4156-95cd-831bcbbf5cc0", GroupID: strPtr("g1")},
-			{ID: "e2", Type: StoneElementTypes.Background, X: 18, Y: 12, Width: 30, CatalogItemUUID: "22e3d0fe-a21f-410d-8748-e5baf62e9e37"},
+			{ID: "e2", Type: StoneElementTypes.Background, X: 18, Y: 12, Width: 30, BackgroundUUID: "22e3d0fe-a21f-410d-8748-e5baf62e9e37"},
 			{ID: "e3", Type: StoneElementTypes.Text, X: 18, Y: 4, Text: "SMITH", Font: "roman", Size: 2, Align: "center", Finish: "engraved"},
 		},
 	}
