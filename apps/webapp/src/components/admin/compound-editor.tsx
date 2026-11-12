@@ -1,15 +1,13 @@
-import { For, Show, createMemo, createSignal } from "solid-js";
+import { Show, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
-import { useQuery } from "@tanstack/solid-query";
 import type {
   CatalogCompound,
   CatalogCompoundWrite,
   CatalogItem,
   GET,
 } from "@glassact/data";
-import { Button, cn } from "@glassact/ui";
-import { browseCatalogOpts } from "../../queries/catalog-browse";
-import { useDebouncedSearchInput } from "../../hooks/use-debounced-search-input";
+import { Button } from "@glassact/ui";
+import { CatalogItemPicker } from "../catalog/catalog-item-picker";
 import { createStoneEditor } from "../stone-designer/create-stone-editor";
 import { StoneCanvas, type PlacedInlayArt } from "../stone-designer/stone-canvas";
 import { boundsOf, boxCorners, newElementId } from "../stone-designer/stone-geometry";
@@ -194,7 +192,7 @@ export function CompoundEditor(props: CompoundEditorProps) {
           />
           Offered to dealerships
         </label>
-        <CatalogItemPicker onPick={addItem} />
+        <CatalogItemPicker title="Add catalog inlays" onPick={addItem} />
         <Button disabled={!canSave()} onClick={save}>
           {props.isSaving ? "Saving..." : "Save compound"}
         </Button>
@@ -203,43 +201,5 @@ export function CompoundEditor(props: CompoundEditorProps) {
         </Show>
       </aside>
     </div>
-  );
-}
-
-function CatalogItemPicker(props: { onPick: (item: GET<CatalogItem>) => void }) {
-  const [search, setSearch] = createSignal("");
-  const [searchText, setSearchText] = useDebouncedSearchInput(search, setSearch);
-  const query = useQuery(() =>
-    browseCatalogOpts({ kind: "inlay", search: search(), limit: 24 }),
-  );
-  const items = createMemo(() => query.data?.items ?? []);
-
-  return (
-    <section class="flex flex-col gap-2">
-      <h3 class="text-sm font-medium text-gray-900">Add catalog inlays</h3>
-      <input
-        placeholder="Search by name or code..."
-        value={searchText()}
-        onInput={(e) => setSearchText(e.currentTarget.value)}
-        class="rounded-md border border-gray-300 px-3 py-2 text-sm"
-      />
-      <div class="grid max-h-80 grid-cols-3 gap-2 overflow-y-auto">
-        <For each={items()}>
-          {(item) => (
-            <button
-              type="button"
-              title={`${item.name} (${item.catalog_code})`}
-              class={cn(
-                "flex aspect-square flex-col items-center justify-center gap-1 rounded-md border border-gray-200 p-1.5 text-[10px] text-gray-600 hover:border-blue-500",
-              )}
-              onClick={() => props.onPick(item)}
-            >
-              <img src={item.svg_url} alt={item.name} loading="lazy" class="min-h-0 flex-1 object-contain" />
-              <span class="w-full truncate">{item.catalog_code}</span>
-            </button>
-          )}
-        </For>
-      </div>
-    </section>
   );
 }

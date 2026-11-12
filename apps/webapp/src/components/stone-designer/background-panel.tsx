@@ -1,14 +1,18 @@
 import { For, Show, createMemo } from "solid-js";
-import type { CatalogItem, GET, StoneBackgroundElement } from "@glassact/data";
+import type { GET, SandblastBackground, StoneBackgroundElement } from "@glassact/data";
 import { Button, cn } from "@glassact/ui";
 import { useBackgroundItems } from "./use-background-items";
+import { RelatedInlays } from "./related-inlays";
+import type { AddableCatalogItem } from "./use-add-catalog-inlay";
 import { DownloadSandblastButton } from "../catalog/download-sandblast-button";
 import type { StoneEditor } from "./create-stone-editor";
-import { newElementId } from "./stone-geometry";
+import { newElementId, type Point } from "./stone-geometry";
 
 interface BackgroundPanelProps {
   editor: StoneEditor;
   isEditable: boolean;
+  isAddingInlay: boolean;
+  onAddInlay: (item: AddableCatalogItem, anchor: Point) => void;
 }
 
 export function BackgroundPanel(props: BackgroundPanelProps) {
@@ -29,14 +33,14 @@ export function BackgroundPanel(props: BackgroundPanelProps) {
 
   // The usual case is one background framing the whole face, so picking one
   // replaces the current background unless the user is editing a second one.
-  function choose(item: GET<CatalogItem>) {
+  function choose(item: GET<SandblastBackground>) {
     const draft = props.editor.draft;
     const replacing = selectedBackground() ?? placed()[0];
     const width = replacing?.width ?? draft.width * 0.9;
     const element: StoneBackgroundElement = {
       id: newElementId(),
       type: "background",
-      catalog_item_uuid: item.uuid,
+      background_uuid: item.uuid,
       x: replacing?.x ?? draft.width / 2,
       y: replacing?.y ?? draft.height / 2,
       rotation: replacing?.rotation ?? 0,
@@ -54,13 +58,13 @@ export function BackgroundPanel(props: BackgroundPanelProps) {
     props.editor.selectIds([element.id]);
   }
 
-  function addAnother(item: GET<CatalogItem>) {
+  function addAnother(item: GET<SandblastBackground>) {
     const draft = props.editor.draft;
     props.editor.addElements([
       {
         id: newElementId(),
         type: "background",
-        catalog_item_uuid: item.uuid,
+        background_uuid: item.uuid,
         x: draft.width / 2,
         y: draft.height / 2,
         rotation: 0,
@@ -86,7 +90,7 @@ export function BackgroundPanel(props: BackgroundPanelProps) {
           <h3 class="text-sm font-medium text-gray-900">On the stone</h3>
           <For each={placed()}>
             {(el) => {
-              const item = () => backgrounds.byUuid().get(el.catalog_item_uuid);
+              const item = () => backgrounds.byUuid().get(el.background_uuid);
               return (
                 <div
                   class={cn(
@@ -100,9 +104,9 @@ export function BackgroundPanel(props: BackgroundPanelProps) {
                     onClick={() => props.editor.selectIds([el.id])}
                   >
                     {item()?.name ?? "Background"}
-                    <span class="block text-xs text-gray-500">{item()?.catalog_code}</span>
+                    <span class="block text-xs text-gray-500">{item()?.code}</span>
                   </button>
-                  <DownloadSandblastButton catalogItemUuid={el.catalog_item_uuid} />
+                  <DownloadSandblastButton backgroundUuid={el.background_uuid} />
                 </div>
               );
             }}
@@ -157,6 +161,15 @@ export function BackgroundPanel(props: BackgroundPanelProps) {
       </Show>
 
       <Show when={props.isEditable}>
+        <RelatedInlays
+          editor={props.editor}
+          backgroundsByUuid={backgrounds.byUuid()}
+          isAdding={props.isAddingInlay}
+          onAdd={props.onAddInlay}
+        />
+      </Show>
+
+      <Show when={props.isEditable}>
         <section>
           <h3 class="text-sm font-medium text-gray-900">Sandblast backgrounds</h3>
           <p class="mt-1 text-xs text-gray-500">
@@ -167,11 +180,11 @@ export function BackgroundPanel(props: BackgroundPanelProps) {
             <div class="mt-2 h-32 animate-pulse rounded-md bg-gray-100" />
           </Show>
           <div class="mt-2 grid grid-cols-3 gap-2">
-            <For each={backgrounds.query.data?.items ?? []}>
+            <For each={backgrounds.query.data ?? []}>
               {(item) => (
                 <button
                   type="button"
-                  title={`${item.name} (${item.catalog_code})`}
+                  title={`${item.name} (${item.code})`}
                   class="flex aspect-square items-center justify-center rounded-md border border-gray-200 bg-white p-1.5 hover:border-blue-500"
                   onClick={(e) => (e.shiftKey ? addAnother(item) : choose(item))}
                 >

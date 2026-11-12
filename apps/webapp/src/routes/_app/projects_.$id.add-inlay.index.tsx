@@ -51,7 +51,6 @@ const PAGE_SIZE = 50;
 
 function toBrowseParams(search: z.output<typeof catalogBrowseSearchSchema>) {
   return {
-    kind: "inlay" as const,
     search: search.q,
     category: search.category,
     limit: PAGE_SIZE,
@@ -236,7 +235,6 @@ function CatalogSelector(props: CatalogSelectorProps) {
         <FilterSidebar
           searchValue={searchText()}
           selectedCategory={search().category}
-          hideBackgrounds
           onSearchChange={setSearchText}
           onCategoryChange={(category) => updateSearch({ category, page: 1 })}
         />

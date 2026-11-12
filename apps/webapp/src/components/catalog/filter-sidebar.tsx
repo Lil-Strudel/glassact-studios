@@ -1,5 +1,4 @@
 import { For, createMemo } from "solid-js";
-import { BACKGROUND_CATEGORY } from "@glassact/data";
 import { TextField, TextFieldRoot, Button } from "@glassact/ui";
 import { useQuery } from "@tanstack/solid-query";
 import { getCatalogCategoriesOpts } from "../../queries/catalog-browse";
@@ -12,18 +11,14 @@ interface FilterSidebarProps {
   onCategoryChange: (value: string) => void;
   searchValue: string;
   selectedCategory: string;
-  hideBackgrounds?: boolean;
 }
 
 export function FilterSidebar(props: FilterSidebarProps) {
   const categoriesQuery = useQuery(() => getCatalogCategoriesOpts());
   const granitePreference = useGranitePreference(PLAIN_GRANITE_KEY);
-  const categories = createMemo(() => {
-    const all = categoriesQuery.isSuccess ? categoriesQuery.data : [];
-    return props.hideBackgrounds
-      ? all.filter((category) => category !== BACKGROUND_CATEGORY)
-      : all;
-  });
+  const categories = createMemo(() =>
+    categoriesQuery.isSuccess ? categoriesQuery.data : [],
+  );
 
   const clearFilters = () => {
     props.onSearchChange("");

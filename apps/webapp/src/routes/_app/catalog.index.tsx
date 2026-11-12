@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/solid-query";
 import { browseCatalogOpts } from "../../queries/catalog-browse";
 import { FilterSidebar } from "../../components/catalog/filter-sidebar";
 import { CatalogGrid } from "../../components/catalog/catalog-grid";
+import { CatalogSectionTabs } from "../../components/catalog/catalog-section-tabs";
 import { useClampPage } from "../../hooks/use-clamp-page";
 import { useDebouncedSearchInput } from "../../hooks/use-debounced-search-input";
 import {
@@ -39,7 +40,6 @@ function RouteComponent() {
 
   const query = useQuery(() =>
     browseCatalogOpts({
-      kind: "all",
       search: search().q,
       category: search().category,
       limit: PAGE_SIZE,
@@ -59,21 +59,24 @@ function RouteComponent() {
   });
 
   return (
-    <div class="flex flex-col lg:flex-row gap-6">
-      <FilterSidebar
-        searchValue={searchText()}
-        selectedCategory={search().category}
-        onSearchChange={setSearchText}
-        onCategoryChange={(category) => updateSearch({ category, page: 1 })}
-      />
+    <div class="flex flex-col gap-6">
+      <CatalogSectionTabs />
+      <div class="flex flex-col lg:flex-row gap-6">
+        <FilterSidebar
+          searchValue={searchText()}
+          selectedCategory={search().category}
+          onSearchChange={setSearchText}
+          onCategoryChange={(category) => updateSearch({ category, page: 1 })}
+        />
 
-      <CatalogGrid
-        items={query.data?.items ?? []}
-        isLoading={query.isLoading}
-        page={search().page}
-        totalPages={totalPages()}
-        onPageChange={(page) => updateSearch({ page })}
-      />
+        <CatalogGrid
+          items={query.data?.items ?? []}
+          isLoading={query.isLoading}
+          page={search().page}
+          totalPages={totalPages()}
+          onPageChange={(page) => updateSearch({ page })}
+        />
+      </div>
     </div>
   );
 }

@@ -23,6 +23,7 @@ import { Route as AppDealershipIndexRouteImport } from './routes/_app/dealership
 import { Route as AppCatalogIndexRouteImport } from './routes/_app/catalog.index'
 import { Route as AppProjectsCreateProjectRouteImport } from './routes/_app/projects_.create-project'
 import { Route as AppDealershipIdRouteImport } from './routes/_app/dealership.$id'
+import { Route as AppCatalogBackgroundsRouteImport } from './routes/_app/catalog.backgrounds'
 import { Route as AppAdminSupportRouteImport } from './routes/_app/admin.support'
 import { Route as AppAdminPriceGroupsRouteImport } from './routes/_app/admin.price-groups'
 import { Route as AppAdminGroutRouteImport } from './routes/_app/admin.grout'
@@ -30,6 +31,7 @@ import { Route as AppAdminGlassRouteImport } from './routes/_app/admin.glass'
 import { Route as AppAdminDealershipsRouteImport } from './routes/_app/admin.dealerships'
 import { Route as AppAdminCompoundsRouteImport } from './routes/_app/admin.compounds'
 import { Route as AppAdminCatalogRouteImport } from './routes/_app/admin.catalog'
+import { Route as AppAdminBackgroundsRouteImport } from './routes/_app/admin.backgrounds'
 import { Route as AppProjectsIdIndexRouteImport } from './routes/_app/projects_.$id.index'
 import { Route as AppAdminUsersIndexRouteImport } from './routes/_app/admin.users.index'
 import { Route as AppProjectsIdDesignerRouteImport } from './routes/_app/projects_.$id.designer'
@@ -42,6 +44,8 @@ import { Route as AppAdminCompoundsUuidRouteImport } from './routes/_app/admin.c
 import { Route as AppAdminCatalogOrderRouteImport } from './routes/_app/admin.catalog_.order'
 import { Route as AppAdminCatalogCreateRouteImport } from './routes/_app/admin.catalog_.create'
 import { Route as AppAdminCatalogUuidRouteImport } from './routes/_app/admin.catalog_.$uuid'
+import { Route as AppAdminBackgroundsCreateRouteImport } from './routes/_app/admin.backgrounds_.create'
+import { Route as AppAdminBackgroundsUuidRouteImport } from './routes/_app/admin.backgrounds_.$uuid'
 import { Route as AppProjectsIdAddInlayIndexRouteImport } from './routes/_app/projects_.$id.add-inlay.index'
 import { Route as AppProjectsIdInlayInlayIdRouteImport } from './routes/_app/projects_.$id.inlay.$inlayId'
 import { Route as AppProjectsIdInlayInlayIdRecustomizeRouteImport } from './routes/_app/projects_.$id.inlay.$inlayId_.recustomize'
@@ -117,6 +121,11 @@ const AppDealershipIdRoute = AppDealershipIdRouteImport.update({
   path: '/dealership/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCatalogBackgroundsRoute = AppCatalogBackgroundsRouteImport.update({
+  id: '/catalog/backgrounds',
+  path: '/catalog/backgrounds',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminSupportRoute = AppAdminSupportRouteImport.update({
   id: '/support',
   path: '/support',
@@ -150,6 +159,11 @@ const AppAdminCompoundsRoute = AppAdminCompoundsRouteImport.update({
 const AppAdminCatalogRoute = AppAdminCatalogRouteImport.update({
   id: '/catalog',
   path: '/catalog',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminBackgroundsRoute = AppAdminBackgroundsRouteImport.update({
+  id: '/backgrounds',
+  path: '/backgrounds',
   getParentRoute: () => AppAdminRoute,
 } as any)
 const AppProjectsIdIndexRoute = AppProjectsIdIndexRouteImport.update({
@@ -212,6 +226,17 @@ const AppAdminCatalogUuidRoute = AppAdminCatalogUuidRouteImport.update({
   path: '/catalog/$uuid',
   getParentRoute: () => AppAdminRoute,
 } as any)
+const AppAdminBackgroundsCreateRoute =
+  AppAdminBackgroundsCreateRouteImport.update({
+    id: '/backgrounds_/create',
+    path: '/backgrounds/create',
+    getParentRoute: () => AppAdminRoute,
+  } as any)
+const AppAdminBackgroundsUuidRoute = AppAdminBackgroundsUuidRouteImport.update({
+  id: '/backgrounds_/$uuid',
+  path: '/backgrounds/$uuid',
+  getParentRoute: () => AppAdminRoute,
+} as any)
 const AppProjectsIdAddInlayIndexRoute =
   AppProjectsIdAddInlayIndexRouteImport.update({
     id: '/projects_/$id/add-inlay/',
@@ -247,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/review-queue': typeof AppReviewQueueRoute
   '/settings': typeof AppSettingsRoute
   '/support': typeof AppSupportRoute
+  '/admin/backgrounds': typeof AppAdminBackgroundsRoute
   '/admin/catalog': typeof AppAdminCatalogRoute
   '/admin/compounds': typeof AppAdminCompoundsRoute
   '/admin/dealerships': typeof AppAdminDealershipsRoute
@@ -254,10 +280,13 @@ export interface FileRoutesByFullPath {
   '/admin/grout': typeof AppAdminGroutRoute
   '/admin/price-groups': typeof AppAdminPriceGroupsRoute
   '/admin/support': typeof AppAdminSupportRoute
+  '/catalog/backgrounds': typeof AppCatalogBackgroundsRoute
   '/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/projects/create-project': typeof AppProjectsCreateProjectRoute
   '/catalog/': typeof AppCatalogIndexRoute
   '/dealership/': typeof AppDealershipIndexRoute
+  '/admin/backgrounds/$uuid': typeof AppAdminBackgroundsUuidRoute
+  '/admin/backgrounds/create': typeof AppAdminBackgroundsCreateRoute
   '/admin/catalog/$uuid': typeof AppAdminCatalogUuidRoute
   '/admin/catalog/create': typeof AppAdminCatalogCreateRoute
   '/admin/catalog/order': typeof AppAdminCatalogOrderRoute
@@ -285,6 +314,7 @@ export interface FileRoutesByTo {
   '/review-queue': typeof AppReviewQueueRoute
   '/settings': typeof AppSettingsRoute
   '/support': typeof AppSupportRoute
+  '/admin/backgrounds': typeof AppAdminBackgroundsRoute
   '/admin/catalog': typeof AppAdminCatalogRoute
   '/admin/compounds': typeof AppAdminCompoundsRoute
   '/admin/dealerships': typeof AppAdminDealershipsRoute
@@ -292,10 +322,13 @@ export interface FileRoutesByTo {
   '/admin/grout': typeof AppAdminGroutRoute
   '/admin/price-groups': typeof AppAdminPriceGroupsRoute
   '/admin/support': typeof AppAdminSupportRoute
+  '/catalog/backgrounds': typeof AppCatalogBackgroundsRoute
   '/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/projects/create-project': typeof AppProjectsCreateProjectRoute
   '/catalog': typeof AppCatalogIndexRoute
   '/dealership': typeof AppDealershipIndexRoute
+  '/admin/backgrounds/$uuid': typeof AppAdminBackgroundsUuidRoute
+  '/admin/backgrounds/create': typeof AppAdminBackgroundsCreateRoute
   '/admin/catalog/$uuid': typeof AppAdminCatalogUuidRoute
   '/admin/catalog/create': typeof AppAdminCatalogCreateRoute
   '/admin/catalog/order': typeof AppAdminCatalogOrderRoute
@@ -325,6 +358,7 @@ export interface FileRoutesById {
   '/_app/review-queue': typeof AppReviewQueueRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/support': typeof AppSupportRoute
+  '/_app/admin/backgrounds': typeof AppAdminBackgroundsRoute
   '/_app/admin/catalog': typeof AppAdminCatalogRoute
   '/_app/admin/compounds': typeof AppAdminCompoundsRoute
   '/_app/admin/dealerships': typeof AppAdminDealershipsRoute
@@ -332,10 +366,13 @@ export interface FileRoutesById {
   '/_app/admin/grout': typeof AppAdminGroutRoute
   '/_app/admin/price-groups': typeof AppAdminPriceGroupsRoute
   '/_app/admin/support': typeof AppAdminSupportRoute
+  '/_app/catalog/backgrounds': typeof AppCatalogBackgroundsRoute
   '/_app/dealership/$id': typeof AppDealershipIdRouteWithChildren
   '/_app/projects_/create-project': typeof AppProjectsCreateProjectRoute
   '/_app/catalog/': typeof AppCatalogIndexRoute
   '/_app/dealership/': typeof AppDealershipIndexRoute
+  '/_app/admin/backgrounds_/$uuid': typeof AppAdminBackgroundsUuidRoute
+  '/_app/admin/backgrounds_/create': typeof AppAdminBackgroundsCreateRoute
   '/_app/admin/catalog_/$uuid': typeof AppAdminCatalogUuidRoute
   '/_app/admin/catalog_/create': typeof AppAdminCatalogCreateRoute
   '/_app/admin/catalog_/order': typeof AppAdminCatalogOrderRoute
@@ -365,6 +402,7 @@ export interface FileRouteTypes {
     | '/review-queue'
     | '/settings'
     | '/support'
+    | '/admin/backgrounds'
     | '/admin/catalog'
     | '/admin/compounds'
     | '/admin/dealerships'
@@ -372,10 +410,13 @@ export interface FileRouteTypes {
     | '/admin/grout'
     | '/admin/price-groups'
     | '/admin/support'
+    | '/catalog/backgrounds'
     | '/dealership/$id'
     | '/projects/create-project'
     | '/catalog/'
     | '/dealership/'
+    | '/admin/backgrounds/$uuid'
+    | '/admin/backgrounds/create'
     | '/admin/catalog/$uuid'
     | '/admin/catalog/create'
     | '/admin/catalog/order'
@@ -403,6 +444,7 @@ export interface FileRouteTypes {
     | '/review-queue'
     | '/settings'
     | '/support'
+    | '/admin/backgrounds'
     | '/admin/catalog'
     | '/admin/compounds'
     | '/admin/dealerships'
@@ -410,10 +452,13 @@ export interface FileRouteTypes {
     | '/admin/grout'
     | '/admin/price-groups'
     | '/admin/support'
+    | '/catalog/backgrounds'
     | '/dealership/$id'
     | '/projects/create-project'
     | '/catalog'
     | '/dealership'
+    | '/admin/backgrounds/$uuid'
+    | '/admin/backgrounds/create'
     | '/admin/catalog/$uuid'
     | '/admin/catalog/create'
     | '/admin/catalog/order'
@@ -442,6 +487,7 @@ export interface FileRouteTypes {
     | '/_app/review-queue'
     | '/_app/settings'
     | '/_app/support'
+    | '/_app/admin/backgrounds'
     | '/_app/admin/catalog'
     | '/_app/admin/compounds'
     | '/_app/admin/dealerships'
@@ -449,10 +495,13 @@ export interface FileRouteTypes {
     | '/_app/admin/grout'
     | '/_app/admin/price-groups'
     | '/_app/admin/support'
+    | '/_app/catalog/backgrounds'
     | '/_app/dealership/$id'
     | '/_app/projects_/create-project'
     | '/_app/catalog/'
     | '/_app/dealership/'
+    | '/_app/admin/backgrounds_/$uuid'
+    | '/_app/admin/backgrounds_/create'
     | '/_app/admin/catalog_/$uuid'
     | '/_app/admin/catalog_/create'
     | '/_app/admin/catalog_/order'
@@ -577,6 +626,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AppDealershipIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/catalog/backgrounds': {
+      id: '/_app/catalog/backgrounds'
+      path: '/catalog/backgrounds'
+      fullPath: '/catalog/backgrounds'
+      preLoaderRoute: typeof AppCatalogBackgroundsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/admin/support': {
       id: '/_app/admin/support'
       path: '/support'
@@ -624,6 +680,13 @@ declare module '@tanstack/solid-router' {
       path: '/catalog'
       fullPath: '/admin/catalog'
       preLoaderRoute: typeof AppAdminCatalogRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/backgrounds': {
+      id: '/_app/admin/backgrounds'
+      path: '/backgrounds'
+      fullPath: '/admin/backgrounds'
+      preLoaderRoute: typeof AppAdminBackgroundsRouteImport
       parentRoute: typeof AppAdminRoute
     }
     '/_app/projects_/$id/': {
@@ -710,6 +773,20 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AppAdminCatalogUuidRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/admin/backgrounds_/create': {
+      id: '/_app/admin/backgrounds_/create'
+      path: '/backgrounds/create'
+      fullPath: '/admin/backgrounds/create'
+      preLoaderRoute: typeof AppAdminBackgroundsCreateRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/backgrounds_/$uuid': {
+      id: '/_app/admin/backgrounds_/$uuid'
+      path: '/backgrounds/$uuid'
+      fullPath: '/admin/backgrounds/$uuid'
+      preLoaderRoute: typeof AppAdminBackgroundsUuidRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/projects_/$id/add-inlay/': {
       id: '/_app/projects_/$id/add-inlay/'
       path: '/projects/$id/add-inlay'
@@ -742,6 +819,7 @@ declare module '@tanstack/solid-router' {
 }
 
 interface AppAdminRouteChildren {
+  AppAdminBackgroundsRoute: typeof AppAdminBackgroundsRoute
   AppAdminCatalogRoute: typeof AppAdminCatalogRoute
   AppAdminCompoundsRoute: typeof AppAdminCompoundsRoute
   AppAdminDealershipsRoute: typeof AppAdminDealershipsRoute
@@ -749,6 +827,8 @@ interface AppAdminRouteChildren {
   AppAdminGroutRoute: typeof AppAdminGroutRoute
   AppAdminPriceGroupsRoute: typeof AppAdminPriceGroupsRoute
   AppAdminSupportRoute: typeof AppAdminSupportRoute
+  AppAdminBackgroundsUuidRoute: typeof AppAdminBackgroundsUuidRoute
+  AppAdminBackgroundsCreateRoute: typeof AppAdminBackgroundsCreateRoute
   AppAdminCatalogUuidRoute: typeof AppAdminCatalogUuidRoute
   AppAdminCatalogCreateRoute: typeof AppAdminCatalogCreateRoute
   AppAdminCatalogOrderRoute: typeof AppAdminCatalogOrderRoute
@@ -760,6 +840,7 @@ interface AppAdminRouteChildren {
 }
 
 const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminBackgroundsRoute: AppAdminBackgroundsRoute,
   AppAdminCatalogRoute: AppAdminCatalogRoute,
   AppAdminCompoundsRoute: AppAdminCompoundsRoute,
   AppAdminDealershipsRoute: AppAdminDealershipsRoute,
@@ -767,6 +848,8 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminGroutRoute: AppAdminGroutRoute,
   AppAdminPriceGroupsRoute: AppAdminPriceGroupsRoute,
   AppAdminSupportRoute: AppAdminSupportRoute,
+  AppAdminBackgroundsUuidRoute: AppAdminBackgroundsUuidRoute,
+  AppAdminBackgroundsCreateRoute: AppAdminBackgroundsCreateRoute,
   AppAdminCatalogUuidRoute: AppAdminCatalogUuidRoute,
   AppAdminCatalogCreateRoute: AppAdminCatalogCreateRoute,
   AppAdminCatalogOrderRoute: AppAdminCatalogOrderRoute,
@@ -803,6 +886,7 @@ interface AppRouteChildren {
   AppReviewQueueRoute: typeof AppReviewQueueRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSupportRoute: typeof AppSupportRoute
+  AppCatalogBackgroundsRoute: typeof AppCatalogBackgroundsRoute
   AppDealershipIdRoute: typeof AppDealershipIdRouteWithChildren
   AppProjectsCreateProjectRoute: typeof AppProjectsCreateProjectRoute
   AppCatalogIndexRoute: typeof AppCatalogIndexRoute
@@ -823,6 +907,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppReviewQueueRoute: AppReviewQueueRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSupportRoute: AppSupportRoute,
+  AppCatalogBackgroundsRoute: AppCatalogBackgroundsRoute,
   AppDealershipIdRoute: AppDealershipIdRouteWithChildren,
   AppProjectsCreateProjectRoute: AppProjectsCreateProjectRoute,
   AppCatalogIndexRoute: AppCatalogIndexRoute,

@@ -1,16 +1,11 @@
 import { createMemo } from "solid-js";
 import { useQuery } from "@tanstack/solid-query";
-import { browseCatalogOpts } from "../../queries/catalog-browse";
-
-// Every active background fits in one page; the browse endpoint caps at 100.
-const BACKGROUND_PAGE = 100;
+import { browseBackgroundsOpts } from "../../queries/background";
 
 export function useBackgroundItems() {
-  const query = useQuery(() =>
-    browseCatalogOpts({ kind: "background", limit: BACKGROUND_PAGE }),
-  );
+  const query = useQuery(() => browseBackgroundsOpts());
   const byUuid = createMemo(
-    () => new Map((query.data?.items ?? []).map((item) => [item.uuid, item])),
+    () => new Map((query.data ?? []).map((background) => [background.uuid, background])),
   );
   return { query, byUuid };
 }

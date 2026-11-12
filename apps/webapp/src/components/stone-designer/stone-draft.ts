@@ -69,7 +69,7 @@ export function describeElement(
     case "inlay":
       return inlayName(el.inlay_uuid) ?? "Inlay";
     case "background":
-      return `Background: ${backgroundName(el.catalog_item_uuid) ?? "sandblast"}`;
+      return `Background: ${backgroundName(el.background_uuid) ?? "sandblast"}`;
     case "text": {
       const firstLine = el.text.split("\n")[0].trim();
       return `Text: ${firstLine || "(empty)"}`;

@@ -49,7 +49,7 @@ export type StoneInlayElement = StoneElementBase & {
 
 export type StoneBackgroundElement = StoneElementBase & {
   type: "background";
-  catalog_item_uuid: string;
+  background_uuid: string;
   width: number;
   flip_x?: boolean;
 };

@@ -1,16 +1,22 @@
 import { For, Show, createMemo, type ParentProps } from "solid-js";
-import type { InlayWithInfo } from "@glassact/data";
+import type { GET, InlayWithInfo, SandblastBackground } from "@glassact/data";
 import { Button } from "@glassact/ui";
 import type { StoneEditor } from "./create-stone-editor";
-import { newElementId } from "./stone-geometry";
+import { newElementId, type Point } from "./stone-geometry";
 import { CompoundPicker } from "./compound-picker";
 import { CustomizeInlayLink } from "./customize-inlay-link";
+import { RelatedInlays } from "./related-inlays";
+import type { AddableCatalogItem } from "./use-add-catalog-inlay";
+import { CatalogItemPicker } from "../catalog/catalog-item-picker";
 
 interface InlayPanelProps {
   editor: StoneEditor;
   projectUuid: string;
   inlays: InlayWithInfo[];
-  canAddCompounds: boolean;
+  backgroundsByUuid: Map<string, GET<SandblastBackground>>;
+  canAddInlays: boolean;
+  isAddingInlay: boolean;
+  onAddInlay: (item: AddableCatalogItem, anchor?: Point) => void;
   onAddCompound: (compoundUuid: string) => Promise<void>;
 }
 
@@ -56,6 +62,15 @@ export function InlayPanel(props: InlayPanelProps) {
 
   return (
     <div class="flex flex-col gap-6">
+      <Show when={props.canAddInlays}>
+        <RelatedInlays
+          editor={props.editor}
+          backgroundsByUuid={props.backgroundsByUuid}
+          isAdding={props.isAddingInlay}
+          onAdd={props.onAddInlay}
+        />
+      </Show>
+
       <section>
         <h3 class="text-sm font-medium text-gray-900">Not on the stone yet</h3>
         <Show
@@ -102,7 +117,16 @@ export function InlayPanel(props: InlayPanelProps) {
         </section>
       </Show>
 
-      <Show when={props.canAddCompounds}>
+      <Show when={props.canAddInlays}>
+        <CatalogItemPicker
+          title="Add from the catalog"
+          description="Click an inlay to add it to the project and place it on the stone."
+          isDisabled={props.isAddingInlay}
+          onPick={(item) => props.onAddInlay(item)}
+        />
+      </Show>
+
+      <Show when={props.canAddInlays}>
         <section>
           <h3 class="text-sm font-medium text-gray-900">Compound inlays</h3>
           <p class="mt-1 text-xs text-gray-500">

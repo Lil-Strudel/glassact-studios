@@ -14,14 +14,7 @@ export const CATALOG_CATEGORIES = [
   "E-ORNAMENTS",
   "F-FAITH",
   "G-PROFESSIONS",
-  "SB-BACKGROUNDS",
 ] as const;
-
-// Sandblast masks for the stone face. Admins manage them in the catalog, but
-// they are never ordered as inlays.
-export const BACKGROUND_CATEGORY = "SB-BACKGROUNDS";
-
-export type CatalogBrowseKind = "inlay" | "background" | "all";
 
 // Phase A: analyze an uploaded SVG into a working structure SVG + best-guess
 // manifest. No catalog row is created.

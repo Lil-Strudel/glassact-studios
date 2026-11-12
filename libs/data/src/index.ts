@@ -25,5 +25,6 @@ export * from "./project-chats";
 export * from "./project-watchers";
 export * from "./projects";
 export * from "./review-queue";
+export * from "./sandblast-background";
 export * from "./stone-design";
 export * from "./support-articles";

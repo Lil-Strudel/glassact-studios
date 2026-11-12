@@ -11,6 +11,7 @@ import { draftFromDesign, inlayArt } from "./stone-draft";
 import { useBackgroundArt } from "./use-background-art";
 import { useBackgroundItems } from "./use-background-items";
 import { useDesignerShortcuts } from "./use-designer-shortcuts";
+import { useAddCatalogInlay } from "./use-add-catalog-inlay";
 import { DesignerToolbar } from "./designer-toolbar";
 import { StonePanel } from "./stone-panel";
 import { InlayPanel } from "./inlay-panel";
@@ -75,6 +76,7 @@ export function StoneDesigner(props: StoneDesignerProps) {
     return inlaysByUuid().get(selected[0].inlay_uuid);
   });
   const backgroundItems = useBackgroundItems();
+  const catalogInlay = useAddCatalogInlay({ editor, projectUuid: () => props.projectUuid });
   const resolveBackground = useBackgroundArt(() => editor.draft.layout.elements);
 
   const stone = createMemo(() => ({
@@ -145,12 +147,20 @@ export function StoneDesigner(props: StoneDesignerProps) {
                 editor={editor}
                 projectUuid={props.projectUuid}
                 inlays={props.inlays}
-                canAddCompounds={props.isEditable}
+                backgroundsByUuid={backgroundItems.byUuid()}
+                canAddInlays={props.isEditable}
+                isAddingInlay={catalogInlay.isAdding()}
+                onAddInlay={catalogInlay.add}
                 onAddCompound={addCompound}
               />
             </TabsContent>
             <TabsContent value="background">
-              <BackgroundPanel editor={editor} isEditable={props.isEditable} />
+              <BackgroundPanel
+                editor={editor}
+                isEditable={props.isEditable}
+                isAddingInlay={catalogInlay.isAdding()}
+                onAddInlay={catalogInlay.add}
+              />
             </TabsContent>
             <TabsContent value="text">
               <TextPanel editor={editor} />

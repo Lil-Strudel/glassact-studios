@@ -14,6 +14,7 @@ import {
   IoColorPaletteOutline,
   IoBrushOutline,
   IoHelpCircleOutline,
+  IoImageOutline,
 } from "solid-icons/io";
 import { getUserSelfOpts } from "../../queries/user";
 
@@ -52,6 +53,11 @@ const navigationItems = [
     label: "Compounds",
     icon: IoAppsOutline,
     path: "/admin/compounds",
+  },
+  {
+    label: "Backgrounds",
+    icon: IoImageOutline,
+    path: "/admin/backgrounds",
   },
   {
     label: "Price Groups",

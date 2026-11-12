@@ -160,7 +160,7 @@ export function StoneCanvas(props: StoneCanvasProps) {
         return { x: -art.width / 2, y: -art.height / 2, width: art.width, height: art.height };
       }
       case "background": {
-        const art = props.resolveBackground(el.catalog_item_uuid);
+        const art = props.resolveBackground(el.background_uuid);
         const height = el.width * (art?.aspect ?? 0.5);
         return { x: -el.width / 2, y: -height / 2, width: el.width, height };
       }
@@ -447,7 +447,7 @@ export function StoneCanvas(props: StoneCanvasProps) {
               {(el) => (
                 <BackgroundView
                   el={el}
-                  art={props.resolveBackground(el.catalog_item_uuid)}
+                  art={props.resolveBackground(el.background_uuid)}
                   frostFilter={ids.frost}
                   onPointerDown={(e) => handleElementPointerDown(e, el)}
                 />
