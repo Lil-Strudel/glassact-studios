@@ -26,4 +26,6 @@ type Inlays struct {
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	Version           int32
+	MirrorX           bool
+	MirrorY           bool
 }

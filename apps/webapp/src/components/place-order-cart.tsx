@@ -24,6 +24,8 @@ import { formatMoney } from "../utils/format-money";
 import { PriceCaveat } from "./price-caveat";
 import { formatPriceFormula } from "../utils/format-price-formula";
 import { IoCheckmarkCircle } from "solid-icons/io";
+import { MirrorBadge } from "./inlay/mirror-badge";
+import { mirrorCssTransform } from "../utils/inlay-mirror";
 
 interface PlaceOrderCartProps {
   project: { uuid: string; name: string; installation_kit: boolean };
@@ -224,6 +226,7 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                               src={inlay.preview_url}
                               alt={inlay.name}
                               class="w-10 h-10 object-contain rounded shrink-0"
+                              style={{ transform: mirrorCssTransform(inlay) }}
                               draggable={false}
                             />
                           </Show>
@@ -237,6 +240,7 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                                   Customized
                                 </Badge>
                               </Show>
+                              <MirrorBadge inlay={inlay} />
                               <Show when={!isCatalog()}>
                                 <Badge variant="outline" class="text-xs">
                                   Custom

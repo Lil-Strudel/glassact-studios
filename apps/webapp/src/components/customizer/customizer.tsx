@@ -40,6 +40,7 @@ interface CustomizerProps {
   // Where to start. Re-customizing an existing inlay seeds from that inlay's
   // current coloring; otherwise the catalog defaults are used.
   initialState?: InitialState;
+  artTransform?: string;
 }
 
 interface InitialState {
@@ -361,6 +362,7 @@ export function Customizer(props: CustomizerProps) {
         <div class="min-h-[24rem] flex-1">
           <CustomizerCanvas
             svgText={props.svgText}
+            artTransform={props.artTransform}
             pieceSource={pieceSource()}
             groutPieceIds={groutPieceIds()}
             resolveHex={resolveHex}

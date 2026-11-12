@@ -10,6 +10,8 @@ import {
   type InlayPhase,
 } from "./inlay-phase";
 import { InlayGlassSummary } from "./inlay-glass-summary";
+import { MirrorBadge } from "./mirror-badge";
+import { mirrorCssTransform } from "../../utils/inlay-mirror";
 
 interface InlayIdentityRailProps {
   inlay: InlayDetail;
@@ -85,13 +87,20 @@ export function InlayIdentityRail(props: InlayIdentityRailProps) {
         }
       >
         <ImageLightbox
-          images={[{ src: previewUrl(), alt: props.inlay.name }]}
+          images={[
+            {
+              src: previewUrl(),
+              alt: props.inlay.name,
+              transform: mirrorCssTransform(props.inlay),
+            },
+          ]}
           triggerClass="block w-full overflow-hidden rounded-lg border bg-gray-50 p-2"
         >
           <img
             src={previewUrl()}
             alt={props.inlay.name}
             class="mx-auto max-h-56 w-full object-contain"
+            style={{ transform: mirrorCssTransform(props.inlay) }}
           />
         </ImageLightbox>
       </Show>
@@ -108,6 +117,7 @@ export function InlayIdentityRail(props: InlayIdentityRailProps) {
           <Show when={props.inlay.is_customized}>
             <Badge variant="warning">Customized</Badge>
           </Show>
+          <MirrorBadge inlay={props.inlay} />
         </div>
       </div>
 

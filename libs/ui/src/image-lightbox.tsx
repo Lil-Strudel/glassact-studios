@@ -17,6 +17,8 @@ import { createPanZoom } from "./create-pan-zoom";
 export interface LightboxImage {
   src: string;
   alt: string;
+  /** CSS transform for the image itself, inside the pan/zoom, e.g. a mirror. */
+  transform?: string;
 }
 
 /** Live view of the open viewer, for a backdrop that follows the image. */
@@ -215,6 +217,7 @@ export function ImageLightbox(props: ImageLightboxProps) {
                     alt={img().alt}
                     draggable={false}
                     class="max-h-full max-w-full select-none object-contain"
+                    style={{ transform: img().transform }}
                   />
                 )}
               </Show>
@@ -303,7 +306,12 @@ export function ImageLightbox(props: ImageLightboxProps) {
                 {(i) => (
                   <Show when={props.images[(i + count()) % count()]}>
                     {(neighbour) => (
-                      <img src={neighbour().src} alt="" aria-hidden="true" />
+                      <img
+                        src={neighbour().src}
+                        alt=""
+                        aria-hidden="true"
+                        style={{ transform: neighbour().transform }}
+                      />
                     )}
                   </Show>
                 )}

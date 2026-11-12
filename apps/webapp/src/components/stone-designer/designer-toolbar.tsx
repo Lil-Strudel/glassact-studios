@@ -5,11 +5,14 @@ import { Button } from "@glassact/ui";
 import type { StoneEditor } from "./create-stone-editor";
 import type { SaveStatus } from "./create-stone-autosave";
 import { CustomizeInlayLink } from "./customize-inlay-link";
+import { InlayArrangeActions } from "../inlay/inlay-arrange-actions";
+import type { DuplicateInlayHooks } from "../inlay/use-duplicate-inlay";
 
 interface DesignerToolbarProps {
   editor: StoneEditor;
   projectUuid: string;
   selectedInlay?: InlayWithInfo;
+  duplicateHooks: DuplicateInlayHooks;
   saveStatus?: SaveStatus;
 }
 
@@ -63,6 +66,12 @@ export function DesignerToolbar(props: DesignerToolbarProps) {
           <>
             <div class="mx-1 h-5 w-px bg-gray-300" />
             <CustomizeInlayLink projectUuid={props.projectUuid} inlay={inlay()} />
+            <InlayArrangeActions
+              projectUuid={props.projectUuid}
+              inlay={inlay()}
+              duplicateHooks={props.duplicateHooks}
+              class="contents"
+            />
             <Button
               as={Link}
               to="/projects/$id/inlay/$inlayId"

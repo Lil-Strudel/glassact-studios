@@ -13,6 +13,8 @@ import type { ReviewQueueItem } from "@glassact/data";
 import { PERMISSION_ACTIONS } from "@glassact/data";
 import { getReviewQueueOpts } from "../../queries/review-queue";
 import { Can } from "../../components/Can";
+import { MirrorBadge } from "../../components/inlay/mirror-badge";
+import { mirrorCssTransform } from "../../utils/inlay-mirror";
 import ProofActions from "../../components/proof/proof-actions";
 import CreateProofDialog from "../../components/proof/create-proof-dialog";
 
@@ -127,6 +129,7 @@ function ItemHeader(props: { item: ReviewQueueItem }) {
     <div class="flex items-start justify-between gap-2">
       <div class="min-w-0">
         <CardTitle class="text-sm truncate">{props.item.inlay.name}</CardTitle>
+        <MirrorBadge inlay={props.item.inlay} />
         <Link
           to="/projects/$id"
           params={{ id: props.item.project_uuid }}
@@ -158,6 +161,7 @@ function ApprovalCard(props: { item: ReviewQueueItem }) {
             src={props.item.pending_proof!.design_asset_url}
             alt={props.item.inlay.name}
             class="max-w-full max-h-full object-contain"
+            style={{ transform: mirrorCssTransform(props.item.inlay) }}
           />
         </div>
       </Show>

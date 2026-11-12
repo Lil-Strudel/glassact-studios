@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/solid-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/solid-router";
 import { useQuery, useQueryClient } from "@tanstack/solid-query";
 import { For, Match, Show, Switch, createMemo, createSignal } from "solid-js";
 import { Badge, Breadcrumb, Button, ImageLightbox } from "@glassact/ui";
@@ -19,6 +19,7 @@ import { ManufacturingTracker } from "../../components/manufacturing/manufacturi
 import { STEP_LABELS } from "../../components/manufacturing/steps";
 import CreateProofDialog from "../../components/proof/create-proof-dialog";
 import { deriveInlayPhase } from "../../components/inlay/inlay-phase";
+import { InlayArrangeActions } from "../../components/inlay/inlay-arrange-actions";
 
 export const Route = createFileRoute("/_app/projects_/$id/inlay/$inlayId")({
   component: InlayDetailPage,
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/_app/projects_/$id/inlay/$inlayId")({
 function InlayDetailPage() {
   const params = Route.useParams();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const projectQuery = useQuery(() => getProjectOpts(params().id));
   const inlayQuery = useQuery(() => getInlayOpts(params().inlayId));
@@ -205,6 +207,19 @@ function InlayDetailPage() {
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
               <div class="space-y-4">
                 <InlayIdentityRail inlay={inlay()!} phase={phase()!} />
+                <Show when={project()!.status === "draft"}>
+                  <InlayArrangeActions
+                    projectUuid={params().id}
+                    inlay={inlay()!}
+                    duplicateHooks={{
+                      after: (duplicate) =>
+                        navigate({
+                          to: "/projects/$id/inlay/$inlayId",
+                          params: { id: params().id, inlayId: duplicate.uuid },
+                        }),
+                    }}
+                  />
+                </Show>
               </div>
 
               <div class="space-y-6">
@@ -215,6 +230,7 @@ function InlayDetailPage() {
                         <ProofReviewPanel
                           proof={proof()}
                           inlayUuid={params().inlayId}
+                          mirror={inlay()!}
                         />
                       )}
                     </Show>
@@ -262,6 +278,7 @@ function InlayDetailPage() {
 
                 <DesignHistory
                   inlayUuid={params().inlayId}
+                  mirror={inlay()!}
                   excludeProofId={pendingProof()?.id}
                 />
               </div>

@@ -61,6 +61,9 @@ import {
 } from "solid-icons/io";
 import { ManufacturingTracker } from "../../components/manufacturing/manufacturing-tracker";
 import { SandblastFileCard } from "../../components/inlay/sandblast-file-card";
+import { MirrorBadge } from "../../components/inlay/mirror-badge";
+import { InlayArrangeActions } from "../../components/inlay/inlay-arrange-actions";
+import { mirrorCssTransform } from "../../utils/inlay-mirror";
 import { ProjectDiscussion } from "../../components/chat/project-discussion";
 import { PriceCaveat } from "../../components/price-caveat";
 import { isManufacturingStatus } from "../../utils/project-status";
@@ -655,6 +658,9 @@ function RouteComponent() {
                         canDelete={
                           projectQuery.data!.status === "draft"
                         }
+                        canArrange={
+                          projectQuery.data!.status === "draft"
+                        }
                         onDelete={() => handleDeleteInlay(inlay)}
                         isDeleting={removeInlay.isPending}
                       />
@@ -808,6 +814,7 @@ interface InlayCardProps {
   projectStatus: ProjectStatus;
   sandblastFileFormat?: SandblastFileFormat;
   canDelete: boolean;
+  canArrange: boolean;
   onDelete: () => void;
   isDeleting: boolean;
 }
@@ -898,6 +905,7 @@ function InlayCard(props: InlayCardProps) {
               src={props.inlay.preview_url}
               alt={props.inlay.name}
               class="max-w-full max-h-full object-contain"
+              style={{ transform: mirrorCssTransform(props.inlay) }}
             />
           </div>
         </Show>
@@ -933,6 +941,7 @@ function InlayCard(props: InlayCardProps) {
                 Customized
               </Badge>
             </Show>
+            <MirrorBadge inlay={props.inlay} />
           </div>
           <div class="flex items-end justify-between gap-2 text-xs text-gray-600">
             <span>{priceLabel()}</span>
@@ -954,6 +963,7 @@ function InlayCard(props: InlayCardProps) {
       <Show
         when={
           props.canDelete ||
+          props.canArrange ||
           showInternalApprove() ||
           hasSandblast() ||
           canUploadSandblast()
@@ -988,6 +998,12 @@ function InlayCard(props: InlayCardProps) {
                 Review &amp; Approve
               </Button>
             </Can>
+          </Show>
+          <Show when={props.canArrange}>
+            <InlayArrangeActions
+              projectUuid={props.projectId}
+              inlay={props.inlay}
+            />
           </Show>
           <Show when={props.canDelete}>
             <Show

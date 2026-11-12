@@ -57,6 +57,8 @@ export function inlayArt(inlay: InlayWithInfo): PlacedInlayArt | undefined {
     imageUrl: inlay.preview_url || null,
     width: inlay.width,
     height: inlay.height,
+    mirrorX: inlay.mirror_x,
+    mirrorY: inlay.mirror_y,
   };
 }
 

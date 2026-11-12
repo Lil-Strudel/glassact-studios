@@ -44,6 +44,8 @@ export type Inlay = StandardTable<{
   type: InlayType;
   is_customized: boolean;
   preview_url: string;
+  mirror_x: boolean;
+  mirror_y: boolean;
   sandblast_file_url: string | null;
   approved_proof_id: number | null;
   manufacturing_step: ManufacturingStep | null;

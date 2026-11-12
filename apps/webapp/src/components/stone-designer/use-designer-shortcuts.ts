@@ -11,7 +11,15 @@ function isTyping(target: EventTarget | null) {
   );
 }
 
-export function useDesignerShortcuts(editor: StoneEditor, isEnabled: Accessor<boolean>) {
+interface DesignerShortcutActions {
+  onDuplicate: () => void;
+}
+
+export function useDesignerShortcuts(
+  editor: StoneEditor,
+  isEnabled: Accessor<boolean>,
+  actions?: DesignerShortcutActions,
+) {
   function onKeyDown(e: KeyboardEvent) {
     if (!isEnabled() || isTyping(e.target)) return;
     const mod = e.metaKey || e.ctrlKey;
@@ -26,6 +34,11 @@ export function useDesignerShortcuts(editor: StoneEditor, isEnabled: Accessor<bo
     if (mod && e.key.toLowerCase() === "y") {
       e.preventDefault();
       editor.redo();
+      return;
+    }
+    if (actions && mod && e.key.toLowerCase() === "d") {
+      e.preventDefault();
+      actions.onDuplicate();
       return;
     }
 

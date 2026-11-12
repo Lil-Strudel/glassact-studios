@@ -31,6 +31,8 @@ interface CustomizerCanvasProps {
   granite?: GranitePreference;
   // The inlay's physical size, so the granite is drawn at true scale.
   inlayInches?: InlayInches;
+  // Drawn on the artwork only, e.g. to show an inlay the way it is mirrored.
+  artTransform?: string;
   onPieceClick: (pieceId: string, groupKey: string) => void;
   onPieceHover: (pieceId: string | null, groupKey: string | null) => void;
   // Fired when the user clicks empty backdrop (not a piece, not a pan).
@@ -203,7 +205,11 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
             "transform-origin": "center",
           }}
         >
-          <div ref={host} class="h-full w-full" />
+          <div
+            ref={host}
+            class="h-full w-full"
+            style={{ transform: props.artTransform }}
+          />
         </div>
       </div>
 

@@ -38,6 +38,8 @@ import {
 } from "../../queries/manufacturing";
 import { isApiError } from "../../utils/is-api-error";
 import { Can } from "../../components/Can";
+import { MirrorBadge } from "../../components/inlay/mirror-badge";
+import { mirrorCssTransform } from "../../utils/inlay-mirror";
 import { AddInlayUpdateDialog } from "../../components/manufacturing/add-inlay-update-dialog";
 import {
   STEP_LABELS,
@@ -108,6 +110,7 @@ function InlayCard(props: InlayCardProps) {
               alt={props.inlay.name}
               src={props.inlay.preview_url}
               class="w-[50px] h-[50px] flex-shrink-0 object-contain rounded"
+              style={{ transform: mirrorCssTransform(props.inlay) }}
               draggable={false}
             />
           </Show>
@@ -116,6 +119,7 @@ function InlayCard(props: InlayCardProps) {
             <CardDescription class="text-xs truncate">
               {props.inlay.dealership_name} — {props.inlay.project_name}
             </CardDescription>
+            <MirrorBadge inlay={props.inlay} />
           </div>
         </Link>
         <Can permission="create_inlay_update">

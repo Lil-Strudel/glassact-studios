@@ -504,3 +504,51 @@ func (m StoneDesignModel) TxAppendGroup(tx *sql.Tx, projectID int, group StoneGr
 	}
 	return design, nil
 }
+
+// DuplicateOffsetInches is how far a duplicated inlay lands from its original,
+// down and to the right, so the copy is visibly separate rather than hidden
+// exactly underneath.
+const DuplicateOffsetInches = 1.0
+
+// TxPlaceDuplicate puts copyInlayUUID on the stone next to sourceInlayUUID, with
+// the same rotation and ungrouped. It reports false, changing nothing, when the
+// project has no design or the source inlay is not on it.
+func (m StoneDesignModel) TxPlaceDuplicate(tx *sql.Tx, projectID int, sourceInlayUUID, copyInlayUUID string) (bool, error) {
+	design, found, err := m.TxGetByProjectIDForUpdate(tx, projectID)
+	if err != nil {
+		return false, fmt.Errorf("failed to load stone design for project %d: %w", projectID, err)
+	}
+	if !found {
+		return false, nil
+	}
+
+	var source *StoneElement
+	for i := range design.Layout.Elements {
+		el := &design.Layout.Elements[i]
+		if el.Type == StoneElementTypes.Inlay && el.InlayUUID == sourceInlayUUID {
+			source = el
+			break
+		}
+	}
+	if source == nil {
+		return false, nil
+	}
+
+	design.Layout.Elements = append(design.Layout.Elements, StoneElement{
+		ID:        uuid.NewString(),
+		Type:      StoneElementTypes.Inlay,
+		X:         source.X + DuplicateOffsetInches,
+		Y:         source.Y + DuplicateOffsetInches,
+		Rotation:  source.Rotation,
+		InlayUUID: copyInlayUUID,
+	})
+
+	if err := design.Validate(); err != nil {
+		return false, fmt.Errorf("stone design for project %d would be invalid: %w", projectID, err)
+	}
+
+	if err := m.TxUpdate(tx, design); err != nil {
+		return false, err
+	}
+	return true, nil
+}

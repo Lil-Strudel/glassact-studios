@@ -172,6 +172,11 @@ Place Order is enabled only when **every** inlay on the project is "ready". An i
 - **Customized catalog inlay** (`type='catalog'`, `is_customized=true`) — produced via the customizer. Becomes ready once the auto-created `inlay_proof` (with `approval_authority='internal'`) is approved by an internal designer/admin, who may also override the price group.
 - **Custom inlay** (`type='custom'`) — becomes ready once an internal designer creates a proof (with `approval_authority='dealership'`) and the dealership approves it. This is the only flow that still uses the legacy "designer uploads → customer reviews" loop.
 
+### Mirroring and Duplicating Inlays
+
+- **Mirroring** — `inlays.mirror_x` (left↔right) and `inlays.mirror_y` (top↔bottom) are independent flags, editable only while the project is `draft`, from the project page, the inlay page or the stone designer. They are an orientation instruction for production, not a new design: they never reset approval, readiness or price, and the stored artwork is never re-baked. Every preview draws the inlay mirrored with a "Mirrored" badge, and the proof design download comes out already mirrored (SVG/PNG/JPEG) and named for its direction; a format that can't be flipped (PDF) downloads unchanged, named `NOT-MIRRORED_cut-mirrored-…`.
+- **Duplicating** — `POST /api/inlay/{uuid}/duplicate` (draft only) copies the inlay, its subtype info and mirror flags as "<name> (copy)". An approved proof is copied with its approval, so a ready inlay's copy is ready at the same price; a customized inlay awaiting review copies into review (`internal_review_required`); a custom inlay without an approved proof copies without a proof (`custom_inlay_submitted`). If the original is on the stone design, the copy is placed 1″ down and right of it.
+
 ### Project Fields
 
 - `name` (required) — display name.

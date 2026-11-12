@@ -6,15 +6,21 @@ import type { GET, InlayProof } from "@glassact/data";
 import { getProofsByInlayOpts } from "../../queries/proof";
 import { ProofStatusBadge } from "../proof/proof-status-badge";
 import { DownloadDesignButton } from "../proof/download-design-button";
+import { mirrorCssTransform, type MirrorFlags } from "../../utils/inlay-mirror";
 
 interface DesignHistoryProps {
   inlayUuid: string;
+  mirror: MirrorFlags;
   // The pending proof already gets a full panel of its own, so skip it here
   // rather than rendering the same design twice.
   excludeProofId?: number;
 }
 
-function ProofRow(props: { proof: GET<InlayProof>; defaultOpen: boolean }) {
+function ProofRow(props: {
+  proof: GET<InlayProof>;
+  defaultOpen: boolean;
+  mirror: MirrorFlags;
+}) {
   const [isOpen, setIsOpen] = createSignal(props.defaultOpen);
 
   return (
@@ -45,6 +51,7 @@ function ProofRow(props: { proof: GET<InlayProof>; defaultOpen: boolean }) {
                   {
                     src: assetUrl(),
                     alt: `Proof v${props.proof.version_number}`,
+                    transform: mirrorCssTransform(props.mirror),
                   },
                 ]}
                 triggerClass="flex w-full items-center justify-center rounded bg-gray-50 p-3"
@@ -53,6 +60,7 @@ function ProofRow(props: { proof: GET<InlayProof>; defaultOpen: boolean }) {
                   src={assetUrl()}
                   alt={`Proof v${props.proof.version_number}`}
                   class="max-h-40 max-w-full rounded object-contain"
+                  style={{ transform: mirrorCssTransform(props.mirror) }}
                 />
               </ImageLightbox>
             )}
@@ -131,6 +139,7 @@ export function DesignHistory(props: DesignHistoryProps) {
                 <ProofRow
                   proof={proof}
                   defaultOpen={index() === 0 && isWorthExpanding()}
+                  mirror={props.mirror}
                 />
               )}
             </For>

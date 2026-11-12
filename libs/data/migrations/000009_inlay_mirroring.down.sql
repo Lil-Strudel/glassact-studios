@@ -1,0 +1,3 @@
+ALTER TABLE inlays
+    DROP COLUMN IF EXISTS mirror_y,
+    DROP COLUMN IF EXISTS mirror_x;

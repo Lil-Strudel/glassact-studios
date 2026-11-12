@@ -40,6 +40,8 @@ export interface PlacedInlayArt {
   imageUrl: string | null;
   width: number;
   height: number;
+  mirrorX?: boolean;
+  mirrorY?: boolean;
 }
 
 export interface StoneSpec {
@@ -702,6 +704,7 @@ function InlayView(props: {
                 width={art().width}
                 height={art().height}
                 preserveAspectRatio="xMidYMid meet"
+                transform={`scale(${art().mirrorX ? -1 : 1} ${art().mirrorY ? -1 : 1})`}
               />
             )}
           </Show>

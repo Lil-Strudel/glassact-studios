@@ -6,10 +6,12 @@ import { Can } from "../Can";
 import ProofActions from "../proof/proof-actions";
 import { ProofStatusBadge } from "../proof/proof-status-badge";
 import { DownloadDesignButton } from "../proof/download-design-button";
+import { mirrorCssTransform, type MirrorFlags } from "../../utils/inlay-mirror";
 
 interface ProofReviewPanelProps {
   proof: GET<InlayProof>;
   inlayUuid: string;
+  mirror: MirrorFlags;
 }
 
 // The pending proof, presented as the thing the page is about. Which side may
@@ -41,6 +43,7 @@ export function ProofReviewPanel(props: ProofReviewPanelProps) {
               {
                 src: assetUrl(),
                 alt: `Proof v${props.proof.version_number}`,
+                transform: mirrorCssTransform(props.mirror),
               },
             ]}
             triggerClass="flex w-full items-center justify-center border-b bg-gray-50 p-6"
@@ -49,6 +52,7 @@ export function ProofReviewPanel(props: ProofReviewPanelProps) {
               src={assetUrl()}
               alt={`Proof v${props.proof.version_number}`}
               class="max-h-96 max-w-full rounded object-contain"
+              style={{ transform: mirrorCssTransform(props.mirror) }}
             />
           </ImageLightbox>
         )}

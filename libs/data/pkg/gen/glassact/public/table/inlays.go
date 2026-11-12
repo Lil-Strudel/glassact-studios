@@ -30,6 +30,8 @@ type inlaysTable struct {
 	CreatedAt         postgres.ColumnTimestampz
 	UpdatedAt         postgres.ColumnTimestampz
 	Version           postgres.ColumnInteger
+	MirrorX           postgres.ColumnBool
+	MirrorY           postgres.ColumnBool
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -84,9 +86,11 @@ func newInlaysTableImpl(schemaName, tableName, alias string) inlaysTable {
 		CreatedAtColumn         = postgres.TimestampzColumn("created_at")
 		UpdatedAtColumn         = postgres.TimestampzColumn("updated_at")
 		VersionColumn           = postgres.IntegerColumn("version")
-		allColumns              = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, IsCustomizedColumn, PreviewURLColumn, SandblastFileURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		mutableColumns          = postgres.ColumnList{UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, IsCustomizedColumn, PreviewURLColumn, SandblastFileURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
-		defaultColumns          = postgres.ColumnList{IDColumn, UUIDColumn, IsCustomizedColumn, PreviewURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn}
+		MirrorXColumn           = postgres.BoolColumn("mirror_x")
+		MirrorYColumn           = postgres.BoolColumn("mirror_y")
+		allColumns              = postgres.ColumnList{IDColumn, UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, IsCustomizedColumn, PreviewURLColumn, SandblastFileURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn, MirrorXColumn, MirrorYColumn}
+		mutableColumns          = postgres.ColumnList{UUIDColumn, ProjectIDColumn, NameColumn, TypeColumn, IsCustomizedColumn, PreviewURLColumn, SandblastFileURLColumn, ApprovedProofIDColumn, ManufacturingStepColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn, MirrorXColumn, MirrorYColumn}
+		defaultColumns          = postgres.ColumnList{IDColumn, UUIDColumn, IsCustomizedColumn, PreviewURLColumn, CreatedAtColumn, UpdatedAtColumn, VersionColumn, MirrorXColumn, MirrorYColumn}
 	)
 
 	return inlaysTable{
@@ -106,6 +110,8 @@ func newInlaysTableImpl(schemaName, tableName, alias string) inlaysTable {
 		CreatedAt:         CreatedAtColumn,
 		UpdatedAt:         UpdatedAtColumn,
 		Version:           VersionColumn,
+		MirrorX:           MirrorXColumn,
+		MirrorY:           MirrorYColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

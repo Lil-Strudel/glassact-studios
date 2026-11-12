@@ -8,6 +8,7 @@ import { CustomizeInlayLink } from "./customize-inlay-link";
 import { RelatedInlays } from "./related-inlays";
 import type { AddableCatalogItem } from "./use-add-catalog-inlay";
 import { CatalogItemPicker } from "../catalog/catalog-item-picker";
+import { mirrorCssTransform } from "../../utils/inlay-mirror";
 
 interface InlayPanelProps {
   editor: StoneEditor;
@@ -145,7 +146,14 @@ function InlayRow(props: ParentProps<{ inlay: InlayWithInfo; projectUuid: string
     <li class="flex items-center gap-3 rounded-md border border-gray-200 p-2">
       <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-gray-100">
         <Show when={props.inlay.preview_url}>
-          {(url) => <img src={url()} alt="" class="max-h-full max-w-full object-contain" />}
+          {(url) => (
+            <img
+              src={url()}
+              alt=""
+              class="max-h-full max-w-full object-contain"
+              style={{ transform: mirrorCssTransform(props.inlay) }}
+            />
+          )}
         </Show>
       </div>
       <div class="min-w-0 flex-1">

@@ -58,6 +58,8 @@ type Inlay struct {
 	Type              InlayType         `json:"type"`
 	IsCustomized      bool              `json:"is_customized"`
 	PreviewURL        string            `json:"preview_url"`
+	MirrorX           bool              `json:"mirror_x"`
+	MirrorY           bool              `json:"mirror_y"`
 	SandblastFileURL  *string           `json:"sandblast_file_url"`
 	ApprovedProofID   *int              `json:"approved_proof_id,omitempty"`
 	ManufacturingStep *string           `json:"manufacturing_step,omitempty"`
@@ -84,6 +86,8 @@ func inlayFromGen(genInlay model.Inlays, genCatalogInfo *model.InlayCatalogInfos
 		Type:         InlayType(genInlay.Type),
 		IsCustomized: genInlay.IsCustomized,
 		PreviewURL:   genInlay.PreviewURL,
+		MirrorX:      genInlay.MirrorX,
+		MirrorY:      genInlay.MirrorY,
 	}
 
 	if genInlay.ApprovedProofID != nil {
@@ -152,6 +156,8 @@ func inlayToGen(in *Inlay) (*model.Inlays, error) {
 		Type:         string(in.Type),
 		IsCustomized: in.IsCustomized,
 		PreviewURL:   in.PreviewURL,
+		MirrorX:      in.MirrorX,
+		MirrorY:      in.MirrorY,
 		UpdatedAt:    in.UpdatedAt,
 		CreatedAt:    in.CreatedAt,
 		Version:      int32(in.Version),
@@ -448,6 +454,8 @@ func (m InlayModel) Insert(inlay *Inlay) error {
 		table.Inlays.Type,
 		table.Inlays.IsCustomized,
 		table.Inlays.PreviewURL,
+		table.Inlays.MirrorX,
+		table.Inlays.MirrorY,
 	).MODEL(
 		genInlay,
 	).RETURNING(
@@ -498,6 +506,8 @@ func (m InlayModel) TxInsert(tx *sql.Tx, inlay *Inlay) error {
 		table.Inlays.Type,
 		table.Inlays.IsCustomized,
 		table.Inlays.PreviewURL,
+		table.Inlays.MirrorX,
+		table.Inlays.MirrorY,
 	).MODEL(
 		genInlay,
 	).RETURNING(
@@ -791,6 +801,8 @@ func (m InlayModel) Update(inlay *Inlay) error {
 		table.Inlays.Name,
 		table.Inlays.Type,
 		table.Inlays.PreviewURL,
+		table.Inlays.MirrorX,
+		table.Inlays.MirrorY,
 	).MODEL(
 		genInlay,
 	).WHERE(

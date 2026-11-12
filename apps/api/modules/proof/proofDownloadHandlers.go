@@ -2,6 +2,7 @@ package proof
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -35,6 +36,15 @@ func (m ProofModule) HandleGetProofDesignDownload(w http.ResponseWriter, r *http
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	if inlay.MirrorX || inlay.MirrorY {
+		var err error
+		key, filename, err = m.mirroredDesignDownload(ctx, proof, inlay, key, filename)
+		if err != nil {
+			m.WriteError(w, r, m.Err.ServerError, err)
+			return
+		}
+	}
+
 	url, err := upload.GenerateSignedDownloadURL(ctx, m.S3, m.Cfg, key, filename, 15*time.Minute)
 	if err != nil {
 		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to sign design download for proof %d: %w", proof.ID, err))
@@ -57,4 +67,35 @@ func buildProofDesignFilename(project *data.Project, inlay *data.Inlay, proof *d
 		upload.SanitizeFilenamePart(project.Name, "project"),
 		upload.SanitizeFilenamePart(inlay.Name, "inlay"),
 		proof.VersionNumber, ext)
+}
+
+// mirroredDesignDownload writes the design flipped the way the inlay is
+// mirrored, so production works from a file that is already the right way
+// round, and returns its key and download name. Both name the direction, so a
+// file on disk can't be mistaken for the unmirrored one. A format that can't
+// be flipped is served as is, named to say it still needs mirroring.
+func (m ProofModule) mirroredDesignDownload(ctx context.Context, proof *data.InlayProof, inlay *data.Inlay, key, filename string) (string, string, error) {
+	ext := filepath.Ext(filename)
+	base := strings.TrimSuffix(filename, ext)
+	direction := mirrorDirection(inlay.MirrorX, inlay.MirrorY)
+
+	original, err := upload.GetFileFromS3(ctx, m.S3, m.Cfg, key)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to read design for proof %d: %w", proof.ID, err)
+	}
+
+	mirrored, contentType, err := mirrorDesignAsset(original, ext, inlay.MirrorX, inlay.MirrorY)
+	if errors.Is(err, errUnmirrorableAsset) {
+		return key, fmt.Sprintf("%s_NOT-MIRRORED_cut-mirrored-%s%s", base, direction, ext), nil
+	}
+	if err != nil {
+		return "", "", fmt.Errorf("failed to mirror design for proof %d: %w", proof.ID, err)
+	}
+
+	mirroredKey := fmt.Sprintf("file/mirrored/%s-%s%s", proof.UUID, direction, ext)
+	if err := upload.PutFileToS3(ctx, m.S3, m.Cfg, mirroredKey, mirrored, contentType); err != nil {
+		return "", "", fmt.Errorf("failed to store mirrored design for proof %d: %w", proof.ID, err)
+	}
+
+	return mirroredKey, fmt.Sprintf("%s_mirrored-%s%s", base, direction, ext), nil
 }

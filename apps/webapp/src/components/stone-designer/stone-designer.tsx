@@ -18,6 +18,10 @@ import { InlayPanel } from "./inlay-panel";
 import { BackgroundPanel } from "./background-panel";
 import { TextPanel } from "./text-panel";
 import { LayersPanel } from "./layers-panel";
+import {
+  useDuplicateInlay,
+  type DuplicateInlayHooks,
+} from "../inlay/use-duplicate-inlay";
 
 interface StoneDesignerProps {
   projectUuid: string;
@@ -65,8 +69,6 @@ export function StoneDesigner(props: StoneDesignerProps) {
     },
   });
 
-  useDesignerShortcuts(editor, () => props.isEditable);
-
   const inlaysByUuid = createMemo(
     () => new Map(props.inlays.map((inlay) => [inlay.uuid, inlay])),
   );
@@ -86,6 +88,27 @@ export function StoneDesigner(props: StoneDesignerProps) {
     granite: graniteChoice(editor.draft.graniteKey, editor.draft.customHex),
   }));
 
+  const duplicator = useDuplicateInlay(() => props.projectUuid);
+  const duplicateHooks: DuplicateInlayHooks = {
+    before: () => autosave.flush(),
+    after: async (duplicate) => {
+      await reloadFromServer();
+      const placed = editor.draft.layout.elements.find(
+        (el) => el.type === "inlay" && el.inlay_uuid === duplicate.uuid,
+      );
+      if (placed) editor.selectIds([placed.id]);
+    },
+  };
+
+  useDesignerShortcuts(editor, () => props.isEditable, {
+    onDuplicate: () => {
+      const inlay = selectedInlay();
+      if (inlay && !duplicator.isPending()) {
+        void duplicator.duplicate(inlay.uuid, duplicateHooks);
+      }
+    },
+  });
+
   async function addCompound(compoundUuid: string) {
     await autosave.flush();
     await props.onAddCompound(compoundUuid);
@@ -100,6 +123,7 @@ export function StoneDesigner(props: StoneDesignerProps) {
             editor={editor}
             projectUuid={props.projectUuid}
             selectedInlay={selectedInlay()}
+            duplicateHooks={duplicateHooks}
             saveStatus={autosave.status()}
           />
         </Show>

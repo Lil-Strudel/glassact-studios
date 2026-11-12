@@ -508,6 +508,8 @@ func (m InlayModule) HandlePatchInlay(w http.ResponseWriter, r *http.Request) {
 		Name        *string   `json:"name"`
 		Description *string   `json:"description"`
 		ImageURLs   *[]string `json:"image_urls" validate:"omitempty,dive,required"`
+		MirrorX     *bool     `json:"mirror_x"`
+		MirrorY     *bool     `json:"mirror_y"`
 	}
 
 	err = m.ReadJSONBody(w, r, &body)
@@ -547,6 +549,14 @@ func (m InlayModule) HandlePatchInlay(w http.ResponseWriter, r *http.Request) {
 
 	if body.Description != nil {
 		inlay.CustomInfo.Description = *body.Description
+	}
+
+	if body.MirrorX != nil {
+		inlay.MirrorX = *body.MirrorX
+	}
+
+	if body.MirrorY != nil {
+		inlay.MirrorY = *body.MirrorY
 	}
 
 	err = m.Db.Inlays.Update(inlay)
@@ -723,6 +733,8 @@ func (m InlayModule) HandleGetKanbanInlays(w http.ResponseWriter, r *http.Reques
 			Type:              data.InlayType(d.Inlays.Type),
 			IsCustomized:      d.Inlays.IsCustomized,
 			PreviewURL:        d.Inlays.PreviewURL,
+			MirrorX:           d.Inlays.MirrorX,
+			MirrorY:           d.Inlays.MirrorY,
 			ManufacturingStep: d.Inlays.ManufacturingStep,
 		}
 

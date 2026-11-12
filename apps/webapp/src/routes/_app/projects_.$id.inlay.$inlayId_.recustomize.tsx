@@ -11,6 +11,7 @@ import { getGroutsOpts } from "../../queries/grouts";
 import { getInlayOpts, postRecustomizeInlayOpts } from "../../queries/inlay";
 import { Customizer } from "../../components/customizer/customizer";
 import { isApiError } from "../../utils/is-api-error";
+import { mirrorCssTransform } from "../../utils/inlay-mirror";
 
 export const Route = createFileRoute(
   "/_app/projects_/$id/inlay/$inlayId_/recustomize",
@@ -193,6 +194,9 @@ function RouteComponent() {
                 glassColors={glassQuery.data!}
                 grouts={groutsQuery.data!}
                 initialState={initialState()}
+                artTransform={
+                  inlayQuery.data ? mirrorCssTransform(inlayQuery.data) : undefined
+                }
                 onBakeComplete={handleBakeComplete}
               />
             )}

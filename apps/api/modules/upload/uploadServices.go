@@ -1,6 +1,7 @@
 package upload
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -188,4 +189,33 @@ func GenerateSignedDownloadURL(
 	}
 
 	return presignedURL.URL, nil
+}
+
+// PutFileToS3 writes content at an exact key, replacing any object already
+// there. Use it for derived files whose key is computed from their source, so
+// regenerating one overwrites rather than accumulates copies.
+func PutFileToS3(
+	ctx context.Context,
+	s3Client *s3.Client,
+	cfg *config.Config,
+	key string,
+	content []byte,
+	contentType string,
+) error {
+	if s3Client == nil {
+		return fmt.Errorf("S3 client not initialized")
+	}
+
+	_, err := s3Client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:        aws.String(cfg.S3.Bucket),
+		Key:           aws.String(key),
+		Body:          bytes.NewReader(content),
+		ContentType:   aws.String(contentType),
+		ContentLength: aws.Int64(int64(len(content))),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to put %s to S3: %w", key, err)
+	}
+
+	return nil
 }

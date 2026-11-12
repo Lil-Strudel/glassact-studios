@@ -96,6 +96,7 @@ func GetRoutes(app *app.Application) http.Handler {
 	mux.Handle("GET /api/inlay/{uuid}", protected.ThenFunc(inlayModule.HandleGetInlayByUUID))
 	mux.Handle("PATCH /api/inlay/{uuid}", canManageProject.ThenFunc(inlayModule.HandlePatchInlay))
 	mux.Handle("POST /api/inlay/{uuid}/recustomize", canManageProject.ThenFunc(inlayModule.HandleRecustomizeInlay))
+	mux.Handle("POST /api/inlay/{uuid}/duplicate", canCreateProject.ThenFunc(inlayModule.HandleDuplicateInlay))
 	mux.Handle("PATCH /api/inlay/{uuid}/step", canManageKanban.ThenFunc(inlayModule.HandlePatchInlayStep))
 	mux.Handle("DELETE /api/inlay/{uuid}", canManageProject.ThenFunc(inlayModule.HandleDeleteInlay))
 	mux.Handle("GET /api/inlay/{uuid}/milestones", protected.ThenFunc(inlayModule.HandleGetInlayMilestones))
