@@ -44,7 +44,7 @@ import { Route as AppAdminCatalogCreateRouteImport } from './routes/_app/admin.c
 import { Route as AppAdminCatalogUuidRouteImport } from './routes/_app/admin.catalog_.$uuid'
 import { Route as AppProjectsIdAddInlayIndexRouteImport } from './routes/_app/projects_.$id.add-inlay.index'
 import { Route as AppProjectsIdInlayInlayIdRouteImport } from './routes/_app/projects_.$id.inlay.$inlayId'
-import { Route as AppProjectsIdInlayInlayIdRecustomizeRouteImport } from './routes/_app/projects_.$id.inlay.$inlayId.recustomize'
+import { Route as AppProjectsIdInlayInlayIdRecustomizeRouteImport } from './routes/_app/projects_.$id.inlay.$inlayId_.recustomize'
 import { Route as AppProjectsIdAddInlayCustomizeCatalogUuidRouteImport } from './routes/_app/projects_.$id.add-inlay.customize.$catalogUuid'
 
 const LoginRoute = LoginRouteImport.update({
@@ -226,9 +226,9 @@ const AppProjectsIdInlayInlayIdRoute =
   } as any)
 const AppProjectsIdInlayInlayIdRecustomizeRoute =
   AppProjectsIdInlayInlayIdRecustomizeRouteImport.update({
-    id: '/recustomize',
-    path: '/recustomize',
-    getParentRoute: () => AppProjectsIdInlayInlayIdRoute,
+    id: '/projects_/$id/inlay/$inlayId_/recustomize',
+    path: '/projects/$id/inlay/$inlayId/recustomize',
+    getParentRoute: () => AppRoute,
   } as any)
 const AppProjectsIdAddInlayCustomizeCatalogUuidRoute =
   AppProjectsIdAddInlayCustomizeCatalogUuidRouteImport.update({
@@ -270,7 +270,7 @@ export interface FileRoutesByFullPath {
   '/projects/$id/designer': typeof AppProjectsIdDesignerRoute
   '/admin/users/': typeof AppAdminUsersIndexRoute
   '/projects/$id/': typeof AppProjectsIdIndexRoute
-  '/projects/$id/inlay/$inlayId': typeof AppProjectsIdInlayInlayIdRouteWithChildren
+  '/projects/$id/inlay/$inlayId': typeof AppProjectsIdInlayInlayIdRoute
   '/projects/$id/add-inlay/': typeof AppProjectsIdAddInlayIndexRoute
   '/projects/$id/add-inlay/customize/$catalogUuid': typeof AppProjectsIdAddInlayCustomizeCatalogUuidRoute
   '/projects/$id/inlay/$inlayId/recustomize': typeof AppProjectsIdInlayInlayIdRecustomizeRoute
@@ -308,7 +308,7 @@ export interface FileRoutesByTo {
   '/projects/$id/designer': typeof AppProjectsIdDesignerRoute
   '/admin/users': typeof AppAdminUsersIndexRoute
   '/projects/$id': typeof AppProjectsIdIndexRoute
-  '/projects/$id/inlay/$inlayId': typeof AppProjectsIdInlayInlayIdRouteWithChildren
+  '/projects/$id/inlay/$inlayId': typeof AppProjectsIdInlayInlayIdRoute
   '/projects/$id/add-inlay': typeof AppProjectsIdAddInlayIndexRoute
   '/projects/$id/add-inlay/customize/$catalogUuid': typeof AppProjectsIdAddInlayCustomizeCatalogUuidRoute
   '/projects/$id/inlay/$inlayId/recustomize': typeof AppProjectsIdInlayInlayIdRecustomizeRoute
@@ -348,10 +348,10 @@ export interface FileRoutesById {
   '/_app/projects_/$id/designer': typeof AppProjectsIdDesignerRoute
   '/_app/admin/users/': typeof AppAdminUsersIndexRoute
   '/_app/projects_/$id/': typeof AppProjectsIdIndexRoute
-  '/_app/projects_/$id/inlay/$inlayId': typeof AppProjectsIdInlayInlayIdRouteWithChildren
+  '/_app/projects_/$id/inlay/$inlayId': typeof AppProjectsIdInlayInlayIdRoute
   '/_app/projects_/$id/add-inlay/': typeof AppProjectsIdAddInlayIndexRoute
   '/_app/projects_/$id/add-inlay/customize/$catalogUuid': typeof AppProjectsIdAddInlayCustomizeCatalogUuidRoute
-  '/_app/projects_/$id/inlay/$inlayId/recustomize': typeof AppProjectsIdInlayInlayIdRecustomizeRoute
+  '/_app/projects_/$id/inlay/$inlayId_/recustomize': typeof AppProjectsIdInlayInlayIdRecustomizeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -468,7 +468,7 @@ export interface FileRouteTypes {
     | '/_app/projects_/$id/inlay/$inlayId'
     | '/_app/projects_/$id/add-inlay/'
     | '/_app/projects_/$id/add-inlay/customize/$catalogUuid'
-    | '/_app/projects_/$id/inlay/$inlayId/recustomize'
+    | '/_app/projects_/$id/inlay/$inlayId_/recustomize'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -724,12 +724,12 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AppProjectsIdInlayInlayIdRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/projects_/$id/inlay/$inlayId/recustomize': {
-      id: '/_app/projects_/$id/inlay/$inlayId/recustomize'
-      path: '/recustomize'
+    '/_app/projects_/$id/inlay/$inlayId_/recustomize': {
+      id: '/_app/projects_/$id/inlay/$inlayId_/recustomize'
+      path: '/projects/$id/inlay/$inlayId/recustomize'
       fullPath: '/projects/$id/inlay/$inlayId/recustomize'
       preLoaderRoute: typeof AppProjectsIdInlayInlayIdRecustomizeRouteImport
-      parentRoute: typeof AppProjectsIdInlayInlayIdRoute
+      parentRoute: typeof AppRoute
     }
     '/_app/projects_/$id/add-inlay/customize/$catalogUuid': {
       id: '/_app/projects_/$id/add-inlay/customize/$catalogUuid'
@@ -795,21 +795,6 @@ const AppDealershipIdRouteWithChildren = AppDealershipIdRoute._addFileChildren(
   AppDealershipIdRouteChildren,
 )
 
-interface AppProjectsIdInlayInlayIdRouteChildren {
-  AppProjectsIdInlayInlayIdRecustomizeRoute: typeof AppProjectsIdInlayInlayIdRecustomizeRoute
-}
-
-const AppProjectsIdInlayInlayIdRouteChildren: AppProjectsIdInlayInlayIdRouteChildren =
-  {
-    AppProjectsIdInlayInlayIdRecustomizeRoute:
-      AppProjectsIdInlayInlayIdRecustomizeRoute,
-  }
-
-const AppProjectsIdInlayInlayIdRouteWithChildren =
-  AppProjectsIdInlayInlayIdRoute._addFileChildren(
-    AppProjectsIdInlayInlayIdRouteChildren,
-  )
-
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
@@ -824,9 +809,10 @@ interface AppRouteChildren {
   AppDealershipIndexRoute: typeof AppDealershipIndexRoute
   AppProjectsIdDesignerRoute: typeof AppProjectsIdDesignerRoute
   AppProjectsIdIndexRoute: typeof AppProjectsIdIndexRoute
-  AppProjectsIdInlayInlayIdRoute: typeof AppProjectsIdInlayInlayIdRouteWithChildren
+  AppProjectsIdInlayInlayIdRoute: typeof AppProjectsIdInlayInlayIdRoute
   AppProjectsIdAddInlayIndexRoute: typeof AppProjectsIdAddInlayIndexRoute
   AppProjectsIdAddInlayCustomizeCatalogUuidRoute: typeof AppProjectsIdAddInlayCustomizeCatalogUuidRoute
+  AppProjectsIdInlayInlayIdRecustomizeRoute: typeof AppProjectsIdInlayInlayIdRecustomizeRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -843,10 +829,12 @@ const AppRouteChildren: AppRouteChildren = {
   AppDealershipIndexRoute: AppDealershipIndexRoute,
   AppProjectsIdDesignerRoute: AppProjectsIdDesignerRoute,
   AppProjectsIdIndexRoute: AppProjectsIdIndexRoute,
-  AppProjectsIdInlayInlayIdRoute: AppProjectsIdInlayInlayIdRouteWithChildren,
+  AppProjectsIdInlayInlayIdRoute: AppProjectsIdInlayInlayIdRoute,
   AppProjectsIdAddInlayIndexRoute: AppProjectsIdAddInlayIndexRoute,
   AppProjectsIdAddInlayCustomizeCatalogUuidRoute:
     AppProjectsIdAddInlayCustomizeCatalogUuidRoute,
+  AppProjectsIdInlayInlayIdRecustomizeRoute:
+    AppProjectsIdInlayInlayIdRecustomizeRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

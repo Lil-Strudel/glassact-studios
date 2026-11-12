@@ -12,7 +12,7 @@ import { Customizer } from "../../components/customizer/customizer";
 import { isApiError } from "../../utils/is-api-error";
 
 export const Route = createFileRoute(
-  "/_app/projects_/$id/inlay/$inlayId/recustomize",
+  "/_app/projects_/$id/inlay/$inlayId_/recustomize",
 )({
   component: RouteComponent,
 });
