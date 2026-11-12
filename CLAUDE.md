@@ -368,7 +368,9 @@ Users can disable specific notification types; disabled notifications still appe
 
 ### Sandblast backgrounds
 
-Items in the `SB-BACKGROUNDS` category (`BACKGROUND_CATEGORY` / `data.BackgroundCategory`) are sandblast masks for the stone face, not inlays. They are never orderable: catalog browse returns `kind=inlay` by default, and the API rejects adding one as an inlay or a compound member. Dealerships place them in the stone designer and download the stored SVG (`GET /api/catalog/{uuid}/sandblast`, named by catalog code) for their own sandblaster. They carry no price.
+Sandblast masks for the stone face live in their own table (`sandblast_backgrounds`), not the catalog: they are never inlays, never orderable and carry no price or size. Each has a unique `code`, tags, an SVG and an `is_active` flag (no hard delete, so a stone design never points at a missing row; a retired background already on a stone still renders and downloads). Admins manage them under Admin → Backgrounds. Uploads are cleaned server-side into a plain black mask trimmed to the browser-measured artwork (`svg.PrepareMask` / `svg.FitMask`). Dealerships browse them under Catalog → Sandblast backgrounds, place them in the stone designer, and download the stored SVG (`GET /api/background/{uuid}/sandblast`, named by code) for their own sandblaster.
+
+**Related inlays** (`sandblast_background_related_items`) are an admin-ordered list of catalog items that suit a background (hearts for a heart frame). Browse only returns active related items. In the stone designer they are offered as one-click adds for the selected background (or every background on the stone); the designer can also add any catalog inlay by search. Either way a stock catalog inlay is created through `POST /api/project/{uuid}/inlays/catalog` and placed on the stone by the designer's autosave.
 
 ### Compound inlays
 
@@ -376,7 +378,7 @@ A compound (`catalog_compounds` + `catalog_compound_members`) is an admin-author
 
 ## Stone Design
 
-One per project (`project_stone_designs`): the stone's shape (`STONE_SHAPES`), size in inches and granite (`granite_key` from the webapp's supplier samples, or `custom` + `granite_custom_hex`), plus a JSONB `layout` of elements (inlays, backgrounds, text) and groups. Element `x`/`y` are centers in inches from the stone's top-left; an inlay element has no size of its own — it is drawn at the inlay's real size (approved proof, else pending proof, else catalog default or requested size, reported as `width`/`height` on the inlay list).
+One per project (`project_stone_designs`): the stone's shape (`STONE_SHAPES`), size in inches and granite (`granite_key` from the webapp's supplier samples, or `custom` + `granite_custom_hex`), plus a JSONB `layout` of elements (inlays, backgrounds by `background_uuid`, text) and groups. Element `x`/`y` are centers in inches from the stone's top-left; an inlay element has no size of its own — it is drawn at the inlay's real size (approved proof, else pending proof, else catalog default or requested size, reported as `width`/`height` on the inlay list).
 
 - It is a visual aid, never part of the price or the order.
 - Editable only by dealership users with `create_project`, only while the project is `draft`; frozen afterwards. Internal users see it read-only.
