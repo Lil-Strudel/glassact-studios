@@ -13,7 +13,10 @@ on:
       - main
     paths:
       - apps/api/**
+      - libs/data/pkg/**
       - libs/data/migrations/**
+      - go.mod
+      - go.sum
       - apps/infrastructure/ec2/**
 
 permissions:
