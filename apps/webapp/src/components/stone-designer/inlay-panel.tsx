@@ -4,9 +4,11 @@ import { Button } from "@glassact/ui";
 import type { StoneEditor } from "./create-stone-editor";
 import { newElementId } from "./stone-geometry";
 import { CompoundPicker } from "./compound-picker";
+import { CustomizeInlayLink } from "./customize-inlay-link";
 
 interface InlayPanelProps {
   editor: StoneEditor;
+  projectUuid: string;
   inlays: InlayWithInfo[];
   canAddCompounds: boolean;
   onAddCompound: (compoundUuid: string) => Promise<void>;
@@ -67,7 +69,7 @@ export function InlayPanel(props: InlayPanelProps) {
           <ul class="mt-2 flex flex-col gap-2">
             <For each={unplaced()}>
               {(inlay) => (
-                <InlayRow inlay={inlay}>
+                <InlayRow inlay={inlay} projectUuid={props.projectUuid}>
                   <Show
                     when={inlay.width != null}
                     fallback={<span class="text-xs text-gray-400">No size yet</span>}
@@ -89,7 +91,7 @@ export function InlayPanel(props: InlayPanelProps) {
           <ul class="mt-2 flex flex-col gap-2">
             <For each={placed()}>
               {(inlay) => (
-                <InlayRow inlay={inlay}>
+                <InlayRow inlay={inlay} projectUuid={props.projectUuid}>
                   <Button size="sm" variant="ghost" onClick={() => selectPlaced(inlay)}>
                     Select
                   </Button>
@@ -114,7 +116,7 @@ export function InlayPanel(props: InlayPanelProps) {
   );
 }
 
-function InlayRow(props: ParentProps<{ inlay: InlayWithInfo }>) {
+function InlayRow(props: ParentProps<{ inlay: InlayWithInfo; projectUuid: string }>) {
   return (
     <li class="flex items-center gap-3 rounded-md border border-gray-200 p-2">
       <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-gray-100">
@@ -129,6 +131,12 @@ function InlayRow(props: ParentProps<{ inlay: InlayWithInfo }>) {
             {props.inlay.width}″ × {props.inlay.height}″
           </p>
         </Show>
+        <CustomizeInlayLink
+          projectUuid={props.projectUuid}
+          inlay={props.inlay}
+          variant="link"
+          class="h-auto px-0 py-0 text-xs"
+        />
       </div>
       {props.children}
     </li>

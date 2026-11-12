@@ -69,6 +69,11 @@ export function StoneDesigner(props: StoneDesignerProps) {
   const inlaysByUuid = createMemo(
     () => new Map(props.inlays.map((inlay) => [inlay.uuid, inlay])),
   );
+  const selectedInlay = createMemo(() => {
+    const selected = editor.selectedElements();
+    if (selected.length !== 1 || selected[0].type !== "inlay") return undefined;
+    return inlaysByUuid().get(selected[0].inlay_uuid);
+  });
   const backgroundItems = useBackgroundItems();
   const resolveBackground = useBackgroundArt(() => editor.draft.layout.elements);
 
@@ -89,7 +94,12 @@ export function StoneDesigner(props: StoneDesignerProps) {
     <div class="flex h-full min-h-0 flex-col gap-3 lg:flex-row">
       <div class="flex min-h-[420px] min-w-0 flex-1 flex-col gap-3">
         <Show when={props.isEditable}>
-          <DesignerToolbar editor={editor} saveStatus={autosave.status()} />
+          <DesignerToolbar
+            editor={editor}
+            projectUuid={props.projectUuid}
+            selectedInlay={selectedInlay()}
+            saveStatus={autosave.status()}
+          />
         </Show>
         <StoneCanvas
           stone={stone()}
@@ -101,7 +111,7 @@ export function StoneDesigner(props: StoneDesignerProps) {
           resolveBackground={resolveBackground}
           editor={props.isEditable ? editor : undefined}
           isZoomable
-          class="min-h-[420px] flex-1 rounded-lg border border-gray-200 bg-gradient-to-b from-sky-50 to-emerald-50"
+          class="min-h-[420px] flex-1 rounded-lg border border-gray-200 bg-gray-50"
         />
         <p class="text-xs text-gray-500">
           Drawn to scale: {editor.draft.width}″ × {editor.draft.height}″.
@@ -133,6 +143,7 @@ export function StoneDesigner(props: StoneDesignerProps) {
             <TabsContent value="inlays">
               <InlayPanel
                 editor={editor}
+                projectUuid={props.projectUuid}
                 inlays={props.inlays}
                 canAddCompounds={props.isEditable}
                 onAddCompound={addCompound}

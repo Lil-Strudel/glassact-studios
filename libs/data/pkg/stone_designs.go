@@ -116,7 +116,7 @@ const (
 var (
 	stoneTextFonts   = map[string]bool{"roman": true, "serif": true, "script": true}
 	stoneTextAligns  = map[string]bool{"left": true, "center": true, "right": true}
-	stoneTextFinish  = map[string]bool{"engraved": true, "frosted": true}
+	stoneTextFinish  = map[string]bool{"engraved": true, "frosted": true, "black-fill": true}
 	clientIDPattern  = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 	graniteKeyFormat = regexp.MustCompile(`^[a-z0-9-]{1,64}$`)
 	hexColorFormat   = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)

@@ -16,6 +16,7 @@ import type {
   StoneElement,
   StoneShape,
   StoneTextElement,
+  StoneTextFinish,
 } from "@glassact/data";
 import { graniteMeanHex, graniteTexture, type GraniteChoice } from "../granite/granite";
 import type { BackgroundArt } from "./background-art";
@@ -85,7 +86,6 @@ export function StoneCanvas(props: StoneCanvasProps) {
     clip: `clip-${uid}`,
     sheen: `sheen-${uid}`,
     shadow: `shadow-${uid}`,
-    bevel: `bevel-${uid}`,
     frost: `frost-${uid}`,
     engrave: `engrave-${uid}`,
     grid: `grid-${uid}`,
@@ -126,13 +126,25 @@ export function StoneCanvas(props: StoneCanvasProps) {
     props.stone ? graniteTexture(props.stone.granite) : null,
   );
 
-  // Cut lettering reads light on dark stone and dark on light stone.
+  // Cut lettering reads light on dark stone and dark on light stone. 0.18 is
+  // the luminance where white and black give equal contrast.
   const engravedFill = createMemo(() => {
     const hex = props.stone ? graniteMeanHex(props.stone.granite) : PLAIN_STONE_HEX;
-    return relativeLuminance(hex) > 0.35
-      ? { color: "#1f1f1f", opacity: 0.55 }
-      : { color: "#ffffff", opacity: 0.6 };
+    return relativeLuminance(hex) > 0.18
+      ? { color: "#1f1f1f", opacity: 0.85 }
+      : { color: "#ffffff", opacity: 0.85 };
   });
+
+  function textLook(finish: StoneTextFinish): { fill: TextFill; filter: string } {
+    switch (finish) {
+      case "engraved":
+        return { fill: engravedFill(), filter: ids.engrave };
+      case "frosted":
+        return { fill: FROSTED_FILL, filter: ids.frost };
+      case "black-fill":
+        return { fill: BLACK_FILL, filter: ids.engrave };
+    }
+  }
 
   const outlinePath = createMemo(() =>
     props.stone
@@ -189,11 +201,11 @@ export function StoneCanvas(props: StoneCanvasProps) {
     return { ...boundsOf(corners), elements: selected };
   });
 
-  const resizable = createMemo(() => {
+  // Inlays are drawn at the size they will be made, so a selection holding
+  // one cannot be scaled.
+  const isResizable = createMemo(() => {
     const bounds = selectionBounds();
-    if (!bounds || bounds.elements.length !== 1) return null;
-    const el = bounds.elements[0];
-    return el.type === "text" || el.type === "background" ? el : null;
+    return !!bounds && bounds.elements.every((el) => el.type === "text" || el.type === "background");
   });
 
   onMount(() => {
@@ -243,10 +255,8 @@ export function StoneCanvas(props: StoneCanvasProps) {
     const bounds = selectionBounds();
     if (!bounds || e.button !== 0) return;
     e.stopPropagation();
-    const center =
-      kind === "resize" && resizable()
-        ? { x: resizable()!.x, y: resizable()!.y }
-        : bounds.center;
+    const only = bounds.elements.length === 1 ? bounds.elements[0] : null;
+    const center = kind === "resize" && only ? { x: only.x, y: only.y } : bounds.center;
     startElementGesture(e, kind, center);
   }
 
@@ -278,11 +288,12 @@ export function StoneCanvas(props: StoneCanvasProps) {
       setGesture({ ...current, started: true });
     }
 
+    const scale = current.kind === "resize" ? resizeScale(current, point) : 1;
     editor.gesture((draft) => {
       for (const el of draft.layout.elements) {
         const original = current.originals.get(el.id);
         if (!original) continue;
-        applyGesture(el, original, current, point, e.shiftKey);
+        applyGesture(el, original, current, point, e.shiftKey, scale);
       }
     });
   }
@@ -364,9 +375,6 @@ export function StoneCanvas(props: StoneCanvasProps) {
             </linearGradient>
             <filter id={ids.shadow} x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation={surface().width * 0.012} />
-            </filter>
-            <filter id={ids.bevel} x="-10%" y="-10%" width="120%" height="120%">
-              <feDropShadow dx="0.03" dy="0.05" stdDeviation="0.04" flood-color="#000" flood-opacity="0.55" />
             </filter>
             <filter id={ids.frost} x="-2%" y="-2%" width="104%" height="104%">
               <feTurbulence type="fractalNoise" baseFrequency="14" numOctaves="2" seed="7" result="noise" />
@@ -453,14 +461,13 @@ export function StoneCanvas(props: StoneCanvasProps) {
                 <InlayView
                   el={el}
                   art={props.resolveInlay(el.inlay_uuid)}
-                  bevelFilter={ids.bevel}
                   onPointerDown={(e) => handleElementPointerDown(e, el)}
                 />
               ) : el.type === "text" ? (
                 <TextView
                   el={el}
-                  fill={el.finish === "engraved" ? engravedFill() : FROSTED_FILL}
-                  filter={el.finish === "engraved" ? ids.engrave : ids.frost}
+                  fill={textLook(el.finish).fill}
+                  filter={textLook(el.finish).filter}
                   onMeasure={reportMeasure}
                   onPointerDown={(e) => handleElementPointerDown(e, el)}
                 />
@@ -531,7 +538,7 @@ export function StoneCanvas(props: StoneCanvasProps) {
                     class="cursor-grab"
                     onPointerDown={(e) => handleHandlePointerDown(e, "rotate")}
                   />
-                  <Show when={resizable()}>
+                  <Show when={isResizable()}>
                     <rect
                       x={bounds().x + bounds().width - handleRadius()}
                       y={bounds().y + bounds().height - handleRadius()}
@@ -566,7 +573,10 @@ export function StoneCanvas(props: StoneCanvasProps) {
   );
 }
 
-const FROSTED_FILL = { color: "#ffffff", opacity: 0.7 };
+type TextFill = { color: string; opacity: number };
+
+const FROSTED_FILL: TextFill = { color: "#ffffff", opacity: 0.92 };
+const BLACK_FILL: TextFill = { color: "#0a0a0a", opacity: 1 };
 
 function relativeLuminance(hex: string): number {
   const channel = (offset: number) => {
@@ -582,6 +592,7 @@ function applyGesture(
   gesture: Extract<Gesture, { originals: Map<string, StoneElement> }>,
   point: Point,
   isSnapping: boolean,
+  scale: number,
 ) {
   switch (gesture.kind) {
     case "move":
@@ -599,26 +610,53 @@ function applyGesture(
       return;
     }
     case "resize": {
-      const startDistance = Math.hypot(
-        gesture.start.x - gesture.center.x,
-        gesture.start.y - gesture.center.y,
-      );
-      if (startDistance === 0) return;
-      const factor = Math.hypot(point.x - gesture.center.x, point.y - gesture.center.y) / startDistance;
+      el.x = gesture.center.x + (original.x - gesture.center.x) * scale;
+      el.y = gesture.center.y + (original.y - gesture.center.y) * scale;
       if (el.type === "text" && original.type === "text") {
-        el.size = Number(Math.min(24, Math.max(0.1, original.size * factor)).toFixed(3));
+        el.size = Number((original.size * scale).toFixed(3));
       } else if (el.type === "background" && original.type === "background") {
-        el.width = Number(Math.min(240, Math.max(0.25, original.width * factor)).toFixed(3));
+        el.width = Number((original.width * scale).toFixed(3));
       }
       return;
     }
   }
 }
 
+const TEXT_SIZE_LIMITS = { min: 0.1, max: 24 };
+const BACKGROUND_WIDTH_LIMITS = { min: 0.25, max: 240 };
+
+// One factor for the whole selection, clamped so the element nearest its
+// limit stops everything; clamping each element alone would distort the
+// arrangement.
+function resizeScale(
+  gesture: Extract<Gesture, { originals: Map<string, StoneElement> }>,
+  point: Point,
+): number {
+  const startDistance = Math.hypot(
+    gesture.start.x - gesture.center.x,
+    gesture.start.y - gesture.center.y,
+  );
+  if (startDistance === 0) return 1;
+  const scale = Math.hypot(point.x - gesture.center.x, point.y - gesture.center.y) / startDistance;
+  let lowest = 0;
+  let highest = Infinity;
+  for (const original of gesture.originals.values()) {
+    const [value, limits] =
+      original.type === "text"
+        ? [original.size, TEXT_SIZE_LIMITS]
+        : original.type === "background"
+          ? [original.width, BACKGROUND_WIDTH_LIMITS]
+          : [null, null];
+    if (value === null || value === 0) continue;
+    lowest = Math.max(lowest, limits.min / value);
+    highest = Math.min(highest, limits.max / value);
+  }
+  return Math.min(highest, Math.max(lowest, scale));
+}
+
 function InlayView(props: {
   el: StoneElement;
   art: PlacedInlayArt | undefined;
-  bevelFilter: string;
   onPointerDown: (e: PointerEvent) => void;
 }) {
   return (
@@ -664,7 +702,6 @@ function InlayView(props: {
                 width={art().width}
                 height={art().height}
                 preserveAspectRatio="xMidYMid meet"
-                filter={`url(#${props.bevelFilter})`}
               />
             )}
           </Show>
@@ -710,7 +747,7 @@ function BackgroundView(props: {
 
 function TextView(props: {
   el: StoneTextElement;
-  fill: { color: string; opacity: number };
+  fill: TextFill;
   filter: string;
   onMeasure: (id: string, box: LocalBox) => void;
   onPointerDown: (e: PointerEvent) => void;

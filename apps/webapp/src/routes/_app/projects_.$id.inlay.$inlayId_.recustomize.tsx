@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import { Show, Switch, Match, createMemo } from "solid-js";
+import { z } from "zod";
 import { Breadcrumb, Card, CardContent, showToast } from "@glassact/ui";
 import type { BakeResult, ColorOverrides } from "@glassact/data";
 import { getCatalogItemOpts } from "../../queries/catalog";
@@ -14,11 +15,15 @@ import { isApiError } from "../../utils/is-api-error";
 export const Route = createFileRoute(
   "/_app/projects_/$id/inlay/$inlayId_/recustomize",
 )({
+  validateSearch: z.object({
+    returnTo: z.enum(["designer"]).optional().catch(undefined),
+  }),
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const params = Route.useParams();
+  const search = Route.useSearch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -100,10 +105,14 @@ function RouteComponent() {
             queryKey: ["project", params().id, "inlays"],
           });
           queryClient.invalidateQueries({ queryKey: ["review-queue"] });
-          navigate({
-            to: "/projects/$id/inlay/$inlayId",
-            params: { id: params().id, inlayId: params().inlayId },
-          });
+          if (search().returnTo === "designer") {
+            navigate({ to: "/projects/$id/designer", params: { id: params().id } });
+          } else {
+            navigate({
+              to: "/projects/$id/inlay/$inlayId",
+              params: { id: params().id, inlayId: params().inlayId },
+            });
+          }
         },
         onError(error) {
           showToast({
@@ -127,15 +136,18 @@ function RouteComponent() {
             title: "Project",
             to: `/projects/${params().id}`,
           },
-          {
-            title: inlayQuery.data?.name ?? "Inlay",
-            to: `/projects/${params().id}/inlay/${params().inlayId}`,
-          },
+          search().returnTo === "designer"
+            ? { title: "Stone design", to: `/projects/${params().id}/designer` }
+            : {
+                title: inlayQuery.data?.name ?? "Inlay",
+                to: `/projects/${params().id}/inlay/${params().inlayId}`,
+              },
           {
             title: inlayQuery.data?.is_customized
               ? "Adjust design"
               : "Customize design",
             to: `/projects/${params().id}/inlay/${params().inlayId}/recustomize`,
+            search: search(),
           },
         ]}
       />

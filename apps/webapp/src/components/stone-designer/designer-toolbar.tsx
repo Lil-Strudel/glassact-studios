@@ -1,10 +1,15 @@
 import { Show } from "solid-js";
+import { Link } from "@tanstack/solid-router";
+import type { InlayWithInfo } from "@glassact/data";
 import { Button } from "@glassact/ui";
 import type { StoneEditor } from "./create-stone-editor";
 import type { SaveStatus } from "./create-stone-autosave";
+import { CustomizeInlayLink } from "./customize-inlay-link";
 
 interface DesignerToolbarProps {
   editor: StoneEditor;
+  projectUuid: string;
+  selectedInlay?: InlayWithInfo;
   saveStatus?: SaveStatus;
 }
 
@@ -53,6 +58,23 @@ export function DesignerToolbar(props: DesignerToolbarProps) {
       >
         Remove from stone
       </Button>
+      <Show when={props.selectedInlay}>
+        {(inlay) => (
+          <>
+            <div class="mx-1 h-5 w-px bg-gray-300" />
+            <CustomizeInlayLink projectUuid={props.projectUuid} inlay={inlay()} />
+            <Button
+              as={Link}
+              to="/projects/$id/inlay/$inlayId"
+              params={{ id: props.projectUuid, inlayId: inlay().uuid }}
+              size="sm"
+              variant="ghost"
+            >
+              Open inlay
+            </Button>
+          </>
+        )}
+      </Show>
       <Show when={props.saveStatus}>
         {(status) => (
           <span

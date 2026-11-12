@@ -26,6 +26,16 @@ func TestStoneLayoutValidate_AcceptsEachElementType(t *testing.T) {
 	}
 }
 
+func TestStoneLayoutValidate_AcceptsEachTextFinish(t *testing.T) {
+	for _, finish := range []string{"engraved", "frosted", "black-fill"} {
+		layout := validLayout()
+		layout.Elements[2].Finish = finish
+		if err := layout.Validate(); err != nil {
+			t.Errorf("finish %q: expected valid layout, got %v", finish, err)
+		}
+	}
+}
+
 func TestStoneLayoutValidate_RejectsBadLayouts(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -43,6 +53,7 @@ func TestStoneLayoutValidate_RejectsBadLayouts(t *testing.T) {
 		{"background without width", func(l *StoneLayout) { l.Elements[1].Width = 0 }},
 		{"text too long", func(l *StoneLayout) { l.Elements[2].Text = strings.Repeat("a", MaxStoneTextLength+1) }},
 		{"unknown font", func(l *StoneLayout) { l.Elements[2].Font = "comic" }},
+		{"unknown finish", func(l *StoneLayout) { l.Elements[2].Finish = "gold-leaf" }},
 		{"unknown type", func(l *StoneLayout) { l.Elements[2].Type = "sticker" }},
 		{"bad inlay uuid", func(l *StoneLayout) { l.Elements[0].InlayUUID = "not-a-uuid" }},
 		{"too many elements", func(l *StoneLayout) {

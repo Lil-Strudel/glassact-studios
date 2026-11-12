@@ -53,7 +53,7 @@ export function StoneDesignSection(props: StoneDesignSectionProps) {
             <StonePreview
               design={design()}
               inlays={props.inlays}
-              class="h-72 rounded-lg border border-gray-200 bg-gradient-to-b from-sky-50 to-emerald-50 transition hover:border-gray-400"
+              class="h-72 rounded-lg border border-gray-200 bg-gray-50 transition hover:border-gray-400"
             />
           </Link>
         )}

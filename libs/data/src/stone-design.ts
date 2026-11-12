@@ -26,8 +26,8 @@ export const STONE_TEXT_FONTS: StoneTextFont[] = ["roman", "serif", "script"];
 
 export type StoneTextAlign = "left" | "center" | "right";
 
-export type StoneTextFinish = "engraved" | "frosted";
-export const STONE_TEXT_FINISHES: StoneTextFinish[] = ["engraved", "frosted"];
+export type StoneTextFinish = "engraved" | "frosted" | "black-fill";
+export const STONE_TEXT_FINISHES: StoneTextFinish[] = ["engraved", "frosted", "black-fill"];
 
 export const MAX_STONE_ELEMENTS = 300;
 export const MAX_STONE_TEXT_LENGTH = 500;
