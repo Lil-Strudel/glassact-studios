@@ -91,6 +91,7 @@ Deeper conventions live alongside the code they govern:
 - `apps/webapp/CLAUDE.md` — SolidJS frontend: reactivity rules, query/mutation layout, `<Can>` permission component, TanStack Form, route conventions.
 - `libs/data/CLAUDE.md` — Shared data layer: StandardTable pattern, TS type helpers (`GET`/`POST`/`PATCH`), Go model template, Jet regeneration.
 - `libs/ui/CLAUDE.md` — UI library specifics (short — inherits from the webapp conventions).
+- `docs/styleguide.md` — **Visual styleguide (Illuminated Umber).** Read before touching any UI in the webapp or landing site: tokens, type, motifs, components. Never use raw Tailwind palette colours (`gray-*`, `white`, `red-*`); use the tokens.
 - Domain rules (project/proof/manufacturing flows, ordering, invoicing, notifications) are captured below.
 
 ## General Conventions
