@@ -5,7 +5,7 @@ import {
   redirect,
 } from "@tanstack/solid-router";
 import { createMemo, createSignal, For, Show } from "solid-js";
-import logoReversed from "../assets/images/logo-reversed.png";
+import logoFull from "../assets/images/logo-full.svg";
 import {
   Button,
   DropdownMenu,
@@ -101,7 +101,7 @@ function RouteComponent() {
               <Link to="/dashboard" class="flex shrink-0 items-center">
                 <img
                   class="block h-9 w-auto"
-                  src={logoReversed}
+                  src={logoFull}
                   alt="GlassAct Studios"
                 />
               </Link>

@@ -1,6 +1,5 @@
 ---
-import { Image } from "astro:assets";
-import LogoImg from "../assets/images/logo-reversed.png";
+import LogoImg from "../assets/images/logo-full.svg";
 import OrnamentRule from "./ornament-rule.astro";
 import ArrowIcon from "./arrow-icon.astro";
 import {
@@ -19,7 +18,7 @@ const footerNavigation = [{ title: "Home", path: "/" }, ...primaryNavigation, { 
     <div class="grid gap-12 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)]">
       <div class="grid content-start gap-5">
         <a href="/" class="w-fit rounded-sm">
-          <Image src={LogoImg} alt="GlassAct Studios" widths={[200, 400]} sizes="200px" class="h-14 w-auto" />
+          <img src={LogoImg.src} width={LogoImg.width} height={LogoImg.height} alt="GlassAct Studios" loading="lazy" class="h-14 w-auto" />
         </a>
         <p class="max-w-sm leading-relaxed text-muted-foreground">
           Custom stained glass inlays for granite memorials. Permanent color,

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/solid-router";
 import { Button } from "@glassact/ui";
 import logoMark from "../assets/images/logo-mark.svg";
-import logoReversed from "../assets/images/logo-reversed.png";
+import logoFull from "../assets/images/logo-full.svg";
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
@@ -37,7 +37,7 @@ function RouteComponent() {
       <main class="relative flex flex-1 items-center justify-center px-6 py-24">
         <div class="flex max-w-2xl flex-col items-center gap-8 text-center">
           <img
-            src={logoReversed}
+            src={logoFull}
             alt=""
             aria-hidden="true"
             class="h-20 w-auto sm:h-24"

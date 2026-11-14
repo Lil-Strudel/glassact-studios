@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/solid-router";
-import logoReversed from "../assets/images/logo-reversed.png";
+import logoFull from "../assets/images/logo-full.svg";
 import { createSignal } from "solid-js";
 import { Button, Form, showToast } from "@glassact/ui";
 import { createForm } from "@tanstack/solid-form";
@@ -59,7 +59,7 @@ function RouteComponent() {
       />
       <div class="relative flex w-full max-w-md flex-col items-center gap-8">
         <div class="flex flex-col items-center gap-5 text-center">
-          <img src={logoReversed} alt="GlassAct Studios" class="h-16 w-auto" />
+          <img src={logoFull} alt="GlassAct Studios" class="h-16 w-auto" />
           <div class="ornament-rule w-48">
             <span class="lozenge" />
           </div>

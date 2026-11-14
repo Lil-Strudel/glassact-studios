@@ -1,6 +1,5 @@
 ---
-import { Image } from "astro:assets";
-import LogoImg from "../assets/images/logo-reversed.png";
+import LogoImg from "../assets/images/logo-full.svg";
 import ButtonLink from "./button-link.astro";
 import ArrowIcon from "./arrow-icon.astro";
 import { customerPortalUrl, primaryNavigation } from "../data/site";
@@ -18,12 +17,11 @@ const mobileNavigation = [
 <header class="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-md">
   <div class="shell flex h-16 items-center justify-between gap-6 lg:h-20">
     <a href="/" class="-m-1 shrink-0 rounded-sm p-1">
-      <Image
-        src={LogoImg}
+      <img
+        src={LogoImg.src}
+        width={LogoImg.width}
+        height={LogoImg.height}
         alt="GlassAct Studios"
-        widths={[160, 320]}
-        sizes="160px"
-        loading="eager"
         class="h-10 w-auto lg:h-12"
       />
     </a>

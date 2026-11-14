@@ -192,7 +192,7 @@ An ornament rule, one Marcellus line saying what will appear here, one sentence 
 
 - **Inlay photos, proofs, granite and the stone designer are never tinted, filtered or recoloured.** They are the product.
 - **Knot mark:** `logo-mark.svg` is the official vector knot for dark grounds (white outlines, crimson `#84153a` bars). Use it wherever the knot stands alone. Never recolour it.
-- **Full logo on dark:** `logo-reversed.png` (vellum "STUDIOS", knot outlines in vellum, crimson lightened) is an interim raster recolour of the original. Replace it with vector artwork of the full logo when available.
+- **Full logo on dark:** `logo-full.svg`, the official vector lockup with "GlassAct" and "STUDIOS" in white beside the knot. The default wherever the name appears: app header, login, landing header and footer.
 - **Original logo** (`logo.png`, black lettering) only sits on the vellum plaque (`bg-plaque`), never directly on umber.
 - **Black line artwork** (catalog design SVGs, sandblast masks, proof line art) sits in a `bg-plaque` well; on umber its lead lines vanish. Photos of finished inlays in granite need no well.
 - **The illuminated "S" emblem** is a landing-site and login flourish, not app chrome.
