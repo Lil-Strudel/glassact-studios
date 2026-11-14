@@ -1,0 +1,24 @@
+---
+import OrnamentRule from "./ornament-rule.astro";
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  lede?: string;
+}
+
+const { eyebrow, title, lede } = Astro.props;
+---
+
+<header class="crimson-wash relative isolate overflow-hidden border-b border-border">
+  <div class="shell grid gap-10 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+    <div class="grid max-w-3xl gap-5">
+      <p class="eyebrow text-gilt">{eyebrow}</p>
+      <h1 class="text-4xl leading-[1.08] sm:text-5xl lg:text-6xl">{title}</h1>
+      <OrnamentRule class="max-w-xs" />
+      {lede && <p class="prose-measure text-lg leading-relaxed text-muted-foreground">{lede}</p>}
+      <slot />
+    </div>
+    <slot name="aside" />
+  </div>
+</header>

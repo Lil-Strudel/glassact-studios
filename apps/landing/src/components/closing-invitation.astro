@@ -1,0 +1,31 @@
+---
+import { Image } from "astro:assets";
+import ButtonLink from "./button-link.astro";
+import ArrowIcon from "./arrow-icon.astro";
+import KnotImg from "../assets/images/logo-mark.svg";
+import { customerPortalUrl } from "../data/site";
+---
+
+<section class="pb-20 sm:pb-28">
+  <div class="shell">
+    <div
+      class="relative isolate overflow-hidden rounded-lg border border-gilt/30 bg-gradient-to-br from-crimson-deep/60 via-card to-card px-6 py-14 text-center sm:px-12 sm:py-16"
+    >
+      <Image src={KnotImg} alt="" width={78} height={62} class="mx-auto h-14 w-auto" />
+      <h2 class="mx-auto mt-6 max-w-2xl text-3xl leading-tight sm:text-4xl">
+        Have a design in mind that isn’t in the catalog?
+      </h2>
+      <p class="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
+        We will redesign existing sandblasting files into colored glass inlays.
+        Ask us about ordering, pricing or a custom design.
+      </p>
+      <div class="mt-9 flex flex-wrap justify-center gap-3">
+        <ButtonLink href="/contact" size="lg">Contact us</ButtonLink>
+        <ButtonLink href={customerPortalUrl} variant="outline" size="lg">
+          Customer portal
+          <ArrowIcon direction="up-right" />
+        </ButtonLink>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,18 @@
+---
+interface Props {
+  numeral: string;
+  isOnCard?: boolean;
+}
+
+const { numeral, isOnCard = false } = Astro.props;
+---
+
+<span class="relative flex size-10 shrink-0 items-center justify-center" aria-hidden="true">
+  <span
+    class:list={[
+      "absolute inset-1.5 rotate-45 border border-gilt/70",
+      isOnCard ? "bg-card" : "bg-background",
+    ]}
+  ></span>
+  <span class="gilt-numeral relative text-sm">{numeral}</span>
+</span>

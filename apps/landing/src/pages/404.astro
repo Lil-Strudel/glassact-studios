@@ -1,18 +1,31 @@
 ---
+import { Image } from "astro:assets";
 import Layout from "../layouts/layout.astro";
+import ButtonLink from "../components/button-link.astro";
+import OrnamentRule from "../components/ornament-rule.astro";
+import EmblemImg from "../assets/images/s-emblem.png";
 ---
 
-<Layout>
-  <main class="py-14 grow">
-    <div class="max-w-screen-xl mx-auto px-4 text-gray-600 md:px-8">
-      <div class="max-w-lg mx-auto space-y-4 text-center">
-        <h1 class="text-gray-800 text-6xl font-semibold">404</h1>
-        <p class="text-gray-800 text-3xl font-semibold">Page not found</p>
-        <p>Sorry, the page you're looking for doesn't exist.</p>
-        <a href="/" class="inline-block mt-4 text-indigo-600 hover:underline">
-          Back to home
-        </a>
+<Layout title="Page not found">
+  <section class="crimson-wash flex grow items-center py-16 sm:py-24">
+    <div class="shell grid justify-items-center gap-6 text-center">
+      <Image
+        src={EmblemImg}
+        alt=""
+        widths={[200, 400]}
+        sizes="140px"
+        class="emblem-glow illuminate w-32 sm:w-36"
+      />
+      <p class="eyebrow text-gilt">Error 404</p>
+      <h1 class="text-4xl sm:text-5xl">Page not found</h1>
+      <OrnamentRule class="w-56" />
+      <p class="max-w-md text-lg text-muted-foreground">
+        Sorry, the page you’re looking for doesn’t exist.
+      </p>
+      <div class="mt-2 flex flex-wrap justify-center gap-3">
+        <ButtonLink href="/">Back to home</ButtonLink>
+        <ButtonLink href="/gallery" variant="secondary">View the gallery</ButtonLink>
       </div>
     </div>
-  </main>
+  </section>
 </Layout>

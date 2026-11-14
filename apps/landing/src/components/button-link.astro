@@ -1,16 +1,12 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-
 import {
   buttonVariants,
   type buttonVariantsProps,
 } from "@glassact/ui/button-variants";
-
 import { cn } from "@glassact/ui/cn";
 
-export interface Props
-  extends Omit<HTMLAttributes<"button">, "disabled">,
-    buttonVariantsProps {}
+export interface Props extends HTMLAttributes<"a">, buttonVariantsProps {}
 
 const {
   variant = "default",
@@ -20,6 +16,6 @@ const {
 } = Astro.props;
 ---
 
-<button class={cn(buttonVariants({ variant, size }), className)} {...rest}>
+<a class={cn(buttonVariants({ variant, size }), "gap-2", className)} {...rest}>
   <slot />
-</button>
+</a>

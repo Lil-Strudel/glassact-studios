@@ -1,0 +1,55 @@
+---
+import NumeralLozenge from "./numeral-lozenge.astro";
+
+const steps = [
+  {
+    numeral: "I",
+    title: "Fused",
+    description:
+      "Two layers of colored fusible plate glass are melted into a ¼″ thick, solid-colored glass. The color is never printed on.",
+  },
+  {
+    numeral: "II",
+    title: "Cut",
+    description:
+      "A computer-controlled water-jet shapes every piece to tolerances measured in thousandths of an inch.",
+  },
+  {
+    numeral: "III",
+    title: "Fire-polished",
+    description:
+      "Over 30 hours in the kiln to fuse, fire-polish and anneal, leaving the glass up to 200 times harder than plate glass.",
+  },
+  {
+    numeral: "IV",
+    title: "Set in stone",
+    description:
+      "Bonded flush with the granite through a stencil cut to fit, then sealed with UV-fast, cement-based grout.",
+  },
+];
+---
+
+<section class="border-y border-border bg-card py-20 sm:py-24">
+  <div class="shell">
+    <div class="grid max-w-2xl gap-4">
+      <p class="eyebrow text-gilt">Methods and materials</p>
+      <h2 class="text-3xl sm:text-4xl">How an inlay is made</h2>
+    </div>
+
+    <ol class="relative mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+      <span
+        class="absolute left-[1.25rem] top-5 hidden h-px w-[calc(100%-2rem)] bg-gradient-to-r from-input via-input to-transparent lg:block"
+        aria-hidden="true"
+      ></span>
+      {
+        steps.map((step) => (
+          <li class="relative grid content-start gap-3">
+            <NumeralLozenge numeral={step.numeral} isOnCard />
+            <h3 class="text-2xl">{step.title}</h3>
+            <p class="leading-relaxed text-muted-foreground">{step.description}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>

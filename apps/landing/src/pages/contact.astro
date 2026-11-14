@@ -1,57 +1,99 @@
 ---
+import { Image } from "astro:assets";
 import Layout from "../layouts/layout.astro";
-import EmailSVG from "../components/email-svg.astro";
-import PhoneSVG from "../components/phone-svg.astro";
-import AddressSVG from "../components/address-svg.astro";
+import PageHeader from "../components/page-header.astro";
+import ArrowIcon from "../components/arrow-icon.astro";
+import EmailIcon from "../components/email-svg.astro";
+import PhoneIcon from "../components/phone-svg.astro";
+import AddressIcon from "../components/address-svg.astro";
+import RoseImg from "../assets/images/gallery/Rose_d600.jpg";
+import { contactDetails, customerPortalUrl } from "../data/site";
 
 const contactMethods = [
   {
-    icon: EmailSVG,
-    contact: "roy@glassactstudios.com",
+    icon: EmailIcon,
+    label: "Email",
+    href: `mailto:${contactDetails.email}`,
+    lines: [contactDetails.email],
   },
   {
-    icon: PhoneSVG,
-    contact: "(801) 850-6698",
+    icon: PhoneIcon,
+    label: "Phone",
+    href: contactDetails.phoneHref,
+    lines: [contactDetails.phoneDisplay],
   },
   {
-    icon: AddressSVG,
-    contact: "GlassAct Studios Inc. 540 South Commerce Rd, Orem, UT 84097",
+    icon: AddressIcon,
+    label: "Studio",
+    href: contactDetails.mapsHref,
+    lines: [contactDetails.companyName, contactDetails.streetAddress, contactDetails.locality],
   },
 ];
 ---
 
-<Layout>
-  <main class="py-14 grow">
-    <div class="max-w-screen-xl mx-auto px-4 text-gray-600 md:px-8">
-      <div
-        class="max-w-lg mx-auto gap-12 justify-between lg:flex lg:max-w-none"
-      >
-        <div class="max-w-lg space-y-3">
-          <h3 class="font-semibold">Contact</h3>
-          <p class="text-gray-800 text-3xl font-semibold sm:text-4xl">
-            Get in touch.
-          </p>
-          <p>
-            Questions about ordering, pricing, or a custom design? Reach us by
-            email or phone below — we aim to reply within 24 hours.
-          </p>
+<Layout title="Contact">
+  <PageHeader
+    eyebrow="Contact"
+    title="Get in touch."
+    lede="Questions about ordering, pricing or a custom design? Reach us by email or phone below. We aim to reply within 24 hours."
+  />
+
+  <section class="py-14 sm:py-20">
+    <div class="shell grid items-start gap-14 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-20">
+      <div class="grid gap-4">
+        <ul class="grid gap-4">
+          {
+            contactMethods.map((method) => (
+              <li>
+                <a
+                  href={method.href}
+                  class="group flex items-start gap-5 rounded-lg border border-border bg-card p-5 transition-colors hover:border-gilt/45 sm:p-6"
+                >
+                  <span class="flex size-12 shrink-0 items-center justify-center rounded-md bg-crimson-deep/60 text-gilt">
+                    <method.icon />
+                  </span>
+                  <span class="grid gap-1">
+                    <span class="eyebrow">{method.label}</span>
+                    {method.lines.map((line, index) => (
+                      <span class:list={[index === 0 ? "font-display text-xl text-foreground group-hover:text-gilt sm:text-2xl" : "text-muted-foreground", "tabular-nums break-words"]}>
+                        {line}
+                      </span>
+                    ))}
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+
+        <div class="mt-4 flex flex-col gap-3 rounded-lg border border-dashed border-input p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div>
-            <ul class="mt-6 flex flex-wrap gap-x-10 gap-y-6 items-center">
-              {
-                contactMethods.map((item) => (
-                  <li class="flex items-center gap-x-3">
-                    <div class="flex-none text-gray-400">
-                      <item.icon />
-                    </div>
-                    <p>{item.contact}</p>
-                  </li>
-                ))
-              }
-            </ul>
+            <p class="font-display text-lg">Already ordering with us?</p>
+            <p class="text-sm text-muted-foreground">
+              Track projects, approve proofs and place orders in the customer portal.
+            </p>
           </div>
+          <a
+            href={customerPortalUrl}
+            class="inline-flex shrink-0 items-center gap-2 text-crimson-light underline-offset-4 hover:underline"
+          >
+            Customer portal
+            <ArrowIcon direction="up-right" />
+          </a>
         </div>
-        <div class="flex-1 mt-12 sm:max-w-lg lg:max-w-md"></div>
       </div>
+
+      <figure class="mx-auto w-full max-w-sm lg:max-w-none">
+        <div class="arched-frame aspect-[4/5] bg-came">
+          <Image
+            src={RoseImg}
+            alt="A yellow rose glass inlay resting on a carved book in a granite headstone"
+            widths={[400, 600]}
+            sizes="(min-width: 1024px) 34vw, 90vw"
+            class="size-full object-cover"
+          />
+        </div>
+      </figure>
     </div>
-  </main>
+  </section>
 </Layout>

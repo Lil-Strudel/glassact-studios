@@ -1,68 +1,159 @@
 ---
 import { Image } from "astro:assets";
 import Layout from "../layouts/layout.astro";
-import TextBlock from "../components/text-block.astro";
+import ClosingInvitation from "../components/closing-invitation.astro";
+import OrnamentRule from "../components/ornament-rule.astro";
+import NumeralLozenge from "../components/numeral-lozenge.astro";
 
 import ColorFusionImg from "../assets/images/color-fusion.png";
+import EmblemImg from "../assets/images/s-emblem.png";
 import StainedGlassImg from "../assets/images/stained-glass.jpg";
-import SEmblemImg from "../assets/images/s-emblem.png";
+import CelticKnotImg from "../assets/images/gallery/3-Celt6x6-300_600.jpg";
+import FinishedHeartImg from "../assets/images/gallery/Finished-heartsm_d600.jpg";
+import MiningProofImg from "../assets/images/gallery/Coal-Mining-Machine1_d600.png";
+import RubySlipperImg from "../assets/images/gallery/Ruby-slipper_d600.png";
+import { patentNotice } from "../data/site";
+
+const chapters = [
+  {
+    numeral: "I",
+    title: "Colored glass history",
+    paragraphs: [
+      "For hundreds of years, colored glass has been produced and used in many ways. A little-known fact is that colored glass never fades: it holds its original color indefinitely.",
+      "In Europe, some of the oldest cathedrals still have their original art glass. Superb examples survive from the early 12th century, such as King David in Augsburg Cathedral in Germany, and the 13th-century windows of Notre-Dame de Chartres in France. Art glass made over 800 years ago is still as vibrant and beautiful as the day it was created.",
+    ],
+    image: StainedGlassImg,
+    imageAlt: "A medieval cathedral window of blue and red stained glass",
+    isArched: true,
+  },
+  {
+    numeral: "II",
+    title: "Shaping the glass",
+    paragraphs: [
+      "Today we have numerous modern tools, such as diamond-crusted saw blades and grinders. The computer-controlled water-jet, with an ultra-thin cutting radius, is essential for cutting glass.",
+      "Cutting a one-inch glass letter or number is no longer a challenge, because the machine’s tolerances are measured in thousandths of an inch.",
+    ],
+    image: CelticKnotImg,
+    imageAlt: "A finely cut Celtic knot glass inlay set in granite",
+    isArched: true,
+  },
+  {
+    numeral: "III",
+    title: "Fusing and annealing",
+    paragraphs: [
+      "Computer-controlled kilns are responsible for a high-quality outcome. Barometric pressure, air temperature and humidity still play a role, but good record keeping and testing ensure the highest quality in glass finishing.",
+      "To fuse, fire-polish and anneal an inlay, the glass is heated multiple times and spends well over 30 hours in the kiln. Our techniques ensure a perfect finish and a hardness up to 200 times that of regular plate glass.",
+    ],
+    image: FinishedHeartImg,
+    imageAlt: "A finished, fire-polished glass heart held in two hands",
+    isArched: true,
+  },
+  {
+    numeral: "IV",
+    title: "Stencils",
+    paragraphs: [
+      "Before a stencil can be cut, a graphic artist draws the artwork and designs the layout in Adobe Illustrator, the gold standard among graphic art and layout programs. Most plotting programs work like a CAD program, which engineers and architects favor, with hints of Illustrator, which artists and the printing industry use.",
+      "The stencil we create is custom matched to the finished glass art. When an artisan sandblasts the stencil onto the granite, the fit of the glass inlay into the stone is guaranteed.",
+    ],
+    image: MiningProofImg,
+    imageAlt:
+      "A client’s photograph of a mining machine, our designed proof, and the finished inlay on a headstone",
+    isArched: false,
+  },
+  {
+    numeral: "V",
+    title: "Installation",
+    paragraphs: [
+      "The glass is bonded to the granite with an industrial, epoxy-like adhesive made specially to adhere glass to stone. A tensile strength of over 2,500 pounds ensures a bond that will never be challenged.",
+      "The only enemy of the adhesive is ultraviolet light from the sun. So every design has a small outline filled with cement-based grout, which seals the gap permanently and keeps the adhesive out of the sunlight. The grout adheres permanently to glass and granite, and we color it with UV-fast pigments, adding another layer of sophistication to the design.",
+    ],
+    image: RubySlipperImg,
+    imageAlt: "A ruby slipper and rainbow glass inlay, outlined in grout, on a granite marker",
+    isArched: true,
+  },
+];
 ---
 
-<Layout>
-  <section class="grow">
-    <div class="max-w-screen-xl py-24 px-4 md:px-8 mx-auto">
-      <div class="w-full pb-8 flex justify-between items-end">
-        <div>
-          <div class="-mx-3 -my-8">
-            <Image src={ColorFusionImg} alt="Color Fusion" class="w-[20rem]" />
-          </div>
-          <h2 class="mt-2 sm:text-3xl text-2xl font-medium lg:mb-0 mb-4">
-            Permanent Colorfast Glass Inlays
-          </h2>
-        </div>
+<Layout title="Our Product">
+  <header class="crimson-wash relative isolate overflow-hidden border-b border-border">
+    <div class="shell grid items-center gap-10 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_auto]">
+      <div class="grid max-w-3xl gap-5">
+        <Image
+          src={ColorFusionImg}
+          alt="ColorFusion"
+          width={320}
+          height={74}
+          class="wordmark-on-dark -ml-2 h-auto w-56 sm:w-64"
+        />
+        <h1 class="text-4xl leading-[1.08] sm:text-5xl lg:text-6xl">
+          Permanent colorfast glass inlays
+        </h1>
+        <OrnamentRule class="max-w-xs" />
+        <p class="prose-measure text-lg leading-relaxed text-muted-foreground">
+          Colored glass holds its original color indefinitely. These are the
+          methods and materials we use to bring it to granite.
+        </p>
       </div>
-      <div class="flex md:gap-8">
-        <div>
-          <Image
-            src={StainedGlassImg}
-            alt="Stained Glass"
-            class="min-w-[400px] hidden md:block"
-          />
-          <Image
-            src={SEmblemImg}
-            alt="S Emblem"
-            class="min-w-[400px] hidden md:block"
-          />
-        </div>
-        <div class="flex flex-col gap-4">
-          <h3 class="text-3xl">Methods and Materials</h3>
-          <TextBlock
-            title="Colored Glass History"
-            description="For hundreds of years, colored glass was produced and used in various ways. A little-known fact is that colored glass never fades and holds its original color for an indefinite time. In Europe, some of the oldest cathedrals still have their original art glass. Superb examples of colored glass are found in the early 12th Century, such as King David displayed in the Augsburg Germany Cathedral, or 13th-Century windows from the Chartres Cathedral in Notre Dame, France. The art glass from over 800 years ago is still as vibrant and beautiful as the first day it was created!"
-          />
-          <Image src={StainedGlassImg} alt="Stained Glass" class="md:hidden" />
-          <TextBlock
-            title="Shaping the Glass"
-            description="Today we have numerous modern tools available such as diamond crusted saw blades and grinders. The computer controlled water-jet, with an ultra-thin cutting radius, is essential for cutting glass.  It is no longer a challenge to cut a one-inch glass letter or number because the machine's tolerances are measured in thousands of an inch.  "
-          />
-          <TextBlock
-            title="Fusing and Annealing"
-            description="Computer controlled kilns are responsible for a high-quality outcome. Barometric pressure, air temperature, and humidity still play a roll, but good record keeping and testing ensure the highest quality in glass finishing. To fuse, fire polish, and anneal the glass inlay, the glass will be heated multiple times and spend well over 30 hours in the kiln. Our fusing and annealing techniques ensure a perfect finish and a hardness that is up to 200 times harder than regular plate glass."
-          />
-          <TextBlock
-            title="Stencils"
-            description="Before a stencil can be cut, a graphic artist draws the artwork and designs the general layout in Adobe Illustrator. Adobe Illustrator is the gold standard in graphic art and layout programs. Most plotting programs reflect how a CAD program works, combined with hints of Adobe Illustrator. CAD is favored by engineers and architects.  Adobe Illustrator is used by artists, graphic artist and by the printing industry. The stencil we create is custom matched to the finished glass art.  When an artisan sandblasts the stencil onto the granite, the fit of the glass inlay into stone is guaranteed."
-          />
-          <TextBlock
-            title="Installation"
-            description="The glass is bonded to the granite using an industrial, epoxy-like adhesive. This adhesive is specially made to adhere glass to stone. A tensile strength of over 2500 pounds ensures a bond that will never be challenged.  The only enemy that could impact the longevity of our adhesive is UV from sunlight.  With that in mind, our artwork is designed with a small outline that is filled with cement based grout. The grout seals the gap permanently and ensures the adhesive to never be exposed to UV or sunlight. The cement based grout adheres permanently to the glass and granite.  Additionally, we color our grout with pigments that are UV-fast.  The colored grout adds another layer of sophistication to our designs."
-          />
-          <TextBlock
-            title="Patent"
-            description="Our process is so special and unique that we have applied for national and international patents. Our first patent has been finalized and granted."
-          />
-        </div>
+      <Image
+        src={EmblemImg}
+        alt=""
+        widths={[240, 480]}
+        sizes="220px"
+        loading="eager"
+        class="emblem-glow illuminate hidden w-52 lg:block"
+      />
+    </div>
+  </header>
+
+  <section class="py-16 sm:py-24">
+    <div class="shell">
+      <p class="eyebrow text-gilt">Methods and materials</p>
+      <ol class="mt-10 grid gap-20 sm:gap-28">
+        {
+          chapters.map((chapter, index) => (
+            <li class="grid items-center gap-10 lg:grid-cols-2 lg:gap-20">
+              <div class:list={["grid gap-5", index % 2 === 1 && "lg:order-2"]}>
+                <div class="flex items-center gap-4">
+                  <NumeralLozenge numeral={chapter.numeral} />
+                  <h2 class="text-3xl sm:text-4xl">{chapter.title}</h2>
+                </div>
+                <div class="prose-measure grid gap-4 text-lg leading-relaxed text-muted-foreground">
+                  {chapter.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+                </div>
+              </div>
+              <figure class="mx-auto w-full max-w-md lg:max-w-none">
+                <div
+                  class:list={[
+                    "bg-came",
+                    chapter.isArched ? "arched-frame aspect-[5/4]" : "came-frame rounded-lg",
+                  ]}
+                >
+                  <Image
+                    src={chapter.image}
+                    alt={chapter.imageAlt}
+                    widths={[400, 800]}
+                    sizes="(min-width: 1024px) 45vw, 90vw"
+                    class:list={["w-full", chapter.isArched ? "h-full object-cover" : "h-auto"]}
+                  />
+                </div>
+              </figure>
+            </li>
+          ))
+        }
+      </ol>
+
+      <div class="mx-auto mt-24 grid max-w-3xl justify-items-center gap-5 rounded-lg border border-gilt/40 bg-card px-6 py-12 text-center sm:px-12">
+        <NumeralLozenge numeral="VI" isOnCard />
+        <h2 class="text-3xl sm:text-4xl">Patent</h2>
+        <OrnamentRule class="w-40" />
+        <p class="max-w-xl text-lg leading-relaxed text-muted-foreground">
+          Our process is special and unique enough that we applied for national
+          and international patents. Our first patent has been granted.
+        </p>
+        <p class="eyebrow text-foreground">{patentNotice}</p>
       </div>
     </div>
   </section>
+
+  <ClosingInvitation />
 </Layout>

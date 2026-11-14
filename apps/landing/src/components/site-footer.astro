@@ -1,0 +1,73 @@
+---
+import { Image } from "astro:assets";
+import LogoImg from "../assets/images/logo-reversed.png";
+import OrnamentRule from "./ornament-rule.astro";
+import ArrowIcon from "./arrow-icon.astro";
+import {
+  contactDetails,
+  customerPortalUrl,
+  patentNotice,
+  primaryNavigation,
+} from "../data/site";
+
+const currentYear = new Date().getFullYear();
+const footerNavigation = [{ title: "Home", path: "/" }, ...primaryNavigation, { title: "Contact", path: "/contact" }];
+---
+
+<footer class="mt-auto border-t border-border bg-card">
+  <div class="shell pt-14">
+    <div class="grid gap-12 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)]">
+      <div class="grid content-start gap-5">
+        <a href="/" class="w-fit rounded-sm">
+          <Image src={LogoImg} alt="GlassAct Studios" widths={[200, 400]} sizes="200px" class="h-14 w-auto" />
+        </a>
+        <p class="max-w-sm leading-relaxed text-muted-foreground">
+          Custom stained glass inlays for granite memorials. Permanent color,
+          made for monument companies nationwide.
+        </p>
+        <a
+          href={customerPortalUrl}
+          class="inline-flex w-fit items-center gap-2 text-crimson-light underline-offset-4 hover:underline"
+        >
+          Sign in to the customer portal
+          <ArrowIcon direction="up-right" />
+        </a>
+      </div>
+
+      <nav aria-label="Footer" class="grid content-start gap-4">
+        <p class="eyebrow">Explore</p>
+        <ul class="grid gap-2.5">
+          {
+            footerNavigation.map((item) => (
+              <li>
+                <a href={item.path} class="text-muted-foreground hover:text-foreground">
+                  {item.title}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <div class="grid content-start gap-4">
+        <p class="eyebrow">Studio</p>
+        <address class="grid gap-2.5 not-italic text-muted-foreground">
+          <a href={`mailto:${contactDetails.email}`} class="w-fit hover:text-foreground">{contactDetails.email}</a>
+          <a href={contactDetails.phoneHref} class="w-fit tabular-nums hover:text-foreground">{contactDetails.phoneDisplay}</a>
+          <a href={contactDetails.mapsHref} class="w-fit hover:text-foreground">
+            {contactDetails.companyName}<br />
+            {contactDetails.streetAddress}<br />
+            {contactDetails.locality}
+          </a>
+        </address>
+      </div>
+    </div>
+
+    <OrnamentRule class="mt-14" />
+
+    <div class="flex flex-col gap-2 py-7 text-sm text-faint sm:flex-row sm:justify-between">
+      <p>© 2014–{currentYear} GlassAct Studios Inc. All images and text. All rights reserved.</p>
+      <p>{patentNotice}</p>
+    </div>
+  </div>
+</footer>

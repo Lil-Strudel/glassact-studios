@@ -1,24 +1,29 @@
 ---
+import { Image } from "astro:assets";
+import {
+  catalogHref,
+  type CatalogCategory,
+} from "../data/catalog-categories";
+
 interface Props {
-  href: string;
-  title: string;
-  description: string;
+  category: CatalogCategory;
 }
 
-const { href, title, description } = Astro.props;
+const { category } = Astro.props;
 ---
 
-<a
-  href={href}
-  class="pointer block rounded-xl border border-gray-100 p-4 shadow-sm hover:border-primary hover:ring-1 hover:ring-gray-200 focus:outline-none focus:ring"
->
-  <span class="inline-block rounded-lg bg-gray-50 p-3">
-    <slot />
-  </span>
-
-  <h2 class="mt-2 font-bold">{title}</h2>
-
-  <p class="hidden sm:mt-1 sm:block sm:text-sm sm:text-gray-600">
-    {description}
-  </p>
+<a href={catalogHref(category)} class="zoom-on-hover group grid gap-3 rounded-sm">
+  <div class="arched-frame aspect-[4/5] bg-came transition-shadow duration-200 group-hover:shadow-[0_0_0_1px_hsl(var(--gilt))]">
+    <Image
+      src={category.image}
+      alt={category.imageAlt}
+      widths={[240, 480]}
+      sizes="(min-width: 1024px) 15vw, (min-width: 640px) 30vw, 45vw"
+      class="size-full object-cover"
+    />
+  </div>
+  <div class="grid gap-0.5 text-center">
+    <h3 class="text-xl group-hover:text-gilt">{category.title}</h3>
+    <p class="text-sm text-faint">{category.description}</p>
+  </div>
 </a>

@@ -1,17 +1,23 @@
 ---
-import NavBar from "../components/navbar";
-import NavBarPlaceholder from "../components/navbar-placeholder.astro";
-import Footer from "../components/footer.astro";
 import "@glassact/ui/globals.css";
-import { Image } from "astro:assets";
-import LogoImg from "../assets/images/logo.png";
+import "../styles/landing.css";
+import SiteHeader from "../components/site-header.astro";
+import SiteFooter from "../components/site-footer.astro";
+
+interface Props {
+  title?: string;
+}
+
+const { title } = Astro.props;
+const documentTitle = title ? `${title} | GlassAct Studios` : "Welcome | GlassAct Studios";
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#18120d" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
@@ -22,16 +28,22 @@ import LogoImg from "../assets/images/logo.png";
       content="Enhance Memorials Forever with GlassAct Studios' Custom Glass Art Inlays for Granite Monuments. Discover everlasting beauty for memorials with our bespoke glass inlays at GlassAct Studios. Revolutionizing the memorial industry, our inlays provide permanent color on granite, ensuring a timeless tribute that defies fading. While traditional paint or stain lasts a mere 2 to 8 years, our stained glass inlays endure indefinitely. Tested for over a decade on gravestones, these inlays surpass the resilience of carved granite itself, enduring extremes that monuments will never encounter. Choose from our extensive catalog of ready-to-manufacture designs or transform existing sandblasting designs into vivid, enduring glass inlays. Join monument companies nationwide in embracing the permanence and enduring elegance of GlassAct Studios' custom glass art in memorials."
     />
     <meta name="generator" content={Astro.generator} />
-    <title>Welcome | GlassAct Studios</title>
+    <title>{documentTitle}</title>
+    <slot name="head" />
   </head>
   <body>
-    <div class="flex flex-col min-h-screen">
-      <NavBar client:only="solid-js">
-        <Image src={LogoImg} alt="Glassact Studios Logo" class="w-[200px]" />
-        <NavBarPlaceholder slot="fallback" />
-      </NavBar>
-      <slot />
-      <Footer />
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-popover focus:px-4 focus:py-2"
+    >
+      Skip to content
+    </a>
+    <div class="flex min-h-screen flex-col">
+      <SiteHeader />
+      <main id="main" class="flex grow flex-col">
+        <slot />
+      </main>
+      <SiteFooter />
     </div>
   </body>
 </html>

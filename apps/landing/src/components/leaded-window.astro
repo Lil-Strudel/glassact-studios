@@ -1,0 +1,38 @@
+---
+import { Image } from "astro:assets";
+import daffodils from "../assets/images/gallery/4-Daf6x6-300_600.jpg";
+import callaLilies from "../assets/images/gallery/6-Flow6x6-300_600.jpg";
+import hummingbird from "../assets/images/gallery/13-hum6x6-300_600.jpg";
+import heartAndCross from "../assets/images/gallery/7-HT6x6-300_600.jpg";
+import mary from "../assets/images/gallery/9-Maria-6x6-300_600.jpg";
+import duck from "../assets/images/gallery/5-Duck6x6-300_600.jpg";
+
+const panes = [
+  { image: daffodils, alt: "Daffodil glass inlay in granite" },
+  { image: hummingbird, alt: "Hummingbird and blossom glass inlay in granite" },
+  { image: heartAndCross, alt: "Cross on a red heart glass inlay in granite" },
+  { image: callaLilies, alt: "Calla lily glass inlay in granite" },
+  { image: mary, alt: "Praying Mary with a rose, glass inlay in granite" },
+  { image: duck, alt: "Mallard duck glass inlay in granite" },
+];
+---
+
+<section aria-label="Glass inlays in granite" class="border-b border-border bg-came">
+  <div class="shell py-6 sm:py-8">
+    <ul class="grid grid-cols-3 gap-[5px] sm:gap-2 lg:grid-cols-6">
+      {
+        panes.map((pane) => (
+          <li class="lancet aspect-[3/4]">
+            <Image
+              src={pane.image}
+              alt={pane.alt}
+              widths={[240, 480]}
+              sizes="(min-width: 1024px) 16vw, 33vw"
+              class="size-full object-cover"
+            />
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

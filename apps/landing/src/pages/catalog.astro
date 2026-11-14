@@ -1,22 +1,81 @@
 ---
 import Layout from "../layouts/layout.astro";
+import PageHeader from "../components/page-header.astro";
+import ArrowIcon from "../components/arrow-icon.astro";
+import { catalogCategories } from "../data/catalog-categories";
+
+const catalogUrl = "https://online.anyflip.com/jmlf/ifub/mobile/index.html";
+const chapters = catalogCategories.filter((category) => category.page);
 ---
 
-<script>
-  const url = new URLSearchParams(window.location.search);
-  const page = url.get("page");
-  if (page) {
-    const catalog = document.getElementById("catalog") as HTMLIFrameElement;
-    catalog.src = `https://online.anyflip.com/jmlf/ifub/mobile/index.html#p=${page}`;
-  }
-</script>
+<Layout title="Catalog">
+  <PageHeader
+    eyebrow="Catalog"
+    title="Our catalog"
+    lede="Hundreds of finished designs, ready to be manufactured. Jump to a chapter below, or ask us to turn your favorite sandblasting design into a colored glass inlay."
+  >
+    <nav aria-label="Catalog chapters" class="mt-2 flex flex-wrap items-center gap-2">
+      {
+        chapters.map((chapter) => (
+          <a
+            href={`/catalog?page=${chapter.page}`}
+            data-catalog-page={chapter.page}
+            class="inline-flex items-center gap-2 rounded-full border border-input px-4 py-1.5 text-sm text-muted-foreground hover:border-gilt/60 hover:text-foreground aria-[current=true]:border-gilt aria-[current=true]:text-foreground"
+          >
+            <span class="lozenge text-gilt" />
+            {chapter.title}
+          </a>
+        ))
+      }
+      <a
+        href={catalogUrl}
+        target="_blank"
+        rel="noopener"
+        class="ml-1 inline-flex items-center gap-1.5 px-2 py-1.5 text-sm text-crimson-light underline-offset-4 hover:underline"
+      >
+        Open full screen
+        <ArrowIcon direction="up-right" />
+      </a>
+    </nav>
+  </PageHeader>
 
-<Layout>
-  <main class="grow flex min-h-full">
-    <iframe
-      id="catalog"
-      class="w-screen min-h-full"
-      title="Catalog"
-      src="https://online.anyflip.com/jmlf/ifub/mobile/index.html"></iframe>
-  </main>
+  <section class="py-10 sm:py-14">
+    <div class="shell">
+      <div class="leaded-panel overflow-hidden rounded-lg p-[5px]">
+        <iframe
+          id="catalog"
+          class="block h-[78vh] min-h-[32rem] w-full rounded-[3px] bg-card"
+          title="GlassAct Studios catalog"
+          src={catalogUrl}></iframe>
+      </div>
+    </div>
+  </section>
 </Layout>
+
+<script>
+  const catalogUrl = "https://online.anyflip.com/jmlf/ifub/mobile/index.html";
+  const catalog = document.getElementById("catalog") as HTMLIFrameElement | null;
+  const chapterLinks = document.querySelectorAll<HTMLAnchorElement>("[data-catalog-page]");
+
+  function showPage(page: string) {
+    if (!catalog) return;
+    catalog.src = `${catalogUrl}#p=${page}`;
+    chapterLinks.forEach((link) => {
+      link.setAttribute("aria-current", String(link.dataset.catalogPage === page));
+    });
+  }
+
+  const requestedPage = new URLSearchParams(window.location.search).get("page");
+  if (requestedPage) showPage(requestedPage);
+
+  chapterLinks.forEach((link) => {
+    link.addEventListener("click", (event) => {
+      const page = link.dataset.catalogPage;
+      if (!page) return;
+      event.preventDefault();
+      history.replaceState(null, "", `?page=${page}`);
+      showPage(page);
+      catalog?.scrollIntoView({ block: "start" });
+    });
+  });
+</script>
