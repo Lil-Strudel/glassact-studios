@@ -83,7 +83,7 @@ const ProofActions: Component<ProofActionsProps> = (props) => {
                   onInput={(e: InputEvent & { currentTarget: HTMLTextAreaElement }) =>
                     setDeclineReason(e.currentTarget.value)
                   }
-                  placeholder="Reason for declining..."
+                  placeholder="What should change?"
                 />
               </TextFieldRoot>
               <div class="flex gap-2">
@@ -93,11 +93,11 @@ const ProofActions: Component<ProofActionsProps> = (props) => {
                   disabled={declineMutation.isPending || !declineReason().trim()}
                   onClick={handleDecline}
                 >
-                  {declineMutation.isPending ? "Declining..." : "Confirm Decline"}
+                  {declineMutation.isPending ? "Declining..." : "Confirm decline"}
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => {
                     setShowDeclineForm(false);
                     setDeclineReason("");
@@ -123,10 +123,10 @@ const ProofActions: Component<ProofActionsProps> = (props) => {
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => setShowDeclineForm(true)}
                 >
-                  Decline
+                  Request changes
                 </Button>
               </div>
             }

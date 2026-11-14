@@ -23,9 +23,9 @@ export function StoneDesignSection(props: StoneDesignSectionProps) {
     userContext.can(PERMISSION_ACTIONS.CREATE_PROJECT);
 
   return (
-    <div class="mt-8">
-      <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-gray-900">Stone design</h2>
+    <section class="flex flex-col gap-4">
+      <div class="flex items-center justify-between gap-4">
+        <h2 class="text-2xl">Stone design</h2>
         <Show when={designQuery.data || canEdit()}>
           <Button
             as={Link}
@@ -40,7 +40,7 @@ export function StoneDesignSection(props: StoneDesignSectionProps) {
       <Show
         when={designQuery.data}
         fallback={
-          <p class="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+          <p class="rounded-lg border border-dashed border-input p-6 text-center text-sm text-muted-foreground">
             <Show when={canEdit()} fallback="No stone has been designed for this project.">
               See every inlay on the actual stone: pick a shape and granite,
               arrange the inlays, add a sandblasted background and lettering.
@@ -53,11 +53,11 @@ export function StoneDesignSection(props: StoneDesignSectionProps) {
             <StonePreview
               design={design()}
               inlays={props.inlays}
-              class="h-72 rounded-lg border border-gray-200 bg-gray-50 transition hover:border-gray-400"
+              class="h-72 rounded-lg border border-border bg-muted transition-colors hover:border-gilt/50"
             />
           </Link>
         )}
       </Show>
-    </div>
+    </section>
   );
 }

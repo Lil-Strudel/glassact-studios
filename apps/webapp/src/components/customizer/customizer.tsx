@@ -282,16 +282,19 @@ export function Customizer(props: CustomizerProps) {
   return (
     <div class="flex h-[calc(100vh-8rem)] flex-col gap-3">
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 class="text-xl font-bold text-gray-900">
-            Customize: {props.item.name}
-          </h1>
-          <p class="text-xs text-gray-500">{props.item.catalog_code}</p>
+        <div class="flex flex-col gap-1">
+          <p class="eyebrow">
+            Customize
+            <span class="ml-2 font-mono font-normal normal-case tracking-wide text-faint">
+              {props.item.catalog_code}
+            </span>
+          </p>
+          <h1 class="text-2xl text-foreground sm:text-3xl">{props.item.name}</h1>
         </div>
 
         <div class="flex items-center gap-2">
           <Show when={customPieces() > 0}>
-            <Badge variant="warning" class="rounded-full">
+            <Badge variant="warning" lozenge>
               {customPieces()} custom piece{customPieces() === 1 ? "" : "s"} · may
               affect price
             </Badge>

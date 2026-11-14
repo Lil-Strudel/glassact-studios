@@ -32,7 +32,8 @@ export function SizeFields(props: SizeFieldsProps) {
   const [heightText, setHeightText] = createSignal("");
 
   createEffect(() => {
-    if (toNumber(widthText()) !== props.width) setWidthText(toText(props.width));
+    if (toNumber(widthText()) !== props.width)
+      setWidthText(toText(props.width));
   });
 
   createEffect(() => {
@@ -50,7 +51,10 @@ export function SizeFields(props: SizeFieldsProps) {
   function handleHeight(text: string) {
     setHeightText(text);
     const height = toNumber(text);
-    props.onChange(height == null ? null : round2(height / props.aspect), height);
+    props.onChange(
+      height == null ? null : round2(height / props.aspect),
+      height,
+    );
   }
 
   return (
@@ -66,7 +70,7 @@ export function SizeFields(props: SizeFieldsProps) {
             onChange={handleWidth}
           />
         </NumberFieldRoot>
-        <span class="pb-2 text-gray-400">×</span>
+        <span class="pb-2 text-faint">×</span>
         <NumberFieldRoot class="flex flex-col gap-1">
           <NumberFieldLabel>Default Height (in)</NumberFieldLabel>
           <NumberField
@@ -78,7 +82,7 @@ export function SizeFields(props: SizeFieldsProps) {
           />
         </NumberFieldRoot>
       </div>
-      <p class="mt-1.5 text-xs text-gray-500">
+      <p class="mt-1.5 text-xs text-faint">
         Aspect ratio is locked to the artwork — editing either dimension updates
         the other.
       </p>

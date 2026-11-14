@@ -14,7 +14,9 @@ import {
   type CatalogFormEditState,
 } from "../../components/admin/catalog-form";
 import { createMemo, Show } from "solid-js";
-import { Button } from "@glassact/ui";
+import { Alert, Button } from "@glassact/ui";
+import { IoAlertCircleOutline } from "solid-icons/io";
+import { PageHeader } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/admin/catalog_/$uuid")({
   component: RouteComponent,
@@ -85,48 +87,53 @@ function RouteComponent() {
       <Show when={itemQuery.data}>
         {(item) => (
           <>
-            <div class="flex items-center justify-between">
-              <div>
-                <h1 class="text-2xl font-bold text-gray-900">
-                  Edit Catalog Item: {item().name}
-                </h1>
-                <p class="text-gray-600 mt-1">Code: {item().catalog_code}</p>
-              </div>
-
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={deleteCatalog.isPending}
-              >
-                {deleteCatalog.isPending ? "Deleting..." : "Delete Item"}
-              </Button>
-            </div>
+            <PageHeader
+              eyebrow="Edit Catalog Item"
+              title={item().name}
+              description={
+                <>
+                  Code:{" "}
+                  <span class="font-mono tabular-nums text-foreground">
+                    {item().catalog_code}
+                  </span>
+                </>
+              }
+              actions={
+                <Button
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={deleteCatalog.isPending}
+                >
+                  {deleteCatalog.isPending ? "Deleting..." : "Delete Item"}
+                </Button>
+              }
+            />
 
             <Show when={putCatalog.isError}>
-              <div class="bg-red-50 border border-red-200 rounded-md p-4">
-                <p class="text-sm text-red-600">
+              <Alert variant="destructive">
+                <IoAlertCircleOutline size={18} />
+                <p>
                   {putCatalog.error instanceof Error
                     ? putCatalog.error.message
                     : "Failed to update catalog item"}
                 </p>
-              </div>
+              </Alert>
             </Show>
 
             <Show when={deleteCatalog.isError}>
-              <div class="bg-red-50 border border-red-200 rounded-md p-4">
-                <p class="text-sm text-red-600">
+              <Alert variant="destructive">
+                <IoAlertCircleOutline size={18} />
+                <p>
                   {deleteCatalog.error instanceof Error
                     ? deleteCatalog.error.message
                     : "Failed to delete catalog item"}
                 </p>
-              </div>
+              </Alert>
             </Show>
 
             <Show
               when={editState()}
-              fallback={
-                <p class="text-gray-600">Loading editor...</p>
-              }
+              fallback={<p class="text-sm text-faint">Loading editor...</p>}
             >
               {(state) => (
                 <CatalogForm
@@ -141,15 +148,14 @@ function RouteComponent() {
       </Show>
 
       <Show when={itemQuery.isLoading}>
-        <div class="text-center py-12">
-          <p class="text-gray-600">Loading...</p>
-        </div>
+        <p class="py-12 text-center text-sm text-faint">Loading...</p>
       </Show>
 
       <Show when={itemQuery.isError}>
-        <div class="bg-red-50 border border-red-200 rounded-md p-4">
-          <p class="text-sm text-red-600">Failed to load catalog item</p>
-        </div>
+        <Alert variant="destructive">
+          <IoAlertCircleOutline size={18} />
+          <p>Failed to load catalog item</p>
+        </Alert>
       </Show>
     </div>
   );

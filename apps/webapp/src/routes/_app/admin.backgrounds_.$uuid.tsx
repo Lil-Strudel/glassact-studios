@@ -2,8 +2,14 @@ import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import { Match, Switch } from "solid-js";
 import type { SandblastBackgroundWrite } from "@glassact/data";
-import { showToast } from "@glassact/ui";
-import { getBackgroundOpts, getBackgroundsOpts, putBackgroundOpts } from "../../queries/background";
+import { Alert, showToast } from "@glassact/ui";
+import { IoAlertCircleOutline } from "solid-icons/io";
+import { PageHeader } from "@glassact/ui";
+import {
+  getBackgroundOpts,
+  getBackgroundsOpts,
+  putBackgroundOpts,
+} from "../../queries/background";
 import { BackgroundForm } from "../../components/admin/background-form";
 import { backgroundTagOptions } from "../../components/catalog/background-search";
 import { isApiError } from "../../utils/is-api-error";
@@ -37,7 +43,9 @@ function RouteComponent() {
           showToast({
             title: "Failed to save background",
             description:
-              error instanceof Error && isApiError(error) ? (error.data?.error ?? "Unknown error") : "Unknown error",
+              error instanceof Error && isApiError(error)
+                ? (error.data?.error ?? "Unknown error")
+                : "Unknown error",
             variant: "error",
           }),
       },
@@ -46,13 +54,16 @@ function RouteComponent() {
 
   return (
     <div class="flex flex-col gap-6">
-      <h1 class="text-2xl font-bold text-gray-900">Edit background</h1>
+      <PageHeader eyebrow="Backgrounds" title="Edit background" />
       <Switch>
         <Match when={backgroundQuery.isLoading}>
-          <div class="h-96 animate-pulse rounded-lg bg-gray-100" />
+          <div class="h-96 animate-pulse rounded-lg bg-card" />
         </Match>
         <Match when={backgroundQuery.isError}>
-          <p class="text-sm text-red-600">Couldn't load this background.</p>
+          <Alert variant="destructive">
+            <IoAlertCircleOutline size={18} />
+            <p>Couldn't load this background.</p>
+          </Alert>
         </Match>
         <Match when={backgroundQuery.data}>
           {(background) => (

@@ -34,11 +34,18 @@ function formatTime(time: string) {
 function MilestoneRow(props: { milestone: GET<InlayMilestone> }) {
   return (
     <li class="flex gap-3">
-      <div class="flex-shrink-0 mt-1">
-        <span class="block w-2.5 h-2.5 rounded-full bg-primary" />
+      <div class="mt-1.5 flex-shrink-0">
+        <span
+          aria-hidden="true"
+          class={`lozenge size-2 ${
+            props.milestone.event_type === "reverted"
+              ? "text-warning-foreground"
+              : "text-gilt"
+          }`}
+        />
       </div>
       <div class="min-w-0 flex-1">
-        <p class="text-sm text-gray-800">
+        <p class="text-sm text-foreground">
           <Show
             when={props.milestone.event_type === "reverted"}
             fallback={
@@ -54,7 +61,7 @@ function MilestoneRow(props: { milestone: GET<InlayMilestone> }) {
             <span class="font-medium">{stepLabel(props.milestone.step)}</span>
           </Show>
         </p>
-        <p class="text-xs text-gray-400">
+        <p class="text-xs text-faint">
           {formatTime(props.milestone.event_time)}
         </p>
       </div>
@@ -70,12 +77,12 @@ function UpdateRow(props: { update: GET<InlayUpdate> }) {
         <Show
           when={isIssue()}
           fallback={
-            <span class="text-gray-400">
+            <span class="text-faint">
               <IoInformationCircleOutline size={18} />
             </span>
           }
         >
-          <span class="text-amber-500">
+          <span class="text-warning-foreground">
             <IoAlertCircleOutline size={18} />
           </span>
         </Show>
@@ -83,29 +90,27 @@ function UpdateRow(props: { update: GET<InlayUpdate> }) {
       <div
         class={`min-w-0 flex-1 rounded-lg border p-3 ${
           isIssue()
-            ? "border-amber-200 bg-amber-50"
-            : "border-gray-200 bg-gray-50"
+            ? "border-warning-foreground/30 bg-warning"
+            : "border-border bg-secondary"
         }`}
       >
         <div class="flex items-center gap-2">
           <Badge
-            variant="secondary"
-            class={`text-xs capitalize ${
-              isIssue() ? "bg-amber-100 text-amber-700 border-amber-200" : ""
-            }`}
+            variant={isIssue() ? "warning" : "outline"}
+            class="capitalize"
           >
             {props.update.update_type}
           </Badge>
           <Show when={props.update.step}>
-            <span class="text-xs text-gray-500">
+            <span class="text-xs text-faint">
               {stepLabel(props.update.step!)}
             </span>
           </Show>
         </div>
-        <p class="mt-1 text-sm text-gray-800 break-words">
+        <p class="mt-1 text-sm text-foreground break-words">
           {props.update.message}
         </p>
-        <p class="mt-1 text-xs text-gray-400">
+        <p class="mt-1 text-xs text-faint">
           {formatTime(props.update.created_at)}
         </p>
       </div>
@@ -147,29 +152,32 @@ export function InlayTimeline(props: InlayTimelineProps) {
   });
 
   return (
-    <div class="border rounded-lg p-4 space-y-4">
+    <div class="space-y-4 rounded-lg border border-border bg-card p-5">
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold">Manufacturing Timeline</h2>
+        <h2 class="text-xl">Manufacturing timeline</h2>
       </div>
 
       <Switch>
         <Match when={isLoading()}>
           <div class="space-y-2">
             <For each={[1, 2, 3]}>
-              {() => <div class="h-10 bg-gray-100 rounded animate-pulse" />}
+              {() => <div class="h-10 animate-pulse rounded bg-muted" />}
             </For>
           </div>
         </Match>
 
         <Match when={isError()}>
-          <p class="text-sm text-red-600">Failed to load timeline.</p>
+          <p class="flex items-center gap-2 text-sm text-error-foreground">
+            <IoAlertCircleOutline size={16} aria-hidden="true" />
+            Couldn't load the timeline.
+          </p>
         </Match>
 
         <Match when={!isLoading() && !isError()}>
           <Show
             when={items().length > 0}
             fallback={
-              <p class="text-sm text-gray-500 text-center py-4">
+              <p class="py-4 text-center text-sm text-faint">
                 No manufacturing activity yet.
               </p>
             }
@@ -195,16 +203,16 @@ export function InlayTimeline(props: InlayTimelineProps) {
               when={showAddForm()}
               fallback={
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   class="w-full"
                   onClick={() => setShowAddForm(true)}
                 >
-                  Add Update
+                  Add update
                 </Button>
               }
             >
-              <div class="border rounded-lg p-4 space-y-3 bg-gray-50">
-                <p class="text-sm font-medium">Add Update</p>
+              <div class="space-y-3 rounded-lg border border-border bg-muted p-4">
+                <p class="eyebrow">Add update</p>
                 <AddInlayUpdateForm
                   inlayUuid={props.inlayUuid}
                   onSuccess={() => setShowAddForm(false)}

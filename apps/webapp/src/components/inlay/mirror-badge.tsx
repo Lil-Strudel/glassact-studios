@@ -11,12 +11,12 @@ export function MirrorBadge(props: MirrorBadgeProps) {
   return (
     <Show when={mirrorDescription(props.inlay)}>
       {(description) => (
-        <Badge variant="warning" title={description()}>
+        <Badge variant="info" title={description()}>
           <Show when={props.inlay.mirror_x}>
-            <IoSwapHorizontal size={12} class="mr-1" />
+            <IoSwapHorizontal size={12} />
           </Show>
           <Show when={props.inlay.mirror_y}>
-            <IoSwapVertical size={12} class="mr-1" />
+            <IoSwapVertical size={12} />
           </Show>
           {description()}
         </Badge>

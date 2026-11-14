@@ -41,6 +41,8 @@ import {
 import { browseCatalogOpts } from "../../queries/catalog-browse";
 import { useDebounce } from "../../hooks/use-debounce";
 import { isApiError } from "../../utils/is-api-error";
+import { PageHeader } from "@glassact/ui";
+import { EmptyState } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/admin/catalog_/order")({
   component: RouteComponent,
@@ -87,22 +89,24 @@ function RankedRow(props: RankedRowProps) {
     <li
       ref={ref}
       class={cn(
-        "flex touch-none items-center gap-3 bg-white px-3 py-2",
+        "flex touch-none items-center gap-3 bg-card px-3 py-2 transition-colors",
         dragging() && "opacity-30",
-        draggedOver() && !dragging() && "bg-primary/5 ring-1 ring-inset ring-primary",
+        draggedOver() &&
+          !dragging() &&
+          "bg-accent ring-1 ring-inset ring-gilt/60",
       )}
     >
       <IoReorderTwoOutline
         size={20}
-        class="flex-shrink-0 cursor-grab text-gray-400"
+        class="flex-shrink-0 cursor-grab text-faint"
         aria-hidden="true"
       />
 
-      <span class="w-8 flex-shrink-0 text-sm font-medium tabular-nums text-gray-500">
+      <span class="w-8 flex-shrink-0 font-display text-base tabular-nums text-gilt">
         #{props.index + 1}
       </span>
 
-      <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-gray-50">
+      <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-input bg-plaque p-1">
         <img
           src={props.item.svg_url}
           alt=""
@@ -112,10 +116,10 @@ function RankedRow(props: RankedRowProps) {
       </div>
 
       <div class="min-w-0 flex-1">
-        <p class="truncate text-sm font-medium text-gray-900">
+        <p class="truncate text-sm font-medium text-foreground">
           {props.item.name}
         </p>
-        <p class="truncate text-xs text-gray-500">
+        <p class="truncate text-xs tabular-nums text-faint">
           {props.item.catalog_code} &middot; {props.item.category}
         </p>
       </div>
@@ -265,25 +269,33 @@ function RouteComponent() {
 
   return (
     <div class="flex flex-col gap-6">
-      <div class="flex items-start justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Best Sellers</h1>
-          <p class="text-gray-600 mt-1">
-            Items listed here show first when dealerships browse the catalog, in
-            the order shown. Everything else follows alphabetically.
-          </p>
-        </div>
-        <Link
-          to="/admin/catalog"
-          search={lastAdminCatalogSearch()}
-          class={buttonVariants({ variant: "outline" })}
-        >
-          Back to catalog
-        </Link>
-      </div>
+      <PageHeader
+        eyebrow="Catalog"
+        title="Best Sellers"
+        description="Items listed here show first when dealerships browse the catalog, in the order shown. Everything else follows alphabetically."
+        actions={
+          <Link
+            to="/admin/catalog"
+            search={lastAdminCatalogSearch()}
+            class={buttonVariants({ variant: "outline" })}
+          >
+            Back to catalog
+          </Link>
+        }
+      />
 
-      <div class="flex items-center justify-between rounded-md border bg-gray-50 px-4 py-3">
-        <p class="text-sm text-gray-600">
+      <div
+        class={cn(
+          "flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3",
+          isDirty() ? "border-gilt/45" : "border-border",
+        )}
+      >
+        <p
+          class={cn(
+            "text-sm",
+            isDirty() ? "text-gilt" : "text-muted-foreground",
+          )}
+        >
           <Show when={isDirty()} fallback="No unsaved changes.">
             You have unsaved changes.
           </Show>
@@ -306,19 +318,21 @@ function RouteComponent() {
       </div>
 
       <div>
-        <h2 class="mb-2 text-sm font-medium text-gray-900">
-          Ranked items ({ranked().length})
+        <h2 class="eyebrow mb-3">
+          Ranked items <span class="tabular-nums">({ranked().length})</span>
         </h2>
 
         <Show
           when={ranked().length > 0}
           fallback={
-            <div class="rounded-md border border-dashed p-8 text-center text-sm text-gray-500">
-              Nothing is ranked yet. Search below to add your best sellers.
-            </div>
+            <EmptyState
+              class="rounded-lg border border-dashed border-input"
+              title="Nothing is ranked yet"
+              description="Search below to add your best sellers."
+            />
           }
         >
-          <ul class="flex flex-col rounded-md border divide-y">
+          <ul class="flex flex-col divide-y divide-border overflow-hidden rounded-lg border border-border">
             <For each={ranked()}>
               {(item, index) => (
                 <RankedRow
@@ -335,32 +349,27 @@ function RouteComponent() {
         </Show>
       </div>
 
-      <div class="border-t pt-6">
-        <h2 class="mb-2 text-sm font-medium text-gray-900">
-          Add an item to the ranking
-        </h2>
+      <div class="border-t border-border pt-6">
+        <h2 class="eyebrow mb-3">Add an item to the ranking</h2>
 
         <TextFieldRoot value={search()} onChange={setSearch}>
-          <TextField
-            placeholder="Search by name or code..."
-            class="max-w-sm"
-          />
+          <TextField placeholder="Search by name or code..." class="max-w-sm" />
         </TextFieldRoot>
 
         <Show when={debouncedSearch().length > 0}>
           <Show
             when={pickerResults().length > 0}
             fallback={
-              <p class="mt-4 text-sm text-gray-500">
+              <p class="mt-4 text-sm text-muted-foreground">
                 No unranked items match that search.
               </p>
             }
           >
-            <ul class="mt-4 flex flex-col rounded-md border divide-y">
+            <ul class="mt-4 flex flex-col divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
               <For each={pickerResults()}>
                 {(item) => (
                   <li class="flex items-center gap-3 px-3 py-2">
-                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-gray-50">
+                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-input bg-plaque p-1">
                       <img
                         src={item.svg_url}
                         alt=""
@@ -368,10 +377,10 @@ function RouteComponent() {
                       />
                     </div>
                     <div class="min-w-0 flex-1">
-                      <p class="truncate text-sm font-medium text-gray-900">
+                      <p class="truncate text-sm font-medium text-foreground">
                         {item.name}
                       </p>
-                      <p class="truncate text-xs text-gray-500">
+                      <p class="truncate text-xs tabular-nums text-faint">
                         {item.catalog_code} &middot; {item.category}
                       </p>
                     </div>

@@ -1,7 +1,4 @@
-import {
-  createFileRoute,
-  stripSearchParams,
-} from "@tanstack/solid-router";
+import { createFileRoute, stripSearchParams } from "@tanstack/solid-router";
 import { createSignal } from "solid-js";
 import {
   Dialog,
@@ -151,9 +148,11 @@ function RouteComponent() {
 
   return (
     <div>
-      <div class="mb-6">
-        <h2 class="text-xl font-semibold">Users</h2>
-        <p class="text-gray-600">Manage this dealership's team members.</p>
+      <div class="space-y-1">
+        <h2 class="text-2xl">Users</h2>
+        <p class="text-sm text-muted-foreground">
+          Manage this dealership's team members.
+        </p>
       </div>
 
       <UserTable

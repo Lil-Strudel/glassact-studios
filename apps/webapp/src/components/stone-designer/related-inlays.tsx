@@ -48,8 +48,8 @@ export function RelatedInlays(props: RelatedInlaysProps) {
     <Show when={suggestions().length > 0}>
       <section class="flex flex-col gap-3">
         <div>
-          <h3 class="text-sm font-medium text-gray-900">Goes with your background</h3>
-          <p class="mt-1 text-xs text-gray-500">
+          <h3 class="eyebrow">Goes with your background</h3>
+          <p class="mt-1 text-xs text-muted-foreground">
             Click one to add it to the project and place it on the background.
           </p>
         </div>
@@ -57,7 +57,7 @@ export function RelatedInlays(props: RelatedInlaysProps) {
           {(suggestion) => (
             <div class="flex flex-col gap-1.5">
               <Show when={suggestions().length > 1}>
-                <p class="text-xs font-medium text-gray-600">{suggestion.background.name}</p>
+                <p class="text-xs font-medium text-muted-foreground">{suggestion.background.name}</p>
               </Show>
               <div class="grid grid-cols-4 gap-2">
                 <For each={suggestion.background.related_items}>
@@ -66,7 +66,7 @@ export function RelatedInlays(props: RelatedInlaysProps) {
                       type="button"
                       title={`Add ${item.name} (${item.catalog_code})`}
                       disabled={props.isAdding}
-                      class="flex aspect-square items-center justify-center rounded-md border border-gray-200 bg-white p-1.5 hover:border-blue-500 disabled:cursor-wait disabled:opacity-50"
+                      class="flex aspect-square items-center justify-center rounded-md border border-came/60 bg-plaque p-1.5 transition-colors hover:border-gilt disabled:cursor-wait disabled:opacity-45"
                       onClick={() => props.onAdd(item, suggestion.anchor)}
                     >
                       <img

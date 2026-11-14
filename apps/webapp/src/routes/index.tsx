@@ -1,6 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/solid-router";
 import { Button } from "@glassact/ui";
-import logoEmblem from "../assets/images/logo-emblem.png";
+import logoMark from "../assets/images/logo-mark.svg";
+import logoReversed from "../assets/images/logo-reversed.png";
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
@@ -18,48 +19,41 @@ export const Route = createFileRoute("/")({
 
 function RouteComponent() {
   return (
-    <div>
-      <div class="min-h-full">
-        <nav>
-          <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="flex h-16 justify-between">
-              <div class="flex">
-                <div class="flex shrink-0 items-center">
-                  <img
-                    class="block h-12 w-auto"
-                    src={logoEmblem}
-                    alt="GlassAct Studios"
-                  />
-                </div>
-              </div>
-              <div class="hidden sm:ml-6 sm:flex sm:items-center">
-                <Button as={Link} to="/login" variant="ghost" class="gap-2">
-                  Login <span aria-hidden="true">&rarr;</span>
-                </Button>
-              </div>
-            </div>
+    <div class="relative flex min-h-dvh flex-col overflow-hidden">
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-x-0 top-0 h-[70vh] bg-gradient-to-b from-crimson-deep/35 via-crimson-deep/10 to-transparent"
+      />
+      <nav class="relative mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <img
+          class="block h-10 w-auto"
+          src={logoMark}
+          alt="GlassAct Studios"
+        />
+        <Button as={Link} to="/login" variant="ghost" class="gap-2">
+          Sign in <span aria-hidden="true">&rarr;</span>
+        </Button>
+      </nav>
+      <main class="relative flex flex-1 items-center justify-center px-6 py-24">
+        <div class="flex max-w-2xl flex-col items-center gap-8 text-center">
+          <img
+            src={logoReversed}
+            alt=""
+            aria-hidden="true"
+            class="h-20 w-auto sm:h-24"
+          />
+          <div class="ornament-rule w-56">
+            <span class="lozenge" />
           </div>
-        </nav>
-        <main>
-          <div class="px-6 pt-14 lg:px-8">
-            <div class="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
-              <div class="text-center">
-                <h1 class="text-balance text-5xl font-semibold tracking-tight text-gray-900 sm:text-7xl">
-                  GlassAct Studios
-                </h1>
-                <p class="mt-8 text-pretty text-lg font-medium text-gray-500 sm:text-xl/8">
-                  Track and place new orders using our new platform!
-                </p>
-                <div class="mt-10 flex items-center justify-center gap-x-6">
-                  <Button as={Link} to="/login">
-                    Login
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
+          <h1 class="text-5xl leading-[1.05] sm:text-6xl">GlassAct Studios</h1>
+          <p class="max-w-prose text-pretty text-lg leading-relaxed text-muted-foreground sm:text-xl">
+            Place and track your stained glass inlay orders.
+          </p>
+          <Button as={Link} to="/login" size="lg">
+            Sign in
+          </Button>
+        </div>
+      </main>
     </div>
   );
 }

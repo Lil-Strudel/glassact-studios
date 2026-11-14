@@ -44,6 +44,8 @@ import {
   listSearchSchema,
   type ListSearchInput,
 } from "../../utils/list-search";
+import { PageHeader } from "@glassact/ui";
+import { EmptyState } from "@glassact/ui";
 import {
   onTablePaginationChange,
   tablePaginationState,
@@ -141,9 +143,9 @@ function PriceGroupForm(props: PriceGroupFormProps) {
               type="checkbox"
               checked={field().state.value}
               onChange={(e) => field().handleChange(e.currentTarget.checked)}
-              class="rounded border-gray-300"
+              class="size-4 rounded border-input accent-primary"
             />
-            <span class="text-sm font-medium text-gray-900">Active</span>
+            <span class="text-sm font-medium text-foreground">Active</span>
           </label>
         )}
       />
@@ -202,14 +204,22 @@ const defaultColumns: ColumnDef<GET<PriceGroup>>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <span class="font-medium text-foreground">
+        {info.getValue() as string}
+      </span>
+    ),
   },
   {
     accessorKey: "base_price_cents",
-    header: "Base Price",
+    header: () => <span class="block text-right">Base Price</span>,
     cell: (info) => {
       const cents = info.getValue() as number;
-      return `$${(cents / 100).toFixed(2)}`;
+      return (
+        <span class="block text-right tabular-nums text-foreground">
+          ${(cents / 100).toFixed(2)}
+        </span>
+      );
     },
   },
   {
@@ -217,8 +227,15 @@ const defaultColumns: ColumnDef<GET<PriceGroup>>[] = [
     header: "Description",
     cell: (info) => {
       const desc = info.getValue() as string | null;
-      if (!desc) return "—";
-      return desc.length > 50 ? `${desc.substring(0, 50)}...` : desc;
+      return (
+        <span class="text-muted-foreground">
+          {!desc
+            ? "—"
+            : desc.length > 50
+              ? `${desc.substring(0, 50)}...`
+              : desc}
+        </span>
+      );
     },
   },
   {
@@ -227,7 +244,7 @@ const defaultColumns: ColumnDef<GET<PriceGroup>>[] = [
     cell: (info) => {
       const isActive = info.getValue() as boolean;
       return (
-        <Badge variant={isActive ? "default" : "secondary"}>
+        <Badge variant={isActive ? "success" : "outline"} lozenge>
           {isActive ? "Yes" : "No"}
         </Badge>
       );
@@ -362,12 +379,14 @@ function RouteComponent() {
   };
 
   return (
-    <div>
-      <div class="flex items-center justify-between py-4">
-        <TextFieldRoot
-          value={filterText()}
-          onChange={setFilterText}
-        >
+    <div class="space-y-6">
+      <PageHeader
+        eyebrow="Administration"
+        title="Price Groups"
+        description="Price tiers assigned to catalog items and proofs."
+      />
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <TextFieldRoot value={filterText()} onChange={setFilterText}>
           <TextField placeholder="Filter by name..." class="max-w-sm" />
         </TextFieldRoot>
         <Dialog
@@ -387,7 +406,10 @@ function RouteComponent() {
           </DialogContent>
         </Dialog>
       </div>
-      <div ref={tableTop} class="rounded-md border scroll-mt-6">
+      <div
+        ref={tableTop}
+        class="scroll-mt-6 overflow-hidden rounded-lg border border-border bg-card"
+      >
         <Table>
           <TableHeader>
             <For each={table.getHeaderGroups()}>
@@ -415,12 +437,12 @@ function RouteComponent() {
             <Show
               when={table.getRowModel().rows?.length}
               fallback={
-                <TableRow>
-                  <TableCell
-                    colSpan={defaultColumns.length}
-                    class="h-24 text-center"
-                  >
-                    No results.
+                <TableRow class="hover:bg-transparent">
+                  <TableCell colSpan={defaultColumns.length} class="p-0">
+                    <EmptyState
+                      title="No price groups found"
+                      description="Try a different name, or add the first price group."
+                    />
                   </TableCell>
                 </TableRow>
               }
@@ -445,7 +467,11 @@ function RouteComponent() {
           </TableBody>
         </Table>
       </div>
-      <div class="flex items-center justify-end space-x-2 py-4">
+      <div class="flex items-center justify-end gap-2">
+        <span class="mr-2 text-sm tabular-nums text-faint">
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {Math.max(table.getPageCount(), 1)}
+        </span>
         <Button
           variant="outline"
           size="sm"

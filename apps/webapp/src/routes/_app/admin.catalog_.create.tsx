@@ -5,6 +5,9 @@ import { postCatalogOpts } from "../../queries/catalog";
 import { CatalogForm } from "../../components/admin/catalog-form";
 import { Show } from "solid-js";
 import type { CatalogWriteRequest } from "@glassact/data";
+import { Alert, Button } from "@glassact/ui";
+import { IoAlertCircleOutline } from "solid-icons/io";
+import { PageHeader } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/admin/catalog_/create")({
   component: RouteComponent,
@@ -29,29 +32,34 @@ function RouteComponent() {
 
   return (
     <div class="flex flex-col gap-6">
-      <div class="flex items-start justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Create Catalog Item</h1>
-          <p class="text-gray-600 mt-1">Add a new catalog item to the system</p>
-        </div>
-        <button
-          onClick={() =>
-            navigate({ to: "/admin/catalog", search: lastAdminCatalogSearch() })
-          }
-          class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-colors"
-        >
-          Back to catalog
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Catalog"
+        title="Create Catalog Item"
+        description="Add a new catalog item to the system"
+        actions={
+          <Button
+            variant="outline"
+            onClick={() =>
+              navigate({
+                to: "/admin/catalog",
+                search: lastAdminCatalogSearch(),
+              })
+            }
+          >
+            Back to catalog
+          </Button>
+        }
+      />
 
       <Show when={postCatalog.isError}>
-        <div class="bg-red-50 border border-red-200 rounded-md p-4">
-          <p class="text-sm text-red-600">
+        <Alert variant="destructive">
+          <IoAlertCircleOutline size={18} />
+          <p>
             {postCatalog.error instanceof Error
               ? postCatalog.error.message
               : "Failed to create catalog item"}
           </p>
-        </div>
+        </Alert>
       </Show>
 
       <CatalogForm onSubmit={handleSubmit} isLoading={postCatalog.isPending} />

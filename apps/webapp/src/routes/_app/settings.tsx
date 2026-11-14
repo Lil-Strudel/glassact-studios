@@ -15,6 +15,7 @@ import type {
   NotificationEventType,
   NotificationPreference,
 } from "@glassact/data";
+import { PageHeader } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/settings")({
   component: RouteComponent,
@@ -59,20 +60,20 @@ function RouteComponent() {
   }
 
   return (
-    <div class="space-y-8">
-      <h1 class="text-2xl font-semibold">Settings</h1>
+    <div class="mx-auto max-w-3xl space-y-8">
+      <PageHeader eyebrow="Your account" title="Settings" />
 
-      <section class="space-y-4">
-        <div>
-          <h2 class="text-lg font-semibold">Notification Preferences</h2>
-          <p class="text-sm text-gray-500 mt-1">
+      <section class="space-y-5">
+        <div class="space-y-2">
+          <h2 class="text-2xl">Notification Preferences</h2>
+          <p class="max-w-prose text-sm leading-relaxed text-muted-foreground">
             You receive notifications for projects you watch, plus anything that
             needs your role to act on it. Creating a project, placing an order,
             sending a message, or acting on a proof starts you watching
             automatically &mdash; use the Watch button on a project to change
             that.
           </p>
-          <p class="text-sm text-gray-500 mt-2">
+          <p class="max-w-prose text-sm leading-relaxed text-muted-foreground">
             These toggles control which of those notifications also reach you by
             email. Everything still appears in your notification bell.
           </p>
@@ -80,31 +81,28 @@ function RouteComponent() {
 
         <Show
           when={!userQuery.isLoading && !prefsQuery.isLoading}
-          fallback={<p class="text-sm text-gray-400">Loading preferences...</p>}
+          fallback={<p class="text-sm text-faint">Loading preferences...</p>}
         >
-          <div class="border rounded-lg overflow-hidden">
+          <div class="overflow-hidden rounded-lg border border-border bg-card">
             <table class="w-full text-sm">
               <thead>
-                <tr class="border-b bg-gray-50">
-                  <th class="px-4 py-3 text-left font-medium text-gray-700">
-                    Event
-                  </th>
-                  <th class="px-4 py-3 text-left font-medium text-gray-700 w-32">
-                    Email
-                  </th>
+                <tr class="border-b border-border bg-muted">
+                  <th class="eyebrow px-4 py-3 text-left">Event</th>
+                  <th class="eyebrow w-32 px-4 py-3 text-center">Email</th>
                 </tr>
               </thead>
               <tbody>
                 <For each={eventTypes()}>
                   {(eventType) => (
-                    <tr class="border-b last:border-b-0 hover:bg-gray-50 transition-colors">
-                      <td class="px-4 py-3 text-gray-800">
+                    <tr class="border-b border-border transition-colors last:border-b-0 hover:bg-accent/60">
+                      <td class="px-4 py-3 text-foreground">
                         {NOTIFICATION_EVENT_LABELS[eventType]}
                       </td>
-                      <td class="px-4 py-3">
+                      <td class="px-4 py-3 text-center">
                         <input
                           type="checkbox"
                           class="h-4 w-4 cursor-pointer accent-primary"
+                          aria-label={`Email me: ${NOTIFICATION_EVENT_LABELS[eventType]}`}
                           checked={isEmailEnabled(eventType)}
                           disabled={patchPref.isPending}
                           onChange={(e) =>

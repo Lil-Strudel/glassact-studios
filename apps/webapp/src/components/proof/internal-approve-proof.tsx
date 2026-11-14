@@ -91,7 +91,7 @@ export default function InternalApproveProof(props: InternalApproveProofProps) {
         e.preventDefault();
         form.handleSubmit();
       }}
-      class="flex flex-col gap-3 border-t pt-3"
+      class="flex flex-col gap-3 border-t border-border pt-3"
     >
       <form.Field
         name="price_group_id"
@@ -182,11 +182,11 @@ function PricePreview(props: PricePreviewProps) {
 
   return (
     <Show when={group()}>
-      <div class="rounded-md bg-muted/50 px-3 py-2">
+      <div class="rounded-md border border-border bg-muted px-3 py-2">
         <Show when={formula()}>
-          <p class="text-xs text-muted-foreground">{formula()}</p>
+          <p class="text-xs tabular-nums text-faint">{formula()}</p>
         </Show>
-        <p class="text-sm font-medium">
+        <p class="font-display text-lg tabular-nums">
           {finalCents() != null ? formatMoney(finalCents()! / 100) : "—"}
         </p>
       </div>

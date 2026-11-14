@@ -1,7 +1,4 @@
-import {
-  createFileRoute,
-  stripSearchParams,
-} from "@tanstack/solid-router";
+import { createFileRoute, stripSearchParams } from "@tanstack/solid-router";
 import { createSignal } from "solid-js";
 import {
   Dialog,
@@ -29,6 +26,7 @@ import {
   deleteInternalUserOpts,
 } from "../../queries/user";
 import { UserTable } from "../../components/user-table";
+import { PageHeader } from "@glassact/ui";
 import { INTERNAL_ROLE_OPTIONS, buildAvatarUrl } from "../../utils/user-roles";
 import { isApiError } from "../../utils/is-api-error";
 import {
@@ -134,11 +132,12 @@ function RouteComponent() {
   }));
 
   return (
-    <div>
-      <div class="mb-6">
-        <h1 class="text-2xl font-bold">Internal Users</h1>
-        <p class="text-gray-600">Manage GlassAct Studios staff</p>
-      </div>
+    <div class="space-y-6">
+      <PageHeader
+        eyebrow="Users"
+        title="Internal Users"
+        description="Manage GlassAct Studios staff"
+      />
 
       <UserTable
         users={usersQuery.data ?? []}

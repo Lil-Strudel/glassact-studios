@@ -24,17 +24,18 @@ export function ProjectDiscussion(props: ProjectDiscussionProps) {
   return (
     <section
       class={cn(
-        "flex min-h-0 flex-col overflow-hidden rounded-lg border",
+        "flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card",
         props.class,
       )}
     >
-      <div class="flex items-center justify-between gap-2 px-4 py-3">
-        <h2 class="text-sm font-semibold text-gray-700">
-          Discussion ({totalCount()})
-        </h2>
+      <div class="flex items-baseline justify-between gap-2 border-b border-border px-4 py-3">
+        <h2 class="text-lg">Project chat</h2>
+        <span class="text-xs tabular-nums text-faint">
+          {totalCount()} {totalCount() === 1 ? "message" : "messages"}
+        </span>
       </div>
 
-      <div class="flex min-h-0 flex-1 flex-col border-t">
+      <div class="flex min-h-0 flex-1 flex-col">
         <ChatThread projectUuid={props.projectUuid} />
         <ChatInput
           projectUuid={props.projectUuid}

@@ -55,7 +55,7 @@ export function SwatchPicker(props: SwatchPickerProps) {
           )}
         </For>
         <Show when={filtered().length === 0}>
-          <p class="col-span-full py-4 text-center text-sm text-gray-400">
+          <p class="col-span-full py-4 text-center text-sm text-faint">
             No colors match.
           </p>
         </Show>
@@ -82,8 +82,8 @@ function SwatchButton(props: {
       onMouseLeave={() => props.onHoverChange?.(null)}
       class="aspect-square w-full rounded border transition disabled:cursor-not-allowed disabled:opacity-50"
       classList={{
-        "border-blue-600 ring-2 ring-blue-500/40": props.selected,
-        "border-black/10 hover:border-gray-500": !props.selected,
+        "border-gilt ring-2 ring-gilt/35": props.selected,
+        "border-came/60 hover:border-input": !props.selected,
       }}
       style={{ "background-color": props.swatch.hex }}
     />

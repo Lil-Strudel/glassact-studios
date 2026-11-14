@@ -4,7 +4,11 @@ import { For, Match, Show, Switch, createMemo, createSignal } from "solid-js";
 import { Badge, Breadcrumb, Button, ImageLightbox } from "@glassact/ui";
 import type { InlayDetail, ManufacturingStep } from "@glassact/data";
 import { PERMISSION_ACTIONS } from "@glassact/data";
-import { IoChevronBack, IoChevronForward } from "solid-icons/io";
+import {
+  IoAlertCircleOutline,
+  IoChevronBack,
+  IoChevronForward,
+} from "solid-icons/io";
 import { getInlayOpts, getInlaysByProjectOpts } from "../../queries/inlay";
 import { getProjectOpts } from "../../queries/project";
 import { Can } from "../../components/Can";
@@ -127,7 +131,7 @@ function InlayDetailPage() {
                 )}
               </Show>
 
-              <span class="text-sm text-gray-500">
+              <span class="text-sm tabular-nums text-faint">
                 {currentIndex() + 1} of {siblings().length}
               </span>
 
@@ -182,17 +186,20 @@ function InlayDetailPage() {
         <Switch>
           <Match when={inlayQuery.isLoading || projectQuery.isLoading}>
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
-              <div class="h-96 animate-pulse rounded-lg bg-gray-200" />
-              <div class="h-96 animate-pulse rounded-lg bg-gray-200" />
+              <div class="h-96 animate-pulse rounded-lg border border-border bg-card" />
+              <div class="h-96 animate-pulse rounded-lg border border-border bg-card" />
             </div>
           </Match>
 
           <Match when={inlayQuery.isError || projectQuery.isError}>
-            <div class="rounded-xl border-2 border-dashed border-red-300 p-8 text-center">
-              <p class="font-medium text-red-600">Failed to load inlay</p>
+            <div class="flex flex-col items-center gap-2 rounded-lg border border-dashed border-error-foreground/40 bg-error p-8 text-center">
+              <p class="flex items-center gap-2 font-medium text-error-foreground">
+                <IoAlertCircleOutline size={18} aria-hidden="true" />
+                Couldn't load this inlay
+              </p>
               <Button
-                variant="outline"
-                class="mt-4"
+                variant="secondary"
+                class="mt-2"
                 onClick={() => {
                   inlayQuery.refetch();
                   projectQuery.refetch();
@@ -257,7 +264,7 @@ function InlayDetailPage() {
                   </Match>
 
                   <Match when={phase() === "cancelled"}>
-                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
+                    <div class="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
                       This project was cancelled, so this inlay will not be
                       manufactured.
                     </div>
@@ -286,8 +293,8 @@ function InlayDetailPage() {
           </Match>
 
           <Match when={!inlay()}>
-            <div class="rounded-xl border-2 border-dashed border-gray-300 p-8 text-center">
-              <p class="text-gray-400">Inlay not found</p>
+            <div class="rounded-lg border border-dashed border-input p-8 text-center">
+              <p class="text-faint">Inlay not found</p>
             </div>
           </Match>
         </Switch>
@@ -316,12 +323,17 @@ function ManufacturingPanel(props: {
     <div class="space-y-6">
       <Show when={step()}>
         {(currentStep) => (
-          <div class="space-y-3 rounded-lg border p-4">
-            <div class="flex items-center justify-between">
-              <h2 class="text-base font-semibold text-gray-900">
-                {STEP_LABELS[currentStep()]}
-              </h2>
-              <Badge variant="secondary">In Production</Badge>
+          <div class="space-y-4 rounded-lg border border-border bg-card p-5">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex flex-col gap-1">
+                <p class="eyebrow">Manufacturing</p>
+                <h2 class="text-xl text-foreground">
+                  {STEP_LABELS[currentStep()]}
+                </h2>
+              </div>
+              <Badge variant="production" lozenge>
+                In production
+              </Badge>
             </div>
             <ManufacturingTracker
               currentStep={currentStep()}
@@ -349,11 +361,9 @@ function ConfiguringPanel(props: {
     <div class="space-y-6">
       <Show when={customInfo()}>
         {(info) => (
-          <div class="space-y-4 rounded-lg border p-4">
+          <div class="space-y-4 rounded-lg border border-border bg-card p-5">
             <div class="flex items-start justify-between gap-2">
-              <h2 class="text-base font-semibold text-gray-900">
-                Design request
-              </h2>
+              <h2 class="text-xl text-foreground">Design request</h2>
               <Show when={props.isDraft && !isEditing()}>
                 <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
                   <Button
@@ -384,11 +394,13 @@ function ConfiguringPanel(props: {
               }
             >
               <div class="space-y-3">
-                <p class="text-sm text-gray-700">{info().description}</p>
+                <p class="max-w-prose whitespace-pre-wrap leading-relaxed text-foreground">
+                  {info().description}
+                </p>
                 <Show
                   when={info().requested_width && info().requested_height}
                 >
-                  <p class="text-sm text-gray-500">
+                  <p class="text-sm tabular-nums text-muted-foreground">
                     Requested: {info().requested_width}" &times;{" "}
                     {info().requested_height}"
                   </p>
@@ -396,7 +408,7 @@ function ConfiguringPanel(props: {
 
                 <Show when={(info().reference_images ?? []).length > 0}>
                   <div class="space-y-1.5">
-                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    <p class="eyebrow">
                       Reference pictures
                     </p>
                     <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
@@ -408,7 +420,7 @@ function ConfiguringPanel(props: {
                               alt: `Reference picture ${i + 1}`,
                             }))}
                             index={imageIndex()}
-                            triggerClass="block aspect-square w-full overflow-hidden rounded-md border bg-gray-50"
+                            triggerClass="came-frame block aspect-square w-full overflow-hidden rounded-md bg-came"
                           >
                             <img
                               src={image.image_url}
@@ -427,15 +439,18 @@ function ConfiguringPanel(props: {
         )}
       </Show>
 
-      <div class="rounded-lg border border-dashed border-gray-300 p-6 text-center">
-        <p class="text-sm font-medium text-gray-500">
+      <div class="flex flex-col items-center gap-3 rounded-lg border border-dashed border-input px-6 py-10 text-center">
+        <div class="ornament-rule w-32" aria-hidden="true">
+          <span class="lozenge" />
+        </div>
+        <p class="font-display text-xl text-foreground">
           Waiting on a proof from GlassAct
         </p>
-        <p class="mt-1 text-sm text-gray-400">
+        <p class="text-sm text-muted-foreground">
           A designer will send a proof for approval.
         </p>
         <Can permission={PERMISSION_ACTIONS.CREATE_PROOF}>
-          <div class="mt-4 flex justify-center">
+          <div class="mt-1 flex justify-center">
             <CreateProofDialog
               inlayUuid={props.inlayUuid}
               requestedWidth={props.inlay.custom_info?.requested_width}
@@ -451,12 +466,14 @@ function ConfiguringPanel(props: {
 
 function ReadyPanel() {
   return (
-    <div class="space-y-4 rounded-lg border p-4">
-      <div class="flex items-center justify-between">
-        <h2 class="text-base font-semibold text-gray-900">Ready to order</h2>
-        <Badge>Ready</Badge>
+    <div class="space-y-3 rounded-lg border border-success-foreground/30 bg-card p-5">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-xl text-foreground">Ready to order</h2>
+        <Badge variant="success" lozenge>
+          Ready
+        </Badge>
       </div>
-      <p class="text-sm text-gray-600">
+      <p class="text-sm text-muted-foreground">
         This inlay is approved and will be included when the order is placed
         from the project page.
       </p>

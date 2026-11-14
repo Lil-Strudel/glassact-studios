@@ -1,10 +1,4 @@
-import {
-  createFileRoute,
-  Link,
-  Outlet,
-  redirect,
-} from "@tanstack/solid-router";
-import { For } from "solid-js";
+import { createFileRoute, Outlet, redirect } from "@tanstack/solid-router";
 import {
   IoPersonOutline,
   IoBusinessOutline,
@@ -17,6 +11,10 @@ import {
   IoImageOutline,
 } from "solid-icons/io";
 import { getUserSelfOpts } from "../../queries/user";
+import {
+  SectionNav,
+  type SectionNavItem,
+} from "../../components/section-nav";
 
 export const Route = createFileRoute("/_app/admin")({
   component: RouteComponent,
@@ -33,7 +31,7 @@ export const Route = createFileRoute("/_app/admin")({
   },
 });
 
-const navigationItems = [
+const navigationItems: SectionNavItem[] = [
   {
     label: "Dealerships",
     icon: IoBusinessOutline,
@@ -83,41 +81,10 @@ const navigationItems = [
 
 function RouteComponent() {
   return (
-    <div>
-      <div class="pt-16 lg:flex lg:gap-x-16">
-        <aside class="flex overflow-x-auto border-b border-gray-900/5 py-4 lg:block lg:w-64 lg:flex-none lg:border-0 lg:py-20">
-          <nav class="flex-none px-4 sm:px-6 lg:px-0">
-            <ul
-              role="list"
-              class="flex gap-x-3 gap-y-1 whitespace-nowrap lg:flex-col"
-            >
-              <For each={navigationItems}>
-                {(item) => {
-                  return (
-                    <li>
-                      <Link
-                        to={item.path}
-                        class="group flex gap-x-3 rounded-md py-2 pl-2 pr-3 text-sm/6 font-semibold"
-                        activeProps={{ class: "bg-gray-50 text-primary" }}
-                        inactiveProps={{
-                          class:
-                            "text-gray-700 hover:bg-gray-50 hover:text-primary",
-                        }}
-                      >
-                        <item.icon size={24} />
-                        {item.label}
-                      </Link>
-                    </li>
-                  );
-                }}
-              </For>
-            </ul>
-          </nav>
-        </aside>
-
-        <div class="mx-auto max-w-2xl w-full space-y-16 sm:space-y-20 lg:mx-0 lg:max-w-none">
-          <Outlet />
-        </div>
+    <div class="lg:flex lg:gap-x-12">
+      <SectionNav label="Administration" items={navigationItems} />
+      <div class="mt-8 min-w-0 flex-1 space-y-8 lg:mt-0">
+        <Outlet />
       </div>
     </div>
   );

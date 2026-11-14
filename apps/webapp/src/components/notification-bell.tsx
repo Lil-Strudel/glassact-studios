@@ -96,20 +96,20 @@ export function NotificationBell() {
     <DropdownMenu placement="bottom-end">
       <DropdownMenuTrigger>
         <Button size="icon" variant="ghost" class="relative">
-          <IoNotificationsOutline size={24} />
+          <IoNotificationsOutline size={22} />
           <Show when={hasUnread()}>
-            <span class="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+            <span class="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold tabular-nums text-primary-foreground ring-2 ring-card">
               {unreadCount.data?.count}
             </span>
           </Show>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent class="w-80 max-h-96 overflow-y-auto p-0">
-        <div class="flex items-center justify-between px-3 py-2 border-b">
-          <span class="text-sm font-semibold">Notifications</span>
+        <div class="flex items-center justify-between border-b border-border px-3 py-2.5">
+          <span class="font-display text-base">Notifications</span>
           <Show when={hasUnread()}>
             <button
-              class="text-xs text-blue-600 hover:underline"
+              class="text-xs text-crimson-light hover:underline"
               onClick={handleMarkAllRead}
               disabled={markAllRead.isPending}
             >
@@ -120,7 +120,7 @@ export function NotificationBell() {
         <Show
           when={recentNotifications().length > 0}
           fallback={
-            <div class="px-3 py-6 text-center text-sm text-gray-500">
+            <div class="px-3 py-8 text-center text-sm text-faint">
               No notifications yet
             </div>
           }
@@ -128,25 +128,25 @@ export function NotificationBell() {
           <For each={recentNotifications()}>
             {(notification) => (
               <DropdownMenuItem
-                class="flex flex-col items-start gap-0.5 px-3 py-2 cursor-pointer"
+                class="flex cursor-pointer flex-col items-start gap-0.5 rounded-none border-b border-border/60 px-3 py-2.5 last:border-b-0"
                 onSelect={() => handleSelect(notification)}
               >
                 <div class="flex w-full items-start gap-2">
                   <Show when={!notification.read_at}>
-                    <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                    <span class="lozenge mt-1.5 text-gilt" aria-label="Unread" />
                   </Show>
                   <Show when={notification.read_at}>
-                    <span class="mt-1.5 h-2 w-2 shrink-0" />
+                    <span class="mt-1.5 size-1.5 shrink-0" />
                   </Show>
                   <div class="min-w-0 flex-1">
-                    <p class="text-sm font-semibold leading-tight truncate">
+                    <p class="truncate text-sm font-medium leading-tight">
                       {notification.title}
                     </p>
-                    <p class="text-xs text-gray-500 line-clamp-2 mt-0.5">
+                    <p class="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                       {notification.body}
                     </p>
                   </div>
-                  <span class="shrink-0 text-[10px] text-gray-400 mt-0.5">
+                  <span class="mt-0.5 shrink-0 text-[10px] tabular-nums text-faint">
                     {formatRelativeTime(notification.created_at)}
                   </span>
                 </div>

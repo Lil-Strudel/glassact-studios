@@ -24,7 +24,7 @@ const FINISH_LABELS: Record<StoneTextFinish, string> = {
   "black-fill": "Black fill",
 };
 
-const inputClass = "w-full rounded-md border border-gray-300 px-2 py-1 text-sm";
+const inputClass = "w-full rounded-md border border-input px-2 py-1 text-sm";
 
 export function TextPanel(props: TextPanelProps) {
   const selectedTexts = createMemo(() =>
@@ -69,7 +69,7 @@ export function TextPanel(props: TextPanelProps) {
     <div class="flex flex-col gap-6">
       <Show when={selectedTexts().length > 0}>
         <section class="flex flex-col gap-3">
-          <h3 class="text-sm font-medium text-gray-900">
+          <h3 class="eyebrow">
             {selectedTexts().length === 1
               ? "Selected text"
               : `${selectedTexts().length} lines of text selected`}
@@ -89,7 +89,7 @@ export function TextPanel(props: TextPanelProps) {
               />
             )}
           </Show>
-          <label class="flex flex-col gap-1 text-xs text-gray-600">
+          <label class="flex flex-col gap-1 text-xs text-muted-foreground">
             Font
             <select
               value={sharedValue("font") ?? ""}
@@ -109,7 +109,7 @@ export function TextPanel(props: TextPanelProps) {
               </For>
             </select>
           </label>
-          <label class="flex items-center justify-between gap-2 text-xs text-gray-600">
+          <label class="flex items-center justify-between gap-2 text-xs text-muted-foreground">
             Letter height (inches)
             <input
               type="number"
@@ -122,16 +122,16 @@ export function TextPanel(props: TextPanelProps) {
                 const value = Number(e.currentTarget.value);
                 if (value >= 0.1 && value <= 24) updateSelected((t) => (t.size = value));
               }}
-              class="w-24 rounded-md border border-gray-300 px-2 py-1 text-sm"
+              class="w-24 rounded-md border border-input px-2 py-1 text-sm"
             />
           </label>
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex overflow-hidden rounded-md border border-gray-300 text-xs">
+            <div class="flex overflow-hidden rounded-md border border-input text-xs">
               <For each={ALIGNS}>
                 {(align) => (
                   <button
                     type="button"
-                    class={cn("px-2.5 py-1 capitalize", sharedValue("align") === align ? "bg-blue-50 text-blue-700" : "hover:bg-gray-50")}
+                    class={cn("px-2.5 py-1 capitalize", sharedValue("align") === align ? "bg-accent text-gilt" : "hover:bg-muted")}
                     onClick={() => updateSelected((t) => (t.align = align))}
                   >
                     {align}
@@ -139,12 +139,12 @@ export function TextPanel(props: TextPanelProps) {
                 )}
               </For>
             </div>
-            <div class="flex overflow-hidden rounded-md border border-gray-300 text-xs">
+            <div class="flex overflow-hidden rounded-md border border-input text-xs">
               <For each={STONE_TEXT_FINISHES}>
                 {(finish) => (
                   <button
                     type="button"
-                    class={cn("px-2.5 py-1", sharedValue("finish") === finish ? "bg-blue-50 text-blue-700" : "hover:bg-gray-50")}
+                    class={cn("px-2.5 py-1", sharedValue("finish") === finish ? "bg-accent text-gilt" : "hover:bg-muted")}
                     onClick={() => updateSelected((t) => (t.finish = finish))}
                   >
                     {FINISH_LABELS[finish]}

@@ -3,6 +3,7 @@ import { For, Show, createSignal } from "solid-js";
 import {
   Badge,
   Button,
+  buttonVariants,
   Dialog,
   DialogContent,
   DialogFooter,
@@ -47,6 +48,8 @@ import {
   onTablePaginationChange,
   tablePaginationState,
 } from "../../utils/table-pagination";
+import { PageHeader } from "@glassact/ui";
+import { EmptyState } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/admin/support")({
   validateSearch: listSearchSchema,
@@ -130,7 +133,7 @@ function ArticleActions(props: ArticleActionsProps) {
     <div class="flex items-center gap-2">
       <ArticleFormDialog
         article={props.article}
-        triggerClass="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent"
+        triggerClass={buttonVariants({ variant: "outline", size: "sm" })}
       >
         Edit
       </ArticleFormDialog>
@@ -147,7 +150,7 @@ function ArticleActions(props: ArticleActionsProps) {
       <Button
         variant="ghost"
         size="sm"
-        class="text-destructive hover:text-destructive"
+        class="text-error-foreground hover:bg-error hover:text-error-foreground"
         onClick={() => setConfirmOpen(true)}
       >
         Delete
@@ -195,17 +198,27 @@ const defaultColumns: ColumnDef<GET<SupportArticle>>[] = [
   {
     accessorKey: "title",
     header: "Title",
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <span class="font-medium text-foreground">
+        {info.getValue() as string}
+      </span>
+    ),
   },
   {
     accessorKey: "category",
     header: "Category",
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <span class="text-muted-foreground">{info.getValue() as string}</span>
+    ),
   },
   {
     accessorKey: "sort_order",
     header: "Sort",
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <span class="tabular-nums text-muted-foreground">
+        {info.getValue() as number}
+      </span>
+    ),
   },
   {
     accessorKey: "is_published",
@@ -213,7 +226,7 @@ const defaultColumns: ColumnDef<GET<SupportArticle>>[] = [
     cell: (info) => {
       const isPublished = info.getValue() as boolean;
       return (
-        <Badge variant={isPublished ? "default" : "secondary"}>
+        <Badge variant={isPublished ? "success" : "draft"} lozenge>
           {isPublished ? "Published" : "Draft"}
         </Badge>
       );
@@ -277,26 +290,27 @@ function RouteComponent() {
   );
 
   return (
-    <div>
-      <div class="mb-6">
-        <h1 class="text-2xl font-bold">Support Articles</h1>
-        <p class="text-gray-600">
-          Manage the knowledge base. Drafts are listed here but hidden from the
-          support page.
-        </p>
-      </div>
+    <div class="space-y-6">
+      <PageHeader
+        eyebrow="Administration"
+        title="Support Articles"
+        description="Manage the knowledge base. Drafts are listed here but hidden from the support page."
+      />
 
-      <div class="flex items-center justify-between py-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
         <TextFieldRoot value={filterText()} onChange={setFilterText}>
           <TextField placeholder="Filter by title..." class="max-w-sm" />
         </TextFieldRoot>
 
-        <ArticleFormDialog triggerClass="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+        <ArticleFormDialog triggerClass={buttonVariants()}>
           Add a new article
         </ArticleFormDialog>
       </div>
 
-      <div ref={tableTop} class="rounded-md border scroll-mt-6">
+      <div
+        ref={tableTop}
+        class="scroll-mt-6 overflow-hidden rounded-lg border border-border bg-card"
+      >
         <Table>
           <TableHeader>
             <For each={table.getHeaderGroups()}>
@@ -322,12 +336,12 @@ function RouteComponent() {
             <Show
               when={table.getRowModel().rows?.length}
               fallback={
-                <TableRow>
-                  <TableCell
-                    colSpan={defaultColumns.length}
-                    class="h-24 text-center"
-                  >
-                    No results.
+                <TableRow class="hover:bg-transparent">
+                  <TableCell colSpan={defaultColumns.length} class="p-0">
+                    <EmptyState
+                      title="No articles found"
+                      description="Try a different title, or add the first article."
+                    />
                   </TableCell>
                 </TableRow>
               }
@@ -353,7 +367,11 @@ function RouteComponent() {
         </Table>
       </div>
 
-      <div class="flex items-center justify-end space-x-2 py-4">
+      <div class="flex items-center justify-end gap-2">
+        <span class="mr-2 text-sm tabular-nums text-faint">
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {Math.max(table.getPageCount(), 1)}
+        </span>
         <Button
           variant="outline"
           size="sm"

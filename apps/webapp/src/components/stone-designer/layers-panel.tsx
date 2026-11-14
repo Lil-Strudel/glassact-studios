@@ -38,7 +38,7 @@ export function LayersPanel(props: LayersPanelProps) {
       </div>
       <Show
         when={topFirst().length > 0}
-        fallback={<p class="text-xs text-gray-500">Nothing on the stone yet.</p>}
+        fallback={<p class="text-xs text-muted-foreground">Nothing on the stone yet.</p>}
       >
         <ul class="flex flex-col gap-1">
           <For each={topFirst()}>
@@ -48,7 +48,7 @@ export function LayersPanel(props: LayersPanelProps) {
                   type="button"
                   class={cn(
                     "flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm",
-                    selected().has(el.id) ? "bg-blue-50 text-blue-800" : "text-gray-800 hover:bg-gray-50",
+                    selected().has(el.id) ? "bg-accent text-gilt" : "text-foreground hover:bg-muted",
                   )}
                   onClick={(e) => props.editor.select(el.id, e.shiftKey)}
                 >
@@ -57,7 +57,7 @@ export function LayersPanel(props: LayersPanelProps) {
                   </span>
                   <Show when={el.group_id && groupNames().get(el.group_id)}>
                     {(name) => (
-                      <span class="flex-shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-600">
+                      <span class="flex-shrink-0 rounded bg-accent px-1.5 py-0.5 text-[10px] text-muted-foreground">
                         {name()}
                       </span>
                     )}

@@ -108,16 +108,20 @@ function RouteComponent() {
             to: `/projects/${params().id}`,
           },
           {
-            title: "Add Inlay",
+            title: "Add inlay",
             to: `/projects/${params().id}/add-inlay`,
           },
         ]}
       />
-      <Tabs defaultValue="catalog">
-        <h1 class="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-          Add Inlay
-        </h1>
-        <div class="max-w-[400px] mx-auto mt-4">
+      <Tabs defaultValue="catalog" class="mt-4">
+        <div class="flex flex-col items-center gap-3 text-center">
+          <p class="eyebrow">{projectQuery.data?.name ?? "Project"}</p>
+          <h1 class="text-3xl sm:text-4xl">Add an inlay</h1>
+          <div class="ornament-rule w-40" aria-hidden="true">
+            <span class="lozenge" />
+          </div>
+        </div>
+        <div class="mx-auto mt-6 max-w-[420px]">
           <TabsList>
             <TabsTrigger value="catalog">Catalog</TabsTrigger>
             <TabsTrigger value="compound">Compound</TabsTrigger>
@@ -133,7 +137,7 @@ function RouteComponent() {
             />
           </TabsContent>
           <TabsContent value="compound">
-            <p class="mx-auto mb-6 max-w-2xl text-center text-sm text-gray-600">
+            <p class="mx-auto mb-6 max-w-2xl text-center text-sm text-muted-foreground">
               Arranged sets of inlays that look good together. Adding one puts
               every inlay in it on the project, grouped on the stone design.
             </p>
@@ -247,7 +251,7 @@ function CatalogSelector(props: CatalogSelectorProps) {
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <For each={Array.from({ length: 6 })}>
                     {() => (
-                      <div class="bg-gray-200 rounded-lg h-64 animate-pulse" />
+                      <div class="h-80 animate-pulse rounded-lg border border-border bg-card" />
                     )}
                   </For>
                 </div>
@@ -257,12 +261,12 @@ function CatalogSelector(props: CatalogSelectorProps) {
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <For each={query.data?.items ?? []}>
                 {(item) => (
-                  <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
+                  <div class="flex flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-input">
                     <GraniteImageLightbox
                       images={[{ src: item.svg_url, alt: item.name }]}
                       inches={{ width: item.default_width, height: item.default_height }}
-                      triggerClass="block w-full h-48 overflow-hidden"
-                      previewClass="w-full h-full p-4"
+                      triggerClass="came-frame m-4 mb-0 block h-52 overflow-hidden rounded-arch bg-plaque"
+                      previewClass="h-full w-full px-6 pb-4 pt-10"
                     >
                       <img
                         src={item.svg_url}
@@ -271,15 +275,15 @@ function CatalogSelector(props: CatalogSelectorProps) {
                       />
                     </GraniteImageLightbox>
                     <div class="p-4 flex flex-col gap-2 flex-1">
-                      <code class="text-xs font-mono bg-gray-100 px-2 py-1 rounded w-fit">
+                      <code class="w-fit rounded bg-accent px-2 py-0.5 font-mono text-xs tracking-wide text-muted-foreground">
                         {item.catalog_code}
                       </code>
                       <div class="flex items-end justify-between gap-2">
                         <div class="min-w-0">
-                          <h3 class="font-semibold text-gray-900 text-sm line-clamp-2">
+                          <h3 class="line-clamp-2 text-base text-foreground">
                             {item.name}
                           </h3>
-                          <p class="text-xs text-gray-500 mt-2">
+                          <p class="mt-1 text-xs text-faint">
                             {item.category}
                           </p>
                         </div>
@@ -292,7 +296,8 @@ function CatalogSelector(props: CatalogSelectorProps) {
                       <div class="flex flex-col gap-2 mt-auto pt-2">
                         <Button
                           variant="outline"
-                          class="w-full text-xs"
+                          size="sm"
+                          class="w-full"
                           onClick={() => addAsIs(item)}
                           disabled={postCatalogInlay.isPending}
                         >
@@ -303,7 +308,9 @@ function CatalogSelector(props: CatalogSelectorProps) {
                         <Button
                           as={Link}
                           to={`/projects/${props.projectUuid}/add-inlay/customize/${item.uuid}`}
-                          class="w-full text-xs"
+                          variant="secondary"
+                          size="sm"
+                          class="w-full"
                         >
                           Customize
                         </Button>
@@ -316,15 +323,14 @@ function CatalogSelector(props: CatalogSelectorProps) {
           </Show>
 
           <Show when={!query.isLoading && query.data?.items.length === 0}>
-            <div class="flex-1 flex items-center justify-center py-12">
-              <div class="text-center">
-                <h3 class="text-lg font-semibold text-gray-900">
-                  No items found
-                </h3>
-                <p class="text-gray-600 mt-2">
-                  Try adjusting your filters or search criteria
-                </p>
+            <div class="flex flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-input px-6 py-12 text-center">
+              <div class="ornament-rule w-40" aria-hidden="true">
+                <span class="lozenge" />
               </div>
+              <h3 class="text-xl text-foreground">No inlays match</h3>
+              <p class="text-sm text-muted-foreground">
+                Try adjusting your filters or search.
+              </p>
             </div>
           </Show>
 
@@ -429,7 +435,7 @@ function CustomInlayForm(props: CustomInlayFormProps) {
   }));
 
   return (
-    <div class="mx-auto max-w-2xl p-4 sm:px-6 lg:px-0">
+    <div class="mx-auto max-w-2xl rounded-lg border border-border bg-card p-6 sm:p-8">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -443,7 +449,7 @@ function CustomInlayForm(props: CustomInlayFormProps) {
             children={(field) => (
               <Form.TextField
                 field={field}
-                label="Inlay Name"
+                label="Inlay name"
                 placeholder="e.g. Memorial Rose Design"
               />
             )}
@@ -469,7 +475,7 @@ function CustomInlayForm(props: CustomInlayFormProps) {
                   <Form.TextField field={field} placeholder="Width (in)" />
                 )}
               />
-              <IoClose />
+              <IoClose class="shrink-0 text-faint" aria-hidden="true" />
               <customForm.Field
                 name="height"
                 children={(field) => (
@@ -493,9 +499,9 @@ function CustomInlayForm(props: CustomInlayFormProps) {
               />
             )}
           />
-          <div class="mx-auto flex gap-4">
+          <div class="flex justify-end gap-3 border-t border-border pt-6">
             <Button
-              variant="outline"
+              variant="ghost"
               as={Link}
               to={`/projects/${props.projectUuid}`}
               disabled={postCustomInlay.isPending}
@@ -503,7 +509,7 @@ function CustomInlayForm(props: CustomInlayFormProps) {
               Cancel
             </Button>
             <Button type="submit" disabled={postCustomInlay.isPending}>
-              {postCustomInlay.isPending ? "Adding..." : "Add to Project"}
+              {postCustomInlay.isPending ? "Adding..." : "Add to project"}
             </Button>
           </div>
         </div>

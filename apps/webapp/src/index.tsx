@@ -1,7 +1,6 @@
 /* @refresh reload */
 import { render } from "solid-js/web";
 
-import "@fontsource-variable/roboto";
 import "@glassact/ui/globals.css";
 import App from "./App";
 

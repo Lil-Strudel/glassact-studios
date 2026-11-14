@@ -103,7 +103,7 @@ export function AddInlayUpdateForm(props: AddInlayUpdateFormProps) {
         <Show when={props.onCancel}>
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             class="flex-1"
             onClick={() => {
               form.reset();

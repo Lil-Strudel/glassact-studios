@@ -1,20 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import type { ProjectListItem, ProjectStatus } from "@glassact/data";
+import { Button, Badge } from "@glassact/ui";
 import {
-  Button,
-  Breadcrumb,
-  Badge,
-  Card,
-  CardHeader,
-  CardTitle,
-} from "@glassact/ui";
-import { IoAddCircleOutline } from "solid-icons/io";
+  IoAddCircleOutline,
+  IoAlertCircleOutline,
+  IoChevronForward,
+} from "solid-icons/io";
 import { Component, createMemo, For, Match, Show, Switch } from "solid-js";
 import { useQuery } from "@tanstack/solid-query";
 import { getProjectsOpts } from "../../queries/project";
 import { useUserContext } from "../../providers/user";
 import { Can } from "../../components/Can";
 import { ProjectStatusBadge } from "../../components/project/status-badge";
+import { PageHeader } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/projects")({
   component: RouteComponent,
@@ -88,34 +86,27 @@ function RouteComponent() {
 
   return (
     <div>
-      <Breadcrumb crumbs={[{ title: "Projects", to: "/projects" }]} />
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-          Projects
-        </h1>
-        <Can permission="create_project">
-          <Button as={Link} to="/projects/create-project">
-            Create New Project
-            <IoAddCircleOutline size={20} class="ml-2" />
-          </Button>
-        </Can>
-      </div>
+      <PageHeader
+        eyebrow={isDealership() ? "Your orders" : "All dealerships"}
+        title="Projects"
+        actions={
+          <Can permission="create_project">
+            <Button as={Link} to="/projects/create-project">
+              <IoAddCircleOutline size={18} class="mr-2" />
+              Create new project
+            </Button>
+          </Can>
+        }
+      />
 
       <Switch>
         <Match when={query.isLoading}>
-          <div class="flex flex-col gap-12 mt-8">
+          <div class="mt-8 flex flex-col gap-10">
             <For each={[1, 2, 3]}>
               {() => (
-                <div>
-                  <div class="h-7 w-48 bg-gray-200 rounded animate-pulse" />
-                  <div class="h-4 w-72 bg-gray-100 rounded animate-pulse mt-2" />
-                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                    <For each={[1, 2, 3]}>
-                      {() => (
-                        <div class="h-32 bg-gray-200 rounded-lg animate-pulse" />
-                      )}
-                    </For>
-                  </div>
+                <div class="flex flex-col gap-3">
+                  <div class="h-7 w-48 animate-pulse rounded bg-muted" />
+                  <div class="h-28 animate-pulse rounded-lg border border-border bg-card" />
                 </div>
               )}
             </For>
@@ -123,14 +114,17 @@ function RouteComponent() {
         </Match>
 
         <Match when={query.isError}>
-          <div class="mt-8 border-2 border-dashed border-red-300 rounded-xl p-8 text-center">
-            <p class="text-red-600 font-medium">Failed to load projects</p>
-            <p class="text-gray-500 text-sm mt-1">
+          <div class="mt-8 flex flex-col items-center gap-2 rounded-lg border border-dashed border-error-foreground/40 bg-error p-8 text-center">
+            <p class="flex items-center gap-2 font-medium text-error-foreground">
+              <IoAlertCircleOutline size={18} aria-hidden="true" />
+              Couldn't load projects
+            </p>
+            <p class="text-sm text-muted-foreground">
               {query.error?.message ?? "An unexpected error occurred."}
             </p>
             <Button
-              variant="outline"
-              class="mt-4"
+              variant="secondary"
+              class="mt-2"
               onClick={() => query.refetch()}
             >
               Retry
@@ -139,21 +133,21 @@ function RouteComponent() {
         </Match>
 
         <Match when={query.isSuccess}>
-          <div class="flex flex-col gap-12 mt-8">
+          <div class="mt-8 flex flex-col gap-10">
             <For each={groups()}>
               {(group) => {
                 const projects = () => getByStatuses(group.statuses);
                 return (
-                  <section>
-                    <div class="flex items-center gap-3">
-                      <h2 class="text-xl font-bold tracking-tight text-gray-900">
-                        {group.title}
-                      </h2>
-                      <Badge variant="secondary">{projects().length}</Badge>
+                  <section class="flex flex-col gap-3">
+                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <h2 class="text-2xl">{group.title}</h2>
+                      <span class="text-sm tabular-nums text-faint">
+                        {projects().length}
+                      </span>
+                      <p class="w-full text-sm text-muted-foreground">
+                        {group.description}
+                      </p>
                     </div>
-                    <p class="mt-1 text-sm text-gray-500">
-                      {group.description}
-                    </p>
 
                     <Show
                       when={projects().length > 0}
@@ -164,11 +158,15 @@ function RouteComponent() {
                         />
                       }
                     >
-                      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                      <ul class="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
                         <For each={projects()}>
-                          {(project) => <ProjectCard project={project} />}
+                          {(project) => (
+                            <li>
+                              <ProjectRow project={project} />
+                            </li>
+                          )}
                         </For>
-                      </div>
+                      </ul>
                     </Show>
                   </section>
                 );
@@ -188,20 +186,18 @@ interface SectionMessageProps {
 
 const SectionMessage: Component<SectionMessageProps> = (props) => {
   return (
-    <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 mt-4">
-      <div class="text-center">
-        <p class="text-gray-400 text-lg font-medium">{props.title}</p>
-        <p class="text-gray-400 text-sm mt-2">{props.description}</p>
-      </div>
+    <div class="rounded-lg border border-dashed border-input px-6 py-6 text-center">
+      <p class="text-muted-foreground">{props.title}</p>
+      <p class="mt-1 text-sm text-faint">{props.description}</p>
     </div>
   );
 };
 
-interface ProjectCardProps {
+interface ProjectRowProps {
   project: ProjectListItem;
 }
 
-const ProjectCard: Component<ProjectCardProps> = (props) => {
+const ProjectRow: Component<ProjectRowProps> = (props) => {
   const formattedDate = () => {
     const date = new Date(props.project.created_at);
     return date.toLocaleDateString("en-US", {
@@ -214,63 +210,71 @@ const ProjectCard: Component<ProjectCardProps> = (props) => {
   const summary = () => props.project.action_summary;
 
   return (
-    <Card class="hover:shadow-md transition-shadow">
-      <CardHeader class="flex flex-row items-start justify-between gap-4 space-y-0">
-        <div class="flex flex-col gap-2 min-w-0">
-          <CardTitle class="text-base truncate">{props.project.name}</CardTitle>
-          <Show when={props.project.dealership_name}>
-            {(name) => (
-              <p class="text-xs font-medium text-gray-600 truncate">{name()}</p>
-            )}
-          </Show>
+    <Link
+      to="/projects/$id"
+      params={{ id: props.project.uuid }}
+      class="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3.5 transition-colors hover:bg-accent/60 sm:grid-cols-[minmax(0,1fr)_auto_auto]"
+    >
+      <div class="flex min-w-0 flex-col gap-1">
+        <div class="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
+          <span class="truncate font-display text-lg text-foreground group-hover:text-crimson-light">
+            {props.project.name}
+          </span>
           <Show when={props.project.internal_reference}>
             {(ref) => (
-              <p class="text-xs text-gray-500 truncate">PO / Ref: {ref()}</p>
+              <span class="truncate text-sm tabular-nums text-muted-foreground">
+                {ref()}
+              </span>
             )}
           </Show>
-          <div class="flex items-center gap-2 flex-wrap">
-            <ProjectStatusBadge status={props.project.status} />
-          </div>
-          <Show when={summary()}>
-            {(s) => (
-              <Show
-                when={
-                  s().needs_internal_approval > 0 ||
-                  s().needs_proof > 0 ||
-                  s().awaiting_reply
-                }
-              >
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <Show when={s().needs_internal_approval > 0}>
-                    <Badge variant="warning" class="text-xs">
-                      Needs approval · {s().needs_internal_approval}
-                    </Badge>
-                  </Show>
-                  <Show when={s().needs_proof > 0}>
-                    <Badge variant="outline" class="text-xs">
-                      Needs proof · {s().needs_proof}
-                    </Badge>
-                  </Show>
-                  <Show when={s().awaiting_reply}>
-                    <Badge variant="secondary" class="text-xs">
-                      Awaiting reply
-                    </Badge>
-                  </Show>
-                </div>
-              </Show>
-            )}
-          </Show>
-          <p class="text-xs text-gray-500">{formattedDate()}</p>
         </div>
-        <Button
-          as={Link}
-          to={`/projects/${props.project.uuid}`}
-          variant="outline"
-          size="sm"
-        >
-          View
-        </Button>
-      </CardHeader>
-    </Card>
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-faint">
+          <Show when={props.project.dealership_name}>
+            {(name) => (
+              <>
+                <span class="text-muted-foreground">{name()}</span>
+                <span aria-hidden="true">·</span>
+              </>
+            )}
+          </Show>
+          <span class="tabular-nums">Created {formattedDate()}</span>
+        </div>
+        <Show when={summary()}>
+          {(s) => (
+            <Show
+              when={
+                s().needs_internal_approval > 0 ||
+                s().needs_proof > 0 ||
+                s().awaiting_reply
+              }
+            >
+              <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                <Show when={s().needs_internal_approval > 0}>
+                  <Badge variant="gilt" lozenge>
+                    Needs approval · {s().needs_internal_approval}
+                  </Badge>
+                </Show>
+                <Show when={s().needs_proof > 0}>
+                  <Badge variant="info" lozenge>
+                    Needs proof · {s().needs_proof}
+                  </Badge>
+                </Show>
+                <Show when={s().awaiting_reply}>
+                  <Badge variant="crimson" lozenge>
+                    Awaiting reply
+                  </Badge>
+                </Show>
+              </div>
+            </Show>
+          )}
+        </Show>
+      </div>
+      <ProjectStatusBadge status={props.project.status} class="justify-self-end" />
+      <IoChevronForward
+        size={16}
+        class="hidden text-faint transition-colors group-hover:text-crimson-light sm:block"
+        aria-hidden="true"
+      />
+    </Link>
   );
 };

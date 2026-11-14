@@ -198,13 +198,13 @@ export function ManifestEditor(props: ManifestEditorProps) {
         <Show
           when={unassignedCount() === 0}
           fallback={
-            <Badge variant="warning" class="rounded-full">
+            <Badge variant="warning" lozenge>
               {unassignedCount()} region
               {unassignedCount() === 1 ? "" : "s"} unassigned
             </Badge>
           }
         >
-          <Badge variant="secondary" class="rounded-full">
+          <Badge variant="success" lozenge>
             All regions assigned
           </Badge>
         </Show>

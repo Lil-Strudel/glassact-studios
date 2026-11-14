@@ -33,6 +33,7 @@ import {
 import { getDealershipsOpts } from "../../queries/dealership";
 import DealershipCombobox from "../../components/dealership-combobox";
 import { UserTable } from "../../components/user-table";
+import { PageHeader } from "@glassact/ui";
 import {
   DEALERSHIP_ROLE_OPTIONS,
   buildAvatarUrl,
@@ -113,7 +114,7 @@ function RouteComponent() {
             <Link
               to="/dealership/$id/users"
               params={{ id: dealership().uuid }}
-              class="text-primary hover:underline"
+              class="text-crimson-light underline-offset-4 hover:underline"
             >
               {dealership().name}
             </Link>
@@ -171,11 +172,12 @@ function RouteComponent() {
   }));
 
   return (
-    <div>
-      <div class="mb-6">
-        <h1 class="text-2xl font-bold">Dealership Users</h1>
-        <p class="text-gray-600">Manage users from dealerships</p>
-      </div>
+    <div class="space-y-6">
+      <PageHeader
+        eyebrow="Users"
+        title="Dealership Users"
+        description="Manage users from dealerships"
+      />
 
       <UserTable
         users={usersQuery.data ?? []}

@@ -66,7 +66,7 @@ export function StonePanel(props: StonePanelProps) {
   return (
     <div class="flex flex-col gap-6">
       <section>
-        <h3 class="text-sm font-medium text-gray-900">Shape</h3>
+        <h3 class="eyebrow">Shape</h3>
         <div class="mt-2 grid grid-cols-4 gap-2">
           <For each={STONE_SHAPES}>
             {(shape) => {
@@ -77,8 +77,8 @@ export function StonePanel(props: StonePanelProps) {
                   type="button"
                   title={info.label}
                   class={cn(
-                    "flex flex-col items-center gap-1 rounded-md border p-2 text-[11px] text-gray-700 transition",
-                    isSelected() ? "border-blue-600 ring-2 ring-blue-500/30" : "border-gray-200 hover:border-gray-400",
+                    "flex flex-col items-center gap-1 rounded-md border p-2 text-[11px] text-foreground transition",
+                    isSelected() ? "border-gilt ring-2 ring-gilt/35" : "border-border hover:border-input",
                   )}
                   onClick={() => chooseShape(shape)}
                 >
@@ -100,9 +100,9 @@ export function StonePanel(props: StonePanelProps) {
       </section>
 
       <section>
-        <h3 class="text-sm font-medium text-gray-900">Size (inches)</h3>
+        <h3 class="eyebrow">Size (inches)</h3>
         <div class="mt-2 flex items-center gap-2">
-          <label class="flex flex-1 flex-col text-xs text-gray-600">
+          <label class="flex flex-1 flex-col text-xs text-muted-foreground">
             Width
             <input
               type="number"
@@ -111,11 +111,11 @@ export function StonePanel(props: StonePanelProps) {
               step="0.5"
               value={draft().width}
               onChange={(e) => setDimension("width", e.currentTarget.value)}
-              class="mt-1 rounded-md border border-gray-300 px-2 py-1 text-sm"
+              class="mt-1 rounded-md border border-input px-2 py-1 text-sm"
             />
           </label>
-          <span class="mt-5 text-gray-400">×</span>
-          <label class="flex flex-1 flex-col text-xs text-gray-600">
+          <span class="mt-5 text-faint">×</span>
+          <label class="flex flex-1 flex-col text-xs text-muted-foreground">
             Height
             <input
               type="number"
@@ -124,7 +124,7 @@ export function StonePanel(props: StonePanelProps) {
               step="0.5"
               value={draft().height}
               onChange={(e) => setDimension("height", e.currentTarget.value)}
-              class="mt-1 rounded-md border border-gray-300 px-2 py-1 text-sm"
+              class="mt-1 rounded-md border border-input px-2 py-1 text-sm"
             />
           </label>
         </div>
@@ -136,8 +136,8 @@ export function StonePanel(props: StonePanelProps) {
                 class={cn(
                   "rounded-full border px-2.5 py-0.5 text-xs",
                   preset.width === draft().width && preset.height === draft().height
-                    ? "border-blue-600 bg-blue-50 text-blue-700"
-                    : "border-gray-300 text-gray-700 hover:border-gray-500",
+                    ? "border-gilt bg-accent text-foreground"
+                    : "border-input text-foreground hover:border-input",
                 )}
                 onClick={() => resizeStone(preset)}
               >
@@ -149,7 +149,7 @@ export function StonePanel(props: StonePanelProps) {
       </section>
 
       <section>
-        <h3 class="text-sm font-medium text-gray-900">Granite</h3>
+        <h3 class="eyebrow">Granite</h3>
         <GranitePicker preference={granitePreference} class="mt-2" />
       </section>
     </div>

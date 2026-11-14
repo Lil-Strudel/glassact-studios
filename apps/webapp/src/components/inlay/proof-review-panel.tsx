@@ -21,13 +21,17 @@ export function ProofReviewPanel(props: ProofReviewPanelProps) {
   const isInternalAuthority = () => props.proof.approval_authority === "internal";
 
   return (
-    <div class="overflow-hidden rounded-lg border bg-white shadow-sm">
-      <div class="flex items-center justify-between border-b px-4 py-3">
-        <div>
-          <h2 class="text-base font-semibold text-gray-900">
+    <div
+      class={`overflow-hidden rounded-lg border bg-card ${
+        isInternalAuthority() ? "border-border" : "border-gilt/45"
+      }`}
+    >
+      <div class="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+        <div class="flex flex-col gap-0.5">
+          <h2 class="text-xl text-foreground">
             Proof v{props.proof.version_number}
           </h2>
-          <p class="text-xs text-gray-500">
+          <p class="text-sm text-muted-foreground">
             {isInternalAuthority()
               ? "Awaiting internal pricing approval"
               : "Awaiting your approval"}
@@ -46,20 +50,20 @@ export function ProofReviewPanel(props: ProofReviewPanelProps) {
                 transform: mirrorCssTransform(props.mirror),
               },
             ]}
-            triggerClass="flex w-full items-center justify-center border-b bg-gray-50 p-6"
+            triggerClass="flex w-full items-center justify-center border-b border-border bg-muted p-6"
           >
             <img
               src={assetUrl()}
               alt={`Proof v${props.proof.version_number}`}
-              class="max-h-96 max-w-full rounded object-contain"
+              class="came-frame max-h-96 max-w-full rounded-arch bg-plaque object-contain px-6 pb-6 pt-12"
               style={{ transform: mirrorCssTransform(props.mirror) }}
             />
           </ImageLightbox>
         )}
       </Show>
 
-      <div class="space-y-4 p-4">
-        <p class="text-sm text-gray-600">
+      <div class="space-y-4 p-5">
+        <p class="text-sm tabular-nums text-muted-foreground">
           {props.proof.width}" &times; {props.proof.height}"
         </p>
 

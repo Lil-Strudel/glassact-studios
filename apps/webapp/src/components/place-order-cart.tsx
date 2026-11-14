@@ -148,20 +148,18 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
   return (
     <Dialog open={open()} onOpenChange={handleOpenChange}>
       <DialogTrigger as={Button} disabled={props.disabled}>
-        Place Order
+        Place order
       </DialogTrigger>
       <DialogContent class="max-w-2xl">
         <Show
           when={!orderSuccess()}
           fallback={
-            <div class="text-center py-8 space-y-4">
-              <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <IoCheckmarkCircle class="w-10 h-10 text-green-600" />
+            <div class="flex flex-col items-center gap-4 py-8 text-center">
+              <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-success-foreground/30 bg-success">
+                <IoCheckmarkCircle class="w-10 h-10 text-success-foreground" />
               </div>
-              <h3 class="text-xl font-semibold text-gray-900">
-                Order Placed Successfully!
-              </h3>
-              <p class="text-gray-600">
+              <h3 class="text-2xl text-foreground">Order placed</h3>
+              <p class="max-w-prose text-muted-foreground">
                 Your order for{" "}
                 <span class="font-medium">{props.project.name}</span> has been
                 submitted. Manufacturing will begin shortly.
@@ -179,12 +177,12 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
           <Show
             when={readyInlays().length > 0}
             fallback={
-              <div class="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center text-sm text-gray-500">
+              <div class="rounded-lg border border-dashed border-input p-8 text-center text-sm text-faint">
                 There are no ready-to-order inlays in this project.
               </div>
             }
           >
-            <div class="border rounded-lg divide-y max-h-96 overflow-y-auto">
+            <div class="max-h-96 divide-y divide-border overflow-y-auto rounded-lg border border-border bg-card">
               <For each={readyInlays()}>
                 {(inlay) => {
                   const isSelected = () => selected().has(inlay.uuid);
@@ -211,13 +209,13 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                       onChange={() => toggleInlay(inlay.uuid)}
                       class="w-full"
                     >
-                      <div class="p-3 flex items-center gap-3 w-full hover:bg-gray-50">
+                      <div class="flex w-full items-center gap-3 p-3 transition-colors hover:bg-accent/60">
                         <CheckboxLabel class="flex flex-1 min-w-0 items-center gap-3 cursor-pointer">
                           <CheckboxControl />
                           <Show
                             when={inlay.preview_url}
                             fallback={
-                              <div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs shrink-0">
+                              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-came text-xs text-faint">
                                 N/A
                               </div>
                             }
@@ -225,7 +223,7 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                             <img
                               src={inlay.preview_url}
                               alt={inlay.name}
-                              class="w-10 h-10 object-contain rounded shrink-0"
+                              class="h-10 w-10 shrink-0 rounded border border-came/60 bg-plaque object-contain p-0.5"
                               style={{ transform: mirrorCssTransform(inlay) }}
                               draggable={false}
                             />
@@ -236,18 +234,14 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                                 {inlay.name}
                               </p>
                               <Show when={inlay.is_customized}>
-                                <Badge variant="warning" class="text-xs">
-                                  Customized
-                                </Badge>
+                                <Badge variant="outline">Customized</Badge>
                               </Show>
                               <MirrorBadge inlay={inlay} />
                               <Show when={!isCatalog()}>
-                                <Badge variant="outline" class="text-xs">
-                                  Custom
-                                </Badge>
+                                <Badge variant="outline">Custom</Badge>
                               </Show>
                             </div>
-                            <div class="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                            <div class="mt-0.5 flex items-center gap-2 text-xs tabular-nums text-faint">
                               <Show when={catalogCode()}>
                                 <span>{catalogCode()}</span>
                               </Show>
@@ -260,11 +254,11 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
 
                         <div class="flex flex-col items-end shrink-0 text-sm gap-1">
                           <Show when={priceFormula()}>
-                            <span class="text-gray-500 text-xs">
+                            <span class="text-xs tabular-nums text-faint">
                               {priceFormula()}
                             </span>
                           </Show>
-                          <span class="font-semibold">
+                          <span class="font-medium tabular-nums">
                             {formatMoney(unitDollars())}
                           </span>
                         </div>
@@ -275,10 +269,10 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
               </For>
             </div>
 
-            <label class="mt-3 flex cursor-pointer items-center gap-3 rounded-lg border p-3 hover:bg-gray-50">
+            <label class="mt-3 flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-accent/60">
               <input
                 type="checkbox"
-                class="h-4 w-4 shrink-0 accent-gray-900"
+                class="h-4 w-4 shrink-0 accent-primary"
                 checked={props.project.installation_kit}
                 disabled={patchProject.isPending}
                 onChange={(e) => handleToggleKit(e.currentTarget.checked)}
@@ -287,29 +281,31 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                 <span class="block text-sm font-medium">
                   Include an installation kit
                 </span>
-                <span class="block text-xs text-gray-500">
+                <span class="block text-xs text-faint">
                   Glue, grout and consumables for every inlay in this project.
                 </span>
               </span>
-              <span class="shrink-0 text-sm font-semibold">
+              <span class="shrink-0 text-sm font-medium tabular-nums">
                 {formatMoney(kitPriceDollars)}
               </span>
             </label>
 
-            <div class="border-t pt-3 mt-3 space-y-1 text-sm">
-              <div class="flex justify-between text-gray-600">
+            <div class="mt-3 space-y-1 border-t border-border pt-3 text-sm tabular-nums">
+              <div class="flex justify-between text-muted-foreground">
                 <span>Subtotal ({selectedCount()} item{selectedCount() === 1 ? "" : "s"})</span>
                 <span>{formatMoney(subtotalDollars())}</span>
               </div>
               <Show when={props.project.installation_kit}>
-                <div class="flex justify-between text-gray-600">
+                <div class="flex justify-between text-muted-foreground">
                   <span>Installation kit</span>
                   <span>{formatMoney(kitTotalDollars())}</span>
                 </div>
               </Show>
-              <div class="flex justify-between text-base font-semibold">
-                <span>Total</span>
-                <span>{formatMoney(totalDollars())}</span>
+              <div class="flex items-baseline justify-between pt-1">
+                <span class="eyebrow">Total</span>
+                <span class="font-display text-2xl text-foreground">
+                  {formatMoney(totalDollars())}
+                </span>
               </div>
               <PriceCaveat class="pt-1 text-right" />
             </div>
@@ -318,7 +314,7 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
           <DialogFooter class="flex justify-end gap-3 mt-4">
             <DialogClose
               as={Button}
-              variant="outline"
+              variant="ghost"
               disabled={placeOrder.isPending}
             >
               Cancel
@@ -331,7 +327,7 @@ export function PlaceOrderCart(props: PlaceOrderCartProps) {
                 readyInlays().length === 0
               }
             >
-              {placeOrder.isPending ? "Placing Order..." : "Place Order"}
+              {placeOrder.isPending ? "Placing order..." : "Place order"}
             </Button>
           </DialogFooter>
         </Show>

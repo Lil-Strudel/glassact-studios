@@ -2,7 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import { Match, Switch } from "solid-js";
 import type { CatalogCompoundWrite } from "@glassact/data";
-import { showToast } from "@glassact/ui";
+import { Alert, showToast } from "@glassact/ui";
+import { IoAlertCircleOutline } from "solid-icons/io";
+import { PageHeader } from "@glassact/ui";
 import { getCompoundOpts, putCompoundOpts } from "../../queries/compound";
 import { CompoundEditor } from "../../components/admin/compound-editor";
 import { isApiError } from "../../utils/is-api-error";
@@ -46,17 +48,24 @@ function RouteComponent() {
 
   return (
     <div class="flex flex-col gap-6">
-      <h1 class="text-2xl font-bold text-gray-900">Edit compound</h1>
+      <PageHeader eyebrow="Compounds" title="Edit compound" />
       <Switch>
         <Match when={compoundQuery.isLoading}>
-          <div class="h-96 animate-pulse rounded-lg bg-gray-100" />
+          <div class="h-96 animate-pulse rounded-lg bg-card" />
         </Match>
         <Match when={compoundQuery.isError}>
-          <p class="text-sm text-red-600">Couldn't load this compound.</p>
+          <Alert variant="destructive">
+            <IoAlertCircleOutline size={18} />
+            <p>Couldn't load this compound.</p>
+          </Alert>
         </Match>
         <Match when={compoundQuery.data}>
           {(compound) => (
-            <CompoundEditor initial={compound()} isSaving={putCompound.isPending} onSave={save} />
+            <CompoundEditor
+              initial={compound()}
+              isSaving={putCompound.isPending}
+              onSave={save}
+            />
           )}
         </Match>
       </Switch>

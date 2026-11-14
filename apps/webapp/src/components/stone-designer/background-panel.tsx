@@ -87,7 +87,7 @@ export function BackgroundPanel(props: BackgroundPanelProps) {
     <div class="flex flex-col gap-6">
       <Show when={placed().length > 0}>
         <section class="flex flex-col gap-2">
-          <h3 class="text-sm font-medium text-gray-900">On the stone</h3>
+          <h3 class="eyebrow">On the stone</h3>
           <For each={placed()}>
             {(el) => {
               const item = () => backgrounds.byUuid().get(el.background_uuid);
@@ -95,16 +95,16 @@ export function BackgroundPanel(props: BackgroundPanelProps) {
                 <div
                   class={cn(
                     "flex items-center gap-2 rounded-md border p-2",
-                    selectedBackground()?.id === el.id ? "border-blue-500" : "border-gray-200",
+                    selectedBackground()?.id === el.id ? "border-gilt" : "border-border",
                   )}
                 >
                   <button
                     type="button"
-                    class="min-w-0 flex-1 truncate text-left text-sm text-gray-900"
+                    class="min-w-0 flex-1 truncate text-left text-sm text-foreground"
                     onClick={() => props.editor.selectIds([el.id])}
                   >
                     {item()?.name ?? "Background"}
-                    <span class="block text-xs text-gray-500">{item()?.code}</span>
+                    <span class="block text-xs text-muted-foreground">{item()?.code}</span>
                   </button>
                   <DownloadSandblastButton backgroundUuid={el.background_uuid} />
                 </div>
@@ -117,8 +117,8 @@ export function BackgroundPanel(props: BackgroundPanelProps) {
       <Show when={props.isEditable && selectedBackground()}>
         {(el) => (
           <section class="flex flex-col gap-2">
-            <h3 class="text-sm font-medium text-gray-900">Selected background</h3>
-            <label class="flex items-center justify-between text-xs text-gray-600">
+            <h3 class="eyebrow">Selected background</h3>
+            <label class="flex items-center justify-between text-xs text-muted-foreground">
               Width (inches)
               <input
                 type="number"
@@ -130,7 +130,7 @@ export function BackgroundPanel(props: BackgroundPanelProps) {
                   const value = Number(e.currentTarget.value);
                   if (value > 0) updateSelected((b) => (b.width = Math.min(240, value)));
                 }}
-                class="w-24 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                class="w-24 rounded-md border border-input px-2 py-1 text-sm"
               />
             </label>
             <div class="flex gap-2">
@@ -171,13 +171,13 @@ export function BackgroundPanel(props: BackgroundPanelProps) {
 
       <Show when={props.isEditable}>
         <section>
-          <h3 class="text-sm font-medium text-gray-900">Sandblast backgrounds</h3>
-          <p class="mt-1 text-xs text-gray-500">
+          <h3 class="eyebrow">Sandblast backgrounds</h3>
+          <p class="mt-1 text-xs text-muted-foreground">
             Click to use as the stone's background. Shift-click to add another
             one alongside it.
           </p>
           <Show when={backgrounds.query.isLoading}>
-            <div class="mt-2 h-32 animate-pulse rounded-md bg-gray-100" />
+            <div class="mt-2 h-32 animate-pulse rounded-md bg-accent" />
           </Show>
           <div class="mt-2 grid grid-cols-3 gap-2">
             <For each={backgrounds.query.data ?? []}>
@@ -185,7 +185,7 @@ export function BackgroundPanel(props: BackgroundPanelProps) {
                 <button
                   type="button"
                   title={`${item.name} (${item.code})`}
-                  class="flex aspect-square items-center justify-center rounded-md border border-gray-200 bg-white p-1.5 hover:border-blue-500"
+                  class="flex aspect-square items-center justify-center rounded-md border border-came/60 bg-plaque p-1.5 transition-colors hover:border-gilt"
                   onClick={(e) => (e.shiftKey ? addAnother(item) : choose(item))}
                 >
                   <img

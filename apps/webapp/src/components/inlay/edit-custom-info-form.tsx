@@ -103,7 +103,7 @@ export default function EditCustomInfoForm(props: EditCustomInfoFormProps) {
       <div class="flex justify-end gap-2">
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => props.onDone()}
           disabled={patchInlay.isPending}

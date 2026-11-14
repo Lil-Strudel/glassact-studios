@@ -17,14 +17,14 @@ export function YoutubeEmbed(props: YoutubeEmbedProps) {
           href={props.url}
           target="_blank"
           rel="noopener noreferrer"
-          class="text-primary underline"
+          class="text-crimson-light underline underline-offset-2"
         >
           Watch video
         </a>
       }
     >
       {(src) => (
-        <div class="relative w-full overflow-hidden rounded-lg border bg-muted pt-[56.25%]">
+        <div class="came-frame relative w-full overflow-hidden rounded-lg bg-came pt-[56.25%]">
           <iframe
             src={src()}
             title={props.title ?? "YouTube video"}

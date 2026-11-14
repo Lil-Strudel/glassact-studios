@@ -5,6 +5,7 @@ import { browseCatalogOpts } from "../../queries/catalog-browse";
 import { FilterSidebar } from "../../components/catalog/filter-sidebar";
 import { CatalogGrid } from "../../components/catalog/catalog-grid";
 import { CatalogSectionTabs } from "../../components/catalog/catalog-section-tabs";
+import { PageHeader } from "@glassact/ui";
 import { useClampPage } from "../../hooks/use-clamp-page";
 import { useDebouncedSearchInput } from "../../hooks/use-debounced-search-input";
 import {
@@ -60,6 +61,11 @@ function RouteComponent() {
 
   return (
     <div class="flex flex-col gap-6">
+      <PageHeader
+        eyebrow="Catalog"
+        title="Inlay catalog"
+        description="Browse stock designs. Every inlay can be ordered as is or customized for the family."
+      />
       <CatalogSectionTabs />
       <div class="flex flex-col lg:flex-row gap-6">
         <FilterSidebar

@@ -104,12 +104,12 @@ export function SandblastFileCard(props: SandblastFileCardProps) {
       <div
         class={
           props.layout === "card"
-            ? "space-y-3 rounded-lg border p-4"
+            ? "space-y-3 rounded-lg border border-border bg-card p-4"
             : "flex flex-col gap-2"
         }
       >
         <Show when={props.layout === "card"}>
-          <h2 class="text-sm font-semibold text-gray-900">Sandblast file</h2>
+          <h2 class="text-lg">Sandblast file</h2>
         </Show>
 
         <Show when={hasSandblast()}>
@@ -121,7 +121,7 @@ export function SandblastFileCard(props: SandblastFileCardProps) {
             onClick={handleDownload}
           >
             <IoDownloadOutline size={16} class="mr-1" />
-            {isDownloading() ? "Preparing..." : "Download Sandblast File"}
+            {isDownloading() ? "Preparing..." : "Download sandblast file"}
           </Button>
         </Show>
 
@@ -130,23 +130,23 @@ export function SandblastFileCard(props: SandblastFileCardProps) {
             <DialogTrigger as={Button} variant="ghost" size="sm" class="w-full">
               <IoCloudUploadOutline size={16} class="mr-1" />
               {hasSandblast()
-                ? "Replace Sandblast File"
-                : "Upload Sandblast File"}
+                ? "Replace sandblast file"
+                : "Upload sandblast file"}
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {hasSandblast() ? "Replace" : "Upload"} Sandblast File
+                  {hasSandblast() ? "Replace" : "Upload"} sandblast file
                 </DialogTitle>
               </DialogHeader>
-              <p class="text-sm text-gray-600">
+              <p class="text-sm text-muted-foreground">
                 Upload the sandblasting file for{" "}
                 <span class="font-semibold">{props.inlayName}</span>. The
                 dealership will be able to download it from this project.
               </p>
               <Show when={preferredFormat()}>
                 {(format) => (
-                  <p class="text-sm text-gray-600">
+                  <p class="text-sm text-muted-foreground">
                     This dealership wants sandblasting files as{" "}
                     <span class="font-semibold">{format()}</span>.
                   </p>
@@ -165,7 +165,7 @@ export function SandblastFileCard(props: SandblastFileCardProps) {
 
           <Show when={preferredFormat()}>
             {(format) => (
-              <p class="text-center text-xs text-gray-500">
+              <p class="text-center text-xs text-faint">
                 {format()} preferred
               </p>
             )}

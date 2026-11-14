@@ -41,9 +41,9 @@ export function ArtworkPanel(props: ArtworkPanelProps) {
   );
 
   return (
-    <div class="border-t pt-4">
-      <h3 class="mb-1 text-sm font-medium text-gray-900">Artwork</h3>
-      <p class="mb-4 text-xs text-gray-500">
+    <div class="border-t border-border pt-5">
+      <h3 class="eyebrow mb-1">Artwork</h3>
+      <p class="mb-4 text-xs text-faint">
         Upload the raw SVG and set its default size, then assign every glass
         group and the grout color.
       </p>
@@ -58,7 +58,7 @@ export function ArtworkPanel(props: ArtworkPanelProps) {
       >
         {(artwork) => (
           <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <div class="h-32 w-32 shrink-0 rounded-lg border border-gray-200 bg-gray-100 p-2">
+            <div class="h-32 w-32 shrink-0 rounded-lg border border-input bg-plaque p-2">
               <Show when={artwork().structureSvg} keyed>
                 {(svgText) => (
                   <SvgPreview
@@ -72,27 +72,27 @@ export function ArtworkPanel(props: ArtworkPanelProps) {
             </div>
 
             <div class="flex flex-col items-start gap-2">
-              <p class="text-sm text-gray-600">
+              <p class="text-sm text-muted-foreground">
                 Size{" "}
-                <span class="font-medium text-gray-900">
+                <span class="font-medium tabular-nums text-foreground">
                   {artwork().defaultWidth.toFixed(2)}" ×{" "}
                   {artwork().defaultHeight.toFixed(2)}"
                 </span>
               </p>
 
               <div class="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary" class="rounded-full">
+                <Badge variant="secondary" class="tabular-nums">
                   {groupCount()} color {groupCount() === 1 ? "group" : "groups"}
                 </Badge>
                 <Show
                   when={unassignedCount() > 0}
                   fallback={
-                    <Badge variant="secondary" class="rounded-full">
+                    <Badge variant="success" lozenge>
                       All regions assigned
                     </Badge>
                   }
                 >
-                  <Badge variant="warning" class="rounded-full">
+                  <Badge variant="warning" lozenge>
                     {unassignedCount()} region
                     {unassignedCount() === 1 ? "" : "s"} unassigned
                   </Badge>

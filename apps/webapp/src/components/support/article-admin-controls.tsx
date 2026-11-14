@@ -1,6 +1,7 @@
 import { createSignal } from "solid-js";
 import {
   Button,
+  buttonVariants,
   Dialog,
   DialogContent,
   DialogFooter,
@@ -50,16 +51,15 @@ export function ArticleAdminControls(props: ArticleAdminControlsProps) {
     <div class="flex items-center gap-2">
       <ArticleFormDialog
         article={props.article}
-        triggerClass="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent"
+        triggerClass={buttonVariants({ variant: "outline", size: "sm" })}
       >
         Edit
       </ArticleFormDialog>
 
       <Button
         type="button"
-        variant="outline"
+        variant="destructive"
         size="sm"
-        class="text-destructive hover:text-destructive"
         onClick={() => setConfirmOpen(true)}
       >
         Delete

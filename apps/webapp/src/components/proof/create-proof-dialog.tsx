@@ -181,7 +181,7 @@ export default function CreateProofDialog(props: CreateProofDialogProps) {
             children={(field) => (
               <div class="flex flex-col gap-2">
                 <PriceGroupCombobox field={field} />
-                <p class="text-xs text-muted-foreground">
+                <p class="text-xs text-faint">
                   Optional. Leave blank to use default pricing, or select to
                   override.
                 </p>
@@ -225,7 +225,7 @@ export default function CreateProofDialog(props: CreateProofDialogProps) {
           />
 
           <DialogFooter class="flex justify-end gap-3">
-            <DialogClose as={Button} variant="outline">
+            <DialogClose as={Button} variant="ghost">
               Cancel
             </DialogClose>
             <Button type="submit" disabled={createProof.isPending}>

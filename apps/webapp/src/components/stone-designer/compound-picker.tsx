@@ -25,19 +25,22 @@ export function CompoundPicker(props: CompoundPickerProps) {
   return (
     <div class={cn("flex flex-col gap-3", props.class)}>
       <Show when={compoundsQuery.isLoading}>
-        <div class="h-24 animate-pulse rounded-md bg-gray-100" />
+        <div class="h-24 animate-pulse rounded-md bg-accent" />
       </Show>
       <Show when={compoundsQuery.isSuccess && compoundsQuery.data.length === 0}>
-        <p class="text-xs text-gray-500">No compound inlays are offered yet.</p>
+        <p class="text-xs text-muted-foreground">No compound inlays are offered yet.</p>
       </Show>
       <For each={compoundsQuery.data ?? []}>
         {(compound) => (
-          <div class="rounded-md border border-gray-200 p-2">
-            <CompoundPreview members={compound.members} class="h-28 w-full" />
+          <div class="rounded-md border border-border p-2">
+            <CompoundPreview
+              members={compound.members}
+              class="h-28 w-full rounded border border-came/60 bg-plaque"
+            />
             <div class="mt-2 flex items-center justify-between gap-2">
               <div class="min-w-0">
-                <p class="truncate text-sm font-medium text-gray-900">{compound.name}</p>
-                <p class="text-xs text-gray-500">{compound.members.length} inlays</p>
+                <p class="truncate text-sm font-medium text-foreground">{compound.name}</p>
+                <p class="text-xs text-muted-foreground">{compound.members.length} inlays</p>
               </div>
               <Button
                 size="sm"

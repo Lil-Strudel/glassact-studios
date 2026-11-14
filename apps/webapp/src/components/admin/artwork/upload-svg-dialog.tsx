@@ -147,7 +147,7 @@ export function UploadSvgDialog(props: UploadSvgDialogProps) {
               />
 
               <Show when={analyzeMutation.isPending}>
-                <p class="text-sm text-gray-600">Analyzing SVG...</p>
+                <p class="text-sm text-faint">Analyzing SVG...</p>
               </Show>
 
               <Show when={analyzeMutation.isError}>
@@ -173,14 +173,14 @@ export function UploadSvgDialog(props: UploadSvgDialogProps) {
         >
           {(svg) => (
             <div class="flex flex-col gap-4">
-              <Alert>
+              <Alert variant="success">
                 <AlertDescription>
                   Upload successful — {pieceCount()} shapes in {groupCount()}{" "}
                   color {groupCount() === 1 ? "group" : "groups"}.
                 </AlertDescription>
               </Alert>
 
-              <div class="h-48 rounded-lg border border-gray-200 bg-gray-100 p-3">
+              <div class="h-48 rounded-lg border border-input bg-plaque p-3">
                 <SvgPreview
                   svgText={svg().structureSvg}
                   manifest={svg().manifest}

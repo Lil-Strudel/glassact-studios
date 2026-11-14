@@ -73,11 +73,11 @@ export function InlayPanel(props: InlayPanelProps) {
       </Show>
 
       <section>
-        <h3 class="text-sm font-medium text-gray-900">Not on the stone yet</h3>
+        <h3 class="eyebrow">Not on the stone yet</h3>
         <Show
           when={unplaced().length > 0}
           fallback={
-            <p class="mt-2 text-xs text-gray-500">
+            <p class="mt-2 text-xs text-muted-foreground">
               Every inlay on this project is placed.
             </p>
           }
@@ -88,7 +88,7 @@ export function InlayPanel(props: InlayPanelProps) {
                 <InlayRow inlay={inlay} projectUuid={props.projectUuid}>
                   <Show
                     when={inlay.width != null}
-                    fallback={<span class="text-xs text-gray-400">No size yet</span>}
+                    fallback={<span class="text-xs text-faint">No size yet</span>}
                   >
                     <Button size="sm" variant="outline" onClick={() => place(inlay)}>
                       Place
@@ -103,7 +103,7 @@ export function InlayPanel(props: InlayPanelProps) {
 
       <Show when={placed().length > 0}>
         <section>
-          <h3 class="text-sm font-medium text-gray-900">On the stone</h3>
+          <h3 class="eyebrow">On the stone</h3>
           <ul class="mt-2 flex flex-col gap-2">
             <For each={placed()}>
               {(inlay) => (
@@ -129,8 +129,8 @@ export function InlayPanel(props: InlayPanelProps) {
 
       <Show when={props.canAddInlays}>
         <section>
-          <h3 class="text-sm font-medium text-gray-900">Compound inlays</h3>
-          <p class="mt-1 text-xs text-gray-500">
+          <h3 class="eyebrow">Compound inlays</h3>
+          <p class="mt-1 text-xs text-muted-foreground">
             Arranged sets. Adding one puts every inlay in it on the project and
             groups them on the stone; ungroup to move them separately.
           </p>
@@ -143,8 +143,8 @@ export function InlayPanel(props: InlayPanelProps) {
 
 function InlayRow(props: ParentProps<{ inlay: InlayWithInfo; projectUuid: string }>) {
   return (
-    <li class="flex items-center gap-3 rounded-md border border-gray-200 p-2">
-      <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-gray-100">
+    <li class="flex items-center gap-3 rounded-md border border-border p-2">
+      <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded border border-came/60 bg-plaque p-0.5">
         <Show when={props.inlay.preview_url}>
           {(url) => (
             <img
@@ -157,9 +157,9 @@ function InlayRow(props: ParentProps<{ inlay: InlayWithInfo; projectUuid: string
         </Show>
       </div>
       <div class="min-w-0 flex-1">
-        <p class="truncate text-sm text-gray-900">{props.inlay.name}</p>
+        <p class="truncate text-sm text-foreground">{props.inlay.name}</p>
         <Show when={props.inlay.width != null}>
-          <p class="text-xs text-gray-500">
+          <p class="text-xs text-muted-foreground">
             {props.inlay.width}″ × {props.inlay.height}″
           </p>
         </Show>

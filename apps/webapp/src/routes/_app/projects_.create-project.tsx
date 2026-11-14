@@ -63,13 +63,20 @@ function RouteComponent() {
       <Breadcrumb
         crumbs={[
           { title: "Projects", to: "/projects" },
-          { title: "Create Project", to: "/projects/create-project" },
+          { title: "New project", to: "/projects/create-project" },
         ]}
       />
-      <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-0">
-        <h1 class="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-          Create a New Project
-        </h1>
+      <div class="mx-auto mt-6 flex max-w-xl flex-col gap-8">
+        <div class="flex flex-col items-center gap-3 text-center">
+          <p class="eyebrow">New project</p>
+          <h1 class="text-3xl sm:text-4xl">Create a new project</h1>
+          <div class="ornament-rule w-40" aria-hidden="true">
+            <span class="lozenge" />
+          </div>
+          <p class="max-w-prose text-sm text-muted-foreground">
+            You'll add inlays and design the stone next.
+          </p>
+        </div>
 
         <form
           onSubmit={(e) => {
@@ -77,14 +84,14 @@ function RouteComponent() {
             e.stopPropagation();
             form.handleSubmit();
           }}
-          class="mt-10 flex flex-col gap-6"
+          class="flex flex-col gap-6 rounded-lg border border-border bg-card p-6 sm:p-8"
         >
           <form.Field
             name="name"
             children={(field) => (
               <Form.TextField
                 field={field}
-                label="Project Name"
+                label="Project name"
                 placeholder="John Smith Memorial"
               />
             )}
@@ -101,9 +108,9 @@ function RouteComponent() {
             )}
           />
 
-          <div class="mt-4 flex items-center justify-center gap-3">
+          <div class="flex items-center justify-end gap-3 border-t border-border pt-6">
             <Button
-              variant="outline"
+              variant="ghost"
               as={Link}
               to="/projects"
               disabled={postProject.isPending}
@@ -111,7 +118,7 @@ function RouteComponent() {
               Cancel
             </Button>
             <Button type="submit" disabled={postProject.isPending}>
-              {postProject.isPending ? "Creating..." : "Create Project"}
+              {postProject.isPending ? "Creating..." : "Create project"}
             </Button>
           </div>
         </form>

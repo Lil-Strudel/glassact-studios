@@ -1,4 +1,5 @@
 import type { ProjectStatus } from "@glassact/data";
+import type { BadgeVariant } from "@glassact/ui";
 
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   draft: "Draft",
@@ -8,6 +9,16 @@ export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   invoiced: "Invoiced",
   completed: "Completed",
   cancelled: "Cancelled",
+};
+
+export const PROJECT_STATUS_TONES: Record<ProjectStatus, BadgeVariant> = {
+  draft: "draft",
+  ordered: "ordered",
+  "in-production": "production",
+  shipped: "shipped",
+  invoiced: "invoiced",
+  completed: "completed",
+  cancelled: "cancelled",
 };
 
 // Statuses where the project's inlays are moving through the shop floor, so

@@ -15,18 +15,18 @@ export function GranitePill(props: GranitePillProps) {
     <Popover placement="bottom-start">
       <PopoverTrigger
         class={cn(
-          "flex items-center gap-1.5 rounded-full border border-gray-200 bg-white/90 py-1 pl-1 pr-2.5 text-[11px] font-medium text-gray-600 shadow-sm hover:bg-white",
+          "flex items-center gap-1.5 rounded-full border border-input/70 bg-popover/90 py-1 pl-1 pr-2.5 text-[11px] font-medium text-muted-foreground shadow-lg shadow-black/30 backdrop-blur transition-colors hover:border-gilt/60 hover:text-foreground",
           props.class,
         )}
       >
         <span
-          class="h-5 w-5 shrink-0 rounded-full border border-black/15"
+          class="h-5 w-5 shrink-0 rounded-full border border-came/70"
           style={graniteSwatchStyle(props.preference.granite())}
         />
         <span class="whitespace-nowrap">
           Granite: {graniteChoiceName(props.preference.granite())}
         </span>
-        <span aria-hidden="true" class="text-gray-400">
+        <span aria-hidden="true" class="text-faint">
           &#9662;
         </span>
       </PopoverTrigger>

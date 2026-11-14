@@ -5,7 +5,7 @@ import {
   redirect,
 } from "@tanstack/solid-router";
 import { createMemo, createSignal, For, Show } from "solid-js";
-import logoEmblem from "../assets/images/logo-emblem.png";
+import logoReversed from "../assets/images/logo-reversed.png";
 import {
   Button,
   DropdownMenu,
@@ -83,32 +83,40 @@ function RouteComponent() {
     setOpen((open) => !open);
   }
 
+  const mobileLinkClass =
+    "block border-l-2 py-2 pl-4 pr-4 text-base font-medium transition-colors";
+  const mobileActiveClass = "border-crimson-light bg-accent text-foreground";
+  const mobileInactiveClass =
+    "border-transparent text-muted-foreground hover:bg-accent/60 hover:text-foreground";
+
   return (
     <div
-      class="flex h-dvh flex-col"
+      class="flex h-dvh flex-col bg-background"
       style={{ "--app-pane-height": "calc(100dvh - 4rem - 1px - 4rem)" }}
     >
-      <nav class="shrink-0 border-b border-gray-200">
+      <nav class="relative z-40 shrink-0 border-b border-border bg-card">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div class="flex h-16 justify-between">
             <div class="flex">
-              <div class="flex shrink-0 items-center">
+              <Link to="/dashboard" class="flex shrink-0 items-center">
                 <img
-                  class="block h-12 w-auto"
-                  src={logoEmblem}
+                  class="block h-9 w-auto"
+                  src={logoReversed}
                   alt="GlassAct Studios"
                 />
-              </div>
-              <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
+              </Link>
+              <div class="hidden sm:-my-px sm:ml-10 sm:flex sm:gap-7">
                 <For each={filteredNavigation()}>
                   {(item) => (
                     <Link
                       to={item.to}
-                      class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium"
-                      activeProps={{ class: "border-primary" }}
+                      class="inline-flex items-center border-b-2 px-0.5 pt-0.5 text-sm font-medium transition-colors"
+                      activeProps={{
+                        class: "border-crimson-light text-foreground",
+                      }}
                       inactiveProps={{
                         class:
-                          "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
+                          "border-transparent text-muted-foreground hover:border-input hover:text-foreground",
                       }}
                     >
                       {item.name}
@@ -117,37 +125,52 @@ function RouteComponent() {
                 </For>
               </div>
             </div>
-            <div class="hidden sm:ml-6 sm:flex sm:items-center">
+            <div class="hidden sm:ml-6 sm:flex sm:items-center sm:gap-2">
               <NotificationBell />
 
               <Show when={user()}>
                 {(currentUser) => (
                   <DropdownMenu placement="bottom-end">
-                    <DropdownMenuTrigger class="ml-3">
+                    <DropdownMenuTrigger class="rounded-full">
                       <img
-                        class="size-8 rounded-full"
+                        class="size-8 rounded-full border border-input object-cover transition-colors hover:border-gilt/70"
                         src={currentUser().avatar}
                         alt="Avatar"
                       />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <For each={userNavigation}>
-                        {(item) => (
-                          <DropdownMenuItem
-                            as={item.component}
-                            {...item.props}
-                          >
-                            {item.name}
-                          </DropdownMenuItem>
-                        )}
-                      </For>
+                    <DropdownMenuContent class="min-w-48">
+                      <div class="border-b border-border px-2 pb-2 pt-1">
+                        <p class="truncate text-sm font-medium">
+                          {currentUser().name}
+                        </p>
+                        <p class="truncate text-xs text-faint">
+                          {currentUser().email}
+                        </p>
+                      </div>
+                      <div class="pt-1">
+                        <For each={userNavigation}>
+                          {(item) => (
+                            <DropdownMenuItem
+                              as={item.component}
+                              {...item.props}
+                            >
+                              {item.name}
+                            </DropdownMenuItem>
+                          )}
+                        </For>
+                      </div>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
               </Show>
             </div>
             <div class="-mr-2 flex items-center sm:hidden">
-              <Button size="icon" variant="ghost" onClick={toggleOpen}>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={toggleOpen}
+                aria-label={open() ? "Close menu" : "Open menu"}
+              >
                 {open() ? <IoClose size={24} /> : <IoMenu size={24} />}
               </Button>
             </div>
@@ -155,41 +178,38 @@ function RouteComponent() {
         </div>
 
         {open() && (
-          <div class="bg-white w-full drop-shadow absolute sm:hidden">
+          <div class="absolute w-full border-b border-border bg-popover shadow-2xl shadow-black/50 sm:hidden">
             <div class="space-y-1 pb-3 pt-2">
               <For each={filteredNavigation()}>
                 {(item) => (
                   <Link
                     to={item.to}
-                    class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
-                    activeProps={{ class: "border-primary bg-red-50" }}
-                    inactiveProps={{
-                      class:
-                        "border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800",
-                    }}
+                    class={mobileLinkClass}
+                    activeProps={{ class: mobileActiveClass }}
+                    inactiveProps={{ class: mobileInactiveClass }}
                   >
                     {item.name}
                   </Link>
                 )}
               </For>
             </div>
-            <div class="border-t border-gray-200 pb-3 pt-4">
+            <div class="border-t border-border pb-3 pt-4">
               <Show when={user()}>
                 {(currentUser) => (
                   <>
                     <div class="flex items-center px-4">
                       <div class="shrink-0">
                         <img
-                          class="size-10 rounded-full"
+                          class="size-10 rounded-full border border-input object-cover"
                           src={currentUser().avatar}
                           alt="Avatar"
                         />
                       </div>
-                      <div class="ml-3">
-                        <div class="text-base font-medium text-gray-800">
+                      <div class="ml-3 min-w-0">
+                        <div class="truncate text-base font-medium text-foreground">
                           {currentUser().name}
                         </div>
-                        <div class="text-sm font-medium text-gray-500">
+                        <div class="truncate text-sm text-faint">
                           {currentUser().email}
                         </div>
                       </div>
@@ -203,21 +223,16 @@ function RouteComponent() {
                           item.component === "a" ? (
                             <a
                               {...item.props}
-                              class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
+                              class={`${mobileLinkClass} ${mobileInactiveClass}`}
                             >
                               {item.name}
                             </a>
                           ) : (
                             <item.component
                               {...item.props}
-                              class="block border-l-4 py-2 pl-3 pr-4 text-base font-medium text-gray-600"
-                              activeProps={{
-                                class: "border-primary bg-red-50",
-                              }}
-                              inactiveProps={{
-                                class:
-                                  "border-transparent hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800",
-                              }}
+                              class={mobileLinkClass}
+                              activeProps={{ class: mobileActiveClass }}
+                              inactiveProps={{ class: mobileInactiveClass }}
                             >
                               {item.name}
                             </item.component>

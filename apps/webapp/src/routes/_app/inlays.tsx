@@ -1,4 +1,5 @@
 import {
+  Alert,
   cn,
   Card,
   CardDescription,
@@ -29,6 +30,7 @@ import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { CleanupFn } from "@atlaskit/pragmatic-drag-and-drop/dist/types/internal-types";
 import { z } from "zod";
+import { IoAlertCircleOutline } from "solid-icons/io";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import type { ManufacturingStep } from "@glassact/data";
 import {
@@ -41,10 +43,8 @@ import { Can } from "../../components/Can";
 import { MirrorBadge } from "../../components/inlay/mirror-badge";
 import { mirrorCssTransform } from "../../utils/inlay-mirror";
 import { AddInlayUpdateDialog } from "../../components/manufacturing/add-inlay-update-dialog";
-import {
-  STEP_LABELS,
-  STEP_ORDER,
-} from "../../components/manufacturing/steps";
+import { STEP_LABELS, STEP_ORDER } from "../../components/manufacturing/steps";
+import { PageHeader } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/inlays")({
   component: RouteComponent,
@@ -87,21 +87,27 @@ function InlayCard(props: InlayCardProps) {
   });
 
   return (
-    <Card ref={ref} class={cn("w-full touch-none", dragging() && "opacity-30")}>
-      <CardHeader class="flex-row justify-between items-start gap-2">
+    <Card
+      ref={ref}
+      class={cn(
+        "w-full cursor-grab touch-none rounded-lg shadow-none transition-colors hover:border-input",
+        dragging() && "opacity-30",
+      )}
+    >
+      <CardHeader class="flex-row items-start justify-between gap-2 space-y-0 p-3">
         <Link
           to="/projects/$id/inlay/$inlayId"
           params={{
             id: props.inlay.project_uuid,
             inlayId: props.inlay.uuid,
           }}
-          class="flex items-start gap-2 min-w-0 hover:underline"
+          class="group flex min-w-0 items-start gap-3"
           draggable={false}
         >
           <Show
             when={props.inlay.preview_url}
             fallback={
-              <div class="w-[50px] h-[50px] flex-shrink-0 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
+              <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md border border-dashed border-input text-xs text-faint">
                 N/A
               </div>
             }
@@ -109,14 +115,16 @@ function InlayCard(props: InlayCardProps) {
             <img
               alt={props.inlay.name}
               src={props.inlay.preview_url}
-              class="w-[50px] h-[50px] flex-shrink-0 object-contain rounded"
+              class="h-12 w-12 flex-shrink-0 rounded-md border border-input bg-plaque object-contain p-0.5"
               style={{ transform: mirrorCssTransform(props.inlay) }}
               draggable={false}
             />
           </Show>
-          <div class="flex flex-col space-y-1 min-w-0">
-            <CardTitle class="text-sm truncate">{props.inlay.name}</CardTitle>
-            <CardDescription class="text-xs truncate">
+          <div class="flex min-w-0 flex-col gap-0.5">
+            <CardTitle class="truncate text-base leading-snug group-hover:text-crimson-light">
+              {props.inlay.name}
+            </CardTitle>
+            <CardDescription class="truncate text-xs text-faint">
               {props.inlay.dealership_name} — {props.inlay.project_name}
             </CardDescription>
             <MirrorBadge inlay={props.inlay} />
@@ -126,7 +134,7 @@ function InlayCard(props: InlayCardProps) {
           <AddInlayUpdateDialog
             inlayUuid={props.inlay.uuid}
             triggerLabel="+ Update"
-            triggerClass="flex-shrink-0 text-xs font-medium text-primary hover:underline cursor-pointer"
+            triggerClass="flex-shrink-0 cursor-pointer text-xs font-medium text-crimson-light underline-offset-4 hover:underline"
           />
         </Can>
       </CardHeader>
@@ -136,6 +144,8 @@ function InlayCard(props: InlayCardProps) {
 
 interface StepColumnProps {
   column: StepColumn;
+  position: number;
+  inlayCount: number;
 }
 
 const StepColumn: ParentComponent<StepColumnProps> = (props) => {
@@ -164,12 +174,34 @@ const StepColumn: ParentComponent<StepColumnProps> = (props) => {
     <div
       ref={ref}
       class={cn(
-        "flex-shrink-0 flex flex-col gap-2 p-4 max-h-[calc(100vh-130px)] w-[300px] max-w-[90%] overflow-y-auto border rounded-lg",
-        draggedOver() && "bg-blue-50 border-blue-300",
+        "flex w-[300px] max-w-[90%] flex-shrink-0 flex-col overflow-y-auto rounded-lg border bg-card transition-colors max-h-[calc(100dvh-16rem)]",
+        draggedOver() ? "border-gilt/60 bg-accent/50" : "border-border",
       )}
     >
-      <span class="text-base font-semibold">{props.column.title}</span>
-      {props.children}
+      <div class="sticky top-0 z-10 flex items-center gap-2.5 border-b border-border bg-card px-4 py-3">
+        <span class="lozenge size-2 text-gilt" aria-hidden="true" />
+        <div class="min-w-0">
+          <p class="eyebrow text-[0.65rem] leading-none text-faint">
+            Step {props.position}
+          </p>
+          <h2 class="truncate text-lg leading-tight">{props.column.title}</h2>
+        </div>
+        <span class="ml-auto rounded-full border border-border px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
+          {props.inlayCount}
+        </span>
+      </div>
+      <div class="flex flex-col gap-2 p-3">
+        <Show
+          when={props.inlayCount > 0}
+          fallback={
+            <p class="py-6 text-center text-xs text-faint">
+              No inlays at this step
+            </p>
+          }
+        >
+          {props.children}
+        </Show>
+      </div>
     </div>
   );
 };
@@ -289,36 +321,45 @@ function RouteComponent() {
   });
 
   return (
-    <>
+    <div class="flex flex-col gap-6">
+      <PageHeader eyebrow="Production" title="Inlays" />
+
       <Switch>
         <Match when={kanbanQuery.isLoading}>
           <div class="flex gap-4 overflow-x-auto">
             <For each={STEP_COLUMNS}>
               {() => (
-                <div class="flex-shrink-0 w-[300px] h-[calc(100vh-130px)] bg-gray-100 rounded-lg animate-pulse" />
+                <div class="h-[calc(100dvh-16rem)] w-[300px] flex-shrink-0 animate-pulse rounded-lg bg-card" />
               )}
             </For>
           </div>
         </Match>
 
         <Match when={kanbanQuery.isError}>
-          <div class="border-2 border-dashed border-red-300 rounded-xl p-8 text-center">
-            <p class="text-red-600 font-medium">Failed to load kanban board</p>
-            <Button
-              variant="outline"
-              class="mt-4"
-              onClick={() => kanbanQuery.refetch()}
-            >
-              Retry
-            </Button>
-          </div>
+          <Alert variant="destructive">
+            <IoAlertCircleOutline size={18} />
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <p class="font-medium">Failed to load kanban board</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => kanbanQuery.refetch()}
+              >
+                Retry
+              </Button>
+            </div>
+          </Alert>
         </Match>
       </Switch>
 
-      <div ref={ref} class="flex gap-4 overflow-x-auto">
+      <div ref={ref} class="flex gap-4 overflow-x-auto pb-2">
         <For each={STEP_COLUMNS}>
-          {(col) => (
-            <StepColumn column={col}>
+          {(col, index) => (
+            <StepColumn
+              column={col}
+              position={index() + 1}
+              inlayCount={columnData().get(col.id)?.length ?? 0}
+            >
               <For each={columnData().get(col.id) ?? []}>
                 {(inlay) => <InlayCard inlay={inlay} />}
               </For>
@@ -326,6 +367,6 @@ function RouteComponent() {
           )}
         </For>
       </div>
-    </>
+    </div>
   );
 }

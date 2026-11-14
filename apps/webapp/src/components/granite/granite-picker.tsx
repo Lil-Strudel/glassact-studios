@@ -45,7 +45,7 @@ export function GranitePicker(props: GranitePickerProps) {
           onPick={props.preference.setCustomHex}
         />
       </div>
-      <p class="text-xs text-gray-600">
+      <p class="text-xs text-muted-foreground">
         {graniteChoiceName(props.preference.granite())}
       </p>
     </div>
@@ -54,8 +54,8 @@ export function GranitePicker(props: GranitePickerProps) {
 
 function swatchStateClass(isSelected: boolean) {
   return isSelected
-    ? "border-blue-600 ring-2 ring-blue-500/40"
-    : "border-black/15 hover:border-gray-500";
+    ? "border-gilt ring-2 ring-gilt/35"
+    : "border-came/70 hover:border-input";
 }
 
 function SwatchButton(props: {

@@ -1,6 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { useQuery } from "@tanstack/solid-query";
-import { Component, createMemo, For, Match, Show, Switch } from "solid-js";
+import {
+  Component,
+  createMemo,
+  For,
+  type JSX,
+  Match,
+  Show,
+  Switch,
+} from "solid-js";
 import type {
   DealershipDashboard,
   GET,
@@ -9,7 +17,8 @@ import type {
   ProjectStatus,
   StatusCount,
 } from "@glassact/data";
-import { Badge, Card, CardContent, CardHeader, CardTitle } from "@glassact/ui";
+import { IoAlertCircleOutline } from "solid-icons/io";
+import { PageHeader } from "@glassact/ui";
 import {
   getDealershipDashboardOpts,
   getInternalDashboardOpts,
@@ -82,9 +91,7 @@ const DealershipDashboardView: Component<DealershipDashboardViewProps> = (
 
   return (
     <div>
-      <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-        Welcome back, {props.userName}
-      </h1>
+      <PageHeader eyebrow="Dashboard" title={`Welcome back, ${props.userName}`} />
 
       <Switch>
         <Match when={query.isLoading}>
@@ -113,7 +120,7 @@ const DealershipDashboardBody: Component<DealershipDashboardBodyProps> = (
   );
 
   return (
-    <div class="flex flex-col gap-8 mt-8">
+    <div class="mt-8 flex flex-col gap-10">
       <div class="flex flex-col gap-3">
         <Show when={props.data.pending_approval_count > 0}>
           <AlertBanner
@@ -137,17 +144,17 @@ const DealershipDashboardBody: Component<DealershipDashboardBodyProps> = (
         </Show>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard label="Active Orders" value={activeOrderCount().toString()} />
+      <StatLedger class="sm:grid-cols-3">
+        <StatCard label="Active orders" value={activeOrderCount().toString()} />
         <StatCard
-          label="Pending Approval"
+          label="Pending approval"
           value={props.data.pending_approval_count.toString()}
         />
         <StatCard
-          label="Outstanding Amount"
+          label="Outstanding amount"
           value={formatCents(props.data.outstanding_invoice_amount_cents)}
         />
-      </div>
+      </StatLedger>
 
       <StatusBreakdown counts={props.data.project_status_counts} />
 
@@ -165,9 +172,7 @@ const InternalDashboardView: Component = () => {
 
   return (
     <div>
-      <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-        Operations Overview
-      </h1>
+      <PageHeader eyebrow="GlassAct Studios" title="Operations overview" />
 
       <Switch>
         <Match when={query.isLoading}>
@@ -196,7 +201,7 @@ const InternalDashboardBody: Component<InternalDashboardBodyProps> = (
   );
 
   return (
-    <div class="flex flex-col gap-8 mt-8">
+    <div class="mt-8 flex flex-col gap-10">
       <div class="flex flex-col gap-3">
         <Show when={props.data.pending_proof_count > 0}>
           <AlertBanner
@@ -204,7 +209,7 @@ const InternalDashboardBody: Component<InternalDashboardBodyProps> = (
             text={`${props.data.pending_proof_count} ${
               props.data.pending_proof_count === 1 ? "proof" : "proofs"
             } awaiting design`}
-            action="View Projects"
+            action="View projects"
           />
         </Show>
         <Show when={orderedCount() > 0}>
@@ -218,35 +223,36 @@ const InternalDashboardBody: Component<InternalDashboardBodyProps> = (
         </Show>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <StatLedger class="sm:grid-cols-3">
         <StatCard
-          label="Pending Proofs"
+          label="Pending proofs"
           value={props.data.pending_proof_count.toString()}
         />
         <StatCard
-          label="Outstanding Amount"
+          label="Outstanding amount"
           value={formatCents(props.data.outstanding_invoice_amount_cents)}
         />
-        <StatCard label="New Orders" value={orderedCount().toString()} />
-      </div>
+        <StatCard label="New orders" value={orderedCount().toString()} />
+      </StatLedger>
 
       <Show when={props.data.manufacturing_step_counts.length > 0}>
-        <section>
-          <h2 class="text-xl font-bold tracking-tight text-gray-900">
-            Manufacturing Pipeline
-          </h2>
-          <div class="flex flex-wrap gap-3 mt-4">
+        <section class="flex flex-col gap-4">
+          <h2 class="text-2xl">Manufacturing pipeline</h2>
+          <ol class="flex flex-wrap items-stretch gap-2">
             <For each={props.data.manufacturing_step_counts}>
               {(entry) => (
-                <div class="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2">
-                  <span class="text-sm font-medium text-gray-700 capitalize">
+                <li class="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-2.5">
+                  <span class="lozenge text-gilt" aria-hidden="true" />
+                  <span class="text-sm capitalize text-muted-foreground">
                     {entry.step.replace(/-/g, " ")}
                   </span>
-                  <Badge variant="secondary">{entry.count}</Badge>
-                </div>
+                  <span class="font-display text-lg tabular-nums text-foreground">
+                    {entry.count}
+                  </span>
+                </li>
               )}
             </For>
-          </div>
+          </ol>
         </section>
       </Show>
 
@@ -271,21 +277,28 @@ const AlertBanner: Component<AlertBannerProps> = (props) => {
   return (
     <Link
       to={props.to}
-      class="flex items-center justify-between gap-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 hover:bg-amber-100 transition-colors"
+      class="group flex items-center justify-between gap-4 rounded-lg border border-gilt/45 bg-card px-4 py-3 transition-colors hover:bg-accent/60"
     >
       <div class="flex items-center gap-3">
-        <span
-          aria-hidden="true"
-          class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-200 text-amber-800 font-bold"
-        >
-          !
-        </span>
-        <span class="text-sm font-medium text-amber-900">{props.text}</span>
+        <span class="lozenge size-2 text-gilt" aria-hidden="true" />
+        <span class="text-sm font-medium text-foreground">{props.text}</span>
       </div>
-      <span class="text-sm font-semibold text-amber-900">
-        {props.action} →
+      <span class="text-sm font-medium text-crimson-light group-hover:underline">
+        {props.action} <span aria-hidden="true">&rarr;</span>
       </span>
     </Link>
+  );
+};
+
+const StatLedger: Component<{ class?: string; children: JSX.Element }> = (
+  props,
+) => {
+  return (
+    <div
+      class={`grid grid-cols-1 divide-y divide-border overflow-hidden rounded-lg border border-border bg-card sm:divide-x sm:divide-y-0 ${props.class ?? ""}`}
+    >
+      {props.children}
+    </div>
   );
 };
 
@@ -297,19 +310,15 @@ interface StatCardProps {
 
 const StatCard: Component<StatCardProps> = (props) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle class="text-sm font-medium text-gray-500">
-          {props.label}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p class="text-2xl font-bold text-gray-900">{props.value}</p>
-        <Show when={props.detail}>
-          <p class="text-xs text-gray-500 mt-1">{props.detail}</p>
-        </Show>
-      </CardContent>
-    </Card>
+    <div class="flex flex-col gap-2 px-5 py-5">
+      <p class="eyebrow">{props.label}</p>
+      <p class="font-display text-3xl tabular-nums text-foreground">
+        {props.value}
+      </p>
+      <Show when={props.detail}>
+        <p class="text-xs text-faint">{props.detail}</p>
+      </Show>
+    </div>
   );
 };
 
@@ -319,22 +328,18 @@ interface StatusBreakdownProps {
 
 const StatusBreakdown: Component<StatusBreakdownProps> = (props) => {
   return (
-    <section>
-      <h2 class="text-xl font-bold tracking-tight text-gray-900">
-        Project Status Breakdown
-      </h2>
+    <section class="flex flex-col gap-4">
+      <h2 class="text-2xl">Projects by status</h2>
       <Show
         when={props.counts.length > 0}
-        fallback={
-          <p class="text-sm text-gray-500 mt-2">No projects to display.</p>
-        }
+        fallback={<p class="text-sm text-faint">No projects to display.</p>}
       >
-        <div class="flex flex-wrap gap-2 mt-4">
+        <div class="flex flex-wrap gap-2">
           <For each={props.counts}>
             {(entry) => (
-              <div class="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+              <div class="flex items-center gap-3 rounded-lg border border-border bg-card py-2 pl-2 pr-4">
                 <ProjectStatusBadge status={entry.status as ProjectStatus} />
-                <span class="text-sm font-semibold text-gray-900">
+                <span class="font-display text-lg tabular-nums text-foreground">
                   {entry.count}
                 </span>
               </div>
@@ -354,17 +359,21 @@ interface RecentProjectsListProps {
 
 const RecentProjectsList: Component<RecentProjectsListProps> = (props) => {
   return (
-    <section>
-      <h2 class="text-xl font-bold tracking-tight text-gray-900">
-        {props.title}
-      </h2>
+    <section class="flex flex-col gap-4">
+      <div class="flex items-baseline justify-between gap-4">
+        <h2 class="text-2xl">{props.title}</h2>
+        <Link
+          to="/projects"
+          class="text-sm text-crimson-light hover:underline"
+        >
+          All projects <span aria-hidden="true">&rarr;</span>
+        </Link>
+      </div>
       <Show
         when={props.projects.length > 0}
-        fallback={
-          <p class="text-sm text-gray-500 mt-2">No recent projects.</p>
-        }
+        fallback={<p class="text-sm text-faint">No recent projects.</p>}
       >
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <For each={props.projects}>
             {(project) => (
               <RecentProjectCard
@@ -394,35 +403,36 @@ const RecentProjectCard: Component<RecentProjectCardProps> = (props) => {
     <Link
       to="/projects/$id"
       params={{ id: props.project.uuid }}
-      class="block hover:shadow-md transition-shadow"
+      class="group flex flex-col gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:border-input hover:bg-accent/40"
     >
-      <Card>
-        <CardHeader>
-          <CardTitle class="text-base truncate">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="truncate font-display text-lg text-foreground group-hover:text-crimson-light">
             {props.project.name}
-          </CardTitle>
-          <div class="flex items-center gap-2 flex-wrap mt-2">
-            <ProjectStatusBadge status={props.project.status} />
-          </div>
-          <p class="text-xs text-gray-500 mt-2">{displayDate()}</p>
-        </CardHeader>
-      </Card>
+          </p>
+          <Show when={props.project.internal_reference}>
+            <p class="truncate text-xs tabular-nums text-faint">
+              {props.project.internal_reference}
+            </p>
+          </Show>
+        </div>
+        <ProjectStatusBadge status={props.project.status} class="shrink-0" />
+      </div>
+      <p class="text-xs tabular-nums text-faint">{displayDate()}</p>
     </Link>
   );
 };
 
 const DashboardSkeleton: Component = () => {
   return (
-    <div class="flex flex-col gap-8 mt-8">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="mt-8 flex flex-col gap-8">
+      <div class="h-28 animate-pulse rounded-lg border border-border bg-card" />
+      <div class="h-6 w-48 animate-pulse rounded bg-muted" />
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <For each={[1, 2, 3]}>
-          {() => <div class="h-28 bg-gray-200 rounded-xl animate-pulse" />}
-        </For>
-      </div>
-      <div class="h-6 w-48 bg-gray-200 rounded animate-pulse" />
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <For each={[1, 2, 3]}>
-          {() => <div class="h-32 bg-gray-200 rounded-xl animate-pulse" />}
+          {() => (
+            <div class="h-24 animate-pulse rounded-lg border border-border bg-card" />
+          )}
         </For>
       </div>
     </div>
@@ -435,9 +445,12 @@ interface DashboardErrorProps {
 
 const DashboardError: Component<DashboardErrorProps> = (props) => {
   return (
-    <div class="mt-8 border-2 border-dashed border-red-300 rounded-xl p-8 text-center">
-      <p class="text-red-600 font-medium">Failed to load dashboard</p>
-      <p class="text-gray-500 text-sm mt-1">
+    <div class="mt-8 flex flex-col items-center gap-2 rounded-lg border border-dashed border-error-foreground/40 bg-error p-8 text-center">
+      <p class="flex items-center gap-2 font-medium text-error-foreground">
+        <IoAlertCircleOutline size={18} aria-hidden="true" />
+        Couldn't load the dashboard
+      </p>
+      <p class="text-sm text-muted-foreground">
         {props.message ?? "An unexpected error occurred."}
       </p>
     </div>

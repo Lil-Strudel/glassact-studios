@@ -137,9 +137,9 @@ export function StoneDesigner(props: StoneDesignerProps) {
           resolveBackground={resolveBackground}
           editor={props.isEditable ? editor : undefined}
           isZoomable
-          class="min-h-[420px] flex-1 rounded-lg border border-gray-200 bg-gray-50"
+          class="min-h-[420px] flex-1 rounded-lg border border-border bg-muted"
         />
-        <p class="text-xs text-gray-500">
+        <p class="text-xs text-muted-foreground">
           Drawn to scale: {editor.draft.width}″ × {editor.draft.height}″.
           <Show when={props.isEditable}>
             {" "}Drag to move, use the round handle to rotate, Shift to snap or
@@ -148,9 +148,9 @@ export function StoneDesigner(props: StoneDesignerProps) {
         </p>
       </div>
 
-      <aside class="w-full flex-shrink-0 overflow-y-auto rounded-lg border border-gray-200 bg-white lg:w-96">
+      <aside class="w-full flex-shrink-0 overflow-y-auto rounded-lg border border-border bg-card lg:w-96">
         <Tabs value={tab()} onChange={(value) => setTab(value as PanelTab)}>
-          <TabsList class="sticky top-0 z-10 w-full bg-white">
+          <TabsList class="sticky top-0 z-10 w-full bg-card">
             <Show when={props.isEditable}>
               <TabsTrigger value="stone">Stone</TabsTrigger>
               <TabsTrigger value="inlays">Inlays</TabsTrigger>

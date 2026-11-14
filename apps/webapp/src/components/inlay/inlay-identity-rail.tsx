@@ -77,11 +77,11 @@ export function InlayIdentityRail(props: InlayIdentityRailProps) {
   );
 
   return (
-    <div class="space-y-4 rounded-lg border p-4">
+    <div class="space-y-4 rounded-lg border border-border bg-card p-4">
       <Show
         when={previewUrl()}
         fallback={
-          <div class="flex h-40 items-center justify-center rounded-lg bg-gray-100 text-sm text-gray-400">
+          <div class="came-frame flex h-48 items-center justify-center rounded-arch bg-came text-sm text-faint">
             No preview
           </div>
         }
@@ -94,7 +94,7 @@ export function InlayIdentityRail(props: InlayIdentityRailProps) {
               transform: mirrorCssTransform(props.inlay),
             },
           ]}
-          triggerClass="block w-full overflow-hidden rounded-lg border bg-gray-50 p-2"
+          triggerClass="came-frame block w-full overflow-hidden rounded-arch bg-plaque px-4 pb-4 pt-8"
         >
           <img
             src={previewUrl()}
@@ -106,16 +106,16 @@ export function InlayIdentityRail(props: InlayIdentityRailProps) {
       </Show>
 
       <div class="space-y-2">
-        <h1 class="text-xl font-semibold text-gray-900">{props.inlay.name}</h1>
+        <h1 class="text-3xl text-foreground">{props.inlay.name}</h1>
         <div class="flex flex-wrap items-center gap-2">
-          <Badge variant={inlayPhaseBadgeVariant(props.phase)}>
+          <Badge variant={inlayPhaseBadgeVariant(props.phase)} lozenge>
             {INLAY_PHASE_LABELS[props.phase]}
           </Badge>
           <Badge variant="outline">
             {props.inlay.type === "catalog" ? "Catalog" : "Custom"}
           </Badge>
           <Show when={props.inlay.is_customized}>
-            <Badge variant="warning">Customized</Badge>
+            <Badge variant="outline">Customized</Badge>
           </Show>
           <MirrorBadge inlay={props.inlay} />
         </div>
@@ -123,34 +123,34 @@ export function InlayIdentityRail(props: InlayIdentityRailProps) {
 
       <Show when={props.inlay.catalog_item}>
         {(catalogItem) => (
-          <div class="space-y-1 border-t pt-3">
-            <code class="inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-xs">
+          <div class="space-y-1 border-t border-border pt-3">
+            <code class="inline-block rounded bg-accent px-2 py-0.5 font-mono text-xs tracking-wide text-muted-foreground">
               {catalogItem().catalog_code}
             </code>
-            <p class="text-sm text-gray-800">{catalogItem().name}</p>
-            <p class="text-xs text-gray-500">{catalogItem().category}</p>
+            <p class="text-sm text-foreground">{catalogItem().name}</p>
+            <p class="text-xs text-faint">{catalogItem().category}</p>
           </div>
         )}
       </Show>
 
-      <div class="space-y-1 border-t pt-3 text-sm">
+      <div class="space-y-1 border-t border-border pt-3 text-sm">
         <Show when={dimensions()}>
           {(dims) => (
-            <p class="text-gray-800">
+            <p class="tabular-nums text-muted-foreground">
               {dims().width}" &times; {dims().height}"
             </p>
           )}
         </Show>
         <div class="flex items-baseline justify-between gap-2">
-          <span class="font-semibold text-gray-900">
+          <span class="font-display text-2xl tabular-nums text-foreground">
             {priceCents() == null ? "—" : formatMoney(priceCents()! / 100)}
           </span>
           <Show when={priceFormula()}>
-            <span class="text-xs text-gray-500">{priceFormula()}</span>
+            <span class="text-xs tabular-nums text-faint">{priceFormula()}</span>
           </Show>
         </div>
         <Show when={snapshot()}>
-          <p class="text-xs text-gray-400">
+          <p class="text-xs text-faint">
             Locked in at order time — invoices bill from this.
           </p>
         </Show>
@@ -159,7 +159,7 @@ export function InlayIdentityRail(props: InlayIdentityRailProps) {
 
       <Show when={props.inlay.is_customized && props.inlay.catalog_item}>
         {(catalogItem) => (
-          <div class="border-t pt-3">
+          <div class="border-t border-border pt-3">
             <InlayGlassSummary
               manifest={catalogItem().manifest}
               colorOverrides={colorOverrides()}

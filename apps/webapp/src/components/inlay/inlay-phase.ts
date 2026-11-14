@@ -1,4 +1,5 @@
 import type { InlayDetail, ProjectStatus } from "@glassact/data";
+import type { BadgeVariant } from "@glassact/ui";
 import { isManufacturingStatus } from "../../utils/project-status";
 
 // Where an inlay is in its life. This — not proof state — decides what the inlay
@@ -30,25 +31,25 @@ export function deriveInlayPhase(
 }
 
 export const INLAY_PHASE_LABELS: Record<InlayPhase, string> = {
-  configuring: "Awaiting Proof",
-  "awaiting-approval": "Awaiting Approval",
-  ready: "Ready to Order",
-  "in-production": "In Production",
+  configuring: "Awaiting proof",
+  "awaiting-approval": "Awaiting approval",
+  ready: "Ready to order",
+  "in-production": "In production",
   complete: "Complete",
   cancelled: "Cancelled",
 };
 
-export function inlayPhaseBadgeVariant(
-  phase: InlayPhase,
-): "default" | "warning" | "outline" | "secondary" {
+export function inlayPhaseBadgeVariant(phase: InlayPhase): BadgeVariant {
   switch (phase) {
     case "ready":
     case "complete":
-      return "default";
+      return "success";
     case "awaiting-approval":
-      return "warning";
+      return "gilt";
     case "in-production":
-      return "secondary";
+      return "production";
+    case "cancelled":
+      return "cancelled";
     default:
       return "outline";
   }

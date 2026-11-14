@@ -185,7 +185,7 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
           panZoom.setViewport(el);
           setViewport(el);
         }}
-        class="gac-canvas relative flex-1 overflow-hidden rounded-lg border border-gray-200"
+        class="gac-canvas relative flex-1 overflow-hidden rounded-lg border border-border"
         classList={{ "gac-grout-interactive": props.groutSelectable }}
         style={
           props.granite
@@ -219,7 +219,7 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
         )}
       </Show>
 
-      <div class="pointer-events-none absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-gray-200 bg-white/90 px-2 py-1 shadow-sm">
+      <div class="pointer-events-none absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border bg-card/90 px-2 py-1 shadow-sm">
         <Button
           variant="ghost"
           size="icon"
@@ -229,7 +229,7 @@ export function CustomizerCanvas(props: CustomizerCanvasProps) {
         >
           −
         </Button>
-        <span class="w-12 text-center text-xs tabular-nums text-gray-500">
+        <span class="w-12 text-center text-xs tabular-nums text-muted-foreground">
           {Math.round(panZoom.scale() * 100)}%
         </span>
         <Button

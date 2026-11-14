@@ -8,7 +8,8 @@ import {
   type SupportArticle,
   type SupportCategory,
 } from "@glassact/data";
-import { Card, CardContent } from "@glassact/ui";
+import { Alert, buttonVariants, Card, CardContent } from "@glassact/ui";
+import { IoAlertCircleOutline } from "solid-icons/io";
 import {
   getSupportArticlesOpts,
   getSupportPriceGroupsOpts,
@@ -19,6 +20,8 @@ import { Markdown } from "../../components/markdown";
 import { YoutubeEmbed } from "../../components/youtube-embed";
 import { ArticleFormDialog } from "../../components/support/article-form-dialog";
 import { ArticleAdminControls } from "../../components/support/article-admin-controls";
+import { PageHeader } from "@glassact/ui";
+import { EmptyState } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/support")({
   component: RouteComponent,
@@ -84,36 +87,36 @@ function RouteComponent() {
   });
 
   return (
-    <div class="mx-auto max-w-4xl px-4 py-8">
-      <div class="mb-8 flex items-start justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-semibold text-foreground">Support</h1>
-          <p class="mt-1 text-sm text-muted-foreground">
-            Guides, tips, and answers for ordering and installing your inlays.
-          </p>
-        </div>
-        <Can permission={MANAGE_SUPPORT}>
-          <ArticleFormDialog triggerClass="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
-            + Add Article
-          </ArticleFormDialog>
-        </Can>
-      </div>
+    <div class="mx-auto flex max-w-4xl flex-col gap-10">
+      <PageHeader
+        eyebrow="Help"
+        title="Support"
+        description="Guides, tips, and answers for ordering and installing your inlays."
+        actions={
+          <Can permission={MANAGE_SUPPORT}>
+            <ArticleFormDialog triggerClass={buttonVariants()}>
+              + Add Article
+            </ArticleFormDialog>
+          </Can>
+        }
+      />
 
       <Switch>
         <Match when={articlesQuery.isLoading}>
           <div class="space-y-4">
             <For each={[0, 1, 2]}>
-              {() => <div class="h-32 animate-pulse rounded-lg bg-muted" />}
+              {() => <div class="h-32 animate-pulse rounded-lg bg-card" />}
             </For>
           </div>
         </Match>
         <Match when={articlesQuery.isError}>
-          <div class="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
-            Failed to load support content. Please try again later.
-          </div>
+          <Alert variant="destructive">
+            <IoAlertCircleOutline size={18} />
+            <p>Failed to load support content. Please try again later.</p>
+          </Alert>
         </Match>
         <Match when={articlesQuery.isSuccess}>
-          <div class="space-y-10">
+          <div class="space-y-12">
             <For each={SECTIONS}>
               {(section) => {
                 const articles = () =>
@@ -126,10 +129,8 @@ function RouteComponent() {
                 return (
                   <Show when={hasContent()}>
                     <section>
-                      <div class="mb-4 border-b pb-2">
-                        <h2 class="text-lg font-semibold text-foreground">
-                          {section.title}
-                        </h2>
+                      <div class="mb-5 space-y-1 border-b border-border pb-3">
+                        <h2 class="text-2xl">{section.title}</h2>
                         <p class="text-sm text-muted-foreground">
                           {section.description}
                         </p>
@@ -158,9 +159,10 @@ function RouteComponent() {
                 (priceGroupsQuery.data?.length ?? 0) === 0
               }
             >
-              <div class="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-                No support content has been added yet.
-              </div>
+              <EmptyState
+                class="rounded-lg border border-dashed border-input"
+                title="No support content has been added yet."
+              />
             </Show>
           </div>
         </Match>
@@ -178,9 +180,7 @@ function ArticleCard(props: ArticleCardProps) {
     <Card>
       <CardContent class="space-y-3 p-5">
         <div class="flex items-start justify-between gap-4">
-          <h3 class="text-base font-semibold text-foreground">
-            {props.article.title}
-          </h3>
+          <h3 class="text-xl">{props.article.title}</h3>
           <Can permission={MANAGE_SUPPORT}>
             <ArticleAdminControls article={props.article} />
           </Can>
@@ -207,26 +207,24 @@ function PriceGroupsCard(props: PriceGroupsCardProps) {
     <Show when={props.priceGroups.length > 0}>
       <Card>
         <CardContent class="p-5">
-          <h3 class="mb-3 text-base font-semibold text-foreground">
-            Price Groups
-          </h3>
+          <h3 class="mb-3 text-xl">Price Groups</h3>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
-                <tr class="border-b text-left text-muted-foreground">
-                  <th class="py-2 pr-4 font-medium">Group</th>
-                  <th class="py-2 pr-4 font-medium">Base Price</th>
-                  <th class="py-2 font-medium">Description</th>
+                <tr class="border-b border-border text-left">
+                  <th class="eyebrow py-2 pr-4">Group</th>
+                  <th class="eyebrow py-2 pr-6 text-right">Base Price</th>
+                  <th class="eyebrow py-2">Description</th>
                 </tr>
               </thead>
               <tbody>
                 <For each={props.priceGroups}>
                   {(group) => (
-                    <tr class="border-b last:border-0">
+                    <tr class="border-b border-border last:border-0">
                       <td class="py-2 pr-4 font-medium text-foreground">
                         {group.name}
                       </td>
-                      <td class="py-2 pr-4 text-foreground">
+                      <td class="py-2 pr-6 text-right tabular-nums text-foreground">
                         {formatCents(group.base_price_cents)}
                       </td>
                       <td class="py-2 text-muted-foreground">

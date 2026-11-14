@@ -51,7 +51,7 @@ export function InlayGlassSummary(props: InlayGlassSummaryProps) {
   return (
     <Show when={groupRows().length > 0}>
       <div class="space-y-2">
-        <p class="text-xs font-medium uppercase tracking-wide text-gray-500">
+        <p class="eyebrow">
           Glass
         </p>
         <ul class="space-y-1.5">
@@ -59,21 +59,21 @@ export function InlayGlassSummary(props: InlayGlassSummaryProps) {
             {(row) => (
               <li class="flex items-center gap-2">
                 <span
-                  class="h-5 w-5 shrink-0 rounded border border-black/10"
+                  class="h-5 w-5 shrink-0 rounded border border-came/60"
                   style={{
                     "background-color": row.glass?.hex ?? row.fallbackHex,
                   }}
                 />
-                <span class="min-w-0 flex-1 truncate text-sm text-gray-800">
+                <span class="min-w-0 flex-1 truncate text-sm text-foreground">
                   {row.glass?.name ?? "Original color"}
                 </span>
-                <span class="shrink-0 text-xs text-gray-500">
+                <span class="shrink-0 text-xs tabular-nums text-faint">
                   {row.count} pc{row.count === 1 ? "" : "s"}
                 </span>
                 <Show when={row.customCount > 0}>
                   <Badge
-                    variant="warning"
-                    class="shrink-0 rounded-full px-1.5 py-0.5 text-[10px]"
+                    variant="gilt"
+                    class="shrink-0 px-1.5 py-0 text-[10px]"
                   >
                     {row.customCount} custom
                   </Badge>
@@ -83,15 +83,15 @@ export function InlayGlassSummary(props: InlayGlassSummaryProps) {
           </For>
           <Show when={grout()}>
             {(groutColor) => (
-              <li class="flex items-center gap-2 border-t pt-1.5">
+              <li class="flex items-center gap-2 border-t border-border pt-1.5">
                 <span
-                  class="h-5 w-5 shrink-0 rounded border border-black/10"
+                  class="h-5 w-5 shrink-0 rounded border border-came/60"
                   style={{ "background-color": groutColor().hex }}
                 />
-                <span class="min-w-0 flex-1 truncate text-sm text-gray-800">
+                <span class="min-w-0 flex-1 truncate text-sm text-foreground">
                   {groutColor().name}
                 </span>
-                <span class="shrink-0 text-xs text-gray-500">grout</span>
+                <span class="shrink-0 text-xs tabular-nums text-faint">grout</span>
               </li>
             )}
           </Show>

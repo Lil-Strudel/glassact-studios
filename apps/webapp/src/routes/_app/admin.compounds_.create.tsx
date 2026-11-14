@@ -5,6 +5,7 @@ import { showToast } from "@glassact/ui";
 import { postCompoundOpts } from "../../queries/compound";
 import { CompoundEditor } from "../../components/admin/compound-editor";
 import { isApiError } from "../../utils/is-api-error";
+import { PageHeader } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/admin/compounds_/create")({
   component: RouteComponent,
@@ -35,7 +36,7 @@ function RouteComponent() {
 
   return (
     <div class="flex flex-col gap-6">
-      <h1 class="text-2xl font-bold text-gray-900">New compound</h1>
+      <PageHeader eyebrow="Compounds" title="New compound" />
       <CompoundEditor isSaving={postCompound.isPending} onSave={save} />
     </div>
   );

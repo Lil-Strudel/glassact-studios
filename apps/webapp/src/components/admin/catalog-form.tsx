@@ -182,7 +182,7 @@ export function CatalogForm(props: CatalogFormProps) {
         e.stopPropagation();
         form.handleSubmit();
       }}
-      class="flex flex-col gap-6"
+      class="flex flex-col gap-6 rounded-lg border border-border bg-card p-6"
     >
       <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
         <form.Field
@@ -240,11 +240,9 @@ export function CatalogForm(props: CatalogFormProps) {
         />
       </Show>
 
-      <div class="border-t pt-4">
-        <h3 class="mb-1 text-sm font-medium text-gray-900">
-          Minimum size (in)
-        </h3>
-        <p class="mb-4 text-xs text-gray-500">
+      <div class="border-t border-border pt-5">
+        <h3 class="eyebrow mb-1">Minimum size (in)</h3>
+        <p class="mb-4 text-xs text-faint">
           Defaults to the artwork's default size. Lower it only when the design
           can be ordered smaller.
         </p>
@@ -312,18 +310,20 @@ export function CatalogForm(props: CatalogFormProps) {
               </Alert>
             </Show>
 
-            <Button
-              type="submit"
-              disabled={
-                props.isLoading ||
-                artwork() == null ||
-                !manifestComplete() ||
-                exceedsDefault(values().min_width, values().min_height) ||
-                uploadMutation.isPending
-              }
-            >
-              {props.isLoading ? "Saving..." : "Save"}
-            </Button>
+            <div class="flex justify-end border-t border-border pt-5">
+              <Button
+                type="submit"
+                disabled={
+                  props.isLoading ||
+                  artwork() == null ||
+                  !manifestComplete() ||
+                  exceedsDefault(values().min_width, values().min_height) ||
+                  uploadMutation.isPending
+                }
+              >
+                {props.isLoading ? "Saving..." : "Save"}
+              </Button>
+            </div>
           </>
         )}
       </form.Subscribe>

@@ -73,7 +73,7 @@ export function ControlPanel(props: ControlPanelProps) {
   return (
     <div class="flex flex-col gap-5">
       <div>
-        <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-500">
+        <p class="eyebrow mb-1.5">
           Edit mode
         </p>
         <Tabs
@@ -81,21 +81,21 @@ export function ControlPanel(props: ControlPanelProps) {
           onChange={(v) => props.onRequestMode(v as "group" | "piece")}
         >
           <TabsList>
-            <TabsTrigger value="group" class="data-[selected]:text-primary-foreground">Color groups</TabsTrigger>
-            <TabsTrigger value="piece" class="data-[selected]:text-primary-foreground">Individual pieces</TabsTrigger>
-            <TabsIndicator class="bg-primary" />
+            <TabsTrigger value="group">Color groups</TabsTrigger>
+            <TabsTrigger value="piece">Individual pieces</TabsTrigger>
+            <TabsIndicator />
           </TabsList>
         </Tabs>
-        <p class="mt-1.5 text-xs text-gray-500">
+        <p class="mt-1.5 text-xs text-faint">
           {props.mode === "group"
             ? "Click a piece or a group below to recolor the whole color."
             : "Click a single piece to recolor just that piece."}
         </p>
       </div>
 
-      <div class="rounded-lg border border-gray-200 p-3">
+      <div class="rounded-lg border border-border bg-card p-3">
         <div class="mb-2 flex items-center justify-between">
-          <p class="text-sm font-semibold text-gray-900">
+          <p class="font-display text-base text-foreground">
             {selectionLabel() ?? "Choose glass color"}
           </p>
           <Show when={props.selection?.type === "piece"}>
@@ -116,7 +116,7 @@ export function ControlPanel(props: ControlPanelProps) {
         <Show
           when={props.selection}
           fallback={
-            <p class="py-3 text-center text-sm text-gray-400">
+            <p class="py-3 text-center text-sm text-faint">
               Select a color group or click a piece to recolor it.
             </p>
           }
@@ -131,7 +131,7 @@ export function ControlPanel(props: ControlPanelProps) {
       </div>
 
       <div>
-        <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-500">
+        <p class="eyebrow mb-1.5">
           Color groups
         </p>
         <div class="flex flex-col gap-1">
@@ -157,25 +157,25 @@ export function ControlPanel(props: ControlPanelProps) {
                   onMouseLeave={() => props.onRegionHover(null)}
                   class="flex items-center gap-2 rounded-md border p-1.5 text-left transition"
                   classList={{
-                    "border-blue-600 bg-blue-50": isSelected(),
-                    "border-gray-200 hover:border-gray-400": !isSelected(),
+                    "border-gilt bg-accent": isSelected(),
+                    "border-border hover:border-input": !isSelected(),
                   }}
                 >
                   <span class="flex shrink-0 items-center">
                     <span
-                      class="h-6 w-6 rounded border border-black/10"
+                      class="h-6 w-6 rounded border border-came/60"
                       style={{
                         "background-color":
                           glass()?.hex ?? region.source_hex ?? "#cccccc",
                       }}
                     />
                   </span>
-                  <span class="min-w-0 flex-1 text-[11px] text-gray-500">
+                  <span class="min-w-0 flex-1 text-[11px] text-muted-foreground">
                     {region.count} piece
                     {region.count === 1 ? "" : "s"}
                   </span>
                   <Show when={custom() > 0}>
-                    <Badge variant="warning" class="shrink-0 rounded-full px-1.5 py-0.5 text-[10px]">
+                    <Badge variant="gilt" class="shrink-0 px-1.5 py-0 text-[10px]">
                       {custom()} custom
                     </Badge>
                   </Show>
@@ -187,7 +187,7 @@ export function ControlPanel(props: ControlPanelProps) {
       </div>
 
       <div>
-        <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-500">
+        <p class="eyebrow mb-1.5">
           Grout
         </p>
         <SwatchPicker
@@ -201,12 +201,14 @@ export function ControlPanel(props: ControlPanelProps) {
       </div>
 
       <div>
-        <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-500">
+        <p class="eyebrow mb-1.5">
           Size
         </p>
         <div class="flex items-end gap-3">
-          <NumberFieldRoot class="flex flex-col gap-1 text-xs text-gray-600">
-            <NumberFieldLabel>Width (in)</NumberFieldLabel>
+          <NumberFieldRoot class="flex flex-col gap-1 text-xs text-muted-foreground">
+            <NumberFieldLabel class="text-xs font-normal text-muted-foreground">
+              Width (in)
+            </NumberFieldLabel>
             <NumberField
               decimalPlaces={1}
               class="w-24"
@@ -214,15 +216,15 @@ export function ControlPanel(props: ControlPanelProps) {
               onChange={(v) => props.onWidthChange(Number(v))}
             />
           </NumberFieldRoot>
-          <span class="pb-1.5 text-gray-400">×</span>
-          <div class="flex flex-col gap-1 text-xs text-gray-600">
+          <span class="pb-1.5 text-faint">×</span>
+          <div class="flex flex-col gap-1 text-xs text-muted-foreground">
             Height (in)
-            <div class="w-24 rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-sm text-gray-500">
+            <div class="flex h-9 w-24 items-center rounded-md border border-border bg-muted px-3 text-sm tabular-nums text-muted-foreground">
               {props.height.toFixed(1)}
             </div>
           </div>
         </div>
-        <p class="mt-1 text-[11px] text-gray-400">
+        <p class="mt-1 text-[11px] text-faint">
           Aspect ratio locked. Minimum {props.minWidth}" × {props.minHeight}".
         </p>
       </div>

@@ -559,14 +559,14 @@ export function StoneCanvas(props: StoneCanvasProps) {
       </div>
 
       <Show when={props.isZoomable}>
-        <div class="absolute bottom-3 right-3 flex overflow-hidden rounded-md border border-gray-300 bg-white/90 text-sm shadow-sm">
-          <button type="button" class="px-3 py-1 hover:bg-gray-100" onClick={panZoom.zoomOut} aria-label="Zoom out">
+        <div class="absolute bottom-3 right-3 flex overflow-hidden rounded-md border border-input bg-card/90 text-sm shadow-sm">
+          <button type="button" class="px-3 py-1 hover:bg-accent" onClick={panZoom.zoomOut} aria-label="Zoom out">
             −
           </button>
-          <button type="button" class="border-x border-gray-300 px-3 py-1 hover:bg-gray-100" onClick={panZoom.reset}>
+          <button type="button" class="border-x border-input px-3 py-1 hover:bg-accent" onClick={panZoom.reset}>
             Fit
           </button>
-          <button type="button" class="px-3 py-1 hover:bg-gray-100" onClick={panZoom.zoomIn} aria-label="Zoom in">
+          <button type="button" class="px-3 py-1 hover:bg-accent" onClick={panZoom.zoomIn} aria-label="Zoom in">
             +
           </button>
         </div>

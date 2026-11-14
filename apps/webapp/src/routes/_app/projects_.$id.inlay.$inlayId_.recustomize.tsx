@@ -155,7 +155,7 @@ function RouteComponent() {
 
       <Switch>
         <Match when={isLoading()}>
-          <div class="flex h-[60vh] items-center justify-center text-gray-500">
+          <div class="flex h-[60vh] items-center justify-center text-muted-foreground">
             Loading customizer…
           </div>
         </Match>
@@ -211,8 +211,8 @@ function Notice(props: { title: string; body: string }) {
   return (
     <Card class="mx-auto mt-12 max-w-md text-center">
       <CardContent class="pt-6">
-        <h2 class="text-lg font-semibold text-gray-900">{props.title}</h2>
-        <p class="mt-2 text-sm text-gray-600">{props.body}</p>
+        <h2 class="text-lg text-foreground">{props.title}</h2>
+        <p class="mt-2 text-sm text-muted-foreground">{props.body}</p>
       </CardContent>
     </Card>
   );

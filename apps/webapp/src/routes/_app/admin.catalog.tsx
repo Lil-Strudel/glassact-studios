@@ -35,6 +35,8 @@ import {
   adminCatalogSearchSchema,
   type AdminCatalogSearchInput,
 } from "../../utils/list-search";
+import { PageHeader } from "@glassact/ui";
+import { EmptyState } from "@glassact/ui";
 
 const PAGE_SIZE = 50;
 
@@ -75,7 +77,7 @@ const defaultColumns: ColumnDef<GET<CatalogItem>>[] = [
             as={Link}
             to={`/admin/catalog/${props.row.original.uuid}`}
           >
-            <IoPencilOutline size={20} />
+            <IoPencilOutline size={18} />
           </Button>
           <Button
             variant="ghost"
@@ -95,7 +97,7 @@ const defaultColumns: ColumnDef<GET<CatalogItem>>[] = [
             }}
             disabled={deleteCatalog.isPending}
           >
-            <IoTrashOutline size={20} />
+            <IoTrashOutline size={18} />
           </Button>
         </div>
       );
@@ -105,7 +107,7 @@ const defaultColumns: ColumnDef<GET<CatalogItem>>[] = [
     accessorKey: "catalog_code",
     header: "Code",
     cell: (info) => (
-      <code class="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
+      <code class="whitespace-nowrap rounded border border-border bg-secondary px-2 py-0.5 font-mono text-xs tabular-nums text-muted-foreground">
         {info.getValue() as string}
       </code>
     ),
@@ -113,19 +115,31 @@ const defaultColumns: ColumnDef<GET<CatalogItem>>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    cell: (info) => info.getValue() as string,
+    cell: (info) => (
+      <span class="font-medium text-foreground">
+        {info.getValue() as string}
+      </span>
+    ),
   },
   {
     accessorKey: "category",
     header: "Category",
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <span class="capitalize text-muted-foreground">
+        {info.getValue() as string}
+      </span>
+    ),
   },
   {
     accessorFn: (row) =>
       `${row.default_width}x${row.default_height} (${row.min_width}-${row.default_width} x ${row.min_height}-${row.default_height})`,
     id: "dimensions",
     header: "Dimensions",
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <span class="whitespace-nowrap tabular-nums text-muted-foreground">
+        {info.getValue() as string}
+      </span>
+    ),
   },
   {
     accessorKey: "display_order",
@@ -135,9 +149,11 @@ const defaultColumns: ColumnDef<GET<CatalogItem>>[] = [
       return (
         <Show
           when={rank != null}
-          fallback={<span class="text-xs text-gray-400">Unranked</span>}
+          fallback={<span class="text-xs text-faint">Unranked</span>}
         >
-          <Badge variant="default">#{rank}</Badge>
+          <Badge variant="gilt" class="tabular-nums">
+            #{rank}
+          </Badge>
         </Show>
       );
     },
@@ -148,7 +164,7 @@ const defaultColumns: ColumnDef<GET<CatalogItem>>[] = [
     cell: (info) => {
       const isActive = info.getValue() as boolean;
       return (
-        <Badge variant={isActive ? "default" : "secondary"}>
+        <Badge variant={isActive ? "success" : "outline"} lozenge>
           {isActive ? "Yes" : "No"}
         </Badge>
       );
@@ -206,40 +222,43 @@ function RouteComponent() {
   );
 
   return (
-    <div>
-      <div class="flex items-center justify-between py-4 gap-4">
-        <div class="flex items-center gap-4">
-          <TextFieldRoot value={searchText()} onChange={setSearchText}>
-            <TextField
-              placeholder="Search by code or name..."
-              class="max-w-sm"
-            />
-          </TextFieldRoot>
+    <div class="space-y-6">
+      <PageHeader
+        eyebrow="Administration"
+        title="Catalog"
+        actions={
+          <>
+            <Button variant="outline" as={Link} to="/admin/catalog/order">
+              Edit best sellers
+            </Button>
+            <Button as={Link} to="/admin/catalog/create">
+              Create new catalog item
+            </Button>
+          </>
+        }
+      />
+      <div class="flex flex-wrap items-center gap-4">
+        <TextFieldRoot value={searchText()} onChange={setSearchText}>
+          <TextField placeholder="Search by code or name..." class="max-w-sm" />
+        </TextFieldRoot>
 
-          <label class="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={search().inactive}
-              onChange={(e) =>
-                updateSearch({ inactive: e.currentTarget.checked, page: 1 })
-              }
-              class="rounded border-gray-300"
-            />
-            Include inactive
-          </label>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <Button variant="outline" as={Link} to="/admin/catalog/order">
-            Edit best sellers
-          </Button>
-          <Button as={Link} to="/admin/catalog/create">
-            Create new catalog item
-          </Button>
-        </div>
+        <label class="flex items-center gap-2 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={search().inactive}
+            onChange={(e) =>
+              updateSearch({ inactive: e.currentTarget.checked, page: 1 })
+            }
+            class="size-4 rounded border-input accent-primary"
+          />
+          Include inactive
+        </label>
       </div>
 
-      <div ref={tableTop} class="rounded-md border scroll-mt-6">
+      <div
+        ref={tableTop}
+        class="scroll-mt-6 overflow-hidden rounded-lg border border-border bg-card"
+      >
         <Table>
           <TableHeader>
             <For each={table().getHeaderGroups()}>
@@ -267,12 +286,21 @@ function RouteComponent() {
             <Show
               when={table().getRowModel().rows?.length}
               fallback={
-                <TableRow>
-                  <TableCell
-                    colSpan={defaultColumns.length}
-                    class="h-24 text-center"
-                  >
-                    {query.isLoading ? "Loading..." : "No results."}
+                <TableRow class="hover:bg-transparent">
+                  <TableCell colSpan={defaultColumns.length} class="p-0">
+                    <Show
+                      when={!query.isLoading}
+                      fallback={
+                        <p class="py-12 text-center text-sm text-faint">
+                          Loading...
+                        </p>
+                      }
+                    >
+                      <EmptyState
+                        title="No catalog items found"
+                        description="Try a different code or name, or create the first catalog item."
+                      />
+                    </Show>
                   </TableCell>
                 </TableRow>
               }
@@ -298,9 +326,10 @@ function RouteComponent() {
         </Table>
       </div>
 
-      <div class="flex items-center justify-end gap-4 py-4">
-        <span class="text-sm text-gray-500">
-          Page {search().page} of {totalPages()} ({query.data?.total ?? 0} items)
+      <div class="flex items-center justify-end gap-4">
+        <span class="text-sm tabular-nums text-faint">
+          Page {search().page} of {totalPages()} ({query.data?.total ?? 0}{" "}
+          items)
         </span>
         <div class="flex items-center gap-2">
           <Button

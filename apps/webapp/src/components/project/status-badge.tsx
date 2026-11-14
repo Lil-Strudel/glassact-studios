@@ -1,50 +1,23 @@
 import type { ProjectStatus } from "@glassact/data";
 import { Badge } from "@glassact/ui";
-
-const STATUS_CONFIG: Record<
-  ProjectStatus,
-  { label: string; class: string }
-> = {
-  draft: {
-    label: "Draft",
-    class: "bg-gray-100 text-gray-700 border-gray-300",
-  },
-  ordered: {
-    label: "Ordered",
-    class: "bg-indigo-100 text-indigo-700 border-indigo-300",
-  },
-  "in-production": {
-    label: "In Production",
-    class: "bg-purple-100 text-purple-700 border-purple-300",
-  },
-  shipped: {
-    label: "Shipped",
-    class: "bg-cyan-100 text-cyan-700 border-cyan-300",
-  },
-  invoiced: {
-    label: "Invoiced",
-    class: "bg-orange-100 text-orange-700 border-orange-300",
-  },
-  completed: {
-    label: "Completed",
-    class: "bg-green-100 text-green-700 border-green-300",
-  },
-  cancelled: {
-    label: "Cancelled",
-    class: "bg-red-100 text-red-700 border-red-300",
-  },
-};
+import {
+  PROJECT_STATUS_LABELS,
+  PROJECT_STATUS_TONES,
+} from "../../utils/project-status";
 
 interface ProjectStatusBadgeProps {
   status: ProjectStatus;
+  class?: string;
 }
 
 export function ProjectStatusBadge(props: ProjectStatusBadgeProps) {
-  const config = () => STATUS_CONFIG[props.status];
-
   return (
-    <Badge variant="outline" class={config().class}>
-      {config().label}
+    <Badge
+      variant={PROJECT_STATUS_TONES[props.status]}
+      lozenge
+      class={props.class}
+    >
+      {PROJECT_STATUS_LABELS[props.status]}
     </Badge>
   );
 }

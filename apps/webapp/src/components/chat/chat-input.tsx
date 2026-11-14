@@ -50,7 +50,7 @@ const ChatInput: Component<ChatInputProps> = (props) => {
   };
 
   return (
-    <div class="flex items-end gap-2 p-4 border-t">
+    <div class="flex items-end gap-2 border-t border-border p-3">
       <TextFieldRoot class="flex-1">
         <TextArea
           value={message()}
@@ -58,7 +58,9 @@ const ChatInput: Component<ChatInputProps> = (props) => {
             setMessage(e.currentTarget.value)
           }
           onKeyDown={handleKeyDown}
-          placeholder={props.placeholder ?? "Type a message..."}
+          placeholder={props.placeholder ?? "Write a message"}
+          class="min-h-[40px] resize-none"
+          rows={1}
         />
       </TextFieldRoot>
       <Button

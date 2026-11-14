@@ -3,10 +3,7 @@ import {
   Breadcrumb,
   Button,
   Badge,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
+  type BadgeVariant,
   Dialog,
   DialogClose,
   DialogContent,
@@ -17,6 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
   showToast,
+  cn,
 } from "@glassact/ui";
 import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
@@ -57,8 +55,10 @@ import { StoneDesignSection } from "../../components/stone-designer/stone-design
 import {
   IoTrashOutline,
   IoAddCircleOutline,
+  IoAlertCircleOutline,
   IoPencilOutline,
 } from "solid-icons/io";
+import { LozengeStepper } from "../../components/project/lozenge-stepper";
 import { ManufacturingTracker } from "../../components/manufacturing/manufacturing-tracker";
 import { SandblastFileCard } from "../../components/inlay/sandblast-file-card";
 import { MirrorBadge } from "../../components/inlay/mirror-badge";
@@ -66,7 +66,10 @@ import { InlayArrangeActions } from "../../components/inlay/inlay-arrange-action
 import { mirrorCssTransform } from "../../utils/inlay-mirror";
 import { ProjectDiscussion } from "../../components/chat/project-discussion";
 import { PriceCaveat } from "../../components/price-caveat";
-import { isManufacturingStatus } from "../../utils/project-status";
+import {
+  isManufacturingStatus,
+  PROJECT_STATUS_LABELS,
+} from "../../utils/project-status";
 import { paymentTimingNotice } from "../../utils/payment-timing";
 
 export const Route = createFileRoute("/_app/projects_/$id/")({
@@ -82,15 +85,9 @@ const STATUS_STEPS: ProjectStatus[] = [
   "completed",
 ];
 
-const STATUS_LABELS: Record<ProjectStatus, string> = {
-  draft: "Draft",
-  ordered: "Ordered",
-  "in-production": "In Production",
-  shipped: "Shipped",
-  invoiced: "Invoiced",
-  completed: "Completed",
-  cancelled: "Cancelled",
-};
+const STATUS_STEP_LABELS = STATUS_STEPS.map(
+  (status) => PROJECT_STATUS_LABELS[status],
+);
 
 const EDITABLE_STATUSES: ProjectStatus[] = ["draft"];
 const CANCELLABLE_STATUSES: ProjectStatus[] = ["draft", "ordered"];
@@ -151,6 +148,17 @@ function RouteComponent() {
   const hasInstallationKit = createMemo(
     () => projectQuery.data?.installation_kit ?? false,
   );
+
+  const notReadyCount = createMemo(
+    () => inlays().filter((inlay) => !inlay.is_ready).length,
+  );
+
+  const placeOrderBlockedReason = createMemo(() => {
+    if (inlays().length === 0) return "Add an inlay to place an order.";
+    const count = notReadyCount();
+    if (count === 0) return null;
+    return `${count} ${count === 1 ? "inlay is" : "inlays are"} not ready yet.`;
+  });
 
   const totalPriceCents = createMemo(
     () =>
@@ -307,34 +315,31 @@ function RouteComponent() {
   return (
     <Switch>
       <Match when={projectQuery.isLoading}>
-        <div class="space-y-6">
-          <div class="h-5 w-64 bg-gray-200 rounded animate-pulse" />
-          <div class="h-8 w-48 bg-gray-200 rounded animate-pulse" />
-          <div class="h-4 w-32 bg-gray-100 rounded animate-pulse" />
-          <div class="flex gap-2 overflow-x-auto py-4">
-            <For each={Array.from({ length: 10 })}>
-              {() => (
-                <div class="h-8 w-24 bg-gray-200 rounded-full animate-pulse flex-shrink-0" />
-              )}
-            </For>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-            <For each={[1, 2, 3]}>
-              {() => <div class="h-48 bg-gray-200 rounded-lg animate-pulse" />}
-            </For>
-          </div>
+        <div class="flex flex-col gap-6">
+          <div class="h-4 w-48 animate-pulse rounded bg-muted" />
+          <div class="h-10 w-72 animate-pulse rounded bg-muted" />
+          <div class="h-12 animate-pulse rounded bg-muted" />
+          <div class="h-28 animate-pulse rounded-lg border border-border bg-card" />
+          <For each={[1, 2, 3]}>
+            {() => (
+              <div class="h-28 animate-pulse rounded-lg border border-border bg-card" />
+            )}
+          </For>
         </div>
       </Match>
 
       <Match when={projectQuery.isError}>
-        <div class="border-2 border-dashed border-red-300 rounded-xl p-8 text-center">
-          <p class="text-red-600 font-medium">Failed to load project</p>
-          <p class="text-gray-500 text-sm mt-1">
+        <div class="flex flex-col items-center gap-2 rounded-lg border border-dashed border-error-foreground/40 bg-error p-8 text-center">
+          <p class="flex items-center gap-2 font-medium text-error-foreground">
+            <IoAlertCircleOutline size={18} aria-hidden="true" />
+            Couldn't load this project
+          </p>
+          <p class="text-sm text-muted-foreground">
             {projectQuery.error?.message ?? "An unexpected error occurred."}
           </p>
           <Button
-            variant="outline"
-            class="mt-4"
+            variant="secondary"
+            class="mt-2"
             onClick={() => projectQuery.refetch()}
           >
             Retry
@@ -344,7 +349,7 @@ function RouteComponent() {
 
       <Match when={projectQuery.isSuccess}>
         <div class="grid gap-6 lg:h-[var(--app-pane-height)] lg:grid-cols-[minmax(0,1fr)_380px] lg:overflow-hidden">
-          <div class="min-w-0 lg:overflow-y-auto lg:pr-2">
+          <div class="flex min-w-0 flex-col gap-6 lg:overflow-y-auto lg:pr-2 [&>*]:shrink-0">
           <Breadcrumb
             crumbs={[
               { title: "Projects", to: "/projects" },
@@ -355,62 +360,21 @@ function RouteComponent() {
             ]}
           />
 
-          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div class="flex flex-col gap-2 min-w-0">
-              <div class="flex items-center gap-3 flex-wrap">
-                <h1 class="text-2xl font-bold text-gray-900">
-                  {projectQuery.data!.name}
-                </h1>
-                <ProjectStatusBadge status={projectQuery.data!.status} />
-              </div>
+          <header class="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
+            <div class="flex min-w-0 flex-col gap-2">
               <Show when={projectQuery.data!.dealership_name}>
-                {(name) => (
-                  <p class="text-sm font-medium text-gray-600">{name()}</p>
-                )}
+                {(name) => <p class="eyebrow">{name()}</p>}
               </Show>
-              <InternalReferenceField
-                projectUuid={projectQuery.data!.uuid}
-                value={projectQuery.data!.internal_reference}
-              />
-              <p class="text-sm text-gray-500">
-                Project total:{" "}
-                <span class="font-semibold text-gray-900">
-                  {formatMoney(totalPriceCents() / 100)}
-                </span>
-              </p>
-              <PriceCaveat />
-              <Show
-                when={projectQuery.data!.status === "draft"}
-                fallback={
-                  <p class="text-sm text-gray-500">
-                    Installation kit:{" "}
-                    <span class="font-semibold text-gray-900">
-                      {hasInstallationKit() ? "Included" : "Not included"}
-                    </span>
-                  </p>
-                }
-              >
-                {/* Matches the PATCH /project route's gate, which internal
-                    staff pass but create_project would exclude them from. */}
-                <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
-                  <label class="flex w-fit cursor-pointer items-center gap-2 text-sm text-gray-500">
-                    <input
-                      type="checkbox"
-                      class="h-4 w-4 accent-gray-900"
-                      checked={hasInstallationKit()}
-                      disabled={toggleKit.isPending}
-                      onChange={(e) => handleToggleKit(e.currentTarget.checked)}
-                    />
-                    <span>
-                      Include an installation kit (
-                      {formatMoney(INSTALLATION_KIT_PRICE_CENTS / 100)}) — covers
-                      every inlay in this project
-                    </span>
-                  </label>
-                </Can>
-              </Show>
+              <h1 class="text-3xl sm:text-4xl">{projectQuery.data!.name}</h1>
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <ProjectStatusBadge status={projectQuery.data!.status} />
+                <InternalReferenceField
+                  projectUuid={projectQuery.data!.uuid}
+                  value={projectQuery.data!.internal_reference}
+                />
+              </div>
             </div>
-            <div class="flex gap-3 flex-wrap">
+            <div class="flex flex-wrap items-center gap-2">
               <WatchButton
                 projectUuid={params().id}
                 isWatching={projectQuery.data!.is_watching}
@@ -418,14 +382,14 @@ function RouteComponent() {
               />
               <Show when={canCancel()}>
                 <Dialog>
-                  <DialogTrigger as={Button} variant="outline">
-                    Cancel Project
+                  <DialogTrigger as={Button} variant="destructive">
+                    Cancel project
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Cancel Project</DialogTitle>
+                      <DialogTitle>Cancel project</DialogTitle>
                     </DialogHeader>
-                    <p class="text-sm text-gray-600">
+                    <p class="text-sm text-muted-foreground">
                       Are you sure you want to cancel{" "}
                       <span class="font-semibold">
                         {projectQuery.data!.name}
@@ -447,30 +411,21 @@ function RouteComponent() {
                       >
                         {cancelProject.isPending
                           ? "Cancelling..."
-                          : "Cancel Project"}
+                          : "Cancel project"}
                       </Button>
                     </div>
                   </DialogContent>
                 </Dialog>
               </Show>
-              <Can permission={PERMISSION_ACTIONS.PLACE_ORDER}>
-                <Show when={projectQuery.data!.status === "draft"}>
-                  <PlaceOrderCart
-                    project={projectQuery.data!}
-                    inlays={inlays()}
-                    disabled={!canPlaceOrder()}
-                  />
-                </Show>
-              </Can>
               <Can permission={PERMISSION_ACTIONS.MANAGE_SHIPPING}>
                 <Show when={canShip()}>
                   <Dialog>
-                    <DialogTrigger as={Button}>Mark Shipped</DialogTrigger>
+                    <DialogTrigger as={Button}>Mark shipped</DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Mark Project Shipped</DialogTitle>
+                        <DialogTitle>Mark project shipped</DialogTitle>
                       </DialogHeader>
-                      <p class="text-sm text-gray-600">
+                      <p class="text-sm text-muted-foreground">
                         Enter the tracking number for this shipment. It will be
                         shared with the dealership so they can look it up.
                       </p>
@@ -481,7 +436,7 @@ function RouteComponent() {
                         onInput={(e) =>
                           setTrackingNumber(e.currentTarget.value)
                         }
-                        class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary mt-3"
+                        class="mt-3 h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-faint focus-visible:border-gilt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gilt/25"
                       />
                       <div class="flex justify-end gap-3 mt-4">
                         <DialogClose as={Button} variant="outline">
@@ -496,7 +451,7 @@ function RouteComponent() {
                         >
                           {markShipped.isPending
                             ? "Marking..."
-                            : "Mark Shipped"}
+                            : "Mark shipped"}
                         </Button>
                       </div>
                     </DialogContent>
@@ -507,54 +462,27 @@ function RouteComponent() {
                     onClick={handleMarkDelivered}
                     disabled={markDelivered.isPending}
                   >
-                    {markDelivered.isPending ? "Marking..." : "Mark Delivered"}
+                    {markDelivered.isPending ? "Marking..." : "Mark delivered"}
                   </Button>
                 </Show>
               </Can>
             </div>
-          </div>
+          </header>
 
           <Show when={projectQuery.data!.status !== "cancelled"}>
-            <div class="mt-6 overflow-x-auto">
-              <div class="flex items-center gap-1 min-w-max">
-                <For each={STATUS_STEPS}>
-                  {(step, index) => {
-                    const isCurrent = () => index() === currentStepIndex();
-                    const isComplete = () => index() < currentStepIndex();
-
-                    return (
-                      <div class="flex items-center">
-                        <Show when={index() > 0}>
-                          <div
-                            class={`w-6 h-0.5 ${isComplete() ? "bg-primary" : "bg-gray-300"}`}
-                          />
-                        </Show>
-                        <div
-                          class={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                            isCurrent()
-                              ? "bg-primary text-white"
-                              : isComplete()
-                                ? "bg-primary/10 text-primary"
-                                : "bg-gray-100 text-gray-500"
-                          }`}
-                        >
-                          {STATUS_LABELS[step]}
-                        </div>
-                      </div>
-                    );
-                  }}
-                </For>
-              </div>
-            </div>
+            <LozengeStepper
+              labels={STATUS_STEP_LABELS}
+              currentIndex={currentStepIndex()}
+            />
           </Show>
 
           <Show when={paymentNotice()}>
             {(notice) => (
               <div
-                class={`mt-4 rounded-md border px-4 py-3 text-sm ${
+                class={`rounded-lg border px-4 py-3 text-sm ${
                   notice().tone === "warning"
-                    ? "border-amber-300 bg-amber-50 text-amber-800"
-                    : "border-blue-200 bg-blue-50 text-blue-800"
+                    ? "border-warning-foreground/30 bg-warning text-warning-foreground"
+                    : "border-info-foreground/30 bg-info text-info-foreground"
                 }`}
               >
                 {notice().message}
@@ -564,12 +492,91 @@ function RouteComponent() {
 
           <Show when={projectQuery.data!.tracking_number}>
             {(tracking) => (
-              <div class="mt-4 rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
-                <span class="font-medium text-gray-900">Tracking number:</span>{" "}
-                <span class="font-mono">{tracking()}</span>
+              <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg border border-border bg-card px-4 py-3 text-sm">
+                <span class="eyebrow">Tracking number</span>
+                <span class="font-mono tabular-nums text-foreground">
+                  {tracking()}
+                </span>
               </div>
             )}
           </Show>
+
+          <section
+            aria-label="Order summary"
+            class="relative overflow-hidden rounded-lg border border-input bg-card"
+          >
+            <div
+              aria-hidden="true"
+              class="pointer-events-none absolute inset-0 bg-gradient-to-r from-crimson-deep/40 via-crimson-deep/10 to-transparent"
+            />
+            <div class="relative grid gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+              <div class="flex flex-col gap-1">
+                <p class="eyebrow">
+                  {projectQuery.data!.status === "draft"
+                    ? "Order total so far"
+                    : "Project total"}
+                </p>
+                <p class="font-display text-3xl tabular-nums text-foreground">
+                  {formatMoney(totalPriceCents() / 100)}
+                </p>
+                <PriceCaveat />
+                <div class="pt-2">
+                  <Show
+                    when={projectQuery.data!.status === "draft"}
+                    fallback={
+                      <p class="text-sm text-muted-foreground">
+                        Installation kit:{" "}
+                        <span class="font-medium text-foreground">
+                          {hasInstallationKit() ? "Included" : "Not included"}
+                        </span>
+                      </p>
+                    }
+                  >
+                    {/* Matches the PATCH /project route's gate, which internal
+                        staff pass but create_project would exclude them from. */}
+                    <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
+                      <label class="flex w-fit cursor-pointer items-start gap-2.5 text-sm text-foreground">
+                        <input
+                          type="checkbox"
+                          class="mt-0.5 h-4 w-4 accent-primary"
+                          checked={hasInstallationKit()}
+                          disabled={toggleKit.isPending}
+                          onChange={(e) => handleToggleKit(e.currentTarget.checked)}
+                        />
+                        <span class="flex flex-col">
+                          <span>
+                            Include installation kit{" "}
+                            <span class="tabular-nums text-muted-foreground">
+                              ({formatMoney(INSTALLATION_KIT_PRICE_CENTS / 100)})
+                            </span>
+                          </span>
+                          <span class="text-xs text-faint">
+                            One kit covers every inlay in this project.
+                          </span>
+                        </span>
+                      </label>
+                    </Can>
+                  </Show>
+                </div>
+              </div>
+              <Can permission={PERMISSION_ACTIONS.PLACE_ORDER}>
+                <Show when={projectQuery.data!.status === "draft"}>
+                  <div class="flex flex-col items-start gap-1.5 sm:items-end">
+                    <PlaceOrderCart
+                      project={projectQuery.data!}
+                      inlays={inlays()}
+                      disabled={!canPlaceOrder()}
+                    />
+                    <Show when={placeOrderBlockedReason()}>
+                      {(reason) => (
+                        <p class="text-xs text-faint">{reason()}</p>
+                      )}
+                    </Show>
+                  </div>
+                </Show>
+              </Can>
+            </div>
+          </section>
 
           <StoneDesignSection
             projectUuid={params().id}
@@ -577,9 +584,9 @@ function RouteComponent() {
             isDraft={projectQuery.data!.status === "draft"}
           />
 
-          <div class="mt-8">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-lg font-semibold text-gray-900">Inlays</h2>
+          <section class="flex flex-col gap-4">
+            <div class="flex items-center justify-between gap-4">
+              <h2 class="text-2xl">Inlays</h2>
               <Show when={canEditInlays()}>
                 <Can permission={PERMISSION_ACTIONS.CREATE_PROJECT}>
                   <Button
@@ -588,8 +595,8 @@ function RouteComponent() {
                     variant="outline"
                     size="sm"
                   >
-                    <IoAddCircleOutline size={18} class="mr-1" />
-                    Add Inlay
+                    <IoAddCircleOutline size={18} class="mr-1.5" />
+                    Add inlay
                   </Button>
                 </Can>
               </Show>
@@ -597,21 +604,24 @@ function RouteComponent() {
 
             <Switch>
               <Match when={inlaysQuery.isLoading}>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
+                <div class="flex flex-col gap-3">
                   <For each={[1, 2, 3]}>
                     {() => (
-                      <div class="h-48 bg-gray-200 rounded-lg animate-pulse" />
+                      <div class="h-28 animate-pulse rounded-lg border border-border bg-card" />
                     )}
                   </For>
                 </div>
               </Match>
 
               <Match when={inlaysQuery.isError}>
-                <div class="border-2 border-dashed border-red-300 rounded-xl p-8 text-center">
-                  <p class="text-red-600 font-medium">Failed to load inlays</p>
+                <div class="flex flex-col items-center gap-2 rounded-lg border border-dashed border-error-foreground/40 bg-error p-8 text-center">
+                  <p class="flex items-center gap-2 font-medium text-error-foreground">
+                    <IoAlertCircleOutline size={18} aria-hidden="true" />
+                    Couldn't load inlays
+                  </p>
                   <Button
-                    variant="outline"
-                    class="mt-4"
+                    variant="secondary"
+                    class="mt-2"
                     onClick={() => inlaysQuery.refetch()}
                   >
                     Retry
@@ -622,20 +632,25 @@ function RouteComponent() {
               <Match
                 when={inlaysQuery.isSuccess && inlaysQuery.data!.length === 0}
               >
-                <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-                  <p class="text-gray-400 text-lg font-medium">No inlays yet</p>
-                  <p class="text-gray-400 text-sm mt-2">
-                    Add inlays to this project to get started.
+                <div class="flex flex-col items-center gap-3 rounded-lg border border-dashed border-input px-6 py-12 text-center">
+                  <div class="ornament-rule w-40" aria-hidden="true">
+                    <span class="lozenge" />
+                  </div>
+                  <p class="font-display text-xl text-foreground">
+                    Inlays on this project will appear here
+                  </p>
+                  <p class="max-w-prose text-sm text-muted-foreground">
+                    Add a catalog inlay or request a custom design to get
+                    started.
                   </p>
                   <Show when={canEditInlays()}>
                     <Can permission={PERMISSION_ACTIONS.CREATE_PROJECT}>
                       <Button
                         as={Link}
                         to={`/projects/${params().id}/add-inlay`}
-                        variant="outline"
-                        class="mt-4"
+                        class="mt-1"
                       >
-                        Add Inlay
+                        Add inlay
                       </Button>
                     </Can>
                   </Show>
@@ -645,7 +660,7 @@ function RouteComponent() {
               <Match
                 when={inlaysQuery.isSuccess && inlaysQuery.data!.length > 0}
               >
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
+                <div class="flex flex-col gap-3">
                   <For each={inlaysQuery.data!}>
                     {(inlay) => (
                       <InlayCard
@@ -669,11 +684,11 @@ function RouteComponent() {
                 </div>
               </Match>
             </Switch>
-          </div>
+          </section>
 
           <Show when={showInvoiceSection()}>
-            <div class="mt-8">
-              <h2 class="text-lg font-semibold text-gray-900 mb-4">Invoice</h2>
+            <section class="flex flex-col gap-4">
+              <h2 class="text-2xl">Invoice</h2>
               <InvoiceSection
                 projectUuid={params().id}
                 invoice={invoiceQuery.data ?? null}
@@ -685,7 +700,7 @@ function RouteComponent() {
                   queryClient.invalidateQueries({ queryKey: ["project"] });
                 }}
               />
-            </div>
+            </section>
           </Show>
           </div>
 
@@ -760,19 +775,22 @@ function InternalReferenceField(props: InternalReferenceFieldProps) {
   }
 
   return (
-    <div class="flex items-center gap-2 text-sm text-gray-600">
-      <span class="font-medium">PO / Reference:</span>
+    <div class="flex items-center gap-2 text-sm text-muted-foreground">
+      <span class="eyebrow text-faint">PO / Ref</span>
       <Show
         when={isEditing()}
         fallback={
           <>
-            <span class="text-gray-900">{props.value || "—"}</span>
+            <span class="tabular-nums text-foreground">
+              {props.value || "—"}
+            </span>
             <Show when={canEdit()}>
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={startEdit}
                 class="h-7 px-2"
+                aria-label="Edit PO / reference"
               >
                 <IoPencilOutline size={14} />
               </Button>
@@ -785,7 +803,7 @@ function InternalReferenceField(props: InternalReferenceFieldProps) {
           value={draft()}
           onInput={(e) => setDraft(e.currentTarget.value)}
           placeholder="e.g. PO-2025-0142"
-          class="border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          class="h-8 rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground placeholder:text-faint focus-visible:border-gilt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gilt/25"
           disabled={patchMutation.isPending}
         />
         <Button
@@ -819,30 +837,24 @@ interface InlayCardProps {
   isDeleting: boolean;
 }
 
-type ReadinessBadge =
-  | { label: string; variant: "default" | "warning" | "outline" }
-  | null;
+type ReadinessBadge = { label: string; variant: BadgeVariant };
 
 function readinessBadge(inlay: InlayWithInfo): ReadinessBadge {
   if (inlay.is_ready) {
-    return { label: "Ready", variant: "default" };
+    return { label: "Ready", variant: "success" };
   }
 
   const hasPending = inlay.has_pending_proof === true;
 
   if (inlay.is_customized && inlay.type === "catalog" && hasPending) {
-    return { label: "Needs Internal Review", variant: "warning" };
+    return { label: "Needs internal review", variant: "info" };
   }
 
   if (inlay.type === "custom" && hasPending) {
-    return { label: "Needs Customer Approval", variant: "warning" };
+    return { label: "Needs customer approval", variant: "gilt" };
   }
 
-  if (inlay.type === "custom" && !hasPending) {
-    return { label: "Awaiting Proof", variant: "outline" };
-  }
-
-  return { label: "Awaiting Proof", variant: "outline" };
+  return { label: "Awaiting proof", variant: "outline" };
 }
 
 function InlayCard(props: InlayCardProps) {
@@ -887,79 +899,92 @@ function InlayCard(props: InlayCardProps) {
   const userContext = useUserContext();
   const queryClient = useQueryClient();
 
+  const needsYourAttention = createMemo(() => {
+    if (props.inlay.is_ready || props.inlay.has_pending_proof !== true) {
+      return false;
+    }
+    return userContext.isDealership()
+      ? props.inlay.type === "custom"
+      : showInternalApprove();
+  });
+
+  const typeLabel = () =>
+    [
+      props.inlay.type === "catalog" ? "Catalog" : "Custom design",
+      props.inlay.is_customized ? "Customized" : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
   const hasSandblast = () => !!props.inlay.sandblast_file_url;
   const canUploadSandblast = () =>
     props.projectStatus !== "draft" &&
     userContext.can(PERMISSION_ACTIONS.MANAGE_KANBAN);
 
   return (
-    <Card class="overflow-hidden">
+    <article
+      class={cn(
+        "overflow-hidden rounded-lg border bg-card",
+        needsYourAttention() ? "border-gilt/45" : "border-border",
+      )}
+    >
       <Link
         to="/projects/$id/inlay/$inlayId"
         params={{ id: props.projectId, inlayId: props.inlay.uuid }}
-        class="block hover:bg-gray-50/50 transition-colors"
+        class="group grid grid-cols-[72px_minmax(0,1fr)] items-start gap-x-4 gap-y-3 p-3 transition-colors hover:bg-accent/40 sm:grid-cols-[88px_minmax(0,1fr)_auto] sm:items-center"
       >
-        <Show when={props.inlay.preview_url}>
-          <div class="bg-gray-50 p-4 flex items-center justify-center h-40 overflow-hidden">
+        <Show
+          when={props.inlay.preview_url}
+          fallback={
+            <div class="came-frame flex aspect-square items-center justify-center rounded-arch bg-came">
+              <span class="text-[10px] text-faint">No preview</span>
+            </div>
+          }
+        >
+          <div class="came-frame flex aspect-square items-center justify-center overflow-hidden rounded-arch bg-plaque p-1.5">
             <img
               src={props.inlay.preview_url}
               alt={props.inlay.name}
-              class="max-w-full max-h-full object-contain"
+              class="max-h-full max-w-full object-contain"
               style={{ transform: mirrorCssTransform(props.inlay) }}
             />
           </div>
         </Show>
-        <Show when={!props.inlay.preview_url}>
-          <div class="bg-gray-100 p-4 flex items-center justify-center h-40">
-            <p class="text-gray-400 text-sm">No preview</p>
-          </div>
-        </Show>
-        <CardHeader class="space-y-2">
-          <div class="flex items-start justify-between gap-2">
-            <CardTitle class="text-sm truncate">{props.inlay.name}</CardTitle>
-            <Badge variant="outline" class="text-xs flex-shrink-0">
-              {props.inlay.type === "catalog" ? "Catalog" : "Custom"}
-            </Badge>
-          </div>
+        <div class="flex min-w-0 flex-col gap-1">
+          <h3 class="truncate text-lg text-foreground group-hover:text-crimson-light">
+            {props.inlay.name}
+          </h3>
+          <p class="text-xs text-faint">{typeLabel()}</p>
           <Show when={description()}>
             {(desc) => (
-              <CardDescription class="text-xs line-clamp-2">
-                {desc()}
-              </CardDescription>
+              <p class="line-clamp-2 text-sm text-muted-foreground">{desc()}</p>
             )}
           </Show>
-          <div class="flex items-center gap-2 flex-wrap">
-            <Show when={badge()}>
-              {(b) => (
-                <Badge variant={b().variant} class="text-xs">
-                  {b().label}
-                </Badge>
-              )}
-            </Show>
-            <Show when={props.inlay.is_customized}>
-              <Badge variant="warning" class="text-xs">
-                Customized
-              </Badge>
-            </Show>
+          <div class="flex flex-wrap items-center gap-1.5 pt-1">
+            <Badge variant={badge().variant} lozenge>
+              {badge().label}
+            </Badge>
             <MirrorBadge inlay={props.inlay} />
           </div>
-          <div class="flex items-end justify-between gap-2 text-xs text-gray-600">
-            <span>{priceLabel()}</span>
-            <Show when={priceFormula()}>
-              {(formula) => <Badge variant="secondary">{formula()}</Badge>}
-            </Show>
-          </div>
-          <Show when={showManufacturingTracker()}>
-            <div class="pt-1">
-              <ManufacturingTracker
-                currentStep={
-                  props.inlay.manufacturing_step as ManufacturingStep
-                }
-              />
-            </div>
+        </div>
+        <div class="col-span-2 flex items-baseline justify-between gap-3 sm:col-span-1 sm:flex-col sm:items-end sm:gap-1 sm:text-right">
+          <span class="font-medium tabular-nums text-foreground">
+            {priceLabel()}
+          </span>
+          <Show when={priceFormula()}>
+            {(formula) => (
+              <span class="text-xs tabular-nums text-faint">{formula()}</span>
+            )}
           </Show>
-        </CardHeader>
+        </div>
       </Link>
+      <Show when={showManufacturingTracker()}>
+        <div class="border-t border-border px-4 py-3">
+          <ManufacturingTracker
+            currentStep={props.inlay.manufacturing_step as ManufacturingStep}
+          />
+        </div>
+      </Show>
       <Show
         when={
           props.canDelete ||
@@ -969,7 +994,7 @@ function InlayCard(props: InlayCardProps) {
           canUploadSandblast()
         }
       >
-        <div class="px-6 pb-4 flex flex-col gap-2">
+        <div class="flex flex-col gap-2 border-t border-border bg-muted/60 px-3 py-2.5 sm:flex-row sm:flex-wrap sm:items-start">
           <SandblastFileCard
             inlayUuid={props.inlay.uuid}
             inlayName={props.inlay.name}
@@ -991,11 +1016,9 @@ function InlayCard(props: InlayCardProps) {
                   id: props.projectId,
                   inlayId: props.inlay.uuid,
                 }}
-                variant="outline"
                 size="sm"
-                class="w-full"
               >
-                Review &amp; Approve
+                Review &amp; approve
               </Button>
             </Can>
           </Show>
@@ -1006,52 +1029,53 @@ function InlayCard(props: InlayCardProps) {
             />
           </Show>
           <Show when={props.canDelete}>
-            <Show
-              when={props.inlay.can_delete}
-              fallback={<BlockedRemoveButton inlay={props.inlay} />}
-            >
-              <Dialog>
-                <DialogTrigger
-                  as={Button}
-                  variant="ghost"
-                  size="sm"
-                  class="text-red-600 hover:text-red-700 hover:bg-red-50 w-full"
-                >
-                  <IoTrashOutline size={16} class="mr-1" />
-                  Remove
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Remove Inlay</DialogTitle>
-                  </DialogHeader>
-                  <p class="text-sm text-gray-600">
-                    Are you sure you want to remove{" "}
-                    <span class="font-semibold">{props.inlay.name}</span> from
-                    this project?
-                  </p>
-                  <div class="flex justify-end gap-3 mt-4">
-                    <DialogClose
-                      as={Button}
-                      variant="outline"
-                      disabled={props.isDeleting}
-                    >
-                      Close
-                    </DialogClose>
-                    <Button
-                      variant="destructive"
-                      onClick={props.onDelete}
-                      disabled={props.isDeleting}
-                    >
-                      {props.isDeleting ? "Removing..." : "Remove Inlay"}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </Show>
+            <div class="sm:ml-auto">
+              <Show
+                when={props.inlay.can_delete}
+                fallback={<BlockedRemoveButton inlay={props.inlay} />}
+              >
+                <Dialog>
+                  <DialogTrigger
+                    as={Button}
+                    variant="destructive"
+                    size="sm"
+                  >
+                    <IoTrashOutline size={16} class="mr-1" />
+                    Remove
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Remove inlay</DialogTitle>
+                    </DialogHeader>
+                    <p class="text-sm text-muted-foreground">
+                      Are you sure you want to remove{" "}
+                      <span class="font-semibold">{props.inlay.name}</span> from
+                      this project?
+                    </p>
+                    <div class="flex justify-end gap-3 mt-4">
+                      <DialogClose
+                        as={Button}
+                        variant="outline"
+                        disabled={props.isDeleting}
+                      >
+                        Close
+                      </DialogClose>
+                      <Button
+                        variant="destructive"
+                        onClick={props.onDelete}
+                        disabled={props.isDeleting}
+                      >
+                        {props.isDeleting ? "Removing..." : "Remove inlay"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </Show>
+            </div>
           </Show>
         </div>
       </Show>
-    </Card>
+    </article>
   );
 }
 
@@ -1065,11 +1089,10 @@ function BlockedRemoveButton(props: { inlay: InlayWithInfo }) {
 
   return (
     <Tooltip>
-      <TooltipTrigger as="span" class="w-full">
+      <TooltipTrigger as="span">
         <Button
-          variant="ghost"
+          variant="destructive"
           size="sm"
-          class="w-full"
           disabled
           aria-label={`Cannot remove ${props.inlay.name}`}
         >
@@ -1170,15 +1193,15 @@ function InvoiceSection(props: InvoiceSectionProps) {
     props.invoice !== null && props.invoice.status !== "void";
 
   return (
-    <div class="border rounded-lg p-6 space-y-4">
+    <div class="space-y-4 rounded-lg border border-border bg-card p-5">
       <Switch>
         <Match when={props.isLoading}>
-          <div class="h-16 bg-gray-100 rounded animate-pulse" />
+          <div class="h-16 animate-pulse rounded bg-muted" />
         </Match>
 
         <Match when={!hasActiveInvoice() && can(PERMISSION_ACTIONS.CREATE_INVOICE)}>
           <div class="space-y-3">
-            <p class="text-sm text-gray-600">
+            <p class="text-sm text-muted-foreground">
               Paste the invoice link from your billing platform to attach it to
               this project.
             </p>
@@ -1188,13 +1211,13 @@ function InvoiceSection(props: InvoiceSectionProps) {
                 placeholder="https://..."
                 value={invoiceUrl()}
                 onInput={(e) => setInvoiceUrl(e.currentTarget.value)}
-                class="flex-1 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                class="h-9 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-faint focus-visible:border-gilt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gilt/25"
               />
               <Button
                 onClick={handleAttach}
                 disabled={attachInvoice.isPending || invoiceUrl().trim() === ""}
               >
-                {attachInvoice.isPending ? "Attaching..." : "Attach Invoice"}
+                {attachInvoice.isPending ? "Attaching..." : "Attach invoice"}
               </Button>
             </div>
           </div>
@@ -1202,7 +1225,7 @@ function InvoiceSection(props: InvoiceSectionProps) {
 
         <Match when={!hasActiveInvoice() && !can(PERMISSION_ACTIONS.CREATE_INVOICE)}>
           <div class="text-center py-4">
-            <p class="text-gray-500 text-sm">
+            <p class="text-sm text-faint">
               Invoice not yet available. Check back soon.
             </p>
           </div>
@@ -1212,24 +1235,23 @@ function InvoiceSection(props: InvoiceSectionProps) {
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div class="space-y-1">
               <div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-gray-700">
-                  Invoice Status:
-                </span>
+                <span class="eyebrow">Invoice</span>
                 <Badge
                   variant={
                     props.invoice!.status === "paid"
-                      ? "default"
+                      ? "success"
                       : props.invoice!.status === "sent"
-                        ? "secondary"
+                        ? "invoiced"
                         : "outline"
                   }
-                  class="text-xs capitalize"
+                  lozenge
+                  class="capitalize"
                 >
                   {props.invoice!.status}
                 </Badge>
               </div>
               <Show when={props.invoice!.paid_at}>
-                <p class="text-xs text-gray-500">
+                <p class="text-xs tabular-nums text-faint">
                   Paid on{" "}
                   {new Date(props.invoice!.paid_at!).toLocaleDateString()}
                 </p>
@@ -1241,25 +1263,25 @@ function InvoiceSection(props: InvoiceSectionProps) {
                 href={props.invoice!.invoice_url!}
                 target="_blank"
                 rel="noopener noreferrer"
-                variant="outline"
+                variant="secondary"
               >
-                View Invoice
+                View invoice
               </Button>
               <Show when={can(PERMISSION_ACTIONS.CREATE_INVOICE) && props.invoice!.status === "sent"}>
                 <Button onClick={handleMarkPaid} disabled={markPaid.isPending}>
-                  {markPaid.isPending ? "Saving..." : "Mark as Paid"}
+                  {markPaid.isPending ? "Saving..." : "Mark as paid"}
                 </Button>
               </Show>
               <Show when={can(PERMISSION_ACTIONS.CREATE_INVOICE) && props.invoice!.status !== "paid"}>
                 <Dialog open={isVoidDialogOpen()} onOpenChange={setIsVoidDialogOpen}>
-                  <DialogTrigger as={Button} variant="outline">
-                    Void Invoice
+                  <DialogTrigger as={Button} variant="destructive">
+                    Void invoice
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Void Invoice</DialogTitle>
+                      <DialogTitle>Void invoice</DialogTitle>
                     </DialogHeader>
-                    <p class="text-sm text-gray-600">
+                    <p class="text-sm text-muted-foreground">
                       Are you sure you want to void this invoice? The project
                       status will remain unchanged. You can attach a new invoice
                       afterwards.
@@ -1277,7 +1299,7 @@ function InvoiceSection(props: InvoiceSectionProps) {
                         onClick={handleVoid}
                         disabled={voidInvoice.isPending}
                       >
-                        {voidInvoice.isPending ? "Voiding..." : "Void Invoice"}
+                        {voidInvoice.isPending ? "Voiding..." : "Void invoice"}
                       </Button>
                     </div>
                   </DialogContent>

@@ -1,13 +1,26 @@
-import { Link, createFileRoute, stripSearchParams } from "@tanstack/solid-router";
+import {
+  Link,
+  createFileRoute,
+  stripSearchParams,
+} from "@tanstack/solid-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import { For, Match, Show, Switch, createMemo } from "solid-js";
 import type { GET, SandblastBackground } from "@glassact/data";
-import { Button, showToast } from "@glassact/ui";
-import { IoAddCircleOutline } from "solid-icons/io";
-import { getBackgroundsOpts, patchBackgroundOpts } from "../../queries/background";
+import { Alert, Badge, Button, showToast } from "@glassact/ui";
+import { IoAddCircleOutline, IoAlertCircleOutline } from "solid-icons/io";
+import { PageHeader } from "@glassact/ui";
+import { EmptyState } from "@glassact/ui";
+import {
+  getBackgroundsOpts,
+  patchBackgroundOpts,
+} from "../../queries/background";
 import { useDebouncedSearchInput } from "../../hooks/use-debounced-search-input";
 import { matchesBackgroundSearch } from "../../components/catalog/background-search";
-import { listSearchDefaults, listSearchSchema, type ListSearchInput } from "../../utils/list-search";
+import {
+  listSearchDefaults,
+  listSearchSchema,
+  type ListSearchInput,
+} from "../../utils/list-search";
 import { isApiError } from "../../utils/is-api-error";
 
 export const Route = createFileRoute("/_app/admin/backgrounds")({
@@ -24,7 +37,11 @@ function RouteComponent() {
   const patchBackground = useMutation(patchBackgroundOpts);
 
   function updateSearch(patch: ListSearchInput) {
-    navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true, resetScroll: false });
+    navigate({
+      search: (prev) => ({ ...prev, ...patch }),
+      replace: true,
+      resetScroll: false,
+    });
   }
 
   const [searchText, setSearchText] = useDebouncedSearchInput(
@@ -33,19 +50,27 @@ function RouteComponent() {
   );
 
   const visible = createMemo(() =>
-    (backgroundsQuery.data ?? []).filter((background) => matchesBackgroundSearch(background, search().q)),
+    (backgroundsQuery.data ?? []).filter((background) =>
+      matchesBackgroundSearch(background, search().q),
+    ),
   );
 
   function toggleActive(background: GET<SandblastBackground>) {
     patchBackground.mutate(
-      { uuid: background.uuid, body: { is_active: !background.is_active, version: background.version } },
       {
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["background"] }),
+        uuid: background.uuid,
+        body: { is_active: !background.is_active, version: background.version },
+      },
+      {
+        onSuccess: () =>
+          queryClient.invalidateQueries({ queryKey: ["background"] }),
         onError: (error) =>
           showToast({
             title: "Failed to update background",
             description:
-              error instanceof Error && isApiError(error) ? (error.data?.error ?? "Unknown error") : "Unknown error",
+              error instanceof Error && isApiError(error)
+                ? (error.data?.error ?? "Unknown error")
+                : "Unknown error",
             variant: "error",
           }),
       },
@@ -54,45 +79,63 @@ function RouteComponent() {
 
   return (
     <div class="flex flex-col gap-6">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Sandblast backgrounds</h1>
-          <p class="mt-1 text-gray-600">
-            Masks dealerships place on the stone face and download for their
-            sandblaster. Related inlays are suggested alongside each one.
-          </p>
-        </div>
-        <Button as={Link} to="/admin/backgrounds/create">
-          <IoAddCircleOutline size={18} class="mr-1" />
-          New background
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Administration"
+        title="Sandblast backgrounds"
+        description="Masks dealerships place on the stone face and download for their sandblaster. Related inlays are suggested alongside each one."
+        actions={
+          <Button as={Link} to="/admin/backgrounds/create">
+            <IoAddCircleOutline size={18} />
+            New background
+          </Button>
+        }
+      />
 
       <input
         placeholder="Search by name, code or tag..."
         value={searchText()}
         onInput={(e) => setSearchText(e.currentTarget.value)}
-        class="w-full max-w-sm rounded-md border border-gray-300 px-3 py-2 text-sm"
+        class="w-full max-w-sm rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-faint focus:border-gilt focus:outline-none focus:ring-2 focus:ring-gilt/25"
       />
 
       <Switch>
         <Match when={backgroundsQuery.isLoading}>
-          <div class="h-48 animate-pulse rounded-lg bg-gray-100" />
+          <div class="h-48 animate-pulse rounded-lg bg-card" />
         </Match>
         <Match when={backgroundsQuery.isError}>
-          <p class="text-sm text-red-600">Couldn't load backgrounds.</p>
+          <Alert variant="destructive">
+            <IoAlertCircleOutline size={18} />
+            <p>Couldn't load backgrounds.</p>
+          </Alert>
         </Match>
         <Match when={backgroundsQuery.isSuccess && visible().length === 0}>
-          <p class="rounded-lg border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
-            {search().q ? "No backgrounds match that search." : "No backgrounds yet."}
-          </p>
+          <EmptyState
+            class="rounded-lg border border-dashed border-input"
+            title={
+              search().q
+                ? "No backgrounds match that search."
+                : "No backgrounds yet."
+            }
+            description={
+              search().q
+                ? undefined
+                : "Upload an SVG mask to offer the first background."
+            }
+            action={
+              search().q ? undefined : (
+                <Button as={Link} to="/admin/backgrounds/create">
+                  New background
+                </Button>
+              )
+            }
+          />
         </Match>
         <Match when={backgroundsQuery.isSuccess}>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <For each={visible()}>
               {(background) => (
-                <div class="flex flex-col gap-3 rounded-lg border border-gray-200 p-4">
-                  <div class="flex h-32 items-center justify-center rounded bg-gray-50 p-2">
+                <div class="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+                  <div class="flex h-32 items-center justify-center rounded-md border border-input bg-plaque p-2">
                     <img
                       src={background.svg_url}
                       alt={background.name}
@@ -102,21 +145,35 @@ function RouteComponent() {
                   </div>
                   <div>
                     <div class="flex items-center gap-2">
-                      <h2 class="truncate font-medium text-gray-900">{background.name}</h2>
+                      <h2 class="truncate text-lg">{background.name}</h2>
                       <Show when={!background.is_active}>
-                        <span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">Disabled</span>
+                        <Badge variant="outline" lozenge>
+                          Disabled
+                        </Badge>
                       </Show>
                     </div>
-                    <p class="text-xs text-gray-500">
-                      {background.code} · {background.related_items.length} related{" "}
-                      {background.related_items.length === 1 ? "inlay" : "inlays"}
+                    <p class="text-xs tabular-nums text-faint">
+                      {background.code} · {background.related_items.length}{" "}
+                      related{" "}
+                      {background.related_items.length === 1
+                        ? "inlay"
+                        : "inlays"}
                     </p>
                   </div>
                   <div class="mt-auto flex gap-2">
-                    <Button as={Link} to={`/admin/backgrounds/${background.uuid}`} size="sm" variant="outline">
+                    <Button
+                      as={Link}
+                      to={`/admin/backgrounds/${background.uuid}`}
+                      size="sm"
+                      variant="outline"
+                    >
                       Edit
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => toggleActive(background)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleActive(background)}
+                    >
                       {background.is_active ? "Disable" : "Enable"}
                     </Button>
                   </div>

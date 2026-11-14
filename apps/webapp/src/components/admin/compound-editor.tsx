@@ -9,9 +9,19 @@ import type {
 import { Button } from "@glassact/ui";
 import { CatalogItemPicker } from "../catalog/catalog-item-picker";
 import { createStoneEditor } from "../stone-designer/create-stone-editor";
-import { StoneCanvas, type PlacedInlayArt } from "../stone-designer/stone-canvas";
-import { boundsOf, boxCorners, newElementId } from "../stone-designer/stone-geometry";
+import {
+  StoneCanvas,
+  type PlacedInlayArt,
+} from "../stone-designer/stone-canvas";
+import {
+  boundsOf,
+  boxCorners,
+  newElementId,
+} from "../stone-designer/stone-geometry";
 import { useDesignerShortcuts } from "../stone-designer/use-designer-shortcuts";
+
+const FIELD_CLASS =
+  "rounded-md border border-input bg-background px-3 py-2 text-sm font-normal text-foreground placeholder:text-faint focus:border-gilt focus:outline-none focus:ring-2 focus:ring-gilt/25";
 
 interface CompoundEditorProps {
   initial?: GET<CatalogCompound>;
@@ -33,8 +43,12 @@ interface MemberItem {
 
 export function CompoundEditor(props: CompoundEditorProps) {
   const [name, setName] = createSignal(props.initial?.name ?? "");
-  const [description, setDescription] = createSignal(props.initial?.description ?? "");
-  const [isActive, setIsActive] = createSignal(props.initial?.is_active ?? true);
+  const [description, setDescription] = createSignal(
+    props.initial?.description ?? "",
+  );
+  const [isActive, setIsActive] = createSignal(
+    props.initial?.is_active ?? true,
+  );
 
   // Keyed by catalog item uuid, which doubles as each element's inlay_uuid.
   const [items, setItems] = createStore<Record<string, MemberItem>>(
@@ -75,7 +89,12 @@ export function CompoundEditor(props: CompoundEditorProps) {
   const resolveInlay = (uuid: string): PlacedInlayArt | undefined => {
     const item = items[uuid];
     return item
-      ? { name: item.name, imageUrl: item.svgUrl, width: item.width, height: item.height }
+      ? {
+          name: item.name,
+          imageUrl: item.svgUrl,
+          width: item.width,
+          height: item.height,
+        }
       : undefined;
   };
 
@@ -101,11 +120,14 @@ export function CompoundEditor(props: CompoundEditorProps) {
   }
 
   const memberCount = () => editor.draft.layout.elements.length;
-  const canSave = () => name().trim() !== "" && memberCount() >= 2 && !props.isSaving;
+  const canSave = () =>
+    name().trim() !== "" && memberCount() >= 2 && !props.isSaving;
 
   function save() {
     const elements = editor.draft.layout.elements.flatMap((el) =>
-      el.type === "inlay" && items[el.inlay_uuid] ? [{ el, item: items[el.inlay_uuid] }] : [],
+      el.type === "inlay" && items[el.inlay_uuid]
+        ? [{ el, item: items[el.inlay_uuid] }]
+        : [],
     );
     const corners = elements.flatMap(({ el, item }) =>
       boxCorners({ x: el.x, y: el.y }, el.rotation, {
@@ -135,10 +157,20 @@ export function CompoundEditor(props: CompoundEditorProps) {
     <div class="flex flex-col gap-6 lg:flex-row">
       <div class="flex min-w-0 flex-1 flex-col gap-3">
         <div class="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="outline" disabled={!editor.canUndo()} onClick={() => editor.undo()}>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!editor.canUndo()}
+            onClick={() => editor.undo()}
+          >
             Undo
           </Button>
-          <Button size="sm" variant="outline" disabled={!editor.canRedo()} onClick={() => editor.redo()}>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!editor.canRedo()}
+            onClick={() => editor.redo()}
+          >
             Redo
           </Button>
           <Button
@@ -149,7 +181,7 @@ export function CompoundEditor(props: CompoundEditorProps) {
           >
             Remove
           </Button>
-          <span class="ml-auto text-xs text-gray-500">
+          <span class="ml-auto text-xs tabular-nums text-faint">
             {memberCount()} inlays · 1 square = 1 inch, shown at real size
           </span>
         </div>
@@ -161,34 +193,34 @@ export function CompoundEditor(props: CompoundEditorProps) {
           resolveBackground={() => undefined}
           editor={editor}
           isZoomable
-          class="h-[480px] rounded-lg border border-gray-200 bg-white"
+          class="h-[480px] rounded-lg border border-input bg-plaque"
         />
       </div>
 
-      <aside class="flex w-full flex-col gap-5 lg:w-96">
-        <label class="flex flex-col gap-1 text-sm font-medium text-gray-900">
+      <aside class="flex w-full flex-col gap-5 self-start rounded-lg border border-border bg-card p-5 lg:w-96">
+        <label class="flex flex-col gap-1.5 text-sm font-medium text-foreground">
           Name
           <input
             value={name()}
             onInput={(e) => setName(e.currentTarget.value)}
-            class="rounded-md border border-gray-300 px-3 py-2 text-sm font-normal"
+            class={FIELD_CLASS}
           />
         </label>
-        <label class="flex flex-col gap-1 text-sm font-medium text-gray-900">
+        <label class="flex flex-col gap-1.5 text-sm font-medium text-foreground">
           Description
           <textarea
             rows={2}
             value={description()}
             onInput={(e) => setDescription(e.currentTarget.value)}
-            class="rounded-md border border-gray-300 px-3 py-2 text-sm font-normal"
+            class={FIELD_CLASS}
           />
         </label>
-        <label class="flex items-center gap-2 text-sm text-gray-900">
+        <label class="flex items-center gap-2 text-sm text-foreground">
           <input
             type="checkbox"
             checked={isActive()}
             onChange={(e) => setIsActive(e.currentTarget.checked)}
-            class="h-4 w-4 rounded border-gray-300"
+            class="h-4 w-4 rounded border-input accent-primary"
           />
           Offered to dealerships
         </label>
@@ -197,7 +229,9 @@ export function CompoundEditor(props: CompoundEditorProps) {
           {props.isSaving ? "Saving..." : "Save compound"}
         </Button>
         <Show when={memberCount() < 2}>
-          <p class="text-xs text-gray-500">A compound needs at least two inlays.</p>
+          <p class="text-xs text-faint">
+            A compound needs at least two inlays.
+          </p>
         </Show>
       </aside>
     </div>

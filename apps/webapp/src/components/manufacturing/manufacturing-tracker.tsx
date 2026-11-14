@@ -25,7 +25,7 @@ export function ManufacturingTracker(props: ManufacturingTrackerProps) {
 
   return (
     <div class="w-full space-y-1.5">
-      <div class="flex items-center gap-0.5 w-full">
+      <div class="flex w-full items-center">
       <For each={STEP_ORDER}>
         {(step, index) => {
           const isComplete = () => index() < currentIdx();
@@ -37,8 +37,8 @@ export function ManufacturingTracker(props: ManufacturingTrackerProps) {
               {index() > 0 && (
                 <div
                   class={cn(
-                    "h-0.5 flex-1",
-                    isComplete() || isCurrent() ? "bg-primary" : "bg-gray-200",
+                    "h-px flex-1",
+                    isComplete() || isCurrent() ? "bg-gilt" : "bg-input",
                   )}
                 />
               )}
@@ -54,17 +54,17 @@ export function ManufacturingTracker(props: ManufacturingTrackerProps) {
                 >
                   <span
                     class={cn(
-                      "block w-3 h-3 rounded-full border-2",
-                      isComplete() && "bg-primary border-primary",
+                      "block size-2.5 rotate-45 border-2",
+                      isComplete() && "border-gilt bg-gilt",
                       isCurrent() &&
-                        "bg-primary border-primary ring-2 ring-primary/30 ring-offset-1",
-                      isFuture() && "bg-white border-gray-300",
+                        "border-crimson-light bg-primary shadow-[0_0_0_3px_hsl(var(--crimson-light)/0.22)]",
+                      isFuture() && "border-input bg-background",
                     )}
                   />
                 </TooltipTrigger>
                 <TooltipContent class="max-w-xs text-left">
                   <p class="font-medium">{STEP_SHORT_LABELS[step]}</p>
-                  <p class="text-primary-foreground/80">
+                  <p class="text-muted-foreground">
                     {isComplete()
                       ? "Completed"
                       : isCurrent()
@@ -81,7 +81,7 @@ export function ManufacturingTracker(props: ManufacturingTrackerProps) {
 
       <Show when={estimate()}>
         {(range) => (
-          <p class="text-xs text-gray-500">
+          <p class="text-xs text-faint">
             Estimated ready to ship: {formatEstimate(range())}
           </p>
         )}

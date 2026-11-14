@@ -2,10 +2,14 @@ import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/solid-query";
 import type { SandblastBackgroundWrite } from "@glassact/data";
 import { showToast } from "@glassact/ui";
-import { getBackgroundsOpts, postBackgroundOpts } from "../../queries/background";
+import {
+  getBackgroundsOpts,
+  postBackgroundOpts,
+} from "../../queries/background";
 import { BackgroundForm } from "../../components/admin/background-form";
 import { backgroundTagOptions } from "../../components/catalog/background-search";
 import { isApiError } from "../../utils/is-api-error";
+import { PageHeader } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/admin/backgrounds_/create")({
   component: RouteComponent,
@@ -27,7 +31,9 @@ function RouteComponent() {
         showToast({
           title: "Failed to create background",
           description:
-            error instanceof Error && isApiError(error) ? (error.data?.error ?? "Unknown error") : "Unknown error",
+            error instanceof Error && isApiError(error)
+              ? (error.data?.error ?? "Unknown error")
+              : "Unknown error",
           variant: "error",
         }),
     });
@@ -35,7 +41,7 @@ function RouteComponent() {
 
   return (
     <div class="flex flex-col gap-6">
-      <h1 class="text-2xl font-bold text-gray-900">New background</h1>
+      <PageHeader eyebrow="Backgrounds" title="New background" />
       <BackgroundForm
         tagOptions={backgroundTagOptions(backgroundsQuery.data ?? [])}
         isSaving={postBackground.isPending}

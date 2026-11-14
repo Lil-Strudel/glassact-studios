@@ -19,7 +19,7 @@ export function ItemDetailModal(props: ParentProps<ItemDetailModalProps>) {
     <Dialog>
       <DialogTrigger as="div" class="contents">
         {props.children ?? (
-          <Button variant="outline">View Details</Button>
+          <Button variant="secondary">View details</Button>
         )}
       </DialogTrigger>
       <DialogContent class="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -31,7 +31,7 @@ export function ItemDetailModal(props: ParentProps<ItemDetailModalProps>) {
           <GraniteImageLightbox
             images={[{ src: props.item.svg_url, alt: props.item.name }]}
             inches={{ width: props.item.default_width, height: props.item.default_height }}
-            triggerClass="block w-full rounded-md overflow-hidden"
+            triggerClass="came-frame block w-full overflow-hidden rounded-md"
             previewClass="p-4 flex items-center justify-center min-h-[400px]"
           >
             <img
@@ -43,44 +43,42 @@ export function ItemDetailModal(props: ParentProps<ItemDetailModalProps>) {
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="text-sm font-medium text-gray-900">Code</label>
-              <p class="text-sm text-gray-600 mt-1">
-                <code class="bg-gray-100 px-2 py-1 rounded">
+              <label class="eyebrow">Code</label>
+              <p class="mt-1 text-sm tabular-nums text-muted-foreground">
+                <code class="rounded bg-accent px-2 py-1 font-mono tracking-wide">
                   {props.item.catalog_code}
                 </code>
               </p>
             </div>
 
             <div>
-              <label class="text-sm font-medium text-gray-900">Category</label>
-              <p class="text-sm text-gray-600 mt-1">{props.item.category}</p>
+              <label class="eyebrow">Category</label>
+              <p class="mt-1 text-sm tabular-nums text-muted-foreground">{props.item.category}</p>
             </div>
 
             <Show when={props.item.description}>
               {(desc) => (
                 <div class="col-span-2">
-                  <label class="text-sm font-medium text-gray-900">
+                  <label class="eyebrow">
                     Description
                   </label>
-                  <p class="text-sm text-gray-600 mt-1">{desc()}</p>
+                  <p class="mt-1 text-sm tabular-nums text-muted-foreground">{desc()}</p>
                 </div>
               )}
             </Show>
 
             <div>
-              <label class="text-sm font-medium text-gray-900">
-                Default Dimensions
+              <label class="eyebrow">Default dimensions
               </label>
-              <p class="text-sm text-gray-600 mt-1">
+              <p class="mt-1 text-sm tabular-nums text-muted-foreground">
                 {props.item.default_width} x {props.item.default_height}
               </p>
             </div>
 
             <div>
-              <label class="text-sm font-medium text-gray-900">
-                Minimum Dimensions
+              <label class="eyebrow">Minimum dimensions
               </label>
-              <p class="text-sm text-gray-600 mt-1">
+              <p class="mt-1 text-sm tabular-nums text-muted-foreground">
                 {props.item.min_width} x {props.item.min_height}
               </p>
             </div>

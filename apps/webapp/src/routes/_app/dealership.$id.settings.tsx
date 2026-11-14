@@ -38,7 +38,10 @@ const formSchema = z.object({
   name: z.string().min(1),
   phone: z
     .string()
-    .refine((d) => d === "" || d.length === 10, "Enter a 10-digit phone number"),
+    .refine(
+      (d) => d === "" || d.length === 10,
+      "Enter a 10-digit phone number",
+    ),
   payment_timing: z.enum(PAYMENT_TIMINGS),
   sandblast_file_format: z.enum(SANDBLAST_FILE_FORMATS),
   address: z.object({
@@ -61,15 +64,17 @@ function RouteComponent() {
   const canEdit = () => userContext.can(PERMISSION_ACTIONS.MANAGE_DEALERSHIP);
 
   return (
-    <div>
-      <div class="mb-6">
-        <h2 class="text-xl font-semibold">Settings</h2>
-        <p class="text-gray-600">Dealership name, billing, and address.</p>
+    <div class="space-y-6">
+      <div class="space-y-1">
+        <h2 class="text-2xl">Settings</h2>
+        <p class="text-sm text-muted-foreground">
+          Dealership name, billing, and address.
+        </p>
       </div>
 
       <Show
         when={query.data}
-        fallback={<p class="text-sm text-gray-400">Loading...</p>}
+        fallback={<p class="text-sm text-faint">Loading...</p>}
       >
         {(dealership) => (
           <Show
@@ -87,39 +92,38 @@ function RouteComponent() {
 function ReadOnlyView(props: { dealership: GET<Dealership> }) {
   const address = () => props.dealership.address;
   return (
-    <dl class="max-w-xl space-y-4">
+    <dl class="grid max-w-2xl gap-x-8 gap-y-5 rounded-lg border border-border bg-card p-6 sm:grid-cols-2">
       <div>
-        <dt class="text-sm font-medium text-gray-500">Name</dt>
-        <dd class="text-gray-900">{props.dealership.name}</dd>
+        <dt class="eyebrow mb-1">Name</dt>
+        <dd class="text-foreground">{props.dealership.name}</dd>
       </div>
       <div>
-        <dt class="text-sm font-medium text-gray-500">Phone</dt>
-        <dd class="text-gray-900">
+        <dt class="eyebrow mb-1">Phone</dt>
+        <dd class="text-foreground">
           {formatPhone(props.dealership.phone) || "—"}
         </dd>
       </div>
       <div>
-        <dt class="text-sm font-medium text-gray-500">
-          Sandblasting file format
-        </dt>
-        <dd class="text-gray-900">
+        <dt class="eyebrow mb-1">Sandblasting file format</dt>
+        <dd class="text-foreground">
           {props.dealership.sandblast_file_format.toUpperCase()}
         </dd>
       </div>
       <Can permission={PERMISSION_ACTIONS.MANAGE_DEALERSHIPS}>
         <div>
-          <dt class="text-sm font-medium text-gray-500">Payment timing</dt>
-          <dd class="text-gray-900">
+          <dt class="eyebrow mb-1">Payment timing</dt>
+          <dd class="text-foreground">
             {PAYMENT_TIMING_LABELS[props.dealership.payment_timing]}
           </dd>
         </div>
       </Can>
-      <div>
-        <dt class="text-sm font-medium text-gray-500">Address</dt>
-        <dd class="text-gray-900">
+      <div class="sm:col-span-2">
+        <dt class="eyebrow mb-1">Address</dt>
+        <dd class="text-foreground">
           {address().street}
-          {address().street_ext ? `, ${address().street_ext}` : ""}, {address().city},{" "}
-          {address().state} {address().postal_code}, {address().country}
+          {address().street_ext ? `, ${address().street_ext}` : ""},{" "}
+          {address().city}, {address().state} {address().postal_code},{" "}
+          {address().country}
         </dd>
       </div>
     </dl>
@@ -186,7 +190,7 @@ function SettingsForm(props: { dealership: GET<Dealership>; uuid: string }) {
         e.stopPropagation();
         form.handleSubmit();
       }}
-      class="flex max-w-xl flex-col gap-4"
+      class="flex max-w-2xl flex-col gap-5 rounded-lg border border-border bg-card p-6"
     >
       <form.Field
         name="name"
@@ -224,8 +228,8 @@ function SettingsForm(props: { dealership: GET<Dealership>; uuid: string }) {
         />
       </Can>
 
-      <div class="border-t pt-4">
-        <h3 class="mb-3 text-sm font-medium text-gray-900">Address</h3>
+      <div class="border-t border-border pt-5">
+        <h3 class="eyebrow mb-3">Address</h3>
 
         <Form.AddressField
           form={form}
@@ -250,15 +254,11 @@ function SettingsForm(props: { dealership: GET<Dealership>; uuid: string }) {
           />
           <form.Field
             name="address.city"
-            children={(field) => (
-              <Form.TextField field={field} label="City" />
-            )}
+            children={(field) => <Form.TextField field={field} label="City" />}
           />
           <form.Field
             name="address.state"
-            children={(field) => (
-              <Form.TextField field={field} label="State" />
-            )}
+            children={(field) => <Form.TextField field={field} label="State" />}
           />
           <form.Field
             name="address.postal_code"
@@ -275,9 +275,11 @@ function SettingsForm(props: { dealership: GET<Dealership>; uuid: string }) {
         </div>
       </div>
 
-      <Button type="submit" disabled={patchDealership.isPending}>
-        Save changes
-      </Button>
+      <div class="flex justify-end border-t border-border pt-5">
+        <Button type="submit" disabled={patchDealership.isPending}>
+          Save changes
+        </Button>
+      </div>
     </form>
   );
 }

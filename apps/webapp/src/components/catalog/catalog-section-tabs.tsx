@@ -1,24 +1,27 @@
 import { Link } from "@tanstack/solid-router";
 
-const linkClass = "rounded-md px-3 py-1.5 text-sm font-medium";
+const linkClass = "-mb-px border-b-2 pb-2.5 text-sm font-medium transition-colors";
+const activeClass = "border-crimson-light text-foreground";
+const inactiveClass =
+  "border-transparent text-muted-foreground hover:border-input hover:text-foreground";
 
 export function CatalogSectionTabs() {
   return (
-    <nav class="flex gap-1 rounded-lg bg-gray-100 p-1 self-start">
+    <nav class="flex gap-6 border-b border-border">
       <Link
         to="/catalog"
         activeOptions={{ exact: true }}
         class={linkClass}
-        activeProps={{ class: "bg-white text-gray-900 shadow-sm" }}
-        inactiveProps={{ class: "text-gray-600 hover:text-gray-900" }}
+        activeProps={{ class: activeClass }}
+        inactiveProps={{ class: inactiveClass }}
       >
         Inlays
       </Link>
       <Link
         to="/catalog/backgrounds"
         class={linkClass}
-        activeProps={{ class: "bg-white text-gray-900 shadow-sm" }}
-        inactiveProps={{ class: "text-gray-600 hover:text-gray-900" }}
+        activeProps={{ class: activeClass }}
+        inactiveProps={{ class: inactiveClass }}
       >
         Sandblast backgrounds
       </Link>

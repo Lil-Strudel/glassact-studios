@@ -4,7 +4,7 @@ import { Button } from "@glassact/ui";
 import type { StoneEditor } from "./create-stone-editor";
 import { newTextElement } from "./stone-text";
 
-const inputClass = "w-full rounded-md border border-gray-300 px-2 py-1 text-sm";
+const inputClass = "w-full rounded-md border border-input px-2 py-1 text-sm";
 
 export function NameAndDatesForm(props: { editor: StoneEditor }) {
   const [name, setName] = createSignal("");
@@ -45,9 +45,9 @@ export function NameAndDatesForm(props: { editor: StoneEditor }) {
   }
 
   return (
-    <section class="flex flex-col gap-2 border-t border-gray-200 pt-4">
-      <h3 class="text-sm font-medium text-gray-900">Name and dates</h3>
-      <p class="text-xs text-gray-500">
+    <section class="flex flex-col gap-2 border-t border-border pt-4">
+      <h3 class="eyebrow">Name and dates</h3>
+      <p class="text-xs text-muted-foreground">
         Lays out the usual name, dates and epitaph lines as ordinary text you
         can move and restyle like any other.
       </p>

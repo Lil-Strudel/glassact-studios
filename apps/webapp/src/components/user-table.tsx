@@ -1,5 +1,6 @@
 import { createMemo, createSignal, For, JSX, Show } from "solid-js";
 import {
+  Badge,
   Button,
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ import {
 import { createForm } from "@tanstack/solid-form";
 import { z } from "zod";
 import { Can } from "./Can";
+import { EmptyState } from "@glassact/ui";
 import { isApiError } from "../utils/is-api-error";
 import { useClampPage } from "../hooks/use-clamp-page";
 import { useDebouncedSearchInput } from "../hooks/use-debounced-search-input";
@@ -109,14 +111,41 @@ export function UserTable<T extends ManagedUser>(props: UserTableProps<T>) {
   }
 
   const columns = createMemo<ColumnDef<T>[]>(() => [
-    { accessorKey: "name", header: "Name", cell: (info) => info.getValue() },
-    { accessorKey: "email", header: "Email", cell: (info) => info.getValue() },
-    { accessorKey: "role", header: "Role", cell: (info) => info.getValue() },
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: (info) => (
+        <span class="font-medium text-foreground">
+          {info.getValue<string>()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+      cell: (info) => (
+        <span class="text-muted-foreground">{info.getValue<string>()}</span>
+      ),
+    },
+    {
+      accessorKey: "role",
+      header: "Role",
+      cell: (info) => <span class="capitalize">{info.getValue<string>()}</span>,
+    },
     ...(props.extraColumns ?? []),
     {
       accessorKey: "is_active",
       header: "Status",
-      cell: (info) => (info.getValue() ? "Active" : "Inactive"),
+      cell: (info) =>
+        info.getValue() ? (
+          <Badge variant="success" lozenge>
+            Active
+          </Badge>
+        ) : (
+          <Badge variant="outline" lozenge>
+            Inactive
+          </Badge>
+        ),
     },
     {
       id: "actions",
@@ -135,10 +164,7 @@ export function UserTable<T extends ManagedUser>(props: UserTableProps<T>) {
               variant="ghost"
               size="sm"
               onClick={() =>
-                handleSetActive(
-                  info.row.original,
-                  !info.row.original.is_active,
-                )
+                handleSetActive(info.row.original, !info.row.original.is_active)
               }
               disabled={pendingUuid() === info.row.original.uuid}
             >
@@ -194,8 +220,8 @@ export function UserTable<T extends ManagedUser>(props: UserTableProps<T>) {
   );
 
   return (
-    <div>
-      <div class="flex items-center justify-between py-4">
+    <div class="space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
         <TextFieldRoot value={filterText()} onChange={setFilterText}>
           <TextField placeholder="Filter by name..." class="max-w-sm" />
         </TextFieldRoot>
@@ -203,7 +229,10 @@ export function UserTable<T extends ManagedUser>(props: UserTableProps<T>) {
         <Can permission={props.permission}>{props.addAction}</Can>
       </div>
 
-      <div ref={tableTop} class="rounded-md border scroll-mt-6">
+      <div
+        ref={tableTop}
+        class="scroll-mt-6 overflow-hidden rounded-lg border border-border bg-card"
+      >
         <Table>
           <TableHeader>
             <For each={table.getHeaderGroups()}>
@@ -229,12 +258,12 @@ export function UserTable<T extends ManagedUser>(props: UserTableProps<T>) {
             <Show
               when={table.getRowModel().rows?.length}
               fallback={
-                <TableRow>
-                  <TableCell
-                    colSpan={columns().length}
-                    class="h-24 text-center"
-                  >
-                    No results.
+                <TableRow class="hover:bg-transparent">
+                  <TableCell colSpan={columns().length} class="p-0">
+                    <EmptyState
+                      title="No users found"
+                      description="Try a different name, or add the first user."
+                    />
                   </TableCell>
                 </TableRow>
               }
@@ -260,7 +289,11 @@ export function UserTable<T extends ManagedUser>(props: UserTableProps<T>) {
         </Table>
       </div>
 
-      <div class="flex items-center justify-end space-x-2 py-4">
+      <div class="flex items-center justify-end gap-2">
+        <span class="mr-2 text-sm tabular-nums text-faint">
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {Math.max(table.getPageCount(), 1)}
+        </span>
         <Button
           variant="outline"
           size="sm"

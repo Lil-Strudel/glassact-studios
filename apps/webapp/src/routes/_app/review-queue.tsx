@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/solid-router";
 import { useQuery, useQueryClient } from "@tanstack/solid-query";
 import { For, Match, Show, Switch } from "solid-js";
 import {
+  Alert,
   Badge,
   Breadcrumb,
   Card,
@@ -9,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@glassact/ui";
+import { IoAlertCircleOutline } from "solid-icons/io";
 import type { ReviewQueueItem } from "@glassact/data";
 import { PERMISSION_ACTIONS } from "@glassact/data";
 import { getReviewQueueOpts } from "../../queries/review-queue";
@@ -17,6 +19,8 @@ import { MirrorBadge } from "../../components/inlay/mirror-badge";
 import { mirrorCssTransform } from "../../utils/inlay-mirror";
 import ProofActions from "../../components/proof/proof-actions";
 import CreateProofDialog from "../../components/proof/create-proof-dialog";
+import { PageHeader } from "@glassact/ui";
+import { EmptyState } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/review-queue")({
   component: RouteComponent,
@@ -25,7 +29,8 @@ export const Route = createFileRoute("/_app/review-queue")({
 function RouteComponent() {
   const query = useQuery(() => getReviewQueueOpts());
 
-  const needsApproval = () => (query.isSuccess ? query.data.needs_approval : []);
+  const needsApproval = () =>
+    query.isSuccess ? query.data.needs_approval : [];
   const needsProof = () => (query.isSuccess ? query.data.needs_proof : []);
   const isEmpty = () =>
     query.isSuccess &&
@@ -36,61 +41,65 @@ function RouteComponent() {
     <Can
       permission={PERMISSION_ACTIONS.INTERNAL_APPROVE_PROOF}
       fallback={() => (
-        <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mt-8">
-          <p class="text-gray-500">You don't have access to the review queue.</p>
-        </div>
+        <EmptyState
+          class="mt-8 rounded-lg border border-dashed border-input"
+          title="You don't have access to the review queue."
+        />
       )}
     >
-      <div>
-        <Breadcrumb crumbs={[{ title: "Review", to: "/review-queue" }]} />
-        <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-          Review Queue
-        </h1>
-        <p class="mt-1 text-sm text-gray-500">
-          Inlays across all projects that need internal action.
-        </p>
+      <div class="flex flex-col gap-8">
+        <div class="space-y-3">
+          <Breadcrumb crumbs={[{ title: "Review", to: "/review-queue" }]} />
+          <PageHeader
+            eyebrow="Design studio"
+            title="Review Queue"
+            description="Inlays across all projects that need internal action."
+          />
+        </div>
 
         <Switch>
           <Match when={query.isLoading}>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <For each={[1, 2, 3]}>
-                {() => <div class="h-48 bg-gray-200 rounded-lg animate-pulse" />}
+                {() => <div class="h-48 animate-pulse rounded-lg bg-card" />}
               </For>
             </div>
           </Match>
 
           <Match when={query.isError}>
-            <div class="mt-8 border-2 border-dashed border-red-300 rounded-xl p-8 text-center">
-              <p class="text-red-600 font-medium">Failed to load review queue</p>
-              <p class="text-gray-500 text-sm mt-1">
-                {query.error?.message ?? "An unexpected error occurred."}
-              </p>
-            </div>
+            <Alert variant="destructive">
+              <IoAlertCircleOutline size={18} />
+              <div>
+                <p class="font-medium">Failed to load review queue</p>
+                <p class="mt-1 text-muted-foreground">
+                  {query.error?.message ?? "An unexpected error occurred."}
+                </p>
+              </div>
+            </Alert>
           </Match>
 
           <Match when={isEmpty()}>
-            <div class="mt-8 border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-              <p class="text-gray-400 text-lg font-medium">All caught up</p>
-              <p class="text-gray-400 text-sm mt-2">
-                Nothing is waiting on internal review right now.
-              </p>
-            </div>
+            <EmptyState
+              class="rounded-lg border border-dashed border-input"
+              title="All caught up"
+              description="Nothing is waiting on internal review right now."
+            />
           </Match>
 
           <Match when={query.isSuccess}>
-            <div class="flex flex-col gap-12 mt-8">
+            <div class="flex flex-col gap-12">
               <Show when={needsApproval().length > 0}>
                 <section>
                   <div class="flex items-center gap-3">
-                    <h2 class="text-xl font-bold tracking-tight text-gray-900">
-                      Needs Approval
-                    </h2>
-                    <Badge variant="warning">{needsApproval().length}</Badge>
+                    <h2 class="text-2xl">Needs Approval</h2>
+                    <Badge variant="gilt" class="tabular-nums">
+                      {needsApproval().length}
+                    </Badge>
                   </div>
-                  <p class="mt-1 text-sm text-gray-500">
+                  <p class="mt-1 text-sm text-muted-foreground">
                     Customized catalog inlays awaiting your pricing approval.
                   </p>
-                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                  <div class="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <For each={needsApproval()}>
                       {(item) => <ApprovalCard item={item} />}
                     </For>
@@ -101,15 +110,15 @@ function RouteComponent() {
               <Show when={needsProof().length > 0}>
                 <section>
                   <div class="flex items-center gap-3">
-                    <h2 class="text-xl font-bold tracking-tight text-gray-900">
-                      Needs Proof
-                    </h2>
-                    <Badge variant="outline">{needsProof().length}</Badge>
+                    <h2 class="text-2xl">Needs Proof</h2>
+                    <Badge variant="outline" class="tabular-nums">
+                      {needsProof().length}
+                    </Badge>
                   </div>
-                  <p class="mt-1 text-sm text-gray-500">
+                  <p class="mt-1 text-sm text-muted-foreground">
                     Custom inlays that still need a proof created.
                   </p>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                  <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <For each={needsProof()}>
                       {(item) => <NeedsProofCard item={item} />}
                     </For>
@@ -128,12 +137,14 @@ function ItemHeader(props: { item: ReviewQueueItem }) {
   return (
     <div class="flex items-start justify-between gap-2">
       <div class="min-w-0">
-        <CardTitle class="text-sm truncate">{props.item.inlay.name}</CardTitle>
+        <CardTitle class="truncate leading-snug">
+          {props.item.inlay.name}
+        </CardTitle>
         <MirrorBadge inlay={props.item.inlay} />
         <Link
           to="/projects/$id"
           params={{ id: props.item.project_uuid }}
-          class="text-xs text-primary hover:underline"
+          class="text-xs text-crimson-light underline-offset-4 hover:underline"
         >
           {props.item.project_name}
         </Link>
@@ -144,7 +155,7 @@ function ItemHeader(props: { item: ReviewQueueItem }) {
           id: props.item.project_uuid,
           inlayId: props.item.inlay.uuid,
         }}
-        class="text-xs text-gray-500 hover:underline flex-shrink-0"
+        class="flex-shrink-0 text-xs text-faint underline-offset-4 hover:text-foreground hover:underline"
       >
         Open
       </Link>
@@ -154,9 +165,9 @@ function ItemHeader(props: { item: ReviewQueueItem }) {
 
 function ApprovalCard(props: { item: ReviewQueueItem }) {
   return (
-    <Card class="overflow-hidden">
+    <Card class="overflow-hidden border-gilt/45">
       <Show when={props.item.pending_proof?.design_asset_url}>
-        <div class="bg-gray-50 p-4 flex items-center justify-center h-40 overflow-hidden border-b">
+        <div class="flex h-40 items-center justify-center overflow-hidden border-b border-border bg-plaque p-4">
           <img
             src={props.item.pending_proof!.design_asset_url}
             alt={props.item.inlay.name}
@@ -172,7 +183,7 @@ function ApprovalCard(props: { item: ReviewQueueItem }) {
         <Show
           when={props.item.pending_proof}
           fallback={
-            <p class="text-sm text-gray-500">
+            <p class="text-sm text-muted-foreground">
               No pending proof found for this inlay.
             </p>
           }
@@ -196,7 +207,7 @@ function NeedsProofCard(props: { item: ReviewQueueItem }) {
       </CardHeader>
       <CardContent class="space-y-3">
         <Show when={props.item.inlay.custom_info?.description}>
-          <p class="text-xs text-gray-600 line-clamp-3">
+          <p class="line-clamp-3 text-sm text-muted-foreground">
             {props.item.inlay.custom_info!.description}
           </p>
         </Show>

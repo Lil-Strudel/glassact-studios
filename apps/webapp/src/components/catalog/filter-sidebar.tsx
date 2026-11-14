@@ -26,10 +26,10 @@ export function FilterSidebar(props: FilterSidebarProps) {
   };
 
   return (
-    <div class="w-full lg:w-64 flex-shrink-0 bg-white lg:border-r border-gray-200 p-4 lg:p-6">
+    <div class="w-full flex-shrink-0 self-start rounded-lg border border-border bg-card p-5 lg:w-64">
       <div class="flex flex-col gap-6">
         <div>
-          <label class="text-sm font-medium text-gray-900">Search</label>
+          <label class="eyebrow">Search</label>
           <TextFieldRoot
             value={props.searchValue}
             onChange={(value) => props.onSearchChange(value)}
@@ -39,11 +39,11 @@ export function FilterSidebar(props: FilterSidebarProps) {
         </div>
 
         <div>
-          <label class="text-sm font-medium text-gray-900">Category</label>
+          <label class="eyebrow">Category</label>
           <select
             value={props.selectedCategory}
             onChange={(e) => props.onCategoryChange(e.currentTarget.value)}
-            class="w-full mt-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            class="mt-2 h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground focus-visible:border-gilt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gilt/25"
           >
             <option value="">All categories</option>
             <For each={categories()}>
@@ -52,15 +52,15 @@ export function FilterSidebar(props: FilterSidebarProps) {
           </select>
         </div>
 
-        <Button variant="outline" class="w-full" onClick={clearFilters}>
+        <Button variant="secondary" class="w-full" onClick={clearFilters}>
           Clear filters
         </Button>
 
-        <div class="border-t border-gray-200 pt-6">
-          <label class="text-sm font-medium text-gray-900">
+        <div class="border-t border-border pt-6">
+          <label class="eyebrow">
             Granite backdrop
           </label>
-          <p class="text-xs text-gray-500 mt-1">
+          <p class="mt-1 text-xs text-faint">
             Preview only — does not filter results.
           </p>
           <GranitePicker preference={granitePreference} class="mt-2" />

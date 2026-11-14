@@ -35,7 +35,7 @@ export function DesignerToolbar(props: DesignerToolbarProps) {
       <Button size="sm" variant="outline" disabled={!props.editor.canRedo()} onClick={() => props.editor.redo()}>
         Redo
       </Button>
-      <div class="mx-1 h-5 w-px bg-gray-300" />
+      <div class="mx-1 h-5 w-px bg-input" />
       <Show
         when={props.editor.selectedGroup()}
         fallback={
@@ -64,7 +64,7 @@ export function DesignerToolbar(props: DesignerToolbarProps) {
       <Show when={props.selectedInlay}>
         {(inlay) => (
           <>
-            <div class="mx-1 h-5 w-px bg-gray-300" />
+            <div class="mx-1 h-5 w-px bg-input" />
             <CustomizeInlayLink projectUuid={props.projectUuid} inlay={inlay()} />
             <InlayArrangeActions
               projectUuid={props.projectUuid}
@@ -88,7 +88,7 @@ export function DesignerToolbar(props: DesignerToolbarProps) {
         {(status) => (
           <span
             class={
-              status() === "error" ? "ml-auto text-xs text-red-600" : "ml-auto text-xs text-gray-500"
+              status() === "error" ? "ml-auto text-xs text-error-foreground" : "ml-auto text-xs text-muted-foreground"
             }
           >
             {SAVE_LABELS[status()]}

@@ -38,7 +38,7 @@ export function PricingWarningDialog(props: PricingWarningDialogProps) {
             Changing the color of a single piece (instead of a whole color
             group) means it no longer matches its group. GlassAct has to create
             new manufacturing files for custom pieces, which{" "}
-            <span class="font-medium text-gray-900">
+            <span class="font-medium text-foreground">
               may increase the price
             </span>{" "}
             of this inlay.
@@ -51,7 +51,7 @@ export function PricingWarningDialog(props: PricingWarningDialogProps) {
           class="flex items-center gap-2"
         >
           <CheckboxControl />
-          <CheckboxLabel class="text-sm text-gray-600">
+          <CheckboxLabel class="text-sm text-muted-foreground">
             Don't remind me again this session
           </CheckboxLabel>
         </Checkbox>

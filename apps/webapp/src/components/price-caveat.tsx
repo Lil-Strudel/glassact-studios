@@ -7,6 +7,6 @@ interface PriceCaveatProps {
 
 export function PriceCaveat(props: PriceCaveatProps) {
   return (
-    <p class={cn("text-xs text-gray-400", props.class)}>{PRICE_CAVEAT}</p>
+    <p class={cn("text-xs text-faint", props.class)}>{PRICE_CAVEAT}</p>
   );
 }

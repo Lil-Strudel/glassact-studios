@@ -46,6 +46,8 @@ import {
   postDealershipOpts,
 } from "../../queries/dealership";
 import { isApiError } from "../../utils/is-api-error";
+import { PageHeader } from "@glassact/ui";
+import { EmptyState } from "@glassact/ui";
 import { PAYMENT_TIMING_LABELS } from "../../utils/payment-timing";
 import { useClampPage } from "../../hooks/use-clamp-page";
 import { useDebouncedSearchInput } from "../../hooks/use-debounced-search-input";
@@ -89,7 +91,7 @@ const defaultColumns: ColumnDef<GET<Dealership>>[] = [
           as={Link}
           to={`/dealership/${props.row.original.uuid}`}
         >
-          <IoBuildOutline size={24} />
+          <IoBuildOutline size={18} />
         </Button>
       );
     },
@@ -97,18 +99,22 @@ const defaultColumns: ColumnDef<GET<Dealership>>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <span class="font-medium text-foreground">{info.getValue<string>()}</span>
+    ),
     footer: (info) => info.column.id,
   },
   {
     accessorKey: "address",
     header: "Address",
-    cell: ({
-      row: {
-        original: { address },
-      },
-    }) =>
-      `${address.street}, ${address.city}, ${address.state} ${address.postal_code}`,
+    cell: (info) => {
+      const address = info.row.original.address;
+      return (
+        <span class="text-muted-foreground">
+          {`${address.street}, ${address.city}, ${address.state} ${address.postal_code}`}
+        </span>
+      );
+    },
     footer: (info) => info.column.id,
   },
 ];
@@ -117,7 +123,10 @@ const formSchema = z.object({
   name: z.string().min(1),
   phone: z
     .string()
-    .refine((d) => d === "" || d.length === 10, "Enter a 10-digit phone number"),
+    .refine(
+      (d) => d === "" || d.length === 10,
+      "Enter a 10-digit phone number",
+    ),
   payment_timing: z.enum(PAYMENT_TIMINGS),
   sandblast_file_format: z.enum(SANDBLAST_FILE_FORMATS),
   address: z.object({
@@ -246,8 +255,13 @@ function RouteComponent() {
     },
   }));
   return (
-    <div>
-      <div class="flex items-center justify-between py-4">
+    <div class="space-y-6">
+      <PageHeader
+        eyebrow="Administration"
+        title="Dealerships"
+        description="The monument dealers who order through GlassAct."
+      />
+      <div class="flex flex-wrap items-center justify-between gap-3">
         <TextFieldRoot value={filterText()} onChange={setFilterText}>
           <TextField placeholder="Filter by name..." class="max-w-sm" />
         </TextFieldRoot>
@@ -305,8 +319,8 @@ function RouteComponent() {
                 )}
               />
 
-              <div class="border-t pt-4">
-                <h3 class="text-sm font-medium text-gray-900 mb-3">Address</h3>
+              <div class="border-t border-border pt-4">
+                <h3 class="eyebrow mb-3">Address</h3>
 
                 <Form.AddressField
                   form={form}
@@ -323,7 +337,10 @@ function RouteComponent() {
           </DialogContent>
         </Dialog>
       </div>
-      <div ref={tableTop} class="rounded-md border scroll-mt-6">
+      <div
+        ref={tableTop}
+        class="scroll-mt-6 overflow-hidden rounded-lg border border-border bg-card"
+      >
         <Table>
           <TableHeader>
             <For each={table.getHeaderGroups()}>
@@ -351,12 +368,12 @@ function RouteComponent() {
             <Show
               when={table.getRowModel().rows?.length}
               fallback={
-                <TableRow>
-                  <TableCell
-                    colSpan={defaultColumns.length}
-                    class="h-24 text-center"
-                  >
-                    No results.
+                <TableRow class="hover:bg-transparent">
+                  <TableCell colSpan={defaultColumns.length} class="p-0">
+                    <EmptyState
+                      title="No dealerships found"
+                      description="Try a different name, or add the first dealership."
+                    />
                   </TableCell>
                 </TableRow>
               }
@@ -381,7 +398,11 @@ function RouteComponent() {
           </TableBody>
         </Table>
       </div>
-      <div class="flex items-center justify-end space-x-2 py-4">
+      <div class="flex items-center justify-end gap-2">
+        <span class="mr-2 text-sm tabular-nums text-faint">
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {Math.max(table.getPageCount(), 1)}
+        </span>
         <Button
           variant="outline"
           size="sm"

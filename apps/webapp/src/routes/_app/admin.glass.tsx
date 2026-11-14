@@ -45,6 +45,8 @@ import {
   listSearchSchema,
   type ListSearchInput,
 } from "../../utils/list-search";
+import { PageHeader } from "@glassact/ui";
+import { EmptyState } from "@glassact/ui";
 import {
   onTablePaginationChange,
   tablePaginationState,
@@ -124,7 +126,7 @@ function GlassColorForm(props: GlassColorFormProps) {
                   : "#000000"
               }
               onInput={(e) => field().handleChange(e.currentTarget.value)}
-              class="h-8 w-16 cursor-pointer rounded border border-gray-300"
+              class="h-8 w-16 cursor-pointer rounded border border-input bg-background"
               aria-label="Pick a color"
             />
           </div>
@@ -157,9 +159,9 @@ function GlassColorForm(props: GlassColorFormProps) {
               type="checkbox"
               checked={field().state.value}
               onChange={(e) => field().handleChange(e.currentTarget.checked)}
-              class="rounded border-gray-300"
+              class="size-4 rounded border-input accent-primary"
             />
-            <span class="text-sm font-medium text-gray-900">Active</span>
+            <span class="text-sm font-medium text-foreground">Active</span>
           </label>
         )}
       />
@@ -218,7 +220,11 @@ const defaultColumns: ColumnDef<GET<GlassColor>>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <span class="font-medium text-foreground">
+        {info.getValue() as string}
+      </span>
+    ),
   },
   {
     accessorKey: "hex",
@@ -228,10 +234,12 @@ const defaultColumns: ColumnDef<GET<GlassColor>>[] = [
       return (
         <div class="flex items-center gap-2">
           <span
-            class="inline-block h-5 w-5 rounded border border-gray-300"
+            class="inline-block h-5 w-5 rounded border border-input"
             style={{ "background-color": hex }}
           />
-          <span class="font-mono text-sm">{hex}</span>
+          <span class="font-mono text-sm tabular-nums text-muted-foreground">
+            {hex}
+          </span>
         </div>
       );
     },
@@ -239,12 +247,20 @@ const defaultColumns: ColumnDef<GET<GlassColor>>[] = [
   {
     accessorKey: "family",
     header: "Family",
-    cell: (info) => (info.getValue() as string | null) ?? "—",
+    cell: (info) => (
+      <span class="text-muted-foreground">
+        {(info.getValue() as string | null) ?? "—"}
+      </span>
+    ),
   },
   {
     accessorKey: "sort_order",
     header: "Sort",
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <span class="tabular-nums text-muted-foreground">
+        {info.getValue() as number}
+      </span>
+    ),
   },
   {
     accessorKey: "is_active",
@@ -252,7 +268,7 @@ const defaultColumns: ColumnDef<GET<GlassColor>>[] = [
     cell: (info) => {
       const isActive = info.getValue() as boolean;
       return (
-        <Badge variant={isActive ? "default" : "secondary"}>
+        <Badge variant={isActive ? "success" : "outline"} lozenge>
           {isActive ? "Yes" : "No"}
         </Badge>
       );
@@ -330,7 +346,9 @@ function RouteComponent() {
     (q) => updateSearch({ q, page: 1 }),
   );
 
-  const query = useQuery(() => getGlassColorsAdminOpts({ limit: 99, offset: 0 }));
+  const query = useQuery(() =>
+    getGlassColorsAdminOpts({ limit: 99, offset: 0 }),
+  );
   const postMutation = useMutation(() => postGlassColorOpts());
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = createSignal(false);
@@ -390,15 +408,20 @@ function RouteComponent() {
   };
 
   return (
-    <div>
-      <div class="flex items-center justify-between py-4">
-        <TextFieldRoot
-          value={filterText()}
-          onChange={setFilterText}
-        >
+    <div class="space-y-6">
+      <PageHeader
+        eyebrow="Administration"
+        title="Glass"
+        description="Glass colours available to the customizer and the manifest editor."
+      />
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <TextFieldRoot value={filterText()} onChange={setFilterText}>
           <TextField placeholder="Filter by name..." class="max-w-sm" />
         </TextFieldRoot>
-        <Dialog open={isCreateDialogOpen()} onOpenChange={setIsCreateDialogOpen}>
+        <Dialog
+          open={isCreateDialogOpen()}
+          onOpenChange={setIsCreateDialogOpen}
+        >
           <DialogTrigger as={Button}>Add a new glass color</DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -412,7 +435,10 @@ function RouteComponent() {
           </DialogContent>
         </Dialog>
       </div>
-      <div ref={tableTop} class="rounded-md border scroll-mt-6">
+      <div
+        ref={tableTop}
+        class="scroll-mt-6 overflow-hidden rounded-lg border border-border bg-card"
+      >
         <Table>
           <TableHeader>
             <For each={table.getHeaderGroups()}>
@@ -440,12 +466,12 @@ function RouteComponent() {
             <Show
               when={table.getRowModel().rows?.length}
               fallback={
-                <TableRow>
-                  <TableCell
-                    colSpan={defaultColumns.length}
-                    class="h-24 text-center"
-                  >
-                    No results.
+                <TableRow class="hover:bg-transparent">
+                  <TableCell colSpan={defaultColumns.length} class="p-0">
+                    <EmptyState
+                      title="No glass colors found"
+                      description="Try a different name, or add the first glass color."
+                    />
                   </TableCell>
                 </TableRow>
               }
@@ -470,7 +496,11 @@ function RouteComponent() {
           </TableBody>
         </Table>
       </div>
-      <div class="flex items-center justify-end space-x-2 py-4">
+      <div class="flex items-center justify-end gap-2">
+        <span class="mr-2 text-sm tabular-nums text-faint">
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {Math.max(table.getPageCount(), 1)}
+        </span>
         <Button
           variant="outline"
           size="sm"

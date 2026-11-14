@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/solid-router";
-import { Link } from "@tanstack/solid-router";
-import { Button } from "@glassact/ui";
+import { createFileRoute, Link } from "@tanstack/solid-router";
+import { IoArrowForward } from "solid-icons/io";
+import { PageHeader } from "@glassact/ui";
 
 export const Route = createFileRoute("/_app/admin/users/")({
   component: RouteComponent,
@@ -8,33 +8,36 @@ export const Route = createFileRoute("/_app/admin/users/")({
 
 function RouteComponent() {
   return (
-    <div class="space-y-6">
-      <div>
-        <h1 class="text-3xl font-bold">User Management</h1>
-        <p class="text-gray-600 mt-2">Manage dealership and internal users</p>
-      </div>
+    <div class="space-y-8">
+      <PageHeader
+        eyebrow="Administration"
+        title="User Management"
+        description="Manage dealership and internal users"
+      />
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Link
           to="/admin/users/dealership"
-          class="block p-6 border rounded-lg hover:shadow-lg transition-shadow"
+          class="group flex flex-col gap-2 rounded-lg border border-border bg-card p-6 transition-colors hover:border-gilt/45 hover:bg-accent/40"
         >
-          <div>
-            <h2 class="text-2xl font-bold mb-2">Dealership Users</h2>
-            <p class="text-gray-600 mb-4">Manage users from dealerships</p>
-            <Button variant="outline">Manage Dealership Users</Button>
-          </div>
+          <h2 class="text-2xl">Dealership Users</h2>
+          <p class="text-muted-foreground">Manage users from dealerships</p>
+          <span class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-crimson-light">
+            Manage Dealership Users
+            <IoArrowForward class="transition-transform group-hover:translate-x-0.5" />
+          </span>
         </Link>
 
         <Link
           to="/admin/users/internal"
-          class="block p-6 border rounded-lg hover:shadow-lg transition-shadow"
+          class="group flex flex-col gap-2 rounded-lg border border-border bg-card p-6 transition-colors hover:border-gilt/45 hover:bg-accent/40"
         >
-          <div>
-            <h2 class="text-2xl font-bold mb-2">Internal Users</h2>
-            <p class="text-gray-600 mb-4">Manage GlassAct Studios staff</p>
-            <Button variant="outline">Manage Internal Users</Button>
-          </div>
+          <h2 class="text-2xl">Internal Users</h2>
+          <p class="text-muted-foreground">Manage GlassAct Studios staff</p>
+          <span class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-crimson-light">
+            Manage Internal Users
+            <IoArrowForward class="transition-transform group-hover:translate-x-0.5" />
+          </span>
         </Link>
       </div>
     </div>
