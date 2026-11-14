@@ -24,7 +24,7 @@ export const catalogCategories: CatalogCategory[] = [
   },
   {
     title: "Outdoors",
-    description: "Outdoor scenes and pastimes",
+    description: "Fishing, cowboys, classic cars and more",
     page: 26,
     image: outdoorsImage,
     imageAlt: "Glass inlay of a jeep set in granite",
