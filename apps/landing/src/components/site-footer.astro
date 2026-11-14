@@ -10,7 +10,7 @@ import {
 } from "../data/site";
 
 const currentYear = new Date().getFullYear();
-const footerNavigation = [{ title: "Home", path: "/" }, ...primaryNavigation, { title: "Contact", path: "/contact" }];
+const footerNavigation = [...primaryNavigation, { title: "Contact", path: "/contact" }];
 ---
 
 <footer class="mt-auto border-t border-border bg-card">

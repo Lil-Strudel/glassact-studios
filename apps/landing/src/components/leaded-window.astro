@@ -19,10 +19,10 @@ const panes = [
 
 <section aria-label="Glass inlays in granite" class="border-b border-border bg-came">
   <div class="shell py-6 sm:py-8">
-    <ul class="grid grid-cols-3 gap-[5px] sm:gap-2 lg:grid-cols-6">
+    <ul class="leaded-panel grid grid-cols-3 gap-[5px] rounded-lg p-[5px] lg:grid-cols-6">
       {
         panes.map((pane) => (
-          <li class="lancet aspect-[3/4]">
+          <li class="glass-pane aspect-square">
             <Image
               src={pane.image}
               alt={pane.alt}

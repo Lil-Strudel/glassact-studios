@@ -1,6 +1,7 @@
 export const customerPortalUrl = "https://app.glassactstudios.com";
 
 export const primaryNavigation = [
+  { title: "Home", path: "/" },
   { title: "Gallery", path: "/gallery" },
   { title: "Our product", path: "/product" },
   { title: "Catalog", path: "/catalog" },

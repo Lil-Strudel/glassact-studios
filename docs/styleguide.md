@@ -11,7 +11,7 @@ The tokens live in `libs/ui/globals.css` (CSS variables) and `libs/ui/tailwind.c
 1. **Browns carry the page; crimson marks the action.** A screen has one crimson thing to do next. Everything else is umber, vellum and rule lines.
 2. **Gilt is ornament.** Rules, focus rings, lozenges, staff names and "needs your attention". Never a large fill, never body text.
 3. **The glass is the colour.** Inlay photos, proofs and the stone designer are the most colourful things on any screen. The chrome around them stays quiet so they glow.
-4. **One system, two volumes.** The landing site and the login page may be ornate (arched frames, large Marcellus, the emblem, glass sheen). Inside the app, dealers work daily: calmer, denser, same tokens.
+4. **One system, two volumes.** The landing site and the login page may be ornate (arched frames, large Marcellus, leaded image grids, glass sheen). Inside the app, dealers work daily: calmer, denser, same tokens.
 5. **Dark only, for now.** Every colour is a token so a light theme can be a second set of values later. Never hard-code a colour.
 
 ## Colour
@@ -108,7 +108,7 @@ Keep running text near 65 characters wide (`max-w-prose`).
 ## Shape, space and depth
 
 - **Radius:** `rounded-md` for controls, `rounded-lg` for cards and panels, `rounded-full` for pills and avatars.
-- **Arched frame:** `rounded-arch` gives the top-rounded church-window shape. Use it for featured imagery: catalog thumbnails, proof images, landing gallery tiles, the hero. Combine with `.came-frame` (a lead-line border). Don't arch functional UI.
+- **Arched frame:** `rounded-arch` gives the top-rounded church-window shape. Use it for a few featured images: the landing hero, catalog category tiles, proof images. Grids of many photos (the gallery, the home page strip) use square panes in a leaded panel instead, because rows of arches read as headstones. Combine with `.came-frame` (a lead-line border). Don't arch functional UI.
 - **Borders over shadows.** Panels are `bg-card border border-border`. Shadows are reserved for floating layers (menus, dialogs, toasts): deep and soft, e.g. `shadow-2xl shadow-black/50`.
 - **Spacing:** Tailwind's scale. Lay out siblings with `flex`/`grid` + `gap`, not per-element margins.
 
@@ -195,7 +195,7 @@ An ornament rule, one Marcellus line saying what will appear here, one sentence 
 - **Full logo on dark:** `logo-full.svg`, the official vector lockup with "GlassAct" and "STUDIOS" in white beside the knot. The default wherever the name appears: app header, login, landing header and footer.
 - **Original logo** (`logo.png`, black lettering) only sits on the vellum plaque (`bg-plaque`), never directly on umber.
 - **Black line artwork** (catalog design SVGs, sandblast masks, proof line art) sits in a `bg-plaque` well; on umber its lead lines vanish. Photos of finished inlays in granite need no well.
-- **The illuminated "S" emblem** is a landing-site and login flourish, not app chrome.
+- **The illuminated "S" emblem** is the source of the palette, not a display element. Don't place it on pages.
 
 ## Voice
 

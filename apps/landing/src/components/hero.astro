@@ -2,7 +2,6 @@
 import { Image } from "astro:assets";
 import ButtonLink from "./button-link.astro";
 import ArrowIcon from "./arrow-icon.astro";
-import EmblemImg from "../assets/images/s-emblem.png";
 import HeroImg from "../assets/images/hero.jpg";
 
 const studioFacts = [
@@ -16,26 +15,17 @@ const studioFacts = [
   <div
     class="shell grid items-center gap-14 pb-16 pt-10 sm:pt-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-16 lg:pb-24 lg:pt-20"
   >
-    <div class="drop-cap-heading">
+    <div>
       <p class="eyebrow reveal text-gilt">
         Custom glass inlays for the memorial industry
       </p>
 
-      <div class="mt-7 flow-root">
-        <Image
-          src={EmblemImg}
-          alt=""
-          widths={[240, 400, 600]}
-          sizes="(min-width: 1280px) 192px, (min-width: 640px) 160px, 120px"
-          loading="eager"
-          class="drop-cap emblem-glow illuminate"
-        />
+      <div class="mt-7">
         <h1
           class="reveal text-[2.55rem] leading-[1.06] sm:text-6xl xl:text-7xl"
           style="--reveal-delay: 300ms"
         >
-          <span class="sr-only">Stained glass, set in stone.</span>
-          <span aria-hidden="true">tained glass,<br />set in stone.</span>
+          Stained glass,<br />set in stone.
         </h1>
 
         <p

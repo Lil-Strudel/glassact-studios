@@ -1,21 +1,12 @@
 ---
-import { Image } from "astro:assets";
 import Layout from "../layouts/layout.astro";
 import ButtonLink from "../components/button-link.astro";
 import OrnamentRule from "../components/ornament-rule.astro";
-import EmblemImg from "../assets/images/s-emblem.png";
 ---
 
 <Layout title="Page not found">
   <section class="crimson-wash flex grow items-center py-16 sm:py-24">
     <div class="shell grid justify-items-center gap-6 text-center">
-      <Image
-        src={EmblemImg}
-        alt=""
-        widths={[200, 400]}
-        sizes="140px"
-        class="emblem-glow illuminate w-32 sm:w-36"
-      />
       <p class="eyebrow text-gilt">Error 404</p>
       <h1 class="text-4xl sm:text-5xl">Page not found</h1>
       <OrnamentRule class="w-56" />

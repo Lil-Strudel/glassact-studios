@@ -8,7 +8,6 @@ const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
 const ariaCurrent = (path: string) => (currentPath === path ? "page" : undefined);
 
 const mobileNavigation = [
-  { title: "Home", path: "/" },
   ...primaryNavigation,
   { title: "Contact us", path: "/contact" },
 ];
