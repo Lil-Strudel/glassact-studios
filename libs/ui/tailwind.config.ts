@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
-import { fontFamily } from "tailwindcss/defaultTheme";
 import tailwindAnimate from "tailwindcss-animate";
+
+const token = (name: string) => `hsl(var(--${name}) / <alpha-value>)`;
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -16,54 +17,76 @@ export default {
         },
       },
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        came: token("came"),
+        border: token("border"),
+        input: token("input"),
+        ring: token("ring"),
+        background: token("background"),
+        foreground: token("foreground"),
+        faint: token("faint"),
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: token("primary"),
+          foreground: token("primary-foreground"),
         },
+        crimson: {
+          deep: token("crimson-deep"),
+          DEFAULT: token("primary"),
+          light: token("crimson-light"),
+        },
+        gilt: {
+          DEFAULT: token("gilt"),
+          foreground: token("gilt-foreground"),
+        },
+        sage: token("sage"),
+        plaque: token("plaque"),
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: token("secondary"),
+          foreground: token("secondary-foreground"),
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: token("destructive"),
+          foreground: token("destructive-foreground"),
         },
         info: {
-          DEFAULT: "hsl(var(--info))",
-          foreground: "hsl(var(--info-foreground))",
+          DEFAULT: token("info"),
+          foreground: token("info-foreground"),
         },
         success: {
-          DEFAULT: "hsl(var(--success))",
-          foreground: "hsl(var(--success-foreground))",
+          DEFAULT: token("success"),
+          foreground: token("success-foreground"),
         },
         warning: {
-          DEFAULT: "hsl(var(--warning))",
-          foreground: "hsl(var(--warning-foreground))",
+          DEFAULT: token("warning"),
+          foreground: token("warning-foreground"),
         },
         error: {
-          DEFAULT: "hsl(var(--error))",
-          foreground: "hsl(var(--error-foreground))",
+          DEFAULT: token("error"),
+          foreground: token("error-foreground"),
+        },
+        status: {
+          draft: token("status-draft"),
+          ordered: token("status-ordered"),
+          production: token("status-production"),
+          shipped: token("status-shipped"),
+          invoiced: token("status-invoiced"),
+          completed: token("status-completed"),
+          cancelled: token("status-cancelled"),
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: token("muted"),
+          foreground: token("muted-foreground"),
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: token("accent"),
+          foreground: token("accent-foreground"),
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: token("popover"),
+          foreground: token("popover-foreground"),
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: token("card"),
+          foreground: token("card-foreground"),
         },
       },
       borderRadius: {
@@ -71,9 +94,15 @@ export default {
         lg: `var(--radius)`,
         md: `calc(var(--radius) - 2px)`,
         sm: "calc(var(--radius) - 4px)",
+        arch: "50% 50% var(--radius) var(--radius) / 30% 30% var(--radius) var(--radius)",
       },
       fontFamily: {
-        sans: ["Roboto Variable", ...fontFamily.sans],
+        display: ["Marcellus", "Optima", "Georgia", "serif"],
+        body: ["Spectral", "Georgia", "serif"],
+      },
+      letterSpacing: {
+        display: "0.01em",
+        label: "0.16em",
       },
       keyframes: {
         "accordion-down": {

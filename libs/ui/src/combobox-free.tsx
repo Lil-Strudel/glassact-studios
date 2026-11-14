@@ -10,10 +10,10 @@ import { Badge } from "./badge";
 // flow. These keep the same idiom/styling as the rest of libs/ui.
 
 const inputClass =
-  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-shadow placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50";
+  "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground transition-[border-color,box-shadow] duration-150 placeholder:text-faint focus-visible:border-gilt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gilt/25 disabled:cursor-not-allowed disabled:opacity-45";
 
 const suggestionListClass =
-  "absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border border-input bg-popover text-popover-foreground shadow-md";
+  "absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border border-border bg-popover text-popover-foreground shadow-2xl shadow-black/50";
 
 const suggestionItemClass =
   "w-full cursor-default select-none px-3 py-2 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground";
@@ -223,7 +223,7 @@ export function ComboboxFreeMulti(props: ComboboxFreeMultiProps) {
                   type="button"
                   disabled={props.disabled}
                   onClick={() => removeTag(tag)}
-                  class="ml-1 hover:text-destructive"
+                  class="ml-1 text-faint hover:text-error-foreground"
                   aria-label={`Remove ${tag}`}
                 >
                   ✕

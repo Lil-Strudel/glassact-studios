@@ -17,7 +17,15 @@ export const Table = (props: ComponentProps<"table">) => {
 export const TableHeader = (props: ComponentProps<"thead">) => {
   const [local, rest] = splitProps(props, ["class"]);
 
-  return <thead class={cn("[&_tr]:border-b", local.class)} {...rest} />;
+  return (
+    <thead
+      class={cn(
+        "bg-muted [&_tr]:border-b [&_tr]:border-border [&_tr:hover]:bg-muted",
+        local.class,
+      )}
+      {...rest}
+    />
+  );
 };
 
 export const TableBody = (props: ComponentProps<"tbody">) => {
@@ -33,7 +41,7 @@ export const TableFooter = (props: ComponentProps<"tfoot">) => {
 
   return (
     <tbody
-      class={cn("bg-primary font-medium text-primary-foreground", local.class)}
+      class={cn("border-t border-border bg-muted font-medium text-foreground", local.class)}
       {...rest}
     />
   );
@@ -45,7 +53,7 @@ export const TableRow = (props: ComponentProps<"tr">) => {
   return (
     <tr
       class={cn(
-        "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+        "border-b border-border transition-colors hover:bg-accent/60 data-[state=selected]:bg-accent",
         local.class,
       )}
       {...rest}
@@ -59,7 +67,7 @@ export const TableHead = (props: ComponentProps<"th">) => {
   return (
     <th
       class={cn(
-        "h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "h-10 px-3 text-left align-middle text-xs font-semibold uppercase tracking-label text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         local.class,
       )}
       {...rest}
@@ -73,7 +81,7 @@ export const TableCell = (props: ComponentProps<"td">) => {
   return (
     <td
       class={cn(
-        "p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "px-3 py-2.5 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         local.class,
       )}
       {...rest}
@@ -86,7 +94,7 @@ export const TableCaption = (props: ComponentProps<"caption">) => {
 
   return (
     <caption
-      class={cn("mt-4 text-sm text-muted-foreground", local.class)}
+      class={cn("mt-4 text-sm text-faint", local.class)}
       {...rest}
     />
   );

@@ -21,7 +21,10 @@ export const AccordionItem = <T extends ValidComponent = "div">(
   const [local, rest] = splitProps(props as accordionItemProps, ["class"]);
 
   return (
-    <AccordionPrimitive.Item class={cn("border-b", local.class)} {...rest} />
+    <AccordionPrimitive.Item
+      class={cn("border-b border-border", local.class)}
+      {...rest}
+    />
   );
 };
 
@@ -43,7 +46,7 @@ export const AccordionTrigger = <T extends ValidComponent = "button">(
     <AccordionPrimitive.Header class="flex" as="div">
       <AccordionPrimitive.Trigger
         class={cn(
-          "flex flex-1 items-center justify-between py-4 text-sm font-medium transition-shadow hover:underline focus-visible:outline-none focus-visible:ring-[1.5px] focus-visible:ring-ring [&[data-expanded]>svg]:rotate-180",
+          "flex flex-1 items-center justify-between py-4 text-left text-sm font-medium transition-colors hover:text-crimson-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&[data-expanded]>svg]:rotate-180",
           local.class,
         )}
         {...rest}
@@ -52,7 +55,7 @@ export const AccordionTrigger = <T extends ValidComponent = "button">(
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
-          class="h-4 w-4 text-muted-foreground transition-transform duration-200"
+          class="h-4 w-4 shrink-0 text-faint transition-transform duration-200"
         >
           <path
             fill="none"
@@ -91,7 +94,7 @@ export const AccordionContent = <T extends ValidComponent = "div">(
       )}
       {...rest}
     >
-      <div class="pb-4 pt-0">{local.children}</div>
+      <div class="pb-4 pt-0 text-muted-foreground">{local.children}</div>
     </AccordionPrimitive.Content>
   );
 };

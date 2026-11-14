@@ -8,7 +8,7 @@ export const Card = (props: ComponentProps<"div">) => {
   return (
     <div
       class={cn(
-        "rounded-xl border bg-card text-card-foreground shadow",
+        "rounded-lg border border-border bg-card text-card-foreground",
         local.class,
       )}
       {...rest}
@@ -29,7 +29,7 @@ export const CardTitle: ParentComponent<ComponentProps<"h1">> = (props) => {
 
   return (
     <h1
-      class={cn("font-semibold leading-none tracking-tight", local.class)}
+      class={cn("font-display text-lg font-normal leading-tight tracking-display", local.class)}
       {...rest}
     />
   );

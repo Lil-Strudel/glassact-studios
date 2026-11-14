@@ -177,7 +177,7 @@ function FormButtonGroup<T extends string>(props: FormButtonGroupProps<T>) {
       onChange={(value) => props.field().handleChange(value)}
     >
       {props.label && <RadioGroupLabel>{props.label}</RadioGroupLabel>}
-      <div class="inline-flex w-fit max-w-full flex-wrap gap-1 rounded-md border border-input bg-muted p-1">
+      <div class="inline-flex w-fit max-w-full flex-wrap gap-1 rounded-md border border-input bg-background p-1">
         <For each={props.options}>
           {(option) => (
             <RadioGroupItem value={option.value} disabled={option.disabled}>
@@ -188,7 +188,7 @@ function FormButtonGroup<T extends string>(props: FormButtonGroupProps<T>) {
                 class="peer"
                 onBlur={() => props.field().handleBlur()}
               />
-              <RadioGroupButtonLabel class="block peer-focus-visible:outline-none peer-focus-visible:ring-[2px] peer-focus-visible:ring-primary">
+              <RadioGroupButtonLabel class="block peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
                 {option.label}
               </RadioGroupButtonLabel>
             </RadioGroupItem>
@@ -461,7 +461,7 @@ function FormSelect(props: FormSelectProps) {
           );
         }}
         onBlur={() => props.field().handleBlur()}
-        class="rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        class="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-faint focus-visible:border-gilt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gilt/25 disabled:cursor-not-allowed disabled:opacity-45"
       >
         <option value="">{props.placeholder ?? "Select..."}</option>
         <For each={props.options}>

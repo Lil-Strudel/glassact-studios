@@ -40,7 +40,7 @@ const PaginationItem = <T extends ValidComponent = "button">(
         buttonVariants({
           variant: "ghost",
         }),
-        "size-10 data-[current]:border",
+        "size-10 tabular-nums data-[current]:border data-[current]:border-gilt/50 data-[current]:bg-accent data-[current]:text-foreground",
         local.class,
       )}
       {...others}
@@ -62,7 +62,7 @@ const PaginationEllipsis = <T extends ValidComponent = "div">(
   return (
     <PaginationPrimitive.Ellipsis
       class={cn(
-        "relative flex size-10 items-center justify-center",
+        "relative flex size-10 items-center justify-center text-faint",
         local.class,
       )}
       {...others}

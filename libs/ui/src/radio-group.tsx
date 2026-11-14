@@ -113,8 +113,8 @@ export const RadioGroupButtonLabel = <T extends ValidComponent = "label">(
       class={cn(
         "cursor-pointer select-none rounded px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors",
         "hover:text-foreground",
-        "data-[checked]:bg-background data-[checked]:text-foreground data-[checked]:shadow-sm",
-        "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
+        "data-[checked]:bg-accent data-[checked]:text-foreground data-[checked]:shadow-[inset_0_0_0_1px_hsl(var(--input))]",
+        "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-45",
         local.class,
       )}
       {...rest}

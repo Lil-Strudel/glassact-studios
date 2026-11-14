@@ -11,7 +11,10 @@ type breadcrumbProps = {
 };
 export const Breadcrumb = (props: breadcrumbProps) => {
   return (
-    <div class="flex gap-2 items-center">
+    <nav
+      aria-label="Breadcrumb"
+      class="flex flex-wrap items-center gap-2 text-sm text-faint"
+    >
       <For each={props.crumbs}>
         {(crumb, i) => (
           <>
@@ -22,7 +25,11 @@ export const Breadcrumb = (props: breadcrumbProps) => {
               // search type collapses to never here.
               search={(crumb.search ?? lastVisitedSearch(crumb.to)) as never}
               variant="link"
-              class="px-0"
+              class={
+                i() === props.crumbs.length - 1
+                  ? "h-auto px-0 py-0 text-foreground hover:text-crimson-light"
+                  : "h-auto px-0 py-0 text-muted-foreground hover:text-crimson-light"
+              }
             >
               {crumb.title}
             </Button>
@@ -32,6 +39,7 @@ export const Breadcrumb = (props: breadcrumbProps) => {
                 stroke-width="0"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
                 style={{ overflow: "visible", color: "currentcolor" }}
                 height="1em"
                 width="1em"
@@ -45,6 +53,6 @@ export const Breadcrumb = (props: breadcrumbProps) => {
           </>
         )}
       </For>
-    </div>
+    </nav>
   );
 };

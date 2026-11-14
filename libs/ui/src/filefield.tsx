@@ -58,13 +58,13 @@ export const filefieldLabel = cva(
   {
     variants: {
       label: {
-        true: "data-[invalid]:text-destructive",
+        true: "data-[invalid]:text-error-foreground",
       },
       error: {
-        true: "text-destructive text-xs",
+        true: "text-error-foreground text-xs",
       },
       description: {
-        true: "font-normal text-muted-foreground",
+        true: "font-normal text-xs text-faint",
       },
     },
     defaultVariants: {

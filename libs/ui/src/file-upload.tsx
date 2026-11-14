@@ -360,17 +360,17 @@ export const FileUpload = (props: FileUploadProps) => {
 
       <FileFieldDropzone
         class={cn(
-          "flex justify-center items-center gap-2 min-h-[120px] w-full rounded-md border-2 border-dashed border-input bg-muted/30 px-4 py-6 text-sm transition-colors hover:border-primary hover:bg-muted/50 data-[invalid]:border-destructive data-[invalid]:bg-destructive/5",
+          "flex justify-center items-center gap-2 min-h-[120px] w-full rounded-lg border border-dashed border-input bg-muted px-4 py-6 text-sm transition-colors hover:border-gilt/60 hover:bg-accent/60 data-[dragging]:border-gilt data-[dragging]:bg-accent/60 data-[invalid]:border-error-foreground data-[invalid]:bg-error",
           props.dropzoneClass,
         )}
       >
         <div class="flex flex-col items-center gap-2 text-center">
-          <div class="text-sm font-medium">Drag & drop your files or</div>
-          <FileFieldTrigger class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-primary underline-offset-4 hover:underline">
+          <div class="text-sm text-muted-foreground">Drag and drop your files or</div>
+          <FileFieldTrigger class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-crimson-light underline-offset-4 hover:underline">
             Browse
           </FileFieldTrigger>
           <Show when={props.description}>
-            <div class="text-xs text-muted-foreground">{props.description}</div>
+            <div class="text-xs text-faint">{props.description}</div>
           </Show>
         </div>
       </FileFieldDropzone>
@@ -378,13 +378,13 @@ export const FileUpload = (props: FileUploadProps) => {
       <FileFieldHiddenInput />
 
       <Show when={validationError()}>
-        <div class="mt-2 flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+        <div class="mt-2 flex items-center gap-2 rounded-md border border-error-foreground/30 bg-error p-3 text-sm text-error-foreground">
           <IoAlertCircle size={16} class="flex-shrink-0" />
           <div class="flex-1">{validationError()}</div>
           <button
             type="button"
             onClick={() => setValidationError(null)}
-            class="flex-shrink-0 p-1 hover:bg-destructive/20 rounded"
+            class="flex-shrink-0 rounded p-1 hover:bg-error-foreground/15"
           >
             <IoClose size={16} />
           </button>
@@ -401,7 +401,7 @@ export const FileUpload = (props: FileUploadProps) => {
           return (
             <FileFieldItem
               class={cn(
-                "relative overflow-hidden rounded-lg aspect-video bg-black flex items-center justify-center",
+                "relative overflow-hidden rounded-lg aspect-video bg-came came-frame flex items-center justify-center",
                 props.previewClass,
               )}
             >
@@ -410,16 +410,15 @@ export const FileUpload = (props: FileUploadProps) => {
               <div
                 class={cn(
                   "absolute inset-0 bg-gradient-to-b to-transparent transition-colors",
-                  status() === "success" &&
-                    "from-green-500/80 via-green-500/20",
-                  status() === "error" && "from-red-500/80 via-red-500/20",
-                  status() === "uploading" &&
-                    "from-blue-500/80 via-blue-500/20",
-                  status() === "idle" && "from-gray-500/30 via-gray-500/10",
+                  status() === "success" && "from-came/85 via-came/30",
+                  status() === "error" &&
+                    "from-error-foreground/60 via-came/40",
+                  status() === "uploading" && "from-came/85 via-came/30",
+                  status() === "idle" && "from-came/70 via-came/20",
                 )}
               />
 
-              <div class="absolute inset-0 flex flex-col justify-between p-4 text-white z-10">
+              <div class="absolute inset-0 flex flex-col justify-between p-4 text-foreground z-10">
                 <div class="flex justify-between items-start">
                   <div class="flex flex-col">
                     <FileFieldItemName class="font-medium text-xs truncate max-w-[150px]" />
@@ -429,7 +428,7 @@ export const FileUpload = (props: FileUploadProps) => {
                   <div class="flex flex-col items-end gap-1">
                     <Switch
                       fallback={
-                        <div class="text-xs font-medium text-gray-200">
+                        <div class="text-xs font-medium text-muted-foreground">
                           Ready
                         </div>
                       }
@@ -446,10 +445,12 @@ export const FileUpload = (props: FileUploadProps) => {
                         </div>
                       </Match>
                       <Match when={status() === "success"}>
-                        <div class="text-xs font-medium">Upload complete</div>
+                        <div class="text-xs font-medium text-success-foreground">
+                          Upload complete
+                        </div>
                       </Match>
                       <Match when={status() === "error"}>
-                        <div class="text-xs font-medium text-red-300">
+                        <div class="text-xs font-medium text-error-foreground">
                           Upload failed
                         </div>
                       </Match>
@@ -459,32 +460,32 @@ export const FileUpload = (props: FileUploadProps) => {
 
                 <div class="flex items-center justify-between">
                   <Show when={status() === "error"}>
-                    <div class="text-[10px] text-red-200 max-w-[200px]">
+                    <div class="text-[10px] text-error-foreground max-w-[200px]">
                       {error()}
                     </div>
                   </Show>
 
                   <div class="flex items-center gap-1 ml-auto">
                     <Show when={status() === "success"}>
-                      <IoCheckmarkCircle size={16} class="text-green-300" />
+                      <IoCheckmarkCircle size={16} class="text-success-foreground" />
                     </Show>
                     <Show when={status() === "error"}>
-                      <IoAlertCircle size={16} class="text-red-300" />
+                      <IoAlertCircle size={16} class="text-error-foreground" />
                     </Show>
                     <FileFieldItemDeleteTrigger
                       onClick={() => handleDelete(file)}
-                      class="p-1 bg-black/40 hover:bg-black/60 rounded-full transition-colors cursor-pointer"
+                      class="cursor-pointer rounded-full bg-came/70 p-1 transition-colors hover:bg-came"
                     >
-                      <IoClose size={16} class="text-white" />
+                      <IoClose size={16} class="text-foreground" />
                     </FileFieldItemDeleteTrigger>
                   </div>
                 </div>
               </div>
 
               <Show when={status() === "uploading"}>
-                <div class="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-came/70">
                   <div
-                    class="h-full bg-blue-500 transition-all duration-300"
+                    class="h-full bg-gilt transition-all duration-300"
                     style={{ width: `${progress()}%` }}
                   />
                 </div>

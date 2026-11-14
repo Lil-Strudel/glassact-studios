@@ -1,100 +1,145 @@
+@import "@fontsource/marcellus/400.css";
+@import "@fontsource/spectral/400.css";
+@import "@fontsource/spectral/400-italic.css";
+@import "@fontsource/spectral/500.css";
+@import "@fontsource/spectral/600.css";
+@import "@fontsource/spectral/700.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    color-scheme: dark;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --came: 24 33% 2.9%;
+    --background: 27 30% 7.3%;
+    --foreground: 39 57% 90%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
+    --card: 26 26% 10.6%;
+    --card-foreground: 39 57% 90%;
 
-    --primary: 355 88.2% 26.7%;
-    --primary-foreground: 0 0% 100%;
+    --popover: 27 24% 14.5%;
+    --popover-foreground: 39 57% 90%;
 
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
+    --primary: 355 65% 40%;
+    --primary-foreground: 38 100% 96.3%;
 
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
+    --crimson-deep: 353 71% 26.7%;
+    --crimson-light: 357 75% 67.6%;
 
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --gilt: 41 68% 56.7%;
+    --gilt-foreground: 27 30% 7.3%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --sage: 92 18% 59.2%;
 
-    --info: 204 94% 94%;
-    --info-foreground: 199 89% 48%;
+    --plaque: 38 50% 90.6%;
 
-    --success: 149 80% 90%;
-    --success-foreground: 160 84% 39%;
+    --secondary: 27 24% 14.5%;
+    --secondary-foreground: 39 57% 90%;
 
-    --warning: 48 96% 89%;
-    --warning-foreground: 25 95% 53%;
+    --muted: 26 26% 10.6%;
+    --muted-foreground: 34 29% 68.6%;
+    --faint: 33 19% 55.1%;
 
-    --error: 0 93% 94%;
-    --error-foreground: 0 84% 60%;
+    --accent: 27 23% 18.4%;
+    --accent-foreground: 39 57% 90%;
 
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+    --destructive: 16 68% 53.9%;
+    --destructive-foreground: 23 53% 6.7%;
+
+    --info: 209 20% 15%;
+    --info-foreground: 209 37% 67.6%;
+
+    --success: 60 17% 14.1%;
+    --success-foreground: 94 28% 62.7%;
+
+    --warning: 37 39% 14.7%;
+    --warning-foreground: 40 72% 60.8%;
+
+    --error: 21 42% 14.9%;
+    --error-foreground: 19 84% 61.4%;
+
+    --status-draft: 29 13% 60.6%;
+    --status-ordered: 40 57% 60.8%;
+    --status-production: 216 53% 67.3%;
+    --status-shipped: 171 32% 57.3%;
+    --status-invoiced: 285 31% 67.6%;
+    --status-completed: 94 28% 62.7%;
+    --status-cancelled: 14 10% 51.2%;
+
+    --border: 28 24% 21.6%;
+    --input: 28 24% 29.8%;
+    --ring: 41 68% 56.7%;
 
     --radius: 0.5rem;
-  }
-
-  [data-kb-theme="dark"] {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 355 88.2% 26.7%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-
-    --info: 204 94% 94%;
-    --info-foreground: 199 89% 48%;
-
-    --success: 149 80% 90%;
-    --success-foreground: 160 84% 39%;
-
-    --warning: 48 96% 89%;
-    --warning-foreground: 25 95% 53%;
-
-    --error: 0 93% 94%;
-    --error-foreground: 0 84% 60%;
-
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
   }
 }
 
 @layer base {
   * {
     @apply border-border;
+    scrollbar-color: hsl(var(--input)) transparent;
+  }
+  html {
+    @apply font-body;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-body antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display font-normal tracking-display;
+    text-wrap: balance;
+  }
+  ::selection {
+    background: hsl(var(--primary) / 0.6);
+    color: hsl(var(--primary-foreground));
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply font-body text-xs font-semibold uppercase tracking-label text-muted-foreground;
+  }
+
+  .ornament-rule {
+    @apply flex items-center gap-3 text-gilt;
+  }
+  .ornament-rule::before,
+  .ornament-rule::after {
+    content: "";
+    @apply h-px flex-1;
+  }
+  .ornament-rule::before {
+    background: linear-gradient(90deg, transparent, hsl(var(--input)));
+  }
+  .ornament-rule::after {
+    background: linear-gradient(90deg, hsl(var(--input)), transparent);
+  }
+
+  .lozenge {
+    @apply inline-block size-1.5 shrink-0 rotate-45 bg-current;
+  }
+
+  .came-frame {
+    border: 3px solid hsl(var(--came));
+    box-shadow: 0 0 0 1px hsl(var(--input));
+  }
+
+  .glass-sheen {
+    background-image: linear-gradient(
+      140deg,
+      rgb(255 255 255 / 0.14),
+      rgb(255 255 255 / 0) 45%,
+      rgb(0 0 0 / 0.18)
+    );
   }
 }

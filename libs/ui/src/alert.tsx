@@ -6,15 +6,20 @@ import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { Polymorphic } from "@kobalte/core/polymorphic";
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7",
+  "relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg~*]:pl-7",
   {
     variants: {
       variant: {
-        default: "bg-background text-foreground",
+        default:
+          "border-border bg-card text-foreground [&>svg]:text-muted-foreground",
         destructive:
-          "border-red-200 bg-red-50 text-red-800 [&>svg]:text-red-600",
+          "border-error-foreground/30 bg-error text-error-foreground [&>svg]:text-error-foreground",
         success:
-          "border-green-200 bg-green-50 text-green-800 [&>svg]:text-green-600",
+          "border-success-foreground/30 bg-success text-success-foreground [&>svg]:text-success-foreground",
+        warning:
+          "border-warning-foreground/30 bg-warning text-warning-foreground [&>svg]:text-warning-foreground",
+        info: "border-info-foreground/30 bg-info text-info-foreground [&>svg]:text-info-foreground",
+        gilt: "border-gilt/45 bg-card text-foreground [&>svg]:text-gilt",
       },
     },
     defaultVariants: {
@@ -25,7 +30,11 @@ const alertVariants = cva(
 
 type AlertProps<T extends ValidComponent = "div"> = PolymorphicProps<
   T,
-  { variant?: "default" | "destructive" | "success"; class?: string; children?: JSX.Element }
+  {
+    variant?: "default" | "destructive" | "success" | "warning" | "info" | "gilt";
+    class?: string;
+    children?: JSX.Element;
+  }
 >;
 
 export function Alert<T extends ValidComponent = "div">(
@@ -54,7 +63,7 @@ export function AlertTitle<T extends ValidComponent = "h5">(
   return (
     <Polymorphic
       as="h5"
-      class={cn("mb-1 font-medium leading-none tracking-tight", local.class)}
+      class={cn("mb-1 font-semibold leading-snug", local.class)}
       {...rest}
     />
   );

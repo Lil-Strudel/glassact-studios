@@ -173,7 +173,7 @@ export function ImageLightbox(props: ImageLightboxProps) {
       </Show>
 
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay class="fixed inset-0 z-50 bg-black/90 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0" />
+        <DialogPrimitive.Overlay class="fixed inset-0 z-50 bg-came/95 backdrop-blur-sm data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0" />
         <DialogPrimitive.Content
           class="fixed inset-0 z-50 flex flex-col focus:outline-none data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0"
           onKeyDown={onKeyDown}
@@ -235,7 +235,7 @@ export function ImageLightbox(props: ImageLightboxProps) {
               type="button"
               aria-label="Previous image"
               onClick={() => step(-1)}
-              class="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-2xl leading-none text-white transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              class="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-input/60 bg-popover/80 text-2xl leading-none text-foreground transition-colors hover:border-gilt/60 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               &#8249;
             </button>
@@ -243,48 +243,48 @@ export function ImageLightbox(props: ImageLightboxProps) {
               type="button"
               aria-label="Next image"
               onClick={() => step(1)}
-              class="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-2xl leading-none text-white transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              class="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-input/60 bg-popover/80 text-2xl leading-none text-foreground transition-colors hover:border-gilt/60 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               &#8250;
             </button>
           </Show>
 
-          <div class="pointer-events-none absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-white/10 px-2 py-1 backdrop-blur">
+          <div class="pointer-events-none absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-input/60 bg-popover/85 px-2 py-1 shadow-2xl shadow-black/50 backdrop-blur">
             <button
               type="button"
               aria-label="Zoom out"
               onClick={panZoom.zoomOut}
-              class="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full text-lg leading-none text-white hover:bg-white/20"
+              class="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full text-lg leading-none text-foreground hover:bg-accent"
             >
               &minus;
             </button>
-            <span class="w-12 text-center text-xs tabular-nums text-white/80">
+            <span class="w-12 text-center text-xs tabular-nums text-muted-foreground">
               {Math.round(panZoom.scale() * 100)}%
             </span>
             <button
               type="button"
               aria-label="Zoom in"
               onClick={panZoom.zoomIn}
-              class="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full text-lg leading-none text-white hover:bg-white/20"
+              class="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full text-lg leading-none text-foreground hover:bg-accent"
             >
               +
             </button>
             <button
               type="button"
               onClick={panZoom.reset}
-              class="pointer-events-auto ml-1 rounded-full px-2 py-0.5 text-xs text-white/80 hover:bg-white/20"
+              class="pointer-events-auto ml-1 rounded-full px-2 py-0.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               Reset
             </button>
             <Show when={hasGallery()}>
-              <span class="ml-2 border-l border-white/20 pl-3 text-xs tabular-nums text-white/80">
+              <span class="ml-2 border-l border-input pl-3 text-xs tabular-nums text-muted-foreground">
                 {current() + 1} / {count()}
               </span>
             </Show>
           </div>
 
           <DialogPrimitive.CloseButton
-            class="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            class="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full border border-input/60 bg-popover/80 text-foreground transition-colors hover:border-gilt/60 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Close"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5">
