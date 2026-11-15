@@ -3,6 +3,7 @@ import { Badge, ImageLightbox } from "@glassact/ui";
 import type { ColorOverrides, InlayDetail } from "@glassact/data";
 import { formatMoney } from "../../utils/format-money";
 import { PriceCaveat } from "../price-caveat";
+import { InstallationKitNote } from "../installation-kit-note";
 import { formatPriceFormula } from "../../utils/format-price-formula";
 import {
   INLAY_PHASE_LABELS,
@@ -155,6 +156,9 @@ export function InlayIdentityRail(props: InlayIdentityRailProps) {
           </p>
         </Show>
         <PriceCaveat />
+        <Show when={!snapshot()}>
+          <InstallationKitNote />
+        </Show>
       </div>
 
       <Show when={props.inlay.is_customized && props.inlay.catalog_item}>

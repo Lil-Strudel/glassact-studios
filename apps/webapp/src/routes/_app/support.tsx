@@ -16,6 +16,7 @@ import {
 } from "../../queries/support";
 import { Can } from "../../components/Can";
 import { PriceCaveat } from "../../components/price-caveat";
+import { InstallationKitNote } from "../../components/installation-kit-note";
 import { Markdown } from "../../components/markdown";
 import { YoutubeEmbed } from "../../components/youtube-embed";
 import { ArticleFormDialog } from "../../components/support/article-form-dialog";
@@ -237,6 +238,7 @@ function PriceGroupsCard(props: PriceGroupsCardProps) {
             </table>
           </div>
           <PriceCaveat class="mt-3" />
+          <InstallationKitNote class="mt-1" />
         </CardContent>
       </Card>
     </Show>
