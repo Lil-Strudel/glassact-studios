@@ -1,4 +1,4 @@
-import { createMemo, createSignal, type Accessor } from "solid-js";
+import { createSignal, type Accessor } from "solid-js";
 import { createStore, produce, reconcile, unwrap } from "solid-js/store";
 import type {
   StoneElement,
@@ -99,12 +99,16 @@ export function createStoneEditor(initial: StoneDraft): StoneEditor {
     bump();
   }
 
-  const selectedElements = createMemo(() => {
+  // Plain accessors, not memos: the editor is built while the router's
+  // navigation transition is still pending, and a memo created inside a Solid
+  // transition reads `undefined` from computations outside it until the
+  // transition commits.
+  const selectedElements = () => {
     const ids = new Set(selection());
     return draft.layout.elements.filter((el) => ids.has(el.id));
-  });
+  };
 
-  const selectedGroup = createMemo(() => {
+  const selectedGroup = () => {
     const selected = selectedElements();
     const groupId = selected[0]?.group_id;
     if (!groupId || selected.some((el) => el.group_id !== groupId)) return null;
@@ -113,7 +117,7 @@ export function createStoneEditor(initial: StoneDraft): StoneEditor {
     );
     if (members.length !== selected.length) return null;
     return draft.layout.groups.find((g) => g.id === groupId) ?? null;
-  });
+  };
 
   function idsWithGroups(ids: string[]): string[] {
     const groupIds = new Set(
