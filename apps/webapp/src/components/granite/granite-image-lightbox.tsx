@@ -4,7 +4,7 @@ import {
   type LightboxView,
 } from "@glassact/ui";
 import { createSignal, type ParentProps } from "solid-js";
-import { graniteBackdropStyle, PLAIN_GRANITE_KEY } from "./granite";
+import { graniteBackdropStyle } from "./granite";
 import { GranitePill } from "./granite-pill";
 import {
   createGranitePlacement,
@@ -27,7 +27,7 @@ interface GraniteImageLightboxProps {
 export function GraniteImageLightbox(
   props: ParentProps<GraniteImageLightboxProps>,
 ) {
-  const preference = useGranitePreference(PLAIN_GRANITE_KEY);
+  const preference = useGranitePreference();
   const [panel, setPanel] = createSignal<HTMLDivElement>();
 
   const panelPlacement = createGranitePlacement({

@@ -30,8 +30,6 @@ function writeStored(storageKey: string, value: string) {
   }
 }
 
-// null = the user has not picked a stone yet, so each surface falls back to the
-// backdrop that suits it (the catalog opens plain, the customizer on gray).
 // Module-level so every surface (catalog grid, detail modal, add-inlay browse,
 // filter sidebar, customizer) reads and writes one shared choice without prop
 // drilling it through unrelated components.
@@ -52,10 +50,8 @@ export interface GranitePreference {
   setCustomHex: (hex: string) => void;
 }
 
-export function useGranitePreference(
-  fallbackKey: string = DEFAULT_GRANITE_KEY,
-): GranitePreference {
-  const graniteKey = createMemo(() => storedKey() ?? fallbackKey);
+export function useGranitePreference(): GranitePreference {
+  const graniteKey = createMemo(() => storedKey() ?? DEFAULT_GRANITE_KEY);
   const granite = createMemo(() => graniteChoice(graniteKey(), customHex()));
 
   function setGraniteKey(key: string) {

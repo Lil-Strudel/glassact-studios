@@ -5,7 +5,7 @@ import type {
   StoneDesign,
   StoneElement,
 } from "@glassact/data";
-import { DEFAULT_CUSTOM_HEX, DEFAULT_GRANITE_KEY } from "../granite/granite";
+import { DEFAULT_CUSTOM_HEX, DEFAULT_GRANITE_KEY, isGraniteKey } from "../granite/granite";
 import type { StoneDraft } from "./create-stone-editor";
 import type { PlacedInlayArt } from "./stone-canvas";
 import { STONE_SHAPE_INFO } from "./stone-shapes";
@@ -29,7 +29,7 @@ export function draftFromDesign(design: GET<StoneDesign> | null): StoneDraft {
     shape: design.stone_shape,
     width: design.stone_width,
     height: design.stone_height,
-    graniteKey: design.granite_key,
+    graniteKey: isGraniteKey(design.granite_key) ? design.granite_key : DEFAULT_GRANITE_KEY,
     customHex: design.granite_custom_hex ?? DEFAULT_CUSTOM_HEX,
     layout: design.layout,
   };

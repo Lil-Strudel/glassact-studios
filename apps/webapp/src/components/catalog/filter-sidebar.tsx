@@ -3,7 +3,6 @@ import { TextField, TextFieldRoot, Button } from "@glassact/ui";
 import { useQuery } from "@tanstack/solid-query";
 import { getCatalogCategoriesOpts } from "../../queries/catalog-browse";
 import { GranitePicker } from "../granite/granite-picker";
-import { PLAIN_GRANITE_KEY } from "../granite/granite";
 import { useGranitePreference } from "../../hooks/use-granite-preference";
 
 interface FilterSidebarProps {
@@ -15,7 +14,7 @@ interface FilterSidebarProps {
 
 export function FilterSidebar(props: FilterSidebarProps) {
   const categoriesQuery = useQuery(() => getCatalogCategoriesOpts());
-  const granitePreference = useGranitePreference(PLAIN_GRANITE_KEY);
+  const granitePreference = useGranitePreference();
   const categories = createMemo(() =>
     categoriesQuery.isSuccess ? categoriesQuery.data : [],
   );

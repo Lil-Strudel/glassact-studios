@@ -41,30 +41,25 @@ export const GRANITE_SAMPLES: GraniteSample[] = manifest.samples.map(
 );
 
 export type GraniteChoice =
-  | { kind: "plain" }
   | { kind: "sample"; sample: GraniteSample }
   | { kind: "custom"; hex: string };
 
-export const PLAIN_GRANITE_KEY = "plain";
 export const CUSTOM_GRANITE_KEY = "custom";
 export const DEFAULT_GRANITE_KEY = "georgia-gray";
 export const DEFAULT_CUSTOM_HEX = "#7a6a5e";
 
-const PLAIN_HEX = "#f3f4f6";
 // Until the inlay has been measured there is no true scale to draw at; this
 // approximates a 4" inlay filling a typical preview.
 const UNPLACED_PX_PER_INCH = 60;
 
 export function isGraniteKey(key: string): boolean {
   return (
-    key === PLAIN_GRANITE_KEY ||
     key === CUSTOM_GRANITE_KEY ||
     GRANITE_SAMPLES.some((sample) => sample.key === key)
   );
 }
 
 export function graniteChoice(key: string, customHex: string): GraniteChoice {
-  if (key === PLAIN_GRANITE_KEY) return { kind: "plain" };
   if (key === CUSTOM_GRANITE_KEY) return { kind: "custom", hex: customHex };
   const sample =
     GRANITE_SAMPLES.find((s) => s.key === key) ??
@@ -74,8 +69,6 @@ export function graniteChoice(key: string, customHex: string): GraniteChoice {
 
 export function graniteChoiceName(choice: GraniteChoice): string {
   switch (choice.kind) {
-    case "plain":
-      return "Plain";
     case "custom":
       return "Custom color";
     case "sample":
@@ -89,10 +82,6 @@ export function graniteBackdropStyle(
   choice: GraniteChoice,
   placement: GranitePlacement | null,
 ): JSX.CSSProperties {
-  if (choice.kind === "plain") {
-    return { "background-color": PLAIN_HEX };
-  }
-
   const tileInches =
     choice.kind === "sample"
       ? choice.sample.tileInches
@@ -119,11 +108,9 @@ export interface GraniteTexture {
 }
 
 // The texture behind a stone drawn in inches (the stone designer), as opposed
-// to a CSS backdrop sized in pixels. Null means draw the plain color.
-export function graniteTexture(choice: GraniteChoice): GraniteTexture | null {
+// to a CSS backdrop sized in pixels.
+export function graniteTexture(choice: GraniteChoice): GraniteTexture {
   switch (choice.kind) {
-    case "plain":
-      return null;
     case "sample":
       return {
         image: choice.sample.image,
@@ -142,13 +129,10 @@ export function graniteTexture(choice: GraniteChoice): GraniteTexture | null {
 }
 
 export function graniteMeanHex(choice: GraniteChoice): string {
-  return graniteTexture(choice)?.baseHex ?? PLAIN_HEX;
+  return graniteTexture(choice).baseHex;
 }
 
 export function graniteSwatchStyle(choice: GraniteChoice): JSX.CSSProperties {
-  if (choice.kind === "plain") {
-    return { "background-color": PLAIN_HEX };
-  }
   const image = choice.kind === "sample" ? choice.sample.swatch : tintBase;
   return {
     ...textureLayers(choice, image),
@@ -159,7 +143,7 @@ export function graniteSwatchStyle(choice: GraniteChoice): JSX.CSSProperties {
 // The tint tile is centered on 50% gray, and `overlay` leaves 50% gray showing
 // exactly the color beneath, so a custom backdrop averages to the picked color.
 function textureLayers(
-  choice: Exclude<GraniteChoice, { kind: "plain" }>,
+  choice: GraniteChoice,
   image: string,
 ): JSX.CSSProperties {
   if (choice.kind === "sample") {

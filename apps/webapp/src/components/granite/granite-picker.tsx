@@ -3,7 +3,6 @@ import { cn } from "@glassact/ui";
 import {
   CUSTOM_GRANITE_KEY,
   GRANITE_SAMPLES,
-  PLAIN_GRANITE_KEY,
   graniteChoiceName,
   graniteSwatchStyle,
   type GraniteChoice,
@@ -24,11 +23,6 @@ export function GranitePicker(props: GranitePickerProps) {
   return (
     <div class={cn("flex flex-col gap-2", props.class)}>
       <div class="grid grid-cols-[repeat(auto-fill,minmax(1.5rem,1fr))] gap-1.5">
-        <SwatchButton
-          choice={{ kind: "plain" }}
-          isSelected={isSelected(PLAIN_GRANITE_KEY)}
-          onSelect={() => props.preference.setGraniteKey(PLAIN_GRANITE_KEY)}
-        />
         <For each={GRANITE_SAMPLES}>
           {(sample) => (
             <SwatchButton

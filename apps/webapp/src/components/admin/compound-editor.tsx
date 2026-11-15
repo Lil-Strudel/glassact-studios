@@ -8,6 +8,7 @@ import type {
 } from "@glassact/data";
 import { Button } from "@glassact/ui";
 import { CatalogItemPicker } from "../catalog/catalog-item-picker";
+import { DEFAULT_CUSTOM_HEX, DEFAULT_GRANITE_KEY } from "../granite/granite";
 import { createStoneEditor } from "../stone-designer/create-stone-editor";
 import {
   StoneCanvas,
@@ -69,8 +70,8 @@ export function CompoundEditor(props: CompoundEditorProps) {
   const editor = createStoneEditor({
     shape: "flat-top",
     ...ARTBOARD,
-    graniteKey: "plain",
-    customHex: "#000000",
+    graniteKey: DEFAULT_GRANITE_KEY,
+    customHex: DEFAULT_CUSTOM_HEX,
     layout: {
       groups: [],
       elements: (props.initial?.members ?? []).map((m) => ({
