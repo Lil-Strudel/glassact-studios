@@ -4,7 +4,7 @@ packages:
 
 allowBuilds:
   esbuild: true
-  sharp: true
+  sharp: false
 
 catalog:
   '@tanstack/solid-form': ^1.28.3
@@ -25,4 +25,3 @@ catalogs:
 
 onlyBuiltDependencies:
   - esbuild
-  - sharp
