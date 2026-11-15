@@ -36,6 +36,8 @@ import {
   postVoidInvoiceOpts,
 } from "../../queries/invoice";
 import type {
+  GET,
+  InlayUpdate,
   ManufacturingStep,
   ProjectStatus,
   InlayWithInfo,
@@ -60,6 +62,8 @@ import {
 } from "solid-icons/io";
 import { LozengeStepper } from "../../components/project/lozenge-stepper";
 import { ManufacturingTracker } from "../../components/manufacturing/manufacturing-tracker";
+import { InlayIssueStrip } from "../../components/manufacturing/inlay-issue-strip";
+import { getProjectInlayUpdatesOpts } from "../../queries/manufacturing";
 import { SandblastFileCard } from "../../components/inlay/sandblast-file-card";
 import { MirrorBadge } from "../../components/inlay/mirror-badge";
 import { InlayArrangeActions } from "../../components/inlay/inlay-arrange-actions";
@@ -126,6 +130,21 @@ function RouteComponent() {
   }));
 
   const inlays = () => (inlaysQuery.isSuccess ? inlaysQuery.data : []);
+
+  const inlayUpdatesQuery = useQuery(() => ({
+    ...getProjectInlayUpdatesOpts(params().id),
+    enabled: projectQuery.isSuccess && projectQuery.data.status !== "draft",
+  }));
+  const issuesByInlayId = createMemo(() => {
+    const issues = new Map<number, GET<InlayUpdate>[]>();
+    for (const update of inlayUpdatesQuery.data ?? []) {
+      if (update.update_type !== "issue") continue;
+      const inlayIssues = issues.get(update.inlay_id) ?? [];
+      inlayIssues.push(update);
+      issues.set(update.inlay_id, inlayIssues);
+    }
+    return issues;
+  });
 
   const canCancel = createMemo(() => {
     if (!projectQuery.isSuccess) return false;
@@ -672,6 +691,7 @@ function RouteComponent() {
                     {(inlay) => (
                       <InlayCard
                         inlay={inlay}
+                        issues={issuesByInlayId().get(inlay.id) ?? []}
                         projectId={params().id}
                         projectStatus={projectQuery.data!.status}
                         sandblastFileFormat={
@@ -837,6 +857,7 @@ function InternalReferenceField(props: InternalReferenceFieldProps) {
 
 interface InlayCardProps {
   inlay: InlayWithInfo;
+  issues: GET<InlayUpdate>[];
   projectId: string;
   projectStatus: ProjectStatus;
   sandblastFileFormat?: SandblastFileFormat;
@@ -998,6 +1019,16 @@ function InlayCard(props: InlayCardProps) {
             currentStep={props.inlay.manufacturing_step as ManufacturingStep}
           />
         </div>
+      </Show>
+      <Show when={props.issues.at(-1)}>
+        {(latestIssue) => (
+          <InlayIssueStrip
+            latestIssue={latestIssue()}
+            issueCount={props.issues.length}
+            projectUuid={props.projectId}
+            inlayUuid={props.inlay.uuid}
+          />
+        )}
       </Show>
       <Show
         when={

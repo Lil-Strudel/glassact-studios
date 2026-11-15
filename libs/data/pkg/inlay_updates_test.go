@@ -143,6 +143,41 @@ func TestInlayUpdate_GetByInlayID(t *testing.T) {
 	}
 }
 
+func TestInlayUpdate_GetByProjectID_ExcludesOtherProjects(t *testing.T) {
+	t.Cleanup(func() { cleanupTables(t) })
+
+	models := getTestModels(t)
+	dealership := createTestDealership(t, models)
+	project := createTestProject(t, models, dealership.ID)
+	otherProject := createTestProject(t, models, dealership.ID)
+	firstInlay := createTestInlay(t, models, project.ID)
+	secondInlay := createTestInlay(t, models, project.ID)
+	otherInlay := createTestInlay(t, models, otherProject.ID)
+
+	for _, update := range []*InlayUpdate{
+		{InlayID: firstInlay.ID, UpdateType: InlayUpdateTypes.Issue, Message: "First"},
+		{InlayID: secondInlay.ID, UpdateType: InlayUpdateTypes.Info, Message: "Second"},
+		{InlayID: otherInlay.ID, UpdateType: InlayUpdateTypes.Issue, Message: "Other project"},
+	} {
+		if err := models.InlayUpdates.Insert(update); err != nil {
+			t.Fatalf("Failed to insert update: %v", err)
+		}
+	}
+
+	updates, err := models.InlayUpdates.GetByProjectID(project.ID)
+	if err != nil {
+		t.Fatalf("Failed to get by project ID: %v", err)
+	}
+	if len(updates) != 2 {
+		t.Fatalf("Expected 2 updates, got %d", len(updates))
+	}
+	for _, update := range updates {
+		if update.InlayID == otherInlay.ID {
+			t.Errorf("Got an update from another project: %q", update.Message)
+		}
+	}
+}
+
 func TestInlayUpdate_Update(t *testing.T) {
 	t.Cleanup(func() { cleanupTables(t) })
 

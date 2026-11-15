@@ -263,6 +263,35 @@ func (m InlayUpdateModel) GetByInlayID(inlayID int) ([]*InlayUpdate, error) {
 	return updates, nil
 }
 
+func (m InlayUpdateModel) GetByProjectID(projectID int) ([]*InlayUpdate, error) {
+	query := postgres.SELECT(
+		table.InlayUpdates.AllColumns,
+	).FROM(
+		table.InlayUpdates.
+			INNER_JOIN(table.Inlays, table.Inlays.ID.EQ(table.InlayUpdates.InlayID)),
+	).WHERE(
+		table.Inlays.ProjectID.EQ(postgres.Int(int64(projectID))),
+	).ORDER_BY(
+		table.InlayUpdates.CreatedAt.ASC(),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dest []model.InlayUpdates
+	err := query.QueryContext(ctx, m.STDB, &dest)
+	if err != nil {
+		return nil, err
+	}
+
+	updates := make([]*InlayUpdate, len(dest))
+	for i, d := range dest {
+		updates[i] = inlayUpdateFromGen(d)
+	}
+
+	return updates, nil
+}
+
 func (m InlayUpdateModel) GetAll() ([]*InlayUpdate, error) {
 	query := postgres.SELECT(
 		table.InlayUpdates.AllColumns,

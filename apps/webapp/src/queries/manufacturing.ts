@@ -73,6 +73,20 @@ export function getInlayUpdatesOpts(inlayUuid: string) {
   });
 }
 
+export async function getProjectInlayUpdates(
+  projectUuid: string,
+): Promise<GET<InlayUpdate>[]> {
+  const res = await api.get(`/project/${projectUuid}/inlay-updates`);
+  return res.data;
+}
+
+export function getProjectInlayUpdatesOpts(projectUuid: string) {
+  return queryOptions({
+    queryKey: ["inlay-updates", { projectUuid }],
+    queryFn: () => getProjectInlayUpdates(projectUuid),
+  });
+}
+
 export interface PostInlayUpdateRequest {
   update_type: InlayUpdateType;
   message: string;

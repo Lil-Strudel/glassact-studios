@@ -13,6 +13,7 @@ import {
 import { stepLabel } from "./steps";
 import { Can } from "../Can";
 import { AddInlayUpdateForm } from "./add-inlay-update-form";
+import { formatTimestamp } from "../../utils/format-timestamp";
 
 interface InlayTimelineProps {
   inlayUuid: string;
@@ -21,15 +22,6 @@ interface InlayTimelineProps {
 type TimelineItem =
   | { kind: "milestone"; time: string; milestone: GET<InlayMilestone> }
   | { kind: "update"; time: string; update: GET<InlayUpdate> };
-
-function formatTime(time: string) {
-  return new Date(time).toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 function MilestoneRow(props: { milestone: GET<InlayMilestone> }) {
   return (
@@ -62,7 +54,7 @@ function MilestoneRow(props: { milestone: GET<InlayMilestone> }) {
           </Show>
         </p>
         <p class="text-xs text-faint">
-          {formatTime(props.milestone.event_time)}
+          {formatTimestamp(props.milestone.event_time)}
         </p>
       </div>
     </li>
@@ -111,7 +103,7 @@ function UpdateRow(props: { update: GET<InlayUpdate> }) {
           {props.update.message}
         </p>
         <p class="mt-1 text-xs text-faint">
-          {formatTime(props.update.created_at)}
+          {formatTimestamp(props.update.created_at)}
         </p>
       </div>
     </li>

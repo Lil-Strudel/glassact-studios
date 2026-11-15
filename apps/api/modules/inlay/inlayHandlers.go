@@ -972,6 +972,29 @@ func (m InlayModule) HandleGetInlayUpdates(w http.ResponseWriter, r *http.Reques
 	m.WriteJSON(w, r, http.StatusOK, updates)
 }
 
+func (m InlayModule) HandleGetProjectInlayUpdates(w http.ResponseWriter, r *http.Request) {
+	projectUUID := r.PathValue("uuid")
+
+	err := m.Validate.Var(projectUUID, "required,uuid4")
+	if err != nil {
+		m.WriteError(w, r, m.Err.BadRequest, err)
+		return
+	}
+
+	project, ok := m.getProjectForInlayAccess(w, r, projectUUID)
+	if !ok {
+		return
+	}
+
+	updates, err := m.Db.InlayUpdates.GetByProjectID(project.ID)
+	if err != nil {
+		m.WriteError(w, r, m.Err.ServerError, fmt.Errorf("failed to get inlay updates for project %d: %w", project.ID, err))
+		return
+	}
+
+	m.WriteJSON(w, r, http.StatusOK, updates)
+}
+
 func (m InlayModule) HandlePostInlayUpdate(w http.ResponseWriter, r *http.Request) {
 	inlayUUID := r.PathValue("uuid")
 

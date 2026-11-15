@@ -84,6 +84,7 @@ func GetRoutes(app *app.Application) http.Handler {
 	inlayModule := inlay.NewInlayModule(app)
 	mux.Handle("GET /api/inlays", canManageKanban.ThenFunc(inlayModule.HandleGetKanbanInlays))
 	mux.Handle("GET /api/project/{uuid}/inlays", protected.ThenFunc(inlayModule.HandleGetInlaysByProject))
+	mux.Handle("GET /api/project/{uuid}/inlay-updates", protected.ThenFunc(inlayModule.HandleGetProjectInlayUpdates))
 	mux.Handle("POST /api/project/{uuid}/inlays/catalog", canCreateProject.ThenFunc(inlayModule.HandlePostCatalogInlay))
 	mux.Handle("POST /api/project/{uuid}/inlays/custom", canCreateProject.ThenFunc(inlayModule.HandlePostCustomInlay))
 

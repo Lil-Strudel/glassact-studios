@@ -292,7 +292,7 @@ Internal users (production/admin, `create_inlay_update` permission) post `inlay_
 | info  | General note (e.g. "ahead of schedule")              |
 | issue | Something went wrong / needs rework (e.g. "dropped during manufacturing, restarting from materials-prep") |
 
-Each update carries a free-text `message` and a `step` (the inlay's manufacturing step when posted, for context). Updates are shown interleaved chronologically with milestone events on the inlay's manufacturing timeline, and posting one notifies the dealership (`inlay_update`).
+Each update carries a free-text `message` and a `step` (the inlay's manufacturing step when posted, for context). Updates are shown interleaved chronologically with milestone events on the inlay's manufacturing timeline, and posting one notifies the dealership (`inlay_update`). On the project page each inlay card also shows its latest `issue` (not `info`), with a count of earlier issues linking to the inlay page; the page loads every update on the project in one request (`GET /api/project/{uuid}/inlay-updates`).
 
 ### Users & Permissions
 

@@ -44,6 +44,7 @@ export function AddInlayUpdateForm(props: AddInlayUpdateFormProps) {
             queryClient.invalidateQueries({
               queryKey: ["inlay", props.inlayUuid, "updates"],
             });
+            queryClient.invalidateQueries({ queryKey: ["inlay-updates"] });
             showToast({
               title: "Update posted",
               description: "The update has been added to the timeline.",
