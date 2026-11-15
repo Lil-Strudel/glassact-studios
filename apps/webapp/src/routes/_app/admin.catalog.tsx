@@ -239,7 +239,7 @@ function RouteComponent() {
       />
       <div class="flex flex-wrap items-center gap-4">
         <TextFieldRoot value={searchText()} onChange={setSearchText}>
-          <TextField placeholder="Search by code or name..." class="max-w-sm" />
+          <TextField placeholder="Search by name, code or tag..." class="max-w-sm" />
         </TextFieldRoot>
 
         <label class="flex items-center gap-2 text-sm text-muted-foreground">

@@ -26,7 +26,7 @@ export function CatalogItemPicker(props: CatalogItemPickerProps) {
         <p class="text-xs text-muted-foreground">{props.description}</p>
       </Show>
       <input
-        placeholder="Search by name or code..."
+        placeholder="Search by name, code or tag..."
         value={searchText()}
         onInput={(e) => setSearchText(e.currentTarget.value)}
         class="rounded-md border border-input px-3 py-2 text-sm"

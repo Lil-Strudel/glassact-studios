@@ -33,7 +33,7 @@ export function FilterSidebar(props: FilterSidebarProps) {
             value={props.searchValue}
             onChange={(value) => props.onSearchChange(value)}
           >
-            <TextField placeholder="Search by name or code..." class="mt-2" />
+            <TextField placeholder="Search by name, code or tag..." class="mt-2" />
           </TextFieldRoot>
         </div>
 
