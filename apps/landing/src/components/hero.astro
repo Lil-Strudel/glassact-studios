@@ -2,6 +2,7 @@
 import { Image } from "astro:assets";
 import ButtonLink from "./button-link.astro";
 import ArrowIcon from "./arrow-icon.astro";
+import HeadstoneFrame from "./headstone-frame.astro";
 import HeroImg from "../assets/images/hero.jpg";
 
 const studioFacts = [
@@ -63,7 +64,7 @@ const studioFacts = [
     </div>
 
     <figure class="reveal mx-auto w-full max-w-xl lg:max-w-none" style="--reveal-delay: 450ms">
-      <div class="arched-frame aspect-[5/4] bg-came">
+      <HeadstoneFrame>
         <Image
           src={HeroImg}
           alt="A granite headstone with stained glass inlays of tulips, roses and daisies framing a heart"
@@ -72,7 +73,7 @@ const studioFacts = [
           loading="eager"
           class="size-full object-cover"
         />
-      </div>
+      </HeadstoneFrame>
       <figcaption class="mt-4 flex items-center justify-center gap-3 text-sm italic text-faint">
         <span class="lozenge text-gilt"></span>
         Glass inlays on a granite headstone

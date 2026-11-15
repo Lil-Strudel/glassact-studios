@@ -936,12 +936,12 @@ function InlayCard(props: InlayCardProps) {
         <Show
           when={props.inlay.preview_url}
           fallback={
-            <div class="came-frame flex aspect-square items-center justify-center rounded-arch bg-came">
+            <div class="came-frame flex aspect-square items-center justify-center rounded-lg bg-came">
               <span class="text-[10px] text-faint">No preview</span>
             </div>
           }
         >
-          <div class="came-frame flex aspect-square items-center justify-center overflow-hidden rounded-arch bg-plaque p-1.5">
+          <div class="came-frame flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-plaque p-1.5">
             <img
               src={props.inlay.preview_url}
               alt={props.inlay.name}

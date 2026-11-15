@@ -1,0 +1,40 @@
+---
+import { cn } from "@glassact/ui/cn";
+
+interface Props {
+  class?: string;
+}
+
+const outline =
+  "M0,1 L0,.088 C0,.088 .1632,.0882 .2262,.0685 C.3325,.0353 .3849,.002 .5007,0 C.6324,.004 .668,.0357 .7738,.0688 C.8368,.0885 1,.0883 1,.0883 L1,1 Z";
+
+const outlineMask = `url("data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><path d='${outline}'/></svg>`,
+)}") 0 0 / 100% 100% no-repeat`;
+---
+
+<div class={cn("relative aspect-[3/2]", Astro.props.class)}>
+  {/* The shadow sits on the outline, not the wrapper: Chrome blanks a masked image under a filter while the hero's reveal animation runs. */}
+  <svg
+    class="absolute inset-0 size-full overflow-visible drop-shadow-[0_24px_28px_rgb(0_0_0/0.5)]"
+    viewBox="0 0 1 1"
+    preserveAspectRatio="none"
+    aria-hidden="true"
+  >
+    <path
+      d={outline}
+      class="fill-came stroke-gilt/40"
+      stroke-width="10"
+      vector-effect="non-scaling-stroke"
+    />
+    <path
+      d={outline}
+      class="fill-none stroke-came"
+      stroke-width="8"
+      vector-effect="non-scaling-stroke"
+    />
+  </svg>
+  <div class="relative size-full" style={`mask: ${outlineMask}; -webkit-mask: ${outlineMask}`}>
+    <slot />
+  </div>
+</div>

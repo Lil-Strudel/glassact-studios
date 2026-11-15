@@ -81,7 +81,7 @@ export function InlayIdentityRail(props: InlayIdentityRailProps) {
       <Show
         when={previewUrl()}
         fallback={
-          <div class="came-frame flex h-48 items-center justify-center rounded-arch bg-came text-sm text-faint">
+          <div class="came-frame flex h-48 items-center justify-center rounded-lg bg-came text-sm text-faint">
             No preview
           </div>
         }
@@ -94,7 +94,7 @@ export function InlayIdentityRail(props: InlayIdentityRailProps) {
               transform: mirrorCssTransform(props.inlay),
             },
           ]}
-          triggerClass="came-frame block w-full overflow-hidden rounded-arch bg-plaque px-4 pb-4 pt-8"
+          triggerClass="came-frame block w-full overflow-hidden rounded-lg bg-plaque p-4"
         >
           <img
             src={previewUrl()}

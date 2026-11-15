@@ -78,7 +78,7 @@ function RouteComponent() {
                     type="button"
                     class="group flex flex-col overflow-hidden rounded-lg border border-border bg-card text-left transition-colors hover:border-input"
                   >
-                    <div class="came-frame m-3 mb-0 flex h-40 items-center justify-center rounded-arch bg-plaque px-4 pb-3 pt-6">
+                    <div class="came-frame m-3 mb-0 flex h-40 items-center justify-center rounded-lg bg-plaque p-4">
                       <img
                         src={background.svg_url}
                         alt={background.name}

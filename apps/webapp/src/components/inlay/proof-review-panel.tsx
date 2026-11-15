@@ -55,7 +55,7 @@ export function ProofReviewPanel(props: ProofReviewPanelProps) {
             <img
               src={assetUrl()}
               alt={`Proof v${props.proof.version_number}`}
-              class="came-frame max-h-96 max-w-full rounded-arch bg-plaque object-contain px-6 pb-6 pt-12"
+              class="came-frame max-h-96 max-w-full rounded-lg bg-plaque object-contain p-6"
               style={{ transform: mirrorCssTransform(props.mirror) }}
             />
           </ImageLightbox>

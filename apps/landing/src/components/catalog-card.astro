@@ -13,7 +13,7 @@ const { category } = Astro.props;
 ---
 
 <a href={catalogHref(category)} class="zoom-on-hover group grid gap-3 rounded-sm">
-  <div class="arched-frame aspect-[4/5] bg-came transition-shadow duration-200 group-hover:shadow-[0_0_0_1px_hsl(var(--gilt))]">
+  <div class="came-frame aspect-[4/5] overflow-hidden rounded-lg bg-came transition-shadow duration-200 group-hover:shadow-[0_0_0_1px_hsl(var(--gilt))]">
     <Image
       src={category.image}
       alt={category.imageAlt}

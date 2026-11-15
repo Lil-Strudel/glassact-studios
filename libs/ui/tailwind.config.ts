@@ -94,7 +94,6 @@ export default {
         lg: `var(--radius)`,
         md: `calc(var(--radius) - 2px)`,
         sm: "calc(var(--radius) - 4px)",
-        arch: "50% 50% var(--radius) var(--radius) / 30% 30% var(--radius) var(--radius)",
       },
       fontFamily: {
         display: ["Marcellus", "Optima", "Georgia", "serif"],

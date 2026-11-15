@@ -265,8 +265,8 @@ function CatalogSelector(props: CatalogSelectorProps) {
                     <GraniteImageLightbox
                       images={[{ src: item.svg_url, alt: item.name }]}
                       inches={{ width: item.default_width, height: item.default_height }}
-                      triggerClass="came-frame m-4 mb-0 block h-52 overflow-hidden rounded-arch bg-plaque"
-                      previewClass="h-full w-full px-6 pb-4 pt-10"
+                      triggerClass="came-frame m-4 mb-0 block h-52 overflow-hidden rounded-lg bg-plaque"
+                      previewClass="h-full w-full p-6"
                     >
                       <img
                         src={item.svg_url}
