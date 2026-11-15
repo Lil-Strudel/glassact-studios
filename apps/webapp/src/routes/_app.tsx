@@ -16,6 +16,8 @@ import {
 import { IoClose, IoMenu } from "solid-icons/io";
 import { useUserContext } from "../providers/user";
 import { NotificationBell } from "../components/notification-bell";
+import { CustomerModeToggle } from "../components/customer-mode-toggle";
+import { useCustomerMode } from "../hooks/use-customer-mode";
 import { PERMISSION_ACTIONS } from "@glassact/data";
 
 export const Route = createFileRoute("/_app")({
@@ -70,6 +72,7 @@ const userNavigation = [
 function RouteComponent() {
   const { user, can, isDealership } = useUserContext();
   const [open, setOpen] = createSignal(false);
+  const { isCustomerMode } = useCustomerMode();
 
   const filteredNavigation = createMemo(() =>
     navigation.filter(
@@ -126,6 +129,9 @@ function RouteComponent() {
               </div>
             </div>
             <div class="hidden sm:ml-6 sm:flex sm:items-center sm:gap-2">
+              <Show when={isCustomerMode()}>
+                <CustomerModeToggle size="sm" />
+              </Show>
               <NotificationBell />
 
               <Show when={user()}>
@@ -164,7 +170,10 @@ function RouteComponent() {
                 )}
               </Show>
             </div>
-            <div class="-mr-2 flex items-center sm:hidden">
+            <div class="-mr-2 flex items-center gap-2 sm:hidden">
+              <Show when={isCustomerMode()}>
+                <CustomerModeToggle size="sm" />
+              </Show>
               <Button
                 size="icon"
                 variant="ghost"

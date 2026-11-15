@@ -3,6 +3,7 @@ import { Badge, ImageLightbox } from "@glassact/ui";
 import type { ColorOverrides, InlayDetail } from "@glassact/data";
 import { formatMoney } from "../../utils/format-money";
 import { PriceCaveat } from "../price-caveat";
+import { ShowPrices } from "../show-prices";
 import { InstallationKitNote } from "../installation-kit-note";
 import { formatPriceFormula } from "../../utils/format-price-formula";
 import {
@@ -142,23 +143,25 @@ export function InlayIdentityRail(props: InlayIdentityRailProps) {
             </p>
           )}
         </Show>
-        <div class="flex items-baseline justify-between gap-2">
-          <span class="font-display text-2xl tabular-nums text-foreground">
-            {priceCents() == null ? "—" : formatMoney(priceCents()! / 100)}
-          </span>
-          <Show when={priceFormula()}>
-            <span class="text-xs tabular-nums text-faint">{priceFormula()}</span>
+        <ShowPrices>
+          <div class="flex items-baseline justify-between gap-2">
+            <span class="font-display text-2xl tabular-nums text-foreground">
+              {priceCents() == null ? "—" : formatMoney(priceCents()! / 100)}
+            </span>
+            <Show when={priceFormula()}>
+              <span class="text-xs tabular-nums text-faint">{priceFormula()}</span>
+            </Show>
+          </div>
+          <Show when={snapshot()}>
+            <p class="text-xs text-faint">
+              Locked in at order time — invoices bill from this.
+            </p>
           </Show>
-        </div>
-        <Show when={snapshot()}>
-          <p class="text-xs text-faint">
-            Locked in at order time — invoices bill from this.
-          </p>
-        </Show>
-        <PriceCaveat />
-        <Show when={!snapshot()}>
-          <InstallationKitNote />
-        </Show>
+          <PriceCaveat />
+          <Show when={!snapshot()}>
+            <InstallationKitNote />
+          </Show>
+        </ShowPrices>
       </div>
 
       <Show when={props.inlay.is_customized && props.inlay.catalog_item}>

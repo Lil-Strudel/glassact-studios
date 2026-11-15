@@ -2,6 +2,7 @@ import { createMemo, Show, type Component } from "solid-js";
 import { Badge } from "@glassact/ui";
 import { useQuery } from "@tanstack/solid-query";
 import { getSupportPriceGroupsOpts } from "../queries/support";
+import { ShowPrices } from "./show-prices";
 
 interface PriceGroupTagProps {
   priceGroupId: number;
@@ -21,11 +22,13 @@ const PriceGroupTag: Component<PriceGroupTagProps> = (props) => {
   );
 
   return (
-    <Show when={name()}>
-      {(priceGroupName) => (
-        <Badge variant="secondary">{priceGroupName()}</Badge>
-      )}
-    </Show>
+    <ShowPrices>
+      <Show when={name()}>
+        {(priceGroupName) => (
+          <Badge variant="secondary">{priceGroupName()}</Badge>
+        )}
+      </Show>
+    </ShowPrices>
   );
 };
 

@@ -24,6 +24,8 @@ import {
   getInternalDashboardOpts,
 } from "../../queries/dashboard";
 import { useUserContext } from "../../providers/user";
+import { useCustomerMode } from "../../hooks/use-customer-mode";
+import { ShowPrices } from "../../components/show-prices";
 import { ProjectStatusBadge } from "../../components/project/status-badge";
 
 export const Route = createFileRoute("/_app/dashboard")({
@@ -118,6 +120,7 @@ const DealershipDashboardBody: Component<DealershipDashboardBodyProps> = (
   const activeOrderCount = createMemo(() =>
     sumStatusCounts(props.data.project_status_counts, ACTIVE_ORDER_STATUSES),
   );
+  const { isCustomerMode } = useCustomerMode();
 
   return (
     <div class="mt-8 flex flex-col gap-10">
@@ -131,7 +134,9 @@ const DealershipDashboardBody: Component<DealershipDashboardBodyProps> = (
             action="Review"
           />
         </Show>
-        <Show when={props.data.outstanding_invoice_count > 0}>
+        <Show
+          when={props.data.outstanding_invoice_count > 0 && !isCustomerMode()}
+        >
           <AlertBanner
             to="/projects"
             text={`${props.data.outstanding_invoice_count} outstanding ${
@@ -144,16 +149,18 @@ const DealershipDashboardBody: Component<DealershipDashboardBodyProps> = (
         </Show>
       </div>
 
-      <StatLedger class="sm:grid-cols-3">
+      <StatLedger class={isCustomerMode() ? "sm:grid-cols-2" : "sm:grid-cols-3"}>
         <StatCard label="Active orders" value={activeOrderCount().toString()} />
         <StatCard
           label="Pending approval"
           value={props.data.pending_approval_count.toString()}
         />
-        <StatCard
-          label="Outstanding amount"
-          value={formatCents(props.data.outstanding_invoice_amount_cents)}
-        />
+        <ShowPrices>
+          <StatCard
+            label="Outstanding amount"
+            value={formatCents(props.data.outstanding_invoice_amount_cents)}
+          />
+        </ShowPrices>
       </StatLedger>
 
       <StatusBreakdown counts={props.data.project_status_counts} />

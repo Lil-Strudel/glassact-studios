@@ -66,6 +66,8 @@ import { InlayArrangeActions } from "../../components/inlay/inlay-arrange-action
 import { mirrorCssTransform } from "../../utils/inlay-mirror";
 import { ProjectDiscussion } from "../../components/chat/project-discussion";
 import { PriceCaveat } from "../../components/price-caveat";
+import { ShowPrices } from "../../components/show-prices";
+import { CustomerModeToggle } from "../../components/customer-mode-toggle";
 import {
   isManufacturingStatus,
   PROJECT_STATUS_LABELS,
@@ -375,6 +377,7 @@ function RouteComponent() {
               </div>
             </div>
             <div class="flex flex-wrap items-center gap-2">
+              <CustomerModeToggle />
               <WatchButton
                 projectUuid={params().id}
                 isWatching={projectQuery.data!.is_watching}
@@ -476,19 +479,21 @@ function RouteComponent() {
             />
           </Show>
 
-          <Show when={paymentNotice()}>
-            {(notice) => (
-              <div
-                class={`rounded-lg border px-4 py-3 text-sm ${
-                  notice().tone === "warning"
-                    ? "border-warning-foreground/30 bg-warning text-warning-foreground"
-                    : "border-info-foreground/30 bg-info text-info-foreground"
-                }`}
-              >
-                {notice().message}
-              </div>
-            )}
-          </Show>
+          <ShowPrices>
+            <Show when={paymentNotice()}>
+              {(notice) => (
+                <div
+                  class={`rounded-lg border px-4 py-3 text-sm ${
+                    notice().tone === "warning"
+                      ? "border-warning-foreground/30 bg-warning text-warning-foreground"
+                      : "border-info-foreground/30 bg-info text-info-foreground"
+                  }`}
+                >
+                  {notice().message}
+                </div>
+              )}
+            </Show>
+          </ShowPrices>
 
           <Show when={projectQuery.data!.tracking_number}>
             {(tracking) => (
@@ -501,82 +506,84 @@ function RouteComponent() {
             )}
           </Show>
 
-          <section
-            aria-label="Order summary"
-            class="relative overflow-hidden rounded-lg border border-input bg-card"
-          >
-            <div
-              aria-hidden="true"
-              class="pointer-events-none absolute inset-0 bg-gradient-to-r from-crimson-deep/40 via-crimson-deep/10 to-transparent"
-            />
-            <div class="relative grid gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-              <div class="flex flex-col gap-1">
-                <p class="eyebrow">
-                  {projectQuery.data!.status === "draft"
-                    ? "Order total so far"
-                    : "Project total"}
-                </p>
-                <p class="font-display text-3xl tabular-nums text-foreground">
-                  {formatMoney(totalPriceCents() / 100)}
-                </p>
-                <PriceCaveat />
-                <div class="pt-2">
-                  <Show
-                    when={projectQuery.data!.status === "draft"}
-                    fallback={
-                      <p class="text-sm text-muted-foreground">
-                        Installation kit:{" "}
-                        <span class="font-medium text-foreground">
-                          {hasInstallationKit() ? "Included" : "Not included"}
-                        </span>
-                      </p>
-                    }
-                  >
-                    {/* Matches the PATCH /project route's gate, which internal
-                        staff pass but create_project would exclude them from. */}
-                    <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
-                      <label class="flex w-fit cursor-pointer items-start gap-2.5 text-sm text-foreground">
-                        <input
-                          type="checkbox"
-                          class="mt-0.5 h-4 w-4 accent-primary"
-                          checked={hasInstallationKit()}
-                          disabled={toggleKit.isPending}
-                          onChange={(e) => handleToggleKit(e.currentTarget.checked)}
-                        />
-                        <span class="flex flex-col">
-                          <span>
-                            Include installation kit{" "}
-                            <span class="tabular-nums text-muted-foreground">
-                              ({formatMoney(INSTALLATION_KIT_PRICE_CENTS / 100)})
+          <ShowPrices>
+            <section
+              aria-label="Order summary"
+              class="relative overflow-hidden rounded-lg border border-input bg-card"
+            >
+              <div
+                aria-hidden="true"
+                class="pointer-events-none absolute inset-0 bg-gradient-to-r from-crimson-deep/40 via-crimson-deep/10 to-transparent"
+              />
+              <div class="relative grid gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                <div class="flex flex-col gap-1">
+                  <p class="eyebrow">
+                    {projectQuery.data!.status === "draft"
+                      ? "Order total so far"
+                      : "Project total"}
+                  </p>
+                  <p class="font-display text-3xl tabular-nums text-foreground">
+                    {formatMoney(totalPriceCents() / 100)}
+                  </p>
+                  <PriceCaveat />
+                  <div class="pt-2">
+                    <Show
+                      when={projectQuery.data!.status === "draft"}
+                      fallback={
+                        <p class="text-sm text-muted-foreground">
+                          Installation kit:{" "}
+                          <span class="font-medium text-foreground">
+                            {hasInstallationKit() ? "Included" : "Not included"}
+                          </span>
+                        </p>
+                      }
+                    >
+                      {/* Matches the PATCH /project route's gate, which internal
+                          staff pass but create_project would exclude them from. */}
+                      <Can permission={PERMISSION_ACTIONS.MANAGE_PROJECT}>
+                        <label class="flex w-fit cursor-pointer items-start gap-2.5 text-sm text-foreground">
+                          <input
+                            type="checkbox"
+                            class="mt-0.5 h-4 w-4 accent-primary"
+                            checked={hasInstallationKit()}
+                            disabled={toggleKit.isPending}
+                            onChange={(e) => handleToggleKit(e.currentTarget.checked)}
+                          />
+                          <span class="flex flex-col">
+                            <span>
+                              Include installation kit{" "}
+                              <span class="tabular-nums text-muted-foreground">
+                                ({formatMoney(INSTALLATION_KIT_PRICE_CENTS / 100)})
+                              </span>
+                            </span>
+                            <span class="text-xs text-faint">
+                              One kit covers every inlay in this project.
                             </span>
                           </span>
-                          <span class="text-xs text-faint">
-                            One kit covers every inlay in this project.
-                          </span>
-                        </span>
-                      </label>
-                    </Can>
-                  </Show>
-                </div>
-              </div>
-              <Can permission={PERMISSION_ACTIONS.PLACE_ORDER}>
-                <Show when={projectQuery.data!.status === "draft"}>
-                  <div class="flex flex-col items-start gap-1.5 sm:items-end">
-                    <PlaceOrderCart
-                      project={projectQuery.data!}
-                      inlays={inlays()}
-                      disabled={!canPlaceOrder()}
-                    />
-                    <Show when={placeOrderBlockedReason()}>
-                      {(reason) => (
-                        <p class="text-xs text-faint">{reason()}</p>
-                      )}
+                        </label>
+                      </Can>
                     </Show>
                   </div>
-                </Show>
-              </Can>
-            </div>
-          </section>
+                </div>
+                <Can permission={PERMISSION_ACTIONS.PLACE_ORDER}>
+                  <Show when={projectQuery.data!.status === "draft"}>
+                    <div class="flex flex-col items-start gap-1.5 sm:items-end">
+                      <PlaceOrderCart
+                        project={projectQuery.data!}
+                        inlays={inlays()}
+                        disabled={!canPlaceOrder()}
+                      />
+                      <Show when={placeOrderBlockedReason()}>
+                        {(reason) => (
+                          <p class="text-xs text-faint">{reason()}</p>
+                        )}
+                      </Show>
+                    </div>
+                  </Show>
+                </Can>
+              </div>
+            </section>
+          </ShowPrices>
 
           <StoneDesignSection
             projectUuid={params().id}
@@ -686,22 +693,24 @@ function RouteComponent() {
             </Switch>
           </section>
 
-          <Show when={showInvoiceSection()}>
-            <section class="flex flex-col gap-4">
-              <h2 class="text-2xl">Invoice</h2>
-              <InvoiceSection
-                projectUuid={params().id}
-                invoice={invoiceQuery.data ?? null}
-                isLoading={invoiceQuery.isLoading}
-                onInvoiceChange={() => {
-                  queryClient.invalidateQueries({
-                    queryKey: ["project", params().id, "invoice"],
-                  });
-                  queryClient.invalidateQueries({ queryKey: ["project"] });
-                }}
-              />
-            </section>
-          </Show>
+          <ShowPrices>
+            <Show when={showInvoiceSection()}>
+              <section class="flex flex-col gap-4">
+                <h2 class="text-2xl">Invoice</h2>
+                <InvoiceSection
+                  projectUuid={params().id}
+                  invoice={invoiceQuery.data ?? null}
+                  isLoading={invoiceQuery.isLoading}
+                  onInvoiceChange={() => {
+                    queryClient.invalidateQueries({
+                      queryKey: ["project", params().id, "invoice"],
+                    });
+                    queryClient.invalidateQueries({ queryKey: ["project"] });
+                  }}
+                />
+              </section>
+            </Show>
+          </ShowPrices>
           </div>
 
           {/* Pinned pane: the conversation fills the window and never moves
@@ -970,16 +979,18 @@ function InlayCard(props: InlayCardProps) {
             <MirrorBadge inlay={props.inlay} />
           </div>
         </div>
-        <div class="col-span-2 flex items-baseline justify-between gap-3 sm:col-span-1 sm:flex-col sm:items-end sm:gap-1 sm:text-right">
-          <span class="font-medium tabular-nums text-foreground">
-            {priceLabel()}
-          </span>
-          <Show when={priceFormula()}>
-            {(formula) => (
-              <span class="text-xs tabular-nums text-faint">{formula()}</span>
-            )}
-          </Show>
-        </div>
+        <ShowPrices>
+          <div class="col-span-2 flex items-baseline justify-between gap-3 sm:col-span-1 sm:flex-col sm:items-end sm:gap-1 sm:text-right">
+            <span class="font-medium tabular-nums text-foreground">
+              {priceLabel()}
+            </span>
+            <Show when={priceFormula()}>
+              {(formula) => (
+                <span class="text-xs tabular-nums text-faint">{formula()}</span>
+              )}
+            </Show>
+          </div>
+        </ShowPrices>
       </Link>
       <Show when={showManufacturingTracker()}>
         <div class="border-t border-border px-4 py-3">

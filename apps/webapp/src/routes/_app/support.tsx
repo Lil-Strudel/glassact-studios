@@ -17,6 +17,7 @@ import {
 } from "../../queries/support";
 import { Can } from "../../components/Can";
 import { PriceCaveat } from "../../components/price-caveat";
+import { ShowPrices } from "../../components/show-prices";
 import { Markdown } from "../../components/markdown";
 import { YoutubeEmbed } from "../../components/youtube-embed";
 import { ArticleFormDialog } from "../../components/support/article-form-dialog";
@@ -205,54 +206,56 @@ interface PriceGroupsCardProps {
 
 function PriceGroupsCard(props: PriceGroupsCardProps) {
   return (
-    <Show when={props.priceGroups.length > 0}>
-      <Card>
-        <CardContent class="p-5">
-          <h3 class="mb-3 text-xl">Price Groups</h3>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="border-b border-border text-left">
-                  <th class="eyebrow py-2 pr-4">Group</th>
-                  <th class="eyebrow py-2 pr-6 text-right">Base Price</th>
-                  <th class="eyebrow py-2">Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                <For each={props.priceGroups}>
-                  {(group) => (
-                    <tr class="border-b border-border">
-                      <td class="whitespace-nowrap py-2 pr-4 font-medium text-foreground">
-                        {group.name}
-                      </td>
-                      <td class="py-2 pr-6 text-right tabular-nums text-foreground">
-                        {formatCents(group.base_price_cents)}
-                      </td>
-                      <td class="py-2 text-muted-foreground">
-                        {group.description ?? "—"}
-                      </td>
-                    </tr>
-                  )}
-                </For>
-                <tr>
-                  <td class="whitespace-nowrap py-2 pr-4 font-medium text-foreground">
-                    Installation Kit
-                  </td>
-                  <td class="whitespace-nowrap py-2 pr-6 text-right tabular-nums text-foreground">
-                    {formatCents(INSTALLATION_KIT_PRICE_CENTS)}
-                    <span class="text-muted-foreground"> / project</span>
-                  </td>
-                  <td class="py-2 text-muted-foreground">
-                    One kit per project, not per inlay. Covers the glue, grout
-                    and consumables for every inlay in the project.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <PriceCaveat class="mt-3" />
-        </CardContent>
-      </Card>
-    </Show>
+    <ShowPrices>
+      <Show when={props.priceGroups.length > 0}>
+        <Card>
+          <CardContent class="p-5">
+            <h3 class="mb-3 text-xl">Price Groups</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-border text-left">
+                    <th class="eyebrow py-2 pr-4">Group</th>
+                    <th class="eyebrow py-2 pr-6 text-right">Base Price</th>
+                    <th class="eyebrow py-2">Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <For each={props.priceGroups}>
+                    {(group) => (
+                      <tr class="border-b border-border">
+                        <td class="whitespace-nowrap py-2 pr-4 font-medium text-foreground">
+                          {group.name}
+                        </td>
+                        <td class="py-2 pr-6 text-right tabular-nums text-foreground">
+                          {formatCents(group.base_price_cents)}
+                        </td>
+                        <td class="py-2 text-muted-foreground">
+                          {group.description ?? "—"}
+                        </td>
+                      </tr>
+                    )}
+                  </For>
+                  <tr>
+                    <td class="whitespace-nowrap py-2 pr-4 font-medium text-foreground">
+                      Installation Kit
+                    </td>
+                    <td class="whitespace-nowrap py-2 pr-6 text-right tabular-nums text-foreground">
+                      {formatCents(INSTALLATION_KIT_PRICE_CENTS)}
+                      <span class="text-muted-foreground"> / project</span>
+                    </td>
+                    <td class="py-2 text-muted-foreground">
+                      One kit per project, not per inlay. Covers the glue, grout
+                      and consumables for every inlay in the project.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <PriceCaveat class="mt-3" />
+          </CardContent>
+        </Card>
+      </Show>
+    </ShowPrices>
   );
 }
