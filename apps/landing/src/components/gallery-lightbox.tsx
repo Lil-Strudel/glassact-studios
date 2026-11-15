@@ -1,5 +1,5 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
-import { ImageLightbox, type LightboxImage } from "@glassact/ui";
+import { ImageLightbox, type LightboxImage } from "@glassact/ui/image-lightbox";
 
 interface GalleryLightboxProps {
   images: LightboxImage[];

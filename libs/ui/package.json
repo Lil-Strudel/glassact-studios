@@ -13,6 +13,10 @@
     "./globals.css": {
       "default": "./globals.css"
     },
+    "./image-lightbox": {
+      "types": "./dist/src/image-lightbox.d.ts",
+      "default": "./src/image-lightbox.tsx"
+    },
     "./*": {
       "types": "./dist/src/*.d.ts",
       "default": [
