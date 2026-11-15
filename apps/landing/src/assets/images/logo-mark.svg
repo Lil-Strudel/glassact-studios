@@ -8,8 +8,8 @@
       }
 
       .st1 {
-        fill: #e2dede;
-        stroke: #ddd9d9;
+        fill: #f4ead7;
+        stroke: #f4ead7;
         stroke-miterlimit: 10;
         stroke-width: .5px;
       }

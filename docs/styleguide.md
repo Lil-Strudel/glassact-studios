@@ -194,8 +194,8 @@ An ornament rule, one Marcellus line saying what will appear here, one sentence 
 
 - **Inlay photos, proofs, granite and the stone designer are never tinted, filtered or recoloured.** They are the product.
 - **Headstone shapes are decoration for the landing site only** (see Shape, space and depth). The stone designer draws real stone shapes because it depicts the customer's stone; that is content, not decoration.
-- **Knot mark:** `logo-mark.svg` is the official vector knot for dark grounds (pale `#e2dede` outlines, crimson `#84153a` bars). Use it wherever the knot stands alone. Never recolour it.
-- **Full logo on dark:** `logo-full.svg`, the official vector lockup beside the knot: "GlassAct" in cream (`#efe8e8`, the same as its knot outlines) and "STUDIOS" in the knot's crimson (`#84153a`). The default wherever the name appears: app header, login, landing header and footer. Never recolour it.
+- **Knot mark:** `logo-mark.svg` is the official vector knot for dark grounds, with `foreground` vellum outlines and bars in the original GlassAct red (`#84153a`). Use it wherever the knot stands alone. Don't recolour it.
+- **Full logo on dark:** `logo-full.svg`, the official vector lockup beside the knot: "GlassAct" in `foreground` vellum (the same as its knot outlines) and "STUDIOS" in the knot's original GlassAct red (`#84153a`), deliberately not the `crimson` token, with a faint vellum glow beneath it so the dark red holds up on umber. The default wherever the name appears: app header, login, landing header and footer. Don't recolour it.
 - **Original logo** (`logo.png`, black lettering) only sits on the vellum plaque (`bg-plaque`), never directly on umber.
 - **Black line artwork** (catalog design SVGs, sandblast masks, proof line art) sits in a `bg-plaque` well; on umber its lead lines vanish. Photos of finished inlays in granite need no well.
 - **The illuminated "S" emblem** is the source of the palette, not a display element. Don't place it on pages.
