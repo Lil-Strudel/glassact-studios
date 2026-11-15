@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/solid-router";
 import { useQuery } from "@tanstack/solid-query";
 import { createMemo, For, Match, Show, Switch } from "solid-js";
 import {
+  INSTALLATION_KIT_PRICE_CENTS,
   PERMISSION_ACTIONS,
   type GET,
   type PriceGroup,
@@ -16,7 +17,6 @@ import {
 } from "../../queries/support";
 import { Can } from "../../components/Can";
 import { PriceCaveat } from "../../components/price-caveat";
-import { InstallationKitNote } from "../../components/installation-kit-note";
 import { Markdown } from "../../components/markdown";
 import { YoutubeEmbed } from "../../components/youtube-embed";
 import { ArticleFormDialog } from "../../components/support/article-form-dialog";
@@ -221,8 +221,8 @@ function PriceGroupsCard(props: PriceGroupsCardProps) {
               <tbody>
                 <For each={props.priceGroups}>
                   {(group) => (
-                    <tr class="border-b border-border last:border-0">
-                      <td class="py-2 pr-4 font-medium text-foreground">
+                    <tr class="border-b border-border">
+                      <td class="whitespace-nowrap py-2 pr-4 font-medium text-foreground">
                         {group.name}
                       </td>
                       <td class="py-2 pr-6 text-right tabular-nums text-foreground">
@@ -234,11 +234,23 @@ function PriceGroupsCard(props: PriceGroupsCardProps) {
                     </tr>
                   )}
                 </For>
+                <tr>
+                  <td class="whitespace-nowrap py-2 pr-4 font-medium text-foreground">
+                    Installation Kit
+                  </td>
+                  <td class="whitespace-nowrap py-2 pr-6 text-right tabular-nums text-foreground">
+                    {formatCents(INSTALLATION_KIT_PRICE_CENTS)}
+                    <span class="text-muted-foreground"> / project</span>
+                  </td>
+                  <td class="py-2 text-muted-foreground">
+                    One kit per project, not per inlay. Covers the glue, grout
+                    and consumables for every inlay in the project.
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
           <PriceCaveat class="mt-3" />
-          <InstallationKitNote class="mt-1" />
         </CardContent>
       </Card>
     </Show>
