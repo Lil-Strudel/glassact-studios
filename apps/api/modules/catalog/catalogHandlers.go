@@ -706,12 +706,8 @@ func filterCatalogItems(items []*data.CatalogItem, search, category, isActive st
 	filtered := make([]*data.CatalogItem, 0, len(items))
 
 	for _, item := range items {
-		if search != "" {
-			searchLower := strings.ToLower(search)
-			if !strings.Contains(strings.ToLower(item.Name), searchLower) &&
-				!strings.Contains(strings.ToLower(item.CatalogCode), searchLower) {
-				continue
-			}
+		if !matchesSearch(item, search) {
+			continue
 		}
 
 		if category != "" && item.Category != category {
@@ -735,12 +731,8 @@ func filterCatalogItemsWithTags(items []*data.CatalogItem, search, category stri
 	filtered := make([]*data.CatalogItem, 0, len(items))
 
 	for _, item := range items {
-		if search != "" {
-			searchLower := strings.ToLower(search)
-			if !strings.Contains(strings.ToLower(item.Name), searchLower) &&
-				!strings.Contains(strings.ToLower(item.CatalogCode), searchLower) {
-				continue
-			}
+		if !matchesSearch(item, search) {
+			continue
 		}
 
 		if category != "" && item.Category != category {
