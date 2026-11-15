@@ -917,6 +917,9 @@ function InlayCard(props: InlayCardProps) {
       .join(" · ");
 
   const hasSandblast = () => !!props.inlay.sandblast_file_url;
+  const canInternalApprove = () =>
+    showInternalApprove() &&
+    userContext.can(PERMISSION_ACTIONS.INTERNAL_APPROVE_PROOF);
   const canUploadSandblast = () =>
     props.projectStatus !== "draft" &&
     userContext.can(PERMISSION_ACTIONS.MANAGE_KANBAN);
@@ -989,7 +992,7 @@ function InlayCard(props: InlayCardProps) {
         when={
           props.canDelete ||
           props.canArrange ||
-          showInternalApprove() ||
+          canInternalApprove() ||
           hasSandblast() ||
           canUploadSandblast()
         }
