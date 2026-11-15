@@ -11,7 +11,7 @@ export function LozengeStepper(props: LozengeStepperProps) {
   return (
     <ol
       class={cn(
-        "grid auto-cols-[minmax(5.5rem,1fr)] grid-flow-col overflow-x-auto pb-1",
+        "grid auto-cols-[minmax(5rem,1fr)] grid-flow-col overflow-x-auto pb-1 pt-2",
         props.class,
       )}
     >
@@ -46,7 +46,7 @@ export function LozengeStepper(props: LozengeStepperProps) {
               />
               <span
                 class={cn(
-                  "whitespace-nowrap px-1 text-xs",
+                  "px-0.5 text-xs leading-tight",
                   isComplete() && "text-muted-foreground",
                   isCurrent() && "font-semibold text-foreground",
                   !isComplete() && !isCurrent() && "text-faint",
